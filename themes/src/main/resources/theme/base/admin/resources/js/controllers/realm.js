@@ -935,16 +935,16 @@ module.controller('RealmIdentityProviderCtrl', function($scope, $filter, $upload
 
     $scope.initSamlProvider = function() {
         $scope.nameIdFormats = [
-            /*
-            {
-                format: "urn:oasis:names:tc:SAML:2.0:nameid-format:transient",
-                name: "Transient"
-            },
-            */
+         
+           
             {
                 format: "urn:oasis:names:tc:SAML:2.0:nameid-format:persistent",
                 name: "Persistent"
 
+            },
+            {
+                format: "urn:oasis:names:tc:SAML:2.0:nameid-format:transient",
+                name: "Transient"
             },
             {
                 format: "urn:oasis:names:tc:SAML:1.1:nameid-format:emailAddress",
