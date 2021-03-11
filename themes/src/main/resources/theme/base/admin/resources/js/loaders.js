@@ -458,8 +458,7 @@ module.factory('IdentityProvidersFederationLoader', function(Loader, IdentityPro
     return Loader.get(IdentityProvidersFederation, function () {
         return {
             realm: $route.current.params.realm,
-            id: $route.current.params.internalId,
-            idps: true
+            id: $route.current.params.internalId
         }
     });
 });
@@ -468,8 +467,24 @@ module.factory('IdentityProvidersFederationExportLoader', function(Loader, Ident
     return Loader.get(IdentityProvidersFederation, function () {
         return {
             realm: $route.current.params.realm,
-            id: $route.current.params.internalId,
-            idps: false
+            id: $route.current.params.internalId
+        }
+    });
+});
+
+module.factory('IdentityProviderMapperTypesFederationLoader', function(Loader, IdentityProviderMapperTypesFederation, $route, $q) {
+    return Loader.get(IdentityProviderMapperTypesFederation, function () {
+        return {
+            realm: $route.current.params.realm
+        }
+    });
+});
+
+module.factory('IdentityProvidersFederationMappersLoader', function(Loader, IdentityProvidersFederationMappers, $route, $q) {
+    return Loader.get(IdentityProvidersFederationMappers, function () {
+        return {
+            realm: $route.current.params.realm,
+            id: $route.current.params.internalId
         }
     });
 });

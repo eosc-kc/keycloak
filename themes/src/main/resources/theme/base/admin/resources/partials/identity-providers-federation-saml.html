@@ -1,14 +1,15 @@
 <div class="col-sm-9 col-md-10 col-sm-push-3 col-md-push-2" >
     <ol class="breadcrumb">
         <li><a href="#/realms/{{realm.realm}}/identity-providers-federations">{{:: 'realm-identity-provider-federations' | translate}}</a></li>
-        <li data-ng-show="!newIdpFederation">{{identityProvidersFederation.alias}}</li>
-        <li data-ng-show="newIdpFederation">{{:: 'add-idp-federation' | translate}}</li>
+        <li data-ng-show="identityProvidersFederation.internalId">{{identityProvidersFederation.alias}}</li>
+        <li data-ng-show="!identityProvidersFederation.internalId">{{:: 'add-idp-federation' | translate}}</li>
     </ol>
 
 
     <ul class="nav nav-tabs">
         <li class="active"><a href="#/realms/{{realm.realm}}/identity-providers-federation/{{identityProvidersFederation.providerId}}/{{identityProvidersFederation.internalId}}">{{:: 'realm-identity-provider-federations' | translate}}</a></li>
-        <li data-ng-show="!newIdpFederation"><a href="#/realms/{{realm.realm}}/identity-providers-federation/{{identityProvidersFederation.providerId}}/{{identityProvidersFederation.internalId}}/export">{{:: 'identity-providers-federation-export' | translate}}</a></li>
+        <li data-ng-show="identityProvidersFederation.internalId"><a href="#/realms/{{realm.realm}}/identity-providers-federation/{{identityProvidersFederation.providerId}}/{{identityProvidersFederation.internalId}}/export">{{:: 'identity-providers-federation-export' | translate}}</a></li>
+        <li data-ng-show="identityProvidersFederation.internalId"><a href="#/realms/{{realm.realm}}/identity-providers-federation/{{identityProvidersFederation.providerId}}/{{identityProvidersFederation.internalId}}/mappers">{{:: 'mappers' | translate}}</a></li>
     </ul>
 
 

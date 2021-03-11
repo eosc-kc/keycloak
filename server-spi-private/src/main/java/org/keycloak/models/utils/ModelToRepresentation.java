@@ -421,7 +421,12 @@ public class ModelToRepresentation {
             rep.setRequiredCredentials(reqCredentials);
         }
 
-        rep.setIdentityProvidersFederations(realm.getIdentityProviderFederations().stream().map(obj -> toRepresentation(obj)).collect(Collectors.toList()));
+        rep.setIdentityProvidersFederations(realm.getIdentityProviderFederations().stream().map(obj -> {
+            IdentityProvidersFederationRepresentation representation = toRepresentation(obj);
+            representation.setFederationMappers(
+                obj.getFederationMapperModels().stream().map(mapper -> toRepresentation(mapper)).collect(Collectors.toList()));
+            return representation;
+        }).collect(Collectors.toList()));
 
         rep.setInternationalizationEnabled(realm.isInternationalizationEnabled());
         rep.setSupportedLocales(realm.getSupportedLocalesStream().collect(Collectors.toSet()));
@@ -695,6 +700,16 @@ public class ModelToRepresentation {
     	representation.setIdentityprovidersAlias(model.getIdentityprovidersAlias());
     	representation.setValidUntilTimestamp(model.getValidUntilTimestamp());
     	representation.setConfig(model.getConfig());
+        return representation;
+    }
+    
+    public static FederationMapperRepresentation toRepresentation(FederationMapperModel model) {
+        FederationMapperRepresentation representation = new FederationMapperRepresentation();
+        representation.setId(model.getId());
+        representation.setIdentityProviderMapper(model.getIdentityProviderMapper());
+        representation.setName(model.getName());
+        representation.setConfig(model.getConfig());
+        representation.setFederationId(model.getFederationId());
         return representation;
     }
     

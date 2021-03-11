@@ -614,6 +614,25 @@ module.config([ '$routeProvider', function($routeProvider) {
             controller : 'IdentityProvidersFederationsExportCtrl'
         })
         
+        .when('/realms/:realm/identity-providers-federation/:providerId/:internalId/mappers', {
+            templateUrl : function(params){ return resourceUrl + '/partials/identity-providers-federation-mappers.html'; },
+            resolve : {
+            	realm : function(RealmLoader) {
+                    return RealmLoader();
+                },
+                identityProvidersFederation : function(IdentityProvidersFederationLoader) {
+                    return IdentityProvidersFederationLoader();
+                },
+                identityProvidersFederationMappers : function(IdentityProvidersFederationMappersLoader) {
+                    return IdentityProvidersFederationMappersLoader();
+                },
+                mapperTypes : function(IdentityProviderMapperTypesFederationLoader) {
+                    return IdentityProviderMapperTypesFederationLoader();
+                }
+            },
+            controller : 'IdentityProvidersFederationsMappersCtrl'
+        })
+        
         
         
         

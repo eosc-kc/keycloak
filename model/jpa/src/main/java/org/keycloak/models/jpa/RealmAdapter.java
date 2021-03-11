@@ -1239,7 +1239,21 @@ public class RealmAdapter implements RealmModel, JpaModel<RealmEntity> {
     	Map<String, String> copy = new HashMap<>();
         copy.putAll(entity.getConfig());
     	federationModel.setConfig(copy);
+    	List<FederationMapperModel> mappers = entity.getFederationMapperEntities().stream().map(this::entityToModel).collect(Collectors.toList());
+        federationModel.setFederationMapperModels(mappers);
     	return federationModel;
+    }
+    
+    private FederationMapperModel entityToModel(FederationMapperEntity entity) {
+        FederationMapperModel model = new FederationMapperModel();
+        Map<String, String> copy = new HashMap<>();
+        copy.putAll(entity.getConfig());
+        model.setId(entity.getId());
+        model.setConfig(copy);
+        model.setFederationId(entity.getFederation().getInternalId());
+        model.setIdentityProviderMapper(entity.getIdentityProviderMapper());
+        model.setName(entity.getName());
+        return model;        
     }
     
     
@@ -1350,6 +1364,52 @@ public class RealmAdapter implements RealmModel, JpaModel<RealmEntity> {
 	}
 	
 
+	@Override
+    public List<FederationMapperModel> getIdentityProviderFederationMappers(String federationId){
+	    TypedQuery<FederationMapperEntity> query = em.createNamedQuery("findByFederation", FederationMapperEntity.class);
+        query.setParameter("federationId", federationId);
+        List<FederationMapperEntity> list = query.getResultList();
+        return  list.stream().map(this::entityToModel).collect(Collectors.toList()) ;
+    };
+    
+    @Override
+    public FederationMapperModel getIdentityProviderFederationMapper(String federationId, String id) {
+        FederationMapperEntity fe =em.find(FederationMapperEntity.class, id);
+        return  fe != null ? entityToModel(fe) : null ;
+
+    };
+    
+    @Override
+    public void addIdentityProvidersFederationMapper(FederationMapperModel federationMapperModel) {
+        FederationMapperEntity mapper = new  FederationMapperEntity();
+        mapper.setId(KeycloakModelUtils.generateId());
+        mapper.setConfig(federationMapperModel.getConfig());
+        mapper.setIdentityProviderMapper(federationMapperModel.getIdentityProviderMapper());
+        mapper.setName(federationMapperModel.getName());
+        FederationEntity federation = em.find(FederationEntity.class, federationMapperModel.getFederationId());
+        federationMapperModel.setId(mapper.getId());
+        em.persist(mapper);
+        em.flush();
+    };
+    
+    @Override
+    public  void updateIdentityProvidersFederationMapper(FederationMapperModel federationMapperModel) {
+        
+        FederationMapperEntity mapper = em.find(FederationMapperEntity.class, federationMapperModel.getId());
+        if(mapper == null) {
+            logger.infov("The FederationMapper with id={} could now be found! Skipping the update...", federationMapperModel.getId());
+            return; //cannot update a non-existent federation
+        }
+        mapper.setConfig(federationMapperModel.getConfig());
+        
+    };
+    
+    @Override
+    public void removeIdentityProvidersFederationMapper(String id) {
+        FederationMapperEntity mapper = em.find(FederationMapperEntity.class, id);
+        em.remove(mapper);
+        em.flush();
+    };
 	 
     
     @Override

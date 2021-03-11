@@ -869,6 +869,46 @@ public class RealmAdapter implements CachedRealmModel {
 		updated.removeIdentityProvidersFederation(internalId);
 	}
 	
+	@Override
+	public List<FederationMapperModel> getIdentityProviderFederationMappers(String federationId){
+	    IdentityProvidersFederationModel federation = getIdentityProvidersFederationById(federationId);
+	    if ( federation != null) {
+	        return federation.getFederationMapperModels();
+	    } else {
+	        throw new IllegalStateException("Federation not found: " + federationId);
+	    }
+	};
+	
+	@Override
+    public FederationMapperModel getIdentityProviderFederationMapper(String federationId, String id) {
+        IdentityProvidersFederationModel federation = getIdentityProvidersFederationById(federationId);
+        if (federation != null) {
+            return federation.getFederationMapperModels().stream().filter(mapper -> Objects.equals(mapper.getId(), id))
+                .findFirst().orElse(null);
+        } else {
+            throw new IllegalStateException("Federation not found: " + federationId);
+        }
+
+    };
+	
+	@Override
+	public void addIdentityProvidersFederationMapper(FederationMapperModel federationMapperModel) {
+	    getDelegateForUpdate();
+        updated.addIdentityProvidersFederationMapper( federationMapperModel);
+	};
+	
+	@Override
+	public  void updateIdentityProvidersFederationMapper(FederationMapperModel federationMapperModel) {
+	    getDelegateForUpdate();
+        updated.updateIdentityProvidersFederationMapper(federationMapperModel);
+	};
+	
+	@Override
+	public void removeIdentityProvidersFederationMapper(String id) {
+	    getDelegateForUpdate();
+        updated.removeIdentityProvidersFederationMapper(id);
+	};
+	
 	
     @Override
     public String getLoginTheme() {

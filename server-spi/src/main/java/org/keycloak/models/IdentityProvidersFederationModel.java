@@ -17,6 +17,7 @@
 package org.keycloak.models;
 
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -63,6 +64,8 @@ public class IdentityProvidersFederationModel implements Serializable {
     
     private Map<String, List<String>> categoryWhiteList;
     
+    private List<FederationMapperModel> federationMapperModels = new ArrayList<>();
+    
 
     public IdentityProvidersFederationModel() {
 		super();
@@ -87,6 +90,7 @@ public class IdentityProvidersFederationModel implements Serializable {
 		this.setLastMetadataRefreshTimestamp(model.getLastMetadataRefreshTimestamp());
 		this.setIdentityprovidersAlias(model.getIdentityprovidersAlias());
 		this.setConfig(model.getConfig());
+		this.setFederationMapperModels(model.getFederationMapperModels());
 	}
 
 	public IdentityProvidersFederationModel(String internalId, String alias, String providerId, String url,
@@ -235,5 +239,12 @@ public class IdentityProvidersFederationModel implements Serializable {
         this.categoryWhiteList = categoryWhiteList;
     }
 
- 
+    public List<FederationMapperModel> getFederationMapperModels() {
+        return federationMapperModels;
+    }
+
+    public void setFederationMapperModels(List<FederationMapperModel> federationMapperModels) {
+        this.federationMapperModels = federationMapperModels;
+    }
+
 }

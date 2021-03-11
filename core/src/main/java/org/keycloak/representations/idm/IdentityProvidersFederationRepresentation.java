@@ -1,5 +1,6 @@
 package org.keycloak.representations.idm;
 
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -39,6 +40,8 @@ public class IdentityProvidersFederationRepresentation {
     private Map<String, List<String>> categoryBlackList;
     
     private Map<String, List<String>> categoryWhiteList;
+    
+    private List<FederationMapperRepresentation> federationMappers = new ArrayList<>();
     
     public IdentityProvidersFederationRepresentation() {
     	this.entityIdBlackList = new HashSet<String>();
@@ -173,5 +176,12 @@ public class IdentityProvidersFederationRepresentation {
         this.categoryWhiteList = categoryWhiteList;
     }
 
+    public List<FederationMapperRepresentation> getFederationMappers() {
+        return federationMappers;
+    }
+
+    public void setFederationMappers(List<FederationMapperRepresentation> federationMappers) {
+        this.federationMappers = federationMappers;
+    }
 
 }

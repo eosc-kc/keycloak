@@ -21,11 +21,38 @@
                 <constraints nullable="false" />
             </column>
         </createTable>
+        <createTable tableName="FEDERATION_MAPPER">
+            <column name="ID" type="VARCHAR(36)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="NAME" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="IDP_MAPPER_NAME" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="FEDERATION_ID" type="VARCHAR(36)">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+        <createTable tableName="FEDERATION_MAPPER_CONFIG">
+            <column name="FEDERATION_MAPPER_ID" type="VARCHAR(36)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="VALUE" type="CLOB"/>
+            <column name="NAME" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
         
         <addPrimaryKey columnNames="FEDERATION_ID, NAME" constraintName="CONSTRAINT_ENTITY_CATEGORY_BLACKLIST" tableName="ENTITY_CATEGORY_BLACKLIST" />
         <addForeignKeyConstraint baseColumnNames="FEDERATION_ID" baseTableName="ENTITY_CATEGORY_BLACKLIST" constraintName="ENTITY_CATEGORY_BLACKLIST_FK" referencedColumnNames="INTERNAL_ID" referencedTableName="FEDERATION" />
         <addPrimaryKey columnNames="FEDERATION_ID, NAME" constraintName="CONSTRAINT_ENTITY_CATEGORY_WHITELIST" tableName="ENTITY_CATEGORY_WHITELIST" />
         <addForeignKeyConstraint baseColumnNames="FEDERATION_ID" baseTableName="ENTITY_CATEGORY_WHITELIST" constraintName="ENTITY_CATEGORY_WHITELIST_FK" referencedColumnNames="INTERNAL_ID" referencedTableName="FEDERATION" />
+        <addPrimaryKey columnNames="ID" constraintName="FEDERATION_MAPPER_PK" tableName="FEDERATION_MAPPER"/>
+        <addPrimaryKey columnNames="FEDERATION_MAPPER_ID, NAME" constraintName="FEDERATION_MAPPER_CONFIG_PK" tableName="FEDERATION_MAPPER_CONFIG"/>
+        <addForeignKeyConstraint baseColumnNames="FEDERATION_ID" baseTableName="FEDERATION_MAPPER" constraintName="FEDERATION_MAPPER_FK" referencedColumnNames="INTERNAL_ID" referencedTableName="FEDERATION"/>
+        <addForeignKeyConstraint baseColumnNames="FEDERATION_MAPPER_ID" baseTableName="FEDERATION_MAPPER_CONFIG" constraintName="FEDERATION_MAPPER_CONFIG_FK" referencedColumnNames="ID" referencedTableName="FEDERATION_MAPPER"/>
      </changeSet>
 
 </databaseChangeLog>

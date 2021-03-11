@@ -1771,12 +1771,25 @@ module.factory('IdentityProviderMapper', function($resource) {
 
 
 module.factory('IdentityProvidersFederation', function($resource) {
-    return $resource(authUrl + '/admin/realms/:realm/identity-provider-federation/instances/:id?idps=:idps', {
+    return $resource(authUrl + '/admin/realms/:realm/identity-provider-federation/instances/:id', {
         realm : '@realm',
-        id : '@id',
-        idps : '@idps'
+        id : '@id'
     });
 });
+
+module.factory('IdentityProvidersFederationMappers', function($resource) {
+    return $resource(authUrl + '/admin/realms/:realm/identity-provider-federation/instances/:id/mappers', {
+        realm : '@realm',
+        id : '@id'
+    });
+});
+
+module.factory('IdentityProviderMapperTypesFederation', function($resource) {
+    return $resource(authUrl + '/admin/realms/:realm/identity-provider-federation/mapper-types', {
+        realm : '@realm'
+    });
+});
+
 
 
 

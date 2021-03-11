@@ -72,6 +72,7 @@ import org.keycloak.models.ClientModel;
 import org.keycloak.models.ClientScopeModel;
 import org.keycloak.models.Constants;
 import org.keycloak.models.FederatedIdentityModel;
+import org.keycloak.models.FederationMapperModel;
 import org.keycloak.models.GroupModel;
 import org.keycloak.models.IdentityProviderMapperModel;
 import org.keycloak.models.IdentityProviderModel;
@@ -111,6 +112,7 @@ import org.keycloak.representations.idm.ComponentExportRepresentation;
 import org.keycloak.representations.idm.ComponentRepresentation;
 import org.keycloak.representations.idm.CredentialRepresentation;
 import org.keycloak.representations.idm.FederatedIdentityRepresentation;
+import org.keycloak.representations.idm.FederationMapperRepresentation;
 import org.keycloak.representations.idm.GroupRepresentation;
 import org.keycloak.representations.idm.IdentityProvidersFederationRepresentation;
 import org.keycloak.representations.idm.IdentityProviderMapperRepresentation;
@@ -1914,11 +1916,15 @@ public class RepresentationToModel {
     private static void importIdentityProvidersFederations(KeycloakSession session, List<IdentityProvidersFederationRepresentation> federations, RealmModel newRealm) {
         if (federations != null) {
             for (IdentityProvidersFederationRepresentation representation : federations) {
-            	//set LastMetadataRefreshTimestamp to null in order to run immediately the schedule task
-            	representation.setLastMetadataRefreshTimestamp(null);
-            	IdentityProvidersFederationModel model = toModel( representation);
+                // set LastMetadataRefreshTimestamp to null in order to run immediately the schedule task
+                representation.setLastMetadataRefreshTimestamp(null);
+                IdentityProvidersFederationModel model = toModel(representation);
+                model.setFederationMapperModels(
+                    representation.getFederationMappers().stream().map(mapper -> toModel(mapper)).collect(Collectors.toList()));
                 newRealm.addIdentityProvidersFederation(model);
-                IdpFederationProvider idpFederationProvider = IdpFederationProviderFactory.getIdpFederationProviderFactoryById(session, model.getProviderId()).create(session,model,newRealm.getId());
+                IdpFederationProvider idpFederationProvider = IdpFederationProviderFactory
+                    .getIdpFederationProviderFactoryById(session, model.getProviderId())
+                    .create(session, model, newRealm.getId());
                 idpFederationProvider.enableUpdateTask();
             }
         }
@@ -1998,6 +2004,16 @@ public class RepresentationToModel {
     	model.setIdentityprovidersAlias(representation.getIdentityprovidersAlias());
     	model.setConfig(removeEmptyString(representation.getConfig()));
     	return model;
+    }
+    
+    public static FederationMapperModel toModel( FederationMapperRepresentation representation ) {
+        FederationMapperModel model = new FederationMapperModel();
+        model.setId(representation.getId());
+        model.setIdentityProviderMapper(representation.getIdentityProviderMapper());
+        model.setName(representation.getName());
+        model.setFederationId(representation.getFederationId());
+        return model;
+        
     }
 
     public static ProtocolMapperModel toModel(ProtocolMapperRepresentation rep) {

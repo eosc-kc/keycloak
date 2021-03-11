@@ -1,5 +1,6 @@
 package org.keycloak.models.jpa.entities;
 
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -7,6 +8,7 @@ import java.util.Set;
 
 import javax.persistence.Access;
 import javax.persistence.AccessType;
+import javax.persistence.CascadeType;
 import javax.persistence.CollectionTable;
 import javax.persistence.Column;
 import javax.persistence.Convert;
@@ -20,6 +22,7 @@ import javax.persistence.ManyToOne;
 import javax.persistence.MapKeyColumn;
 import javax.persistence.NamedQueries;
 import javax.persistence.NamedQuery;
+import javax.persistence.OneToMany;
 import javax.persistence.Table;
 
 import org.keycloak.models.jpa.converter.ListJsonConverter;
@@ -103,6 +106,9 @@ public class FederationEntity {
     @CollectionTable(name="ENTITY_CATEGORY_WHITELIST", joinColumns={ @JoinColumn(name="FEDERATION_ID") })
     @Convert(converter = ListJsonConverter.class, attributeName = "value")
     private Map<String, List<String>> categoryWhiteList;
+	
+	@OneToMany(cascade =CascadeType.REMOVE,  mappedBy = "federation")
+	private List<FederationMapperEntity> federationMapperEntities = new ArrayList<FederationMapperEntity>();
 
 	public String getInternalId() {
 		return internalId;
@@ -238,6 +244,14 @@ public class FederationEntity {
 
     public void setCategoryWhiteList(Map<String, List<String>> categoryWhiteList) {
         this.categoryWhiteList = categoryWhiteList;
+    }
+
+    public List<FederationMapperEntity> getFederationMapperEntities() {
+        return federationMapperEntities;
+    }
+
+    public void setFederationMapperEntities(List<FederationMapperEntity> federationMapperEntities) {
+        this.federationMapperEntities = federationMapperEntities;
     }
 
     @Override

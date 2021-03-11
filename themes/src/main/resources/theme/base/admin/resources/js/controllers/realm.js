@@ -1835,6 +1835,17 @@ module.controller('IdentityProvidersFederationsExportCtrl', function(realm, Dial
 	
 });
 
+module.controller('IdentityProvidersFederationsMappersCtrl', function(realm, Dialog, $scope, identityProvidersFederation, identityProvidersFederationMappers, mapperTypes, Current, Notifications, $location, $http) {
+
+	$scope.realm = realm;
+	$scope.identityProvidersFederation = identityProvidersFederation;
+	$scope.identityProvidersFederationMappers = identityProvidersFederationMappers;
+	$scope.mapperTypes = mapperTypes;
+
+	
+	
+});
+
 
 
 
