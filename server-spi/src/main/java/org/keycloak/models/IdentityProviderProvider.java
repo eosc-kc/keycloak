@@ -14,6 +14,7 @@ public interface IdentityProviderProvider extends Provider {
 	Long countIdentityProviders(RealmModel realm);
 
 	List<IdentityProviderModel> getIdentityProviders(RealmModel realm);
+	Set<IdentityProviderModelSummary> getIdentityProvidersSummary(RealmModel realm);
 	List<IdentityProviderModel> searchIdentityProviders(RealmModel realm, String keyword, Integer firstResult, Integer maxResults);
 	
 	IdentityProviderModel getIdentityProviderById(RealmModel realm, String internalId);
@@ -24,6 +25,7 @@ public interface IdentityProviderProvider extends Provider {
 	boolean isIdentityFederationEnabled(RealmModel realm);
 	
 	Set<IdentityProviderMapperModel> getIdentityProviderMappers(RealmModel realmModel);
+	Set<IdentityProviderMapperModelSummary> getIdentityProviderMappersSummary(RealmModel realmModel);
 	Set<IdentityProviderMapperModel> getIdentityProviderMappersByAlias(RealmModel realmModel, String brokerAlias);
 	IdentityProviderMapperModel addIdentityProviderMapper(RealmModel realmModel, IdentityProviderMapperModel model);
 	void removeIdentityProviderMapper(RealmModel realmModel, IdentityProviderMapperModel mapping);

@@ -14,12 +14,7 @@ import javax.persistence.NonUniqueResultException;
 import javax.persistence.TypedQuery;
 
 import org.jboss.logging.Logger;
-import org.keycloak.models.IdentityProviderMapperModel;
-import org.keycloak.models.IdentityProviderModel;
-import org.keycloak.models.IdentityProviderProvider;
-import org.keycloak.models.IdentityProvidersFederationModel;
-import org.keycloak.models.KeycloakSession;
-import org.keycloak.models.RealmModel;
+import org.keycloak.models.*;
 import org.keycloak.models.jpa.entities.FederationEntity;
 import org.keycloak.models.jpa.entities.IdentityProviderEntity;
 import org.keycloak.models.jpa.entities.IdentityProviderMapperEntity;
@@ -59,7 +54,14 @@ public class JpaIdpProvider implements IdentityProviderProvider {
     	query.setParameter("realmId", realm.getId());
     	return query.getSingleResult();
     }
-    
+
+
+	@Override
+	public Set<IdentityProviderModelSummary> getIdentityProvidersSummary(RealmModel realm) {
+		TypedQuery<IdentityProviderEntity> query = em.createNamedQuery("findIdentityProviderSummaryByRealm", IdentityProviderEntity.class);
+		query.setParameter("realmId", realm.getId());
+		return query.getResultList().stream().map(entity -> new IdentityProviderModelSummary(entity.getInternalId(), entity.getAlias(), entity.getProviderId())).collect(Collectors.toCollection(HashSet::new));
+	}
     
 	@Override
 	public List<IdentityProviderModel> getIdentityProviders(RealmModel realm) {
@@ -288,6 +290,13 @@ public class JpaIdpProvider implements IdentityProviderProvider {
 		query.setParameter("realmId", realmModel.getId());
         return query.getResultList().stream().map(entity -> entityToModel(entity)).collect(Collectors.toCollection(HashSet::new));
     }
+
+	@Override
+	public Set<IdentityProviderMapperModelSummary> getIdentityProviderMappersSummary(RealmModel realmModel) {
+		TypedQuery<IdentityProviderMapperEntity> query = em.createNamedQuery("findIdentityProviderMappersByRealm", IdentityProviderMapperEntity.class);
+		query.setParameter("realmId", realmModel.getId());
+		return query.getResultList().stream().map(entity -> new IdentityProviderMapperModelSummary(entity.getId(), entity.getName(), entity.getIdentityProviderAlias())).collect(Collectors.toCollection(HashSet::new));
+	}
 
     @Override
     public Set<IdentityProviderMapperModel> getIdentityProviderMappersByAlias(RealmModel realmModel, String brokerAlias) {
