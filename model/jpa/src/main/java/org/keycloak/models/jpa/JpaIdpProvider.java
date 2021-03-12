@@ -1,17 +1,9 @@
 package org.keycloak.models.jpa;
 
-import java.util.Date;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
-import javax.persistence.EntityManager;
-import javax.persistence.NoResultException;
-import javax.persistence.NonUniqueResultException;
-import javax.persistence.TypedQuery;
+import javax.persistence.*;
 
 import org.jboss.logging.Logger;
 import org.keycloak.models.*;
@@ -58,9 +50,10 @@ public class JpaIdpProvider implements IdentityProviderProvider {
 
 	@Override
 	public Set<IdentityProviderModelSummary> getIdentityProvidersSummary(RealmModel realm) {
-		TypedQuery<IdentityProviderEntity> query = em.createNamedQuery("findIdentityProviderSummaryByRealm", IdentityProviderEntity.class);
+		Query query = em.createNamedQuery("findIdentityProviderSummaryByRealm");
 		query.setParameter("realmId", realm.getId());
-		return query.getResultList().stream().map(entity -> new IdentityProviderModelSummary(entity.getInternalId(), entity.getAlias(), entity.getProviderId())).collect(Collectors.toCollection(HashSet::new));
+		List<IdentityProviderEntity> idps = query.getResultList();
+		return idps.stream().map(entity -> new IdentityProviderModelSummary(entity.getInternalId(), entity.getAlias(), entity.getProviderId())).collect(Collectors.toCollection(HashSet::new));
 	}
     
 	@Override
@@ -172,7 +165,7 @@ public class JpaIdpProvider implements IdentityProviderProvider {
 
 	// realm is not used in this implementation. Could also be null
 	@Override
-	public IdentityProviderModel getIdentityProviderById(RealmModel realm, String internalId) {
+	public IdentityProviderModel getIdentityProviderById(String realmId, String internalId) {
 		IdentityProviderEntity identityProvider = em.find(IdentityProviderEntity.class, internalId);
 		return identityProvider != null ? entityToModel(identityProvider, false) : null;
 	}
@@ -366,7 +359,7 @@ public class JpaIdpProvider implements IdentityProviderProvider {
     }
 
     @Override
-    public IdentityProviderMapperModel getIdentityProviderMapperById(RealmModel realmModel, String id) {
+    public IdentityProviderMapperModel getIdentityProviderMapperById(String realmId, String id) {
     	IdentityProviderMapperEntity entity = em.find(IdentityProviderMapperEntity.class, id);
         if (entity == null) return null;
         return entityToModel(entity);

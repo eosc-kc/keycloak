@@ -44,24 +44,25 @@ public class InfinispanCacheIdpProviderFactory implements CacheIdpProviderFactor
 					cluster.registerListener(IdpAddedEvent.EVENT_NAME, (ClusterEvent event) -> {
 						IdpAddedEvent idpAddedEvent = (IdpAddedEvent) event;
 						String realmId = idpAddedEvent.getRealmId();
-						IdentityProviderModel idpModel = idpAddedEvent.getIdentityProvider();
-						idpCache.put(realmId + idpModel.getInternalId(), idpModel);
+						String idpId = idpAddedEvent.getIdpId();
+						IdentityProviderModel idpModel = idpCacheProvider.getIdentityProviderById(realmId, idpId); //this also adds to the cache
 						idpCacheProvider.addIdpSummary(realmId, new IdentityProviderModelSummary(idpModel));
 					});
 
 					cluster.registerListener(IdpUpdatedEvent.EVENT_NAME, (ClusterEvent event) -> {
 						IdpUpdatedEvent idpUpdatedEvent = (IdpUpdatedEvent) event;
 						String realmId = idpUpdatedEvent.getRealmId();
-						IdentityProviderModel idpModel = idpUpdatedEvent.getIdentityProvider();
+						String idpId = idpUpdatedEvent.getIdpId();
+						IdentityProviderModel idpModel = idpCacheProvider.getIdentityProviderDelegate().getIdentityProviderById(realmId, idpId);
 						idpCache.put(realmId + idpModel.getInternalId(), idpModel);
 					});
 
 					cluster.registerListener(IdpRemovedEvent.EVENT_NAME, (ClusterEvent event) -> {
 						IdpRemovedEvent idpRemovedEvent = (IdpRemovedEvent) event;
 						String realmId = idpRemovedEvent.getRealmId();
-						IdentityProviderModel idpModel = idpRemovedEvent.getIdentityProvider();
-						idpCache.remove(realmId + idpModel.getInternalId());
-						idpCacheProvider.removeIdpSummary(realmId, new IdentityProviderModelSummary(idpModel));
+						String idpId = idpRemovedEvent.getIdpId();
+						idpCache.remove(realmId + idpId);
+						idpCacheProvider.removeIdpSummary(realmId, new IdentityProviderModelSummary(idpId, null, null));
 					});
 
 					cluster.registerListener(InfinispanCacheIdpProviderFactory.IDP_CLEAR_CACHE_EVENT, (ClusterEvent event) -> {
@@ -79,24 +80,25 @@ public class InfinispanCacheIdpProviderFactory implements CacheIdpProviderFactor
 					cluster.registerListener(IdpMapperAddedEvent.EVENT_NAME, (ClusterEvent event) -> {
 						IdpMapperAddedEvent idpMapperAddedEvent = (IdpMapperAddedEvent) event;
 						String realmId = idpMapperAddedEvent.getRealmId();
-						IdentityProviderMapperModel idpMapperModel = idpMapperAddedEvent.getIdentityProviderMapper();
-						idpMappersCache.put(realmId + idpMapperModel.getId(), idpMapperModel);
+						String mapperId = idpMapperAddedEvent.getMapperId();
+						IdentityProviderMapperModel idpMapperModel = idpCacheProvider.getIdentityProviderMapperById(realmId, mapperId); //this also adds to the cache
 						idpCacheProvider.addIdpMapperSummary(realmId, new IdentityProviderMapperModelSummary(idpMapperModel));
 					});
 
 					cluster.registerListener(IdpMapperUpdatedEvent.EVENT_NAME, (ClusterEvent event) -> {
 						IdpMapperUpdatedEvent idpMapperUpdatedEvent = (IdpMapperUpdatedEvent) event;
 						String realmId = idpMapperUpdatedEvent.getRealmId();
-						IdentityProviderMapperModel idpMapperModel = idpMapperUpdatedEvent.getIdentityProviderMapper();
+						String mapperId = idpMapperUpdatedEvent.getMapperId();
+						IdentityProviderMapperModel idpMapperModel = idpCacheProvider.getIdentityProviderDelegate().getIdentityProviderMapperById(realmId, mapperId);
 						idpMappersCache.put(realmId + idpMapperModel.getId(), idpMapperModel);
 					});
 
 					cluster.registerListener(IdpMapperRemovedEvent.EVENT_NAME, (ClusterEvent event) -> {
 						IdpMapperRemovedEvent idpMapperRemovedEvent = (IdpMapperRemovedEvent) event;
 						String realmId = idpMapperRemovedEvent.getRealmId();
-						IdentityProviderMapperModel idpMapperModel = idpMapperRemovedEvent.getIdentityProviderMapper();
-						idpMappersCache.remove(realmId + idpMapperModel.getId());
-						idpCacheProvider.removeIdpMapperSummary(realmId, new IdentityProviderMapperModelSummary(idpMapperModel));
+						String mapperId = idpMapperRemovedEvent.getMapperId();
+						idpMappersCache.remove(realmId + mapperId);
+						idpCacheProvider.removeIdpMapperSummary(realmId, new IdentityProviderMapperModelSummary(mapperId, null, null));
 					});
 
 					cluster.registerListener(InfinispanCacheIdpProviderFactory.IDP_MAPPERS_CLEAR_CACHE_EVENT, (ClusterEvent event) -> {

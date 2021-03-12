@@ -32,7 +32,7 @@ import java.util.Map;
     @NamedQuery(name="findIdentityProviderMappersByRealmAndAliasAndName", query="select identityProviderMapper from IdentityProviderMapperEntity identityProviderMapper where identityProviderMapper.realm.id = :realmId and identityProviderMapper.identityProviderAlias = :alias and identityProviderMapper.name = :name")
 })
 @NamedNativeQueries({
-    @NamedNativeQuery(name="findIdentityProviderMappersSummaryByRealm", query="select ID, NAME, IDP_ALIAS from identity_provider_mapper where REALM_ID = :realmId", resultClass = IdentityProviderMapperEntity.class)
+    @NamedNativeQuery(name="findIdentityProviderMappersSummaryByRealm", query="select * from identity_provider_mapper where realm_id = :realmId", resultClass = IdentityProviderMapperEntity.class)
 })
 public class IdentityProviderMapperEntity {
 

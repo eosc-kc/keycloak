@@ -21,11 +21,6 @@ public class IdpCacheProvider implements CacheIdpProviderI {
     private static Map<String, Set<IdentityProviderModelSummary>> idpSummaries = new ConcurrentHashMap<>();
     private static Map<String, Set<IdentityProviderMapperModelSummary>> idpMapperSummaries = new ConcurrentHashMap<>();
 
-
-//	private static IdpIndex idpIndex = new IdpIndex();
-//	private static IdpMapperIndex idpMapperIndex = new IdpMapperIndex();
-
-
     private ClusterProvider cluster;
 
     protected KeycloakSession session;
@@ -127,22 +122,24 @@ public class IdpCacheProvider implements CacheIdpProviderI {
 
     @Override
     public List<IdentityProviderModel> getIdentityProviders(RealmModel realm) {
-        return idpSummaries.get(realm.getId()).stream().map(idpSummary -> getIdentityProviderById(realm, idpSummary.getInternalId())).collect(Collectors.toList());
+        Set<IdentityProviderModelSummary> summaries = idpSummaries.get(realm.getId());
+        return summaries==null ? new ArrayList<>() : summaries.stream().map(idpSummary -> getIdentityProviderById(realm.getId(), idpSummary.getInternalId())).collect(Collectors.toList());
     }
 
     @Override
     public Set<IdentityProviderModelSummary> getIdentityProvidersSummary(RealmModel realm) {
-        return idpSummaries.get(realm.getId());
+        Set<IdentityProviderModelSummary> summaries = idpSummaries.get(realm.getId());
+        return summaries==null ? new HashSet<>() : summaries;
     }
 
     @Override
     public List<IdentityProviderModel> searchIdentityProviders(RealmModel realm, String keyword, Integer firstResult, Integer maxResults) {
         final String lowercaseKeyword = keyword.toLowerCase();
         Set<IdentityProviderModelSummary> summaries = idpSummaries.get(realm.getId());
-        if(summaries==null)
-            return new ArrayList<>();
-        return summaries.stream()
-                .map(idpSummary -> getIdentityProviderById(realm, idpSummary.getInternalId()))
+        return summaries==null ?
+                new ArrayList<>() :
+                summaries.stream()
+                .map(idpSummary -> getIdentityProviderById(realm.getId(), idpSummary.getInternalId()))
                 .filter(idp -> {
                     String name = idp.getDisplayName() == null ? "" : idp.getDisplayName();
                     return name.toLowerCase().contains(lowercaseKeyword) || idp.getAlias().toLowerCase().contains(lowercaseKeyword);
@@ -152,19 +149,23 @@ public class IdpCacheProvider implements CacheIdpProviderI {
                 .collect(Collectors.toList());
     }
 
+
     @Override
-    public IdentityProviderModel getIdentityProviderById(RealmModel realm, String internalId) {
-        IdentityProviderModel idp = cacheIdp.get(realm.getId() + internalId);
+    public IdentityProviderModel getIdentityProviderById(String realmId, String internalId) {
+        IdentityProviderModel idp = cacheIdp.get(realmId + internalId);
         if (idp == null) {
-            idp = getIdentityProviderDelegate().getIdentityProviderById(realm, internalId);
-            cacheIdp.put(realm.getId() + internalId, idp);
+            idp = getIdentityProviderDelegate().getIdentityProviderById(realmId, internalId);
+            cacheIdp.put(realmId + internalId, idp);
         }
         return idp;
     }
 
     @Override
     public IdentityProviderModel getIdentityProviderByAlias(RealmModel realm, String alias) {
-        return idpSummaries.get(realm.getId()).stream().filter(idp -> idp.getAlias().equals(alias)).map(idpSummary -> getIdentityProviderById(realm, idpSummary.getInternalId())).findFirst().orElse(null);
+        Set<IdentityProviderModelSummary> summaries = idpSummaries.get(realm.getId());
+        if(summaries==null)
+            return null;
+        return summaries.stream().filter(idp -> idp.getAlias().equals(alias)).map(idpSummary -> getIdentityProviderById(realm.getId(), idpSummary.getInternalId())).findFirst().orElse(null);
     }
 
 
@@ -177,7 +178,7 @@ public class IdpCacheProvider implements CacheIdpProviderI {
         addIdpSummary(realm.getId(), new IdentityProviderModelSummary(identityProvider));
 //		}
 
-        cluster.notify(IdpAddedEvent.EVENT_NAME, new IdpAddedEvent(realm.getId(), identityProvider), true, ClusterProvider.DCNotify.ALL_DCS);
+        cluster.notify(IdpAddedEvent.EVENT_NAME, new IdpAddedEvent(realm.getId(), identityProvider.getInternalId()), true, ClusterProvider.DCNotify.ALL_DCS);
     }
 
 
@@ -194,7 +195,7 @@ public class IdpCacheProvider implements CacheIdpProviderI {
                 cacheIdpMappers.remove(realm.getId() + idpMapper.getId());
                 removeIdpMapperSummary(realm.getId(), new IdentityProviderMapperModelSummary(idpMapper));
 //            }
-            cluster.notify(IdpMapperRemovedEvent.EVENT_NAME, new IdpMapperRemovedEvent(realm.getId(), idpMapper), true, ClusterProvider.DCNotify.ALL_DCS);
+            cluster.notify(IdpMapperRemovedEvent.EVENT_NAME, new IdpMapperRemovedEvent(realm.getId(), idpMapper.getId()), true, ClusterProvider.DCNotify.ALL_DCS);
         });
 
         //remove the identity provider from the cache
@@ -203,7 +204,7 @@ public class IdpCacheProvider implements CacheIdpProviderI {
             cacheIdp.remove(realm.getId()+idpModel.getInternalId());
             removeIdpSummary(realm.getId(), new IdentityProviderModelSummary(idpModel));
 //        }
-        cluster.notify(IdpRemovedEvent.EVENT_NAME, new IdpRemovedEvent(realm.getId(), idpModel), true, ClusterProvider.DCNotify.ALL_DCS);
+        cluster.notify(IdpRemovedEvent.EVENT_NAME, new IdpRemovedEvent(realm.getId(), idpModel.getInternalId()), true, ClusterProvider.DCNotify.ALL_DCS);
     }
 
     @Override
@@ -216,14 +217,14 @@ public class IdpCacheProvider implements CacheIdpProviderI {
         //no need to alter the summary, since its fields never change after creation
 //		}
 
-        cluster.notify(IdpUpdatedEvent.EVENT_NAME, new IdpUpdatedEvent(realm.getId(), identityProvider), true, ClusterProvider.DCNotify.ALL_DCS);
+        cluster.notify(IdpUpdatedEvent.EVENT_NAME, new IdpUpdatedEvent(realm.getId(), identityProvider.getInternalId()), true, ClusterProvider.DCNotify.ALL_DCS);
     }
 
 
     @Override
     public void saveFederationIdp(RealmModel realmModel, IdentityProviderModel idpModel) {
         if (idpModel.getInternalId() != null) {
-            IdentityProviderModel existingModel = getIdentityProviderById(realmModel, idpModel.getInternalId());
+            IdentityProviderModel existingModel = getIdentityProviderById(realmModel.getId(), idpModel.getInternalId());
             if (existingModel.equalsPreviousVersion(idpModel))
                 return;
         }
@@ -235,7 +236,7 @@ public class IdpCacheProvider implements CacheIdpProviderI {
         addIdpSummary(realmModel.getId(), new IdentityProviderModelSummary(idpModel));
 //		}
 
-        cluster.notify(IdpUpdatedEvent.EVENT_NAME, new IdpUpdatedEvent(realmModel.getId(), idpModel), true, ClusterProvider.DCNotify.ALL_DCS);
+        cluster.notify(IdpUpdatedEvent.EVENT_NAME, new IdpUpdatedEvent(realmModel.getId(), idpModel.getInternalId()), true, ClusterProvider.DCNotify.ALL_DCS);
     }
 
 
@@ -251,7 +252,7 @@ public class IdpCacheProvider implements CacheIdpProviderI {
                         cacheIdp.remove(realmModel.getId() + idpModel.getInternalId());
                         removeIdpSummary(realmModel.getId(), new IdentityProviderModelSummary(idpModel));
 //                    }
-                    cluster.notify(IdpRemovedEvent.EVENT_NAME, new IdpRemovedEvent(realmModel.getId(), idpModel), true, ClusterProvider.DCNotify.ALL_DCS);
+                    cluster.notify(IdpRemovedEvent.EVENT_NAME, new IdpRemovedEvent(realmModel.getId(), idpModel.getInternalId()), true, ClusterProvider.DCNotify.ALL_DCS);
 
                     //remove also its mappers
                     Set<IdentityProviderMapperModel> idpMappers = getIdentityProviderMappersByAlias(realmModel, idpAlias);
@@ -262,14 +263,14 @@ public class IdpCacheProvider implements CacheIdpProviderI {
                         });
 //                    }
                     idpMappers.forEach(idpMapper -> {
-                        cluster.notify(IdpMapperRemovedEvent.EVENT_NAME, new IdpMapperRemovedEvent(realmModel.getId(), idpMapper), true, ClusterProvider.DCNotify.ALL_DCS);
+                        cluster.notify(IdpMapperRemovedEvent.EVENT_NAME, new IdpMapperRemovedEvent(realmModel.getId(), idpMapper.getId()), true, ClusterProvider.DCNotify.ALL_DCS);
                     });
                 } else if (idpModel.getFederations().size() > 1) {
                     idpModel.getFederations().remove(idpfModel.getInternalId());
 //                    synchronized (cacheIdp) {
                         cacheIdp.put(realmModel.getId()+idpModel.getInternalId(), idpModel);
 //                    }
-                    cluster.notify(IdpUpdatedEvent.EVENT_NAME, new IdpUpdatedEvent(realmModel.getId(), idpModel), true, ClusterProvider.DCNotify.ALL_DCS);
+                    cluster.notify(IdpUpdatedEvent.EVENT_NAME, new IdpUpdatedEvent(realmModel.getId(), idpModel.getInternalId()), true, ClusterProvider.DCNotify.ALL_DCS);
                 } else //means it's zero. should never happen normally
                     logger.errorf("Cache inconsistency! Trying to remove from cache an identity provider (alias= %s) which does not belong to the expected federation (alias= %s)", idpAlias, idpfModel.getAlias());
             } else
@@ -280,18 +281,23 @@ public class IdpCacheProvider implements CacheIdpProviderI {
 
     @Override
     public boolean isIdentityFederationEnabled(RealmModel realm) {
-        return idpSummaries.get(realm.getId()).size() > 0;
+        Set<IdentityProviderModelSummary> summaries = idpSummaries.get(realm.getId());
+        if(summaries==null)
+            return false;
+        return summaries.size() > 0;
     }
 
 
     @Override
     public Set<IdentityProviderMapperModel> getIdentityProviderMappers(RealmModel realmModel) {
-        return idpMapperSummaries.get(realmModel.getId()).stream().map(idpMapperSummary -> getIdentityProviderMapperById(realmModel, idpMapperSummary.getId())).collect(Collectors.toSet());
+        Set<IdentityProviderMapperModelSummary> summaries = idpMapperSummaries.get(realmModel.getId());
+        return summaries==null ? new HashSet<>() : summaries.stream().map(idpMapperSummary -> getIdentityProviderMapperById(realmModel.getId(), idpMapperSummary.getId())).collect(Collectors.toSet());
     }
 
     @Override
     public Set<IdentityProviderMapperModelSummary> getIdentityProviderMappersSummary(RealmModel realmModel) {
-        return idpMapperSummaries.get(realmModel.getId());
+        Set<IdentityProviderMapperModelSummary> summaries = idpMapperSummaries.get(realmModel.getId());
+        return summaries==null ? new HashSet<>() : summaries;
     }
 
     @Override
@@ -299,7 +305,7 @@ public class IdpCacheProvider implements CacheIdpProviderI {
         Set<IdentityProviderMapperModelSummary> summaries = getIdentityProviderMappersSummary(realmModel);
         if(summaries==null)
             return new HashSet<>();
-        return summaries.stream().filter(mapperSummary -> mapperSummary.getIdentityProviderAlias().equals(brokerAlias)).map(mapperSummary -> getIdentityProviderMapperById(realmModel, mapperSummary.getId())).collect(Collectors.toSet());
+        return summaries.stream().filter(mapperSummary -> mapperSummary.getIdentityProviderAlias().equals(brokerAlias)).map(mapperSummary -> getIdentityProviderMapperById(realmModel.getId(), mapperSummary.getId())).collect(Collectors.toSet());
     }
 
     @Override
@@ -311,7 +317,7 @@ public class IdpCacheProvider implements CacheIdpProviderI {
             cacheIdpMappers.put(realmModel.getId()+model.getId(), model);
             addIdpMapperSummary(realmModel.getId(), new IdentityProviderMapperModelSummary(model));
 //        }
-        cluster.notify(IdpMapperAddedEvent.EVENT_NAME, new IdpMapperAddedEvent(realmModel.getId(), model), true, ClusterProvider.DCNotify.ALL_DCS);
+        cluster.notify(IdpMapperAddedEvent.EVENT_NAME, new IdpMapperAddedEvent(realmModel.getId(), model.getId()), true, ClusterProvider.DCNotify.ALL_DCS);
         return model;
     }
 
@@ -324,7 +330,7 @@ public class IdpCacheProvider implements CacheIdpProviderI {
             removeIdpMapperSummary(realmModel.getId(), new IdentityProviderMapperModelSummary(mapper));
 //        }
 
-        cluster.notify(IdpMapperRemovedEvent.EVENT_NAME, new IdpMapperRemovedEvent(realmModel.getId(), mapper), true, ClusterProvider.DCNotify.ALL_DCS);
+        cluster.notify(IdpMapperRemovedEvent.EVENT_NAME, new IdpMapperRemovedEvent(realmModel.getId(), mapper.getId()), true, ClusterProvider.DCNotify.ALL_DCS);
     }
 
     @Override
@@ -337,22 +343,22 @@ public class IdpCacheProvider implements CacheIdpProviderI {
             //no need to update the mapper summaries, since their attributes are defined upon creation and never change
 //        }
 
-        cluster.notify(IdpMapperUpdatedEvent.EVENT_NAME, new IdpMapperUpdatedEvent(realmModel.getId(), mapper), true, ClusterProvider.DCNotify.ALL_DCS);
+        cluster.notify(IdpMapperUpdatedEvent.EVENT_NAME, new IdpMapperUpdatedEvent(realmModel.getId(), mapper.getId()), true, ClusterProvider.DCNotify.ALL_DCS);
     }
 
     @Override
-    public IdentityProviderMapperModel getIdentityProviderMapperById(RealmModel realmModel, String id) {
-        IdentityProviderMapperModel idpMapper = cacheIdpMappers.get(realmModel.getId() + id);
+    public IdentityProviderMapperModel getIdentityProviderMapperById(String realmId, String id) {
+        IdentityProviderMapperModel idpMapper = cacheIdpMappers.get(realmId + id);
         if (idpMapper == null) {
-            idpMapper = getIdentityProviderDelegate().getIdentityProviderMapperById(realmModel, id);
-            cacheIdpMappers.put(realmModel.getId() + id, idpMapper);
+            idpMapper = getIdentityProviderDelegate().getIdentityProviderMapperById(realmId, id);
+            cacheIdpMappers.put(realmId + id, idpMapper);
         }
         return idpMapper;
     }
 
     @Override
     public IdentityProviderMapperModel getIdentityProviderMapperByName(RealmModel realmModel, String alias, String name) {
-        return idpMapperSummaries.get(realmModel.getId()).stream().filter(m -> m.getIdentityProviderAlias().equals(alias) && m.getName().equals(name)).map(m -> getIdentityProviderMapperById(realmModel, m.getId())).findFirst().orElse(null);
+        return getIdentityProviderMappersSummary(realmModel).stream().filter(m -> m.getIdentityProviderAlias().equals(alias) && m.getName().equals(name)).map(m -> getIdentityProviderMapperById(realmModel.getId(), m.getId())).findFirst().orElse(null);
     }
 
 

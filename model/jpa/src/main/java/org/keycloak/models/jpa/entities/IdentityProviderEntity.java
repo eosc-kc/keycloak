@@ -44,7 +44,7 @@ import java.util.Set;
         @NamedQuery(name="findUtilizedIdentityProviderTypesOfRealm", query="select distinct identityProvider.providerId from IdentityProviderEntity identityProvider where identityProvider.realm.id = :realmId")
 })
 @NamedNativeQueries({
-        @NamedNativeQuery(name="findIdentityProviderSummaryByRealm", query="select INTERNAL_ID, PROVIDER_ID, PROVIDER_ALIAS from identity_provider where REALM_ID = :realmId", resultClass = IdentityProviderEntity.class)
+        @NamedNativeQuery(name="findIdentityProviderSummaryByRealm", query="select * from identity_provider where realm_id = :realmId", resultClass=IdentityProviderEntity.class)
 })
 public class IdentityProviderEntity {
 

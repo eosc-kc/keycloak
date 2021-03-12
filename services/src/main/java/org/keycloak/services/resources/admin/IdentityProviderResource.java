@@ -194,7 +194,7 @@ public class IdentityProviderResource {
 
     // return ID of IdentityProvider from realm based on internalId of this provider
     private static String getProviderIdByInternalId(RealmModel realm, String providerInternalId, KeycloakSession session) {
-        IdentityProviderModel identityProviderModel = session.identityProviderStorage().getIdentityProviderById(realm, providerInternalId);
+        IdentityProviderModel identityProviderModel = session.identityProviderStorage().getIdentityProviderById(realm.getId(), providerInternalId);
         if(identityProviderModel != null)
         	return identityProviderModel.getAlias();
         return null;
@@ -367,7 +367,7 @@ public class IdentityProviderResource {
             throw new javax.ws.rs.NotFoundException();
         }
 
-        IdentityProviderMapperModel model = session.identityProviderStorage().getIdentityProviderMapperById(realm, id);
+        IdentityProviderMapperModel model = session.identityProviderStorage().getIdentityProviderMapperById(realm.getId(), id);
         if (model == null) throw new NotFoundException("Model not found");
         return ModelToRepresentation.toRepresentation(model);
     }
@@ -389,7 +389,7 @@ public class IdentityProviderResource {
             throw new javax.ws.rs.NotFoundException();
         }
 
-        IdentityProviderMapperModel model = session.identityProviderStorage().getIdentityProviderMapperById(realm, id);
+        IdentityProviderMapperModel model = session.identityProviderStorage().getIdentityProviderMapperById(realm.getId(), id);
         if (model == null) throw new NotFoundException("Model not found");
         model = RepresentationToModel.toModel(rep);
         session.identityProviderStorage().updateIdentityProviderMapper(realm, model);
@@ -412,7 +412,7 @@ public class IdentityProviderResource {
             throw new javax.ws.rs.NotFoundException();
         }
 
-        IdentityProviderMapperModel model = session.identityProviderStorage().getIdentityProviderMapperById(realm, id);
+        IdentityProviderMapperModel model = session.identityProviderStorage().getIdentityProviderMapperById(realm.getId(), id);
         if (model == null) throw new NotFoundException("Model not found");
         session.identityProviderStorage().removeIdentityProviderMapper(realm, model);
         adminEvent.operation(OperationType.DELETE).resource(ResourceType.IDENTITY_PROVIDER_MAPPER).resourcePath(session.getContext().getUri()).success();

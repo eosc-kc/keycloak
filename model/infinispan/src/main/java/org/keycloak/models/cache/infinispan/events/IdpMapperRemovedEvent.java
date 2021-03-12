@@ -16,13 +16,13 @@ public class IdpMapperRemovedEvent implements ClusterEvent {
     public static String EVENT_NAME = "IDP_MAPPER_REMOVED_EVENT";
 
     private String realmId;
-    private IdentityProviderMapperModel identityProviderMapper;
+    private String mapperId;
 
     public IdpMapperRemovedEvent(){ }
 
-    public IdpMapperRemovedEvent(String realmId, IdentityProviderMapperModel identityProviderMapper) {
+    public IdpMapperRemovedEvent(String realmId, String mapperId) {
         this.realmId = realmId;
-        this.identityProviderMapper = identityProviderMapper;
+        this.mapperId = mapperId;
     }
 
     public String getRealmId() {
@@ -33,24 +33,27 @@ public class IdpMapperRemovedEvent implements ClusterEvent {
         this.realmId = realmId;
     }
 
-    public IdentityProviderMapperModel getIdentityProviderMapper() {
-        return identityProviderMapper;
+    public String getMapperId() {
+        return mapperId;
     }
 
-    public void setIdentityProviderMapper(IdentityProviderMapperModel identityProviderMapper) {
-        this.identityProviderMapper = identityProviderMapper;
+    public void setMapperId(String mapperId) {
+        this.mapperId = mapperId;
     }
 
     public static class ExternalizerImpl implements Externalizer<IdpMapperRemovedEvent> {
 
         @Override
         public void writeObject(ObjectOutput output, IdpMapperRemovedEvent obj) throws IOException {
-            MarshallUtil.marshallByteArray(EventSerializer.writeValueAsBytes(obj), output);
+            MarshallUtil.marshallString(obj.getRealmId(), output);
+            MarshallUtil.marshallString(obj.getMapperId(), output);
         }
 
         @Override
         public IdpMapperRemovedEvent readObject(ObjectInput input) throws IOException, ClassNotFoundException {
-            return EventSerializer.readValue(MarshallUtil.unmarshallByteArray(input), IdpMapperRemovedEvent.class);
+            String realmId = MarshallUtil.unmarshallString(input);
+            String mapperId = MarshallUtil.unmarshallString(input);
+            return new IdpMapperRemovedEvent(realmId, mapperId);
         }
     }
 

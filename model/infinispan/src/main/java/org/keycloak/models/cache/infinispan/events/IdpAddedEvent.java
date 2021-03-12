@@ -16,13 +16,13 @@ public class IdpAddedEvent implements ClusterEvent {
     public static String EVENT_NAME = "IDP_ADDED_EVENT";
 
     private String realmId;
-    private IdentityProviderModel identityProvider;
+    private String idpId;
 
     public IdpAddedEvent() { }
 
-    public IdpAddedEvent(String realmId, IdentityProviderModel identityProvider) {
+    public IdpAddedEvent(String realmId, String idpId) {
         this.realmId = realmId;
-        this.identityProvider = identityProvider;
+        this.idpId = idpId;
     }
 
     public String getRealmId() {
@@ -33,12 +33,12 @@ public class IdpAddedEvent implements ClusterEvent {
         this.realmId = realmId;
     }
 
-    public IdentityProviderModel getIdentityProvider() {
-        return identityProvider;
+    public String getIdpId() {
+        return idpId;
     }
 
-    public void setIdentityProvider(IdentityProviderModel identityProvider) {
-        this.identityProvider = identityProvider;
+    public void setIdpId(String idpId) {
+        this.idpId = idpId;
     }
 
     public static class ExternalizerImpl implements Externalizer<IdpAddedEvent> {
@@ -46,15 +46,14 @@ public class IdpAddedEvent implements ClusterEvent {
         @Override
         public void writeObject(ObjectOutput output, IdpAddedEvent obj) throws IOException {
             MarshallUtil.marshallString(obj.getRealmId(), output);
-            MarshallUtil.marshallByteArray(EventSerializer.writeValueAsBytes((IdentityProviderModel)obj.getIdentityProvider()), output);
+            MarshallUtil.marshallString(obj.getIdpId(), output);
         }
 
         @Override
         public IdpAddedEvent readObject(ObjectInput input) throws IOException, ClassNotFoundException {
             String realmId = MarshallUtil.unmarshallString(input);
-            byte [] idpModelBytes = MarshallUtil.unmarshallByteArray(input);
-            IdentityProviderModel idpModel = EventSerializer.readValue(idpModelBytes, IdentityProviderModel.class);
-            return new IdpAddedEvent(realmId, idpModel);
+            String idpId = MarshallUtil.unmarshallString(input);
+            return new IdpAddedEvent(realmId, idpId);
         }
 
     }
