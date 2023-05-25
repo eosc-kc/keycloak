@@ -37,6 +37,8 @@ import org.keycloak.models.KeycloakSession;
 import org.keycloak.models.ModelDuplicateException;
 import org.keycloak.models.RealmModel;
 import org.keycloak.models.RoleModel;
+import org.keycloak.models.UserManager;
+import org.keycloak.models.UserModel;
 import org.keycloak.models.utils.ModelToRepresentation;
 import org.keycloak.models.utils.RepresentationToModel;
 import org.keycloak.protocol.oidc.OIDCLoginProtocolFactory;
@@ -59,6 +61,9 @@ import org.keycloak.validation.ValidationUtil;
 
 import jakarta.ws.rs.ForbiddenException;
 import jakarta.ws.rs.core.Response;
+
+import static java.lang.Boolean.FALSE;
+import static java.lang.Boolean.TRUE;
 
 /**
  * @author <a href="mailto:sthorger@redhat.com">Stian Thorgersen</a>
@@ -180,6 +185,13 @@ public abstract class AbstractClientRegistrationProvider implements ClientRegist
 
         if (!client.getClientId().equals(rep.getClientId())) {
             throw new ErrorResponseException(ErrorCodes.INVALID_CLIENT_METADATA, "Client Identifier modified", Response.Status.BAD_REQUEST);
+        }
+
+        UserModel serviceAccount = this.session.users().getServiceAccount(client);
+        if (TRUE.equals(rep.isServiceAccountsEnabled()) && serviceAccount == null) {
+            new ClientManager(new RealmManager(session)).enableServiceAccount(client);
+        } else if (serviceAccount != null && FALSE.equals(rep.isServiceAccountsEnabled())) {
+                new UserManager(session).removeUser(session.getContext().getRealm(), serviceAccount);
         }
 
         RepresentationToModel.updateClient(rep, client, session);
