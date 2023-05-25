@@ -92,7 +92,7 @@ public class UserAttributeStatementMapper extends AbstractSAMLProtocolMapper imp
         UserModel user = userSession.getUser();
         List<String> attributeNames = Arrays.asList(mappingModel.getConfig().get(ProtocolMapperUtils.USER_ATTRIBUTE).split(Constants.CFG_DELIMITER));
         boolean aggregateAttrs = Boolean.valueOf(mappingModel.getConfig().get(ProtocolMapperUtils.AGGREGATE_ATTRS));
-        Collection<String> attributeValues = KeycloakModelUtils.resolveAttribute(user, attributeNames, aggregateAttrs);
+        Collection<String> attributeValues = attributeNames.size() ==1 ? KeycloakModelUtils.resolveAttribute(user, attributeNames.get(0) , aggregateAttrs) : KeycloakModelUtils.resolveAttribute(user, attributeNames , aggregateAttrs);
         if (attributeValues.isEmpty()) return;
         AttributeStatementHelper.addAttributes(attributeStatement, mappingModel, attributeValues);
     }
