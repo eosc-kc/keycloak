@@ -28,7 +28,6 @@ import java.util.Set;
 import org.keycloak.models.Constants;
 import org.keycloak.models.IdentityProviderModel;
 import org.keycloak.models.UserSessionModel;
-import org.keycloak.representations.IDToken;
 import org.keycloak.sessions.AuthenticationSessionModel;
 
 /**
@@ -44,6 +43,7 @@ public class BrokeredIdentityContext {
     private String username;
     private String modelUsername;
     private String email;
+    private boolean emailVerified;
     private String firstName;
     private String lastName;
     private String brokerSessionId;
@@ -136,8 +136,11 @@ public class BrokeredIdentityContext {
     }
 
     public boolean isEmailVerified() {
-        Object val = contextData.get(IDToken.EMAIL_VERIFIED);
-        return val instanceof Boolean && (Boolean) val;
+        return emailVerified;
+    }
+
+    public void setEmailVerified(boolean emailVerified) {
+        this.emailVerified = emailVerified;
     }
 
     public String getBrokerSessionId() {

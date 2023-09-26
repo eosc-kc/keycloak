@@ -438,6 +438,7 @@ public class IdentityProviderSamlTest extends AbstractIdentityProviderTest {
         ));
         if (hasHideOnLoginPage) {
             keys.add("hideOnLoginPage");
+            keys.add("entityAttributes");
         }
         assertThat(config.keySet(), containsInAnyOrder(keys.toArray()));
         assertThat(config, hasEntry("validateSignature", "true"));

@@ -12,3 +12,6 @@ Full Keycloak upstream jira issue can be shown if filtered by Fix version.
 
 ### Added
 - SAML Federation implementation
+
+### Changed
+- Change emailVerified User field with UserAttributeMappers (conditional trust email). [EOSC-KC-70](https://github.com/eosc-kc/keycloak/issues/70)
