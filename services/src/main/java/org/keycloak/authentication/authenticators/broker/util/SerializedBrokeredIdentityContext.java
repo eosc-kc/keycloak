@@ -126,6 +126,16 @@ public class SerializedBrokeredIdentityContext implements UpdateProfileContext {
     }
 
     @Override
+    public Boolean isEmailVerified() {
+        return Boolean.valueOf(getFirstAttribute(UserModel.EMAIL_VERIFIED));
+    }
+
+    @Override
+    public void setEmailVerified(Boolean emailVerified) {
+        setSingleAttribute(UserModel.EMAIL_VERIFIED, emailVerified.toString());
+    }
+
+    @Override
     public String getFirstName() {
         return getFirstAttribute(UserModel.FIRST_NAME);
     }
@@ -277,6 +287,7 @@ public class SerializedBrokeredIdentityContext implements UpdateProfileContext {
         ctx.setUsername(getBrokerUsername());
         ctx.setModelUsername(getModelUsername());
         ctx.setEmail(getEmail());
+        ctx.setEmailVerified(isEmailVerified());
         ctx.setFirstName(getFirstName());
         ctx.setLastName(getLastName());
         ctx.setBrokerSessionId(getBrokerSessionId());
@@ -311,6 +322,7 @@ public class SerializedBrokeredIdentityContext implements UpdateProfileContext {
         ctx.setBrokerUsername(context.getUsername());
         ctx.setModelUsername(context.getModelUsername());
         ctx.setEmail(context.getEmail());
+        ctx.setEmailVerified(context.isEmailVerified());
         ctx.setFirstName(context.getFirstName());
         ctx.setLastName(context.getLastName());
         ctx.setBrokerSessionId(context.getBrokerSessionId());
