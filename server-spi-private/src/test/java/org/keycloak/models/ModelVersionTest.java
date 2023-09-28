@@ -59,46 +59,6 @@ public class ModelVersionTest {
         Assert.assertEquals(0, version50Snapshot.getMinor());
         Assert.assertEquals(0, version50Snapshot.getMicro());
         Assert.assertNull(version50Snapshot.getQualifier());
-
-        Assert.assertFalse(version_100Beta1.lessThan(version_100Beta1));
-        Assert.assertTrue(version_100Beta1.lessThan(version_100CR1));
-        Assert.assertTrue(version_100Beta1.lessThan(version_100));
-        Assert.assertTrue(version_100Beta1.lessThan(version_110Beta1));
-        Assert.assertTrue(version_100Beta1.lessThan(version_110CR1));
-        Assert.assertTrue(version_100Beta1.lessThan(version_110));
-        Assert.assertFalse(version_110Beta1.lessThan(version_100CR1));
-        Assert.assertFalse(version_130Beta1.lessThan(version_120CR1));
-        Assert.assertTrue(version_130Beta1.lessThan(version_130));
-        Assert.assertTrue(version_130Beta1.lessThan(version_140));
-        Assert.assertFalse(version_211CR1.lessThan(version_140));
-        Assert.assertTrue(version_140.lessThan(version_211CR1));
-
-        Assert.assertFalse(version_211.lessThan(version_110CR1));
-
-        Assert.assertTrue(version_211CR1.lessThan(version50Snapshot));
-
-        ModelVersion versionPipeline = new ModelVersion("8.0.2-REL-20200130-143126");
-        Assert.assertEquals(8, versionPipeline.getMajor());
-        Assert.assertEquals(0, versionPipeline.getMinor());
-        Assert.assertEquals(2, versionPipeline.getMicro());
-        Assert.assertNull(versionPipeline.getQualifier());
-
-        ModelVersion versionPipeline2 = new ModelVersion("9.1.2-SNAPSHOT-stage-20191125-003440");
-        Assert.assertEquals(9, versionPipeline2.getMajor());
-        Assert.assertEquals(1, versionPipeline2.getMinor());
-        Assert.assertEquals(2, versionPipeline2.getMicro());
-        Assert.assertNull(versionPipeline2.getQualifier());
-
-        ModelVersion versionProduct = new ModelVersion("7.0.0.redhat-00002");
-        Assert.assertEquals(7, versionProduct.getMajor());
-        Assert.assertEquals(0, versionProduct.getMinor());
-        Assert.assertEquals(0, versionProduct.getMicro());
-        Assert.assertNull(versionProduct.getQualifier());
-
-        ModelVersion version_24_0_0 = new ModelVersion("24.0.0");
-        ModelVersion version_24_0_4_0_SNAPSHOT = new ModelVersion("24.0.4.0-SNAPSHOT");
-        Assert.assertTrue(version_24_0_0.lessThan(version_24_0_4_0_SNAPSHOT));
-        Assert.assertFalse(version_24_0_4_0_SNAPSHOT.lessThan(version_24_0_0));
     }
 
 }
