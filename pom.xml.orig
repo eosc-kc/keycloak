@@ -41,8 +41,12 @@
         <maven.compiler.target>17</maven.compiler.target>
         <maven.compiler.release>17</maven.compiler.release>
 
+<<<<<<< HEAD
         <project.version.npm>26.5.1</project.version.npm>
+=======
+        <project.version.npm>26.5.0</project.version.npm>
         <eosc-kc.version>${project.version}-0.1</eosc-kc.version>
+>>>>>>> 3224bc8aa6 (RCIAM-945 Eosc-kc version model with MigrationModel changes)
 
         <asciidoctor.plugin.version>1.5.8</asciidoctor.plugin.version>
 
