@@ -31,6 +31,9 @@ public class ModelVersion {
     int micro;
     String qualifier;
 
+    Integer majorEoscKc;
+    Integer minorEoscKc;
+
     public ModelVersion(int major, int minor, int micro) {
         this.major = major;
         this.minor = minor;
@@ -38,25 +41,32 @@ public class ModelVersion {
     }
 
     public ModelVersion(String version) {
-        version = version.split("-")[0];
+        String[] versionArray = version.split("-");
 
-        String[] split = version.split("\\.");
+        String[] split1 = versionArray[0].split("\\.");
+
         try {
-            if (split.length > 0) {
-                major = Integer.parseInt(split[0]);
+            if (split1.length > 0) {
+                major = Integer.parseInt(split1[0]);
             }
-            if (split.length > 1) {
-                minor = Integer.parseInt(split[1]);
+            if (split1.length > 1) {
+                minor = Integer.parseInt(split1[1]);
             }
-            if (split.length > 2) {
-                micro = Integer.parseInt(split[2]);
+            if (split1.length > 2) {
+                micro = Integer.parseInt(split1[2]);
             }
-            if (split.length > 3) {
-                qualifier = split[3];
+            if (split1.length > 3) {
+                qualifier = split1[3];
 
                 if (qualifier.startsWith("redhat")) {
                     qualifier = null;
                 }
+            }
+
+            if (versionArray.length >1 ) {
+                String[] split2 = versionArray[1].split("rc")[0].split("\\.");
+                majorEoscKc = Integer.parseInt(split2[0]);
+                minorEoscKc = Integer.parseInt(split2[1]);
             }
         } catch (NumberFormatException e) {
             logger.warn("failed to parse version: " + version, e);
@@ -73,6 +83,14 @@ public class ModelVersion {
 
     public int getMicro() {
         return micro;
+    }
+
+    public Integer getMajorEoscKc() {
+        return majorEoscKc;
+    }
+
+    public Integer getMinorEoscKc() {
+        return minorEoscKc;
     }
 
     public String getQualifier() {
@@ -98,17 +116,24 @@ public class ModelVersion {
             return false;
         }
 
-        if (qualifier != null && qualifier.equals(version.qualifier)) return false;
-        if (qualifier == null) return false;
-        if (version.qualifier == null) return true;
-        int comp = qualifier.compareTo(version.qualifier);
-        if (comp < 0) {
-            return true;
-        } else if (comp > 0){
+        //For our case do not take into account qualifier in order not to meke things complex
+        //Qualifier is not part of original Keycloak version
+
+//        if (qualifier != null && qualifier.equals(version.qualifier)) return false;
+//        if (qualifier == null) return false;
+//        if (version.qualifier == null) return true;
+//        int comp = qualifier.compareTo(version.qualifier);
+//        if (comp < 0) {
+//            return true;
+//        } else if (comp > 0){
+//            return false;
+//        }
+
+        if ( version.majorEoscKc != null ) {
+            return majorEoscKc == null || majorEoscKc < version.majorEoscKc || (majorEoscKc.equals(version.majorEoscKc) && minorEoscKc < version.minorEoscKc);
+        } else {
             return false;
         }
-
-        return false;
     }
 
     public boolean hasSameMajorMinor(ModelVersion v2) {
@@ -122,11 +147,15 @@ public class ModelVersion {
         }
 
         ModelVersion v = (ModelVersion) obj;
-        return v.getMajor() == major && v.getMinor() == minor && v.getMicro() == micro;
+        return v.getMajor() == major && v.getMinor() == minor && v.getMicro() == micro && (majorEoscKc == null || majorEoscKc.equals(v.getMajorEoscKc())) && (minorEoscKc == null || minorEoscKc.equals(v.getMinorEoscKc()));
     }
 
     @Override
     public String toString() {
-        return major + "." + minor + "." + micro;
+       StringBuilder sb = new StringBuilder(major + "." + minor + "." + micro);
+       if ( majorEoscKc != null ) {
+           sb.append("-").append(majorEoscKc).append(".").append(minorEoscKc);
+       }
+       return sb.toString();
     }
 }
