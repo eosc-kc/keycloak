@@ -12,6 +12,7 @@ Full Keycloak upstream jira issue can be shown if filtered by Fix version.
 
 ### Added
 - SAML Federation implementation
+- - Eosc-kc version model with MigrationModel changes [RCIAM-945](https://jira.argo.grnet.gr/browse/RCIAM-945)
 
 ### Changed
 - Change emailVerified User field with UserAttributeMappers (conditional trust email). [EOSC-KC-70](https://github.com/eosc-kc/keycloak/issues/70)

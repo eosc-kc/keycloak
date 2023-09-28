@@ -74,7 +74,6 @@ import org.keycloak.migration.migrators.Migration;
 import org.keycloak.models.Constants;
 import org.keycloak.models.DeploymentStateProvider;
 import org.keycloak.models.KeycloakSession;
-import org.keycloak.models.ModelException;
 import org.keycloak.models.RealmModel;
 import org.keycloak.representations.idm.RealmRepresentation;
 import org.keycloak.storage.MigrationManager;
@@ -155,13 +154,9 @@ public class DefaultMigrationManager implements MigrationManager {
         ModelVersion currentVersion = new ModelVersion(Version.VERSION);
         ModelVersion latestUpdate = migrations[migrations.length-1].getVersion();
         ModelVersion databaseVersion = model.getStoredVersion() != null ? new ModelVersion(model.getStoredVersion()) : null;
+        logger.info("currentVersion === "+currentVersion.toString()+ ",databaseVersion "+ (databaseVersion == null ? "empty" : databaseVersion.toString()) + ", latestUpdate"+ ( latestUpdate == null ? "empty" :  latestUpdate.toString()));
 
-        if (SNAPSHOT_VERSION.equals(currentVersion) && databaseVersion != null && databaseVersion.lessThan(SNAPSHOT_VERSION) && !allowMigrateExistingDatabaseToSnapshot) {
-            throw new ModelException("Incorrect state of migration. You are trying to run nightly server version '" + currentVersion + "' against a database, which was previously migrated to version '" + databaseVersion +
-                    "'. This indicates that you are trying to run development server version against production database, which can result in a loss or corruption of data, and also does not allow upgrading. If it is intended, " +
-                    "use the option spi-datastore-legacy-allow-migrate-existing-database-to-snapshot of the datastore provider when starting the server and explicitly set it to true.");
-        }
-        if (databaseVersion == null || databaseVersion.lessThan(latestUpdate)) {
+       if (databaseVersion == null || databaseVersion.lessThan(latestUpdate)) {
             for (Migration m : migrations) {
                 if (databaseVersion == null || databaseVersion.lessThan(m.getVersion())) {
                     if (databaseVersion != null) {
@@ -170,15 +165,10 @@ public class DefaultMigrationManager implements MigrationManager {
                     m.migrate(session);
                 }
             }
-        } else if (currentVersion.lessThan(databaseVersion)) {
-            if (databaseVersion.equals(SNAPSHOT_VERSION)) {
-                throw new ModelException("Incorrect state of migration. You are trying to run server version '" + currentVersion + "' against a database which was migrated to snapshot version '"
-                        + databaseVersion + "'. Databases that have been migrated to a snapshot version can't be migrated to a released version of Keycloak or to a more recent snapshot version.");
-            } else {
-                logger.warnf("Possibly incorrect state of migration. You are trying to run server version '" + currentVersion + "' against database, which was already migrated to newer version '"  +
-                        databaseVersion + "'.");
-            }
-        }
+       } else if (currentVersion.lessThan(databaseVersion)) {
+           logger.warnf("Possibly incorrect state of migration. You are trying to run server version '" + currentVersion + "' against database, which was already migrated to newer version '" +
+                   databaseVersion + "'.");
+       }
 
         if (databaseVersion == null || databaseVersion.lessThan(currentVersion)) {
             model.setStoredVersion(currentVersion.toString());
@@ -192,7 +182,6 @@ public class DefaultMigrationManager implements MigrationManager {
     public static final ModelVersion RHSSO_VERSION_7_2_KEYCLOAK_VERSION = new ModelVersion("3.4.3");
     public static final ModelVersion RHSSO_VERSION_7_3_KEYCLOAK_VERSION = new ModelVersion("4.8.3");
     public static final ModelVersion RHSSO_VERSION_7_4_KEYCLOAK_VERSION = new ModelVersion("9.0.3");
-    public static final ModelVersion SNAPSHOT_VERSION = new ModelVersion(Constants.SNAPSHOT_VERSION);
 
     private static final Map<Pattern, ModelVersion> PATTERN_MATCHER = new LinkedHashMap<>();
     static {
