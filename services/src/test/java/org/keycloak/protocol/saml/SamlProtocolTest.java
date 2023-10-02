@@ -29,6 +29,7 @@ import java.net.URI;
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
 import java.security.NoSuchAlgorithmException;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
@@ -620,6 +621,16 @@ public class SamlProtocolTest {
 
         @Override
         public void setAccessCodeLifespanUserAction(int seconds) {
+
+        }
+
+        @Override
+        public List<String> getClaimsSupported() {
+            return new ArrayList<>();
+        }
+
+        @Override
+        public void setClaimsSupported(List<String> claimsSupported) {
 
         }
 

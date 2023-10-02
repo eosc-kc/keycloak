@@ -473,6 +473,7 @@ public class ModelToRepresentation {
         if (realm.getPasswordPolicy() != null) {
             rep.setPasswordPolicy(realm.getPasswordPolicy().toString());
         }
+        rep.setClaimsSupported(realm.getClaimsSupported());
         OTPPolicy otpPolicy = realm.getOTPPolicy();
         rep.setOtpPolicyAlgorithm(otpPolicy.getAlgorithm());
         rep.setOtpPolicyPeriod(otpPolicy.getPeriod());
