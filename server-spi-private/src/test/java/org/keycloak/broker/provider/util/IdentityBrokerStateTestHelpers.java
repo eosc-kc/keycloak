@@ -1023,6 +1023,16 @@ public class IdentityBrokerStateTestHelpers {
         }
 
         @Override
+        public List<String> getClaimsSupported() {
+            return null;
+        }
+
+        @Override
+        public void setClaimsSupported(List<String> claimsSupported) {
+
+        }
+
+        @Override
         public OAuth2DeviceConfig getOAuth2DeviceConfig() {
             return null;
         }
