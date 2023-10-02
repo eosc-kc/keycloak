@@ -715,6 +715,20 @@ public class RealmAdapter implements StorageProviderRealmModel, JpaModel<RealmEn
             setAttribute(RealmAttributes.ACTION_TOKEN_GENERATED_BY_USER_LIFESPAN + "." + actionTokenId, actionTokenGeneratedByUserLifespan);
     }
 
+    @Override
+    public List<String> getClaimsSupported() {
+        if (getAttribute(RealmAttributes.CLAIMS_SUPPORTED) != null) {
+            return new ArrayList<String>(Arrays.asList(getAttribute(RealmAttributes.CLAIMS_SUPPORTED).split(",")));
+        } else {
+            return null;
+        }
+    }
+
+    @Override
+    public void setClaimsSupported(List<String> claimsSupported) {
+        setAttribute(RealmAttributes.CLAIMS_SUPPORTED, claimsSupported.stream().collect(Collectors.joining(",")));
+    }
+
     protected RequiredCredentialModel initRequiredCredentialModel(String type) {
         RequiredCredentialModel model = RequiredCredentialModel.BUILT_IN.get(type);
         if (model == null) {
