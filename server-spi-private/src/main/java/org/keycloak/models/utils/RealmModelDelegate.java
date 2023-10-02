@@ -419,6 +419,16 @@ public class RealmModelDelegate implements RealmModel {
         delegate.setAccessTokenLifespan(seconds);
     }
 
+    @Override
+    public Integer getIdTokenLifespan() {
+        return delegate.getIdTokenLifespan();
+    }
+
+    @Override
+    public void setIdTokenLifespan(int seconds) {
+        delegate.setIdTokenLifespan(seconds);
+    }
+
     public int getAccessTokenLifespanForImplicitFlow() {
         return delegate.getAccessTokenLifespanForImplicitFlow();
     }

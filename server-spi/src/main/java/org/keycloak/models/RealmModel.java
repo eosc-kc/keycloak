@@ -256,6 +256,10 @@ public interface RealmModel extends RoleContainerModel {
 
     void setAccessTokenLifespan(int seconds);
 
+    Integer getIdTokenLifespan();
+
+    void setIdTokenLifespan(int seconds);
+
     int getAccessTokenLifespanForImplicitFlow();
     void setAccessTokenLifespanForImplicitFlow(int seconds);
 
