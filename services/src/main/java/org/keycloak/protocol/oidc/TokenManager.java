@@ -1393,7 +1393,7 @@ public class TokenManager {
             idToken.issuer(accessToken.getIssuer());
             idToken.setNonce(clientSessionCtx.getAttribute(OIDCLoginProtocol.NONCE_PARAM, String.class));
             idToken.setSessionId(accessToken.getSessionId());
-            idToken.exp(accessToken.getExp());
+            idToken.exp(getIdTokenExpiration(accessToken.getExp()));
 
             // Protocol mapper is supposed to set this in case "step_up_authentication" feature enabled
             if (!Profile.isFeatureEnabled(Profile.Feature.STEP_UP_AUTHENTICATION)) {
@@ -1404,6 +1404,21 @@ public class TokenManager {
                 idToken = transformIDToken(session, idToken, userSession, clientSessionCtx);
             }
             return this;
+        }
+
+        private Long getIdTokenExpiration(Long accessTokenLifespan){
+            Integer idTokenLifespan;
+            String clientIdTokenLifespan = client.getAttribute(OIDCConfigAttributes.ID_TOKEN_LIFESPAN);
+            if (clientIdTokenLifespan != null && !clientIdTokenLifespan.trim().isEmpty()) {
+                idTokenLifespan = Integer.parseInt(clientIdTokenLifespan);
+            } else {
+                idTokenLifespan = realm.getIdTokenLifespan();
+            }
+            if (idTokenLifespan== null ) {
+                return accessTokenLifespan;
+            } else {
+                return idToken.getIat() + idTokenLifespan;
+            }
         }
 
         public AccessTokenResponseBuilder generateAccessTokenHash() {

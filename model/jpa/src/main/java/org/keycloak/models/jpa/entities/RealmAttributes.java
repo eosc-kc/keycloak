@@ -41,6 +41,7 @@ public interface RealmAttributes {
     String CLIENT_OFFLINE_SESSION_MAX_LIFESPAN = "clientOfflineSessionMaxLifespan";
     String WEBAUTHN_POLICY_RP_ENTITY_NAME = "webAuthnPolicyRpEntityName";
     String WEBAUTHN_POLICY_SIGNATURE_ALGORITHMS = "webAuthnPolicySignatureAlgorithms";
+    String ID_TOKEN_LIFESPAN = "idTokenLifespan";
 
     String WEBAUTHN_POLICY_RP_ID = "webAuthnPolicyRpId";
     String WEBAUTHN_POLICY_ATTESTATION_CONVEYANCE_PREFERENCE = "webAuthnPolicyAttestationConveyancePreference";
