@@ -670,6 +670,18 @@ public class RealmAdapter implements CachedRealmModel {
     }
 
     @Override
+    public Integer getIdTokenLifespan() {
+        if (isUpdated()) return updated.getIdTokenLifespan();
+        return cached.getIdTokenLifespan();
+    }
+
+    @Override
+    public void setIdTokenLifespan(int seconds) {
+        getDelegateForUpdate();
+        updated.setIdTokenLifespan(seconds);
+    }
+
+    @Override
     public int getAccessTokenLifespanForImplicitFlow() {
         if (isUpdated()) return updated.getAccessTokenLifespanForImplicitFlow();
         return cached.getAccessTokenLifespanForImplicitFlow();

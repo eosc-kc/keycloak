@@ -498,6 +498,17 @@ public class RealmAdapter implements StorageProviderRealmModel, JpaModel<RealmEn
     }
 
     @Override
+    public Integer getIdTokenLifespan() {
+        String idTokenLifespan = getAttribute(RealmAttributes.ID_TOKEN_LIFESPAN);
+        return idTokenLifespan != null ? Integer.parseInt(idTokenLifespan) : null;
+    }
+
+    @Override
+    public void setIdTokenLifespan(int tokenLifespan) {
+        setAttribute(RealmAttributes.ID_TOKEN_LIFESPAN, tokenLifespan);
+    }
+
+    @Override
     public int getAccessTokenLifespanForImplicitFlow() {
         return realm.getAccessTokenLifespanForImplicitFlow();
     }
