@@ -180,6 +180,8 @@ public class CachedRealm extends AbstractExtendableRevisioned {
 
     protected Map<String, Map<String,String>> realmLocalizationTexts;
 
+    protected List<String> claimsSupported;
+
     public CachedRealm(long revision, RealmModel model) {
         super(revision, model.getId());
         name = model.getName();
@@ -250,6 +252,7 @@ public class CachedRealm extends AbstractExtendableRevisioned {
 
         requiredCredentials = model.getRequiredCredentialsStream().collect(Collectors.toList());
         userActionTokenLifespans = Map.copyOf(model.getUserActionTokenLifespans());
+        claimsSupported = model.getClaimsSupported();
         federations  = model.getSAMLFederations();
         smtpConfig = model.getSmtpConfig();
         browserSecurityHeaders = model.getBrowserSecurityHeaders();
@@ -781,5 +784,9 @@ public class CachedRealm extends AbstractExtendableRevisioned {
 
     public boolean isScimApiEnabled() {
         return scimApiEnabled;
+    }
+
+    public List<String> getClaimsSupported() {
+        return claimsSupported;
     }
 }
