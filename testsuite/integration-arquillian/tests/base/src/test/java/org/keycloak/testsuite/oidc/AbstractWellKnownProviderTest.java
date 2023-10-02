@@ -42,6 +42,7 @@ import org.keycloak.models.Constants;
 import org.keycloak.protocol.oidc.OIDCLoginProtocol;
 import org.keycloak.protocol.oidc.OIDCLoginProtocolFactory;
 import org.keycloak.protocol.oidc.OIDCLoginProtocolService;
+import org.keycloak.protocol.oidc.OIDCWellKnownProvider;
 import org.keycloak.protocol.oidc.representations.MTLSEndpointAliases;
 import org.keycloak.protocol.oidc.representations.OIDCConfigurationRepresentation;
 import org.keycloak.protocol.oidc.utils.OIDCResponseType;
@@ -87,6 +88,8 @@ import static org.junit.Assert.assertTrue;
 
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
 public abstract class AbstractWellKnownProviderTest extends AbstractKeycloakTest {
+
+    private static final List<String> CLAIMS_SUPPORTED = Stream.of( "iss", IDToken.SUBJECT, IDToken.AUD, "exp", "iat", IDToken.AUTH_TIME, IDToken.NAME, IDToken.GIVEN_NAME, IDToken.FAMILY_NAME, IDToken.PREFERRED_USERNAME, IDToken.EMAIL, IDToken.ACR, IDToken.AZP, "email_verified").toList();
 
     private CloseableHttpClient client;
 
@@ -446,6 +449,25 @@ public abstract class AbstractWellKnownProviderTest extends AbstractKeycloakTest
 
     private void assertScopesSupportedMatchesWithRealm(OIDCConfigurationRepresentation oidcConfig, List<String> expectedScopeList) {
         Assert.assertNames(oidcConfig.getScopesSupported(), expectedScopeList.toArray(new String[expectedScopeList.size()]) );
+    }
+
+    @Test
+    public void testChangeClaimsSupported() throws IOException {
+        Client client = AdminClientUtil.createResteasyClient();
+        RealmResource testRealm = adminClient.realm("test");
+        RealmRepresentation realmRep = testRealm.toRepresentation();
+        try {
+            realmRep.setClaimsSupported(CLAIMS_SUPPORTED);
+            testRealm.update(realmRep);
+
+            OIDCConfigurationRepresentation oidcConfig = getOIDCDiscoveryRepresentation(client, OAuthClient.AUTH_SERVER_ROOT);
+            Assert.assertNames(oidcConfig.getClaimsSupported(), CLAIMS_SUPPORTED.toArray(new String[CLAIMS_SUPPORTED.size()]));
+
+            realmRep.setClaimsSupported(OIDCWellKnownProvider.DEFAULT_CLAIMS_SUPPORTED.stream().collect(Collectors.toList()));
+            testRealm.update(realmRep);
+        } finally {
+            client.close();
+        }
     }
 
     protected void assertScopesSupportedMatchesWithRealm(OIDCConfigurationRepresentation oidcConfig) {
