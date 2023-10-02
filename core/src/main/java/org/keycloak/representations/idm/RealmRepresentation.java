@@ -218,6 +218,7 @@ public class RealmRepresentation {
     protected String keycloakVersion;
 
     protected Boolean userManagedAccessAllowed;
+    protected List<String> claimsSupported;
 
     protected Boolean organizationsEnabled;
     private List<OrganizationRepresentation> organizations;
@@ -1489,6 +1490,15 @@ public class RealmRepresentation {
     public void setVerifiableCredentialsEnabled(Boolean verifiableCredentialsEnabled) {
         this.verifiableCredentialsEnabled = verifiableCredentialsEnabled;
     }
+
+    public List<String> getClaimsSupported() {
+        return claimsSupported;
+    }
+
+    public void setClaimsSupported(List<String> claimsSupported) {
+        this.claimsSupported = claimsSupported;
+    }
+
 
     @JsonIgnore
     public Map<String, String> getAttributesOrEmpty() {

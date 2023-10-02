@@ -54,6 +54,7 @@ public interface RealmAttributes {
     String WEBAUTHN_POLICY_PASSKEYS_ENABLED = "webAuthnPolicyPasskeysEnabled";
 
     String ADMIN_EVENTS_EXPIRATION = "adminEventsExpiration";
+    String CLAIMS_SUPPORTED = "claimsSupported";
 
     String FIRST_BROKER_LOGIN_FLOW_ID = "firstBrokerLoginFlowId";
 
