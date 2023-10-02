@@ -108,6 +108,7 @@ public class CachedRealm extends AbstractExtendableRevisioned {
     protected int clientOfflineSessionIdleTimeout;
     protected int clientOfflineSessionMaxLifespan;
     protected int accessTokenLifespan;
+    protected Integer idTokenLifespan;
     protected int accessTokenLifespanForImplicitFlow;
     protected int accessCodeLifespan;
     protected int accessCodeLifespanUserAction;
@@ -228,6 +229,7 @@ public class CachedRealm extends AbstractExtendableRevisioned {
         clientOfflineSessionIdleTimeout = model.getClientOfflineSessionIdleTimeout();
         clientOfflineSessionMaxLifespan = model.getClientOfflineSessionMaxLifespan();
         accessTokenLifespan = model.getAccessTokenLifespan();
+        idTokenLifespan = model.getIdTokenLifespan();
         accessTokenLifespanForImplicitFlow = model.getAccessTokenLifespanForImplicitFlow();
         accessCodeLifespan = model.getAccessCodeLifespan();
         deviceConfig = new DefaultLazyLoader<>(OAuth2DeviceConfig::new, null);
@@ -508,6 +510,10 @@ public class CachedRealm extends AbstractExtendableRevisioned {
 
     public int getAccessTokenLifespan() {
         return accessTokenLifespan;
+    }
+
+    public Integer getIdTokenLifespan() {
+        return idTokenLifespan;
     }
 
     public int getAccessTokenLifespanForImplicitFlow() {

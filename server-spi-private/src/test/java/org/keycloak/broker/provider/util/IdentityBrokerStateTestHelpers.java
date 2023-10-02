@@ -993,6 +993,16 @@ public class IdentityBrokerStateTestHelpers {
         }
 
         @Override
+        public Integer getIdTokenLifespan() {
+            return null;
+        }
+
+        @Override
+        public void setIdTokenLifespan(int seconds) {
+
+        }
+
+        @Override
         public int getAccessTokenLifespanForImplicitFlow() {
             return 0;
         }
