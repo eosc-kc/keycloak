@@ -273,7 +273,7 @@ public class AuthorizationEndpointChecker {
     }
 
     // https://tools.ietf.org/html/rfc7636#section-4
-    public void checkPKCEParams() throws AuthorizationCheckException {
+    public void checkPKCEParams(boolean enforcePKCE) throws AuthorizationCheckException {
         String codeChallenge = request.getCodeChallenge();
         String codeChallengeMethod = request.getCodeChallengeMethod();
 
@@ -285,7 +285,7 @@ public class AuthorizationEndpointChecker {
         String pkceCodeChallengeMethod = OIDCAdvancedConfigWrapper.fromClientModel(client).getPkceCodeChallengeMethod();
 
         if (pkceCodeChallengeMethod != null && !pkceCodeChallengeMethod.isEmpty()) {
-            checkParamsForPkceEnforcedClient(codeChallengeMethod, pkceCodeChallengeMethod, codeChallenge);
+            checkParamsForPkceEnforcedClient(codeChallengeMethod, pkceCodeChallengeMethod, codeChallenge, enforcePKCE);
         } else {
             // if PKCE Activation is OFF, execute the codes implemented in KEYCLOAK-2604
             checkParamsForPkceNotEnforcedClient(codeChallengeMethod, pkceCodeChallengeMethod, codeChallenge);
@@ -337,14 +337,17 @@ public class AuthorizationEndpointChecker {
         return m.matches();
     }
 
-    private void checkParamsForPkceEnforcedClient(String codeChallengeMethod, String pkceCodeChallengeMethod, String codeChallenge) throws AuthorizationCheckException {
+    private void checkParamsForPkceEnforcedClient(String codeChallengeMethod, String pkceCodeChallengeMethod, String codeChallenge, boolean enforcePKCE) throws AuthorizationCheckException {
         // check whether code challenge method is specified
-        if (codeChallengeMethod == null) {
+        if (codeChallengeMethod == null && enforcePKCE) {
             logger.info("PKCE enforced Client without code challenge method.");
             String errorMessage = "Missing parameter: " + OIDCLoginProtocol.CODE_CHALLENGE_METHOD_PARAM;
             event.detail(Details.REASON, errorMessage);
             event.error(Errors.INVALID_REQUEST);
             throw new AuthorizationCheckException(Response.Status.BAD_REQUEST, OAuthErrorException.INVALID_REQUEST, errorMessage);
+        } else if (codeChallengeMethod == null) {
+            //for not enforce pkce( now device code flow)
+            return;
         }
         // check whether specified code challenge method is configured one in advance
         if (!codeChallengeMethod.equals(pkceCodeChallengeMethod)) {
