@@ -189,7 +189,7 @@ public class AuthorizationEndpoint extends AuthorizationEndpointBase {
             checker.checkValidScope();
             checker.checkValidResource();
             checker.checkOIDCParams();
-            checker.checkPKCEParams();
+            checker.checkPKCEParams(true);
         } catch (AuthorizationEndpointChecker.AuthorizationCheckException ex) {
             return redirectErrorToClient(parsedResponseMode, ex.getError(), ex.getErrorDescription());
         }
