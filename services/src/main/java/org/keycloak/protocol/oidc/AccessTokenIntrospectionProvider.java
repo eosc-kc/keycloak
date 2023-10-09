@@ -400,11 +400,11 @@ public class AccessTokenIntrospectionProvider<T extends AccessToken> implements 
 
     protected Response introspectWithExternal(String token, String issuer, RealmModel realm) throws IOException {
 
-        String cachedToken = (String) tokenRelayCache.get(new Key(token, realm.getName()));
-        if(cachedToken != null)
-            return Response.ok(cachedToken).type(MediaType.APPLICATION_JSON_TYPE).build();
-
         try {
+            String cachedToken = (String) tokenRelayCache.get(new Key(token, realm.getName()));
+            if(cachedToken != null)
+                return Response.ok(cachedToken).type(MediaType.APPLICATION_JSON_TYPE).build();
+
             IdentityProviderModel issuerIdp = realm.getIdentityProvidersStream().filter(idp -> issuer.equals(idp.getConfig().get("issuer"))).findAny().orElse(null);
             if (issuerIdp != null) {
                 OIDCIdentityProviderConfig oidcIssuerIdp = new OIDCIdentityProviderConfig(issuerIdp);
