@@ -2,6 +2,7 @@ package org.keycloak.models.cache.infinispan.tokenrelay;
 
 import org.infinispan.Cache;
 import org.infinispan.commons.api.CacheContainerAdmin;
+import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
@@ -60,6 +61,7 @@ public class TokenRelayCacheProvider implements CustomCacheProvider {
                     .clustering()
                     .cacheMode(CacheMode.REPL_SYNC)
                     .memory().storage(StorageType.HEAP)
+                    .encoding().mediaType(MediaType.APPLICATION_SERIALIZED_OBJECT_TYPE)
                     .build();
             cache = cacheManager.administration()
                     .withFlags(CacheContainerAdmin.AdminFlag.VOLATILE)
