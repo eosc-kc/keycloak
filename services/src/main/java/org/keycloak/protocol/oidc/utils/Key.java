@@ -1,6 +1,8 @@
 package org.keycloak.protocol.oidc.utils;
 
-public class Key {
+import java.io.Serializable;
+
+public class Key implements Serializable {
 
     private String tokenStr;
     private String realmName;
@@ -30,6 +32,12 @@ public class Key {
     @Override
     public int hashCode() {
         return (tokenStr + realmName).hashCode();
+    }
+
+
+    @Override
+    public String toString() {
+        return tokenStr + realmName;
     }
 
 }
