@@ -23,6 +23,7 @@ Full Keycloak upstream jira issue can be shown if filtered by Fix version.
 - Add is required configuration option for UserAttributeMapper and AttributeToRoleMapper 
 - Refresh token revoke per client and correct refresh flow [RCIAM-920](https://jira.argo.grnet.gr/browse/RCIAM-920)
 - SAML entityID/OIDC issuer showing in user if IdP display name does not exist [RCIAM-887](https://jira.argo.grnet.gr/browse/RCIAM-887)
+- Make optional the use of PKCE for Clients configured with PKCE only for Device Code Flow [RCIAM-1069](https://jira.argo.grnet.gr/browse/RCIAM-1069)
 
 
 ### Fixed
