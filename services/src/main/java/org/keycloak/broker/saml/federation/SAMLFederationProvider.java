@@ -819,7 +819,7 @@ public class SAMLFederationProvider implements FederationProvider {
             SAMLMetadataWriter metadataWriter = new SAMLMetadataWriter(writer);
 
 			EntityDescriptorType entityDescriptor = SPMetadataDescriptor.buildSPDescriptor(authnBinding, authnBindingLogout, endpoint, endpoint, wantAuthnRequestsSigned, wantLogoutRequestsSigned,
-                wantAssertionsSigned, wantAssertionsEncrypted, entityId, nameIDPolicyFormat, signingKeys, encryptionKeys);
+                wantAssertionsSigned,  !"false".equals(wantAssertionsEncrypted), entityId, nameIDPolicyFormat, signingKeys, encryptionKeys);
 
             // Create the AttributeConsumingService if at least one attribute importer mapper exists
             List<FederationMapperModel> mappers = model.getFederationMapperModels().stream().filter(mapper -> "saml-user-attribute-idp-mapper".equals(mapper.getIdentityProviderMapper())).collect(Collectors.toList());
