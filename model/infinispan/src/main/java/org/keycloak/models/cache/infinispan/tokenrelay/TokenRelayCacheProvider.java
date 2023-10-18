@@ -9,12 +9,8 @@ import org.keycloak.models.KeycloakSession;
 import org.keycloak.models.customcache.CustomCacheProvider;
 
 import org.infinispan.Cache;
-import org.infinispan.commons.api.CacheContainerAdmin;
-import org.infinispan.commons.dataconversion.MediaType;
-import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.configuration.cache.StorageType;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.manager.EmbeddedCacheManager;

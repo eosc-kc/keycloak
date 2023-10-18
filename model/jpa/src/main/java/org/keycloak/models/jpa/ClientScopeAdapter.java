@@ -22,11 +22,14 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import jakarta.persistence.EntityManager;
 
 import org.keycloak.models.ClientScopeModel;
+import org.keycloak.models.ClientScopePolicyModel;
+import org.keycloak.models.ClientScopePolicyValueModel;
 import org.keycloak.models.KeycloakSession;
 import org.keycloak.models.ModelDuplicateException;
 import org.keycloak.models.ModelException;
@@ -35,6 +38,8 @@ import org.keycloak.models.RealmModel;
 import org.keycloak.models.RoleModel;
 import org.keycloak.models.jpa.entities.ClientScopeAttributeEntity;
 import org.keycloak.models.jpa.entities.ClientScopeEntity;
+import org.keycloak.models.jpa.entities.ClientScopePolicyEntity;
+import org.keycloak.models.jpa.entities.ClientScopePolicyValueEntity;
 import org.keycloak.models.jpa.entities.ProtocolMapperEntity;
 import org.keycloak.models.utils.KeycloakModelUtils;
 import org.keycloak.models.utils.RoleUtils;
@@ -219,6 +224,78 @@ public class ClientScopeAdapter implements ClientScopeModel, JpaModel<ClientScop
         if (entity.getConfig() != null) config.putAll(entity.getConfig());
         mapping.setConfig(config);
         return mapping;
+    }
+
+    @Override
+    public Stream<ClientScopePolicyModel> getClientScopePoliciesStream() {
+        return this.entity.getClientScopePolicies().stream().map(this::entityToModel);
+    }
+
+    @Override
+    public ClientScopePolicyModel addClientScopePolicy(ClientScopePolicyModel policy){
+        ClientScopePolicyEntity entity = new ClientScopePolicyEntity();
+        entity.setId(policy.getId() != null ? policy.getId() : KeycloakModelUtils.generateId());
+        entity.setClientScope(this.entity);
+        entity.setUserAttribute(policy.getUserAttribute());
+        entity.getClientScopePolicyValues().clear();
+        entity.getClientScopePolicyValues().addAll(policy.getClientScopePolicyValues().stream().map(x -> this.modelToEntity(x, entity)).collect(Collectors.toList()));
+        em.persist(entity);
+        this.entity.getClientScopePolicies().add(entity);
+        return entityToModel(entity);
+    };
+
+    @Override
+    public void removeClientScopePolicy(String id){
+        ClientScopePolicyEntity entity = getClientScopePolicyEntity(id);
+        if (entity == null) return;
+        this.entity.getClientScopePolicies().remove(entity);
+        em.remove(entity);
+    };
+
+    @Override
+    public ClientScopePolicyModel updateClientScopePolicy(ClientScopePolicyModel policy){
+        ClientScopePolicyEntity entity = getClientScopePolicyEntity(policy.getId());
+        if (entity == null) return null;
+        entity.setUserAttribute(policy.getUserAttribute());
+        entity.getClientScopePolicyValues().clear();
+        entity.getClientScopePolicyValues().addAll(policy.getClientScopePolicyValues().stream().map(x -> this.modelToEntity(x,entity)).collect(Collectors.toList()));
+        em.merge(entity);
+        return policy;
+    };
+
+    @Override
+    public ClientScopePolicyModel getClientScopePolicy(String id) {
+        ClientScopePolicyEntity entity = getClientScopePolicyEntity(id);
+        return entity == null ? null : entityToModel(entity);
+    }
+
+    private ClientScopePolicyEntity getClientScopePolicyEntity(String id) {
+        return this.entity.getClientScopePolicies().stream().filter(x->id.equals(x.getId())).findAny().orElse(null);
+    }
+
+    private ClientScopePolicyModel entityToModel(ClientScopePolicyEntity entity) {
+        ClientScopePolicyModel model = new ClientScopePolicyModel();
+        model.setId(entity.getId());
+        model.setUserAttribute(entity.getUserAttribute());
+        model.setClientScopePolicyValues(entity.getClientScopePolicyValues().stream().map(valEntity-> {
+            ClientScopePolicyValueModel valModel = new ClientScopePolicyValueModel();
+            valModel.setId(valEntity.getId());
+            valModel.setNegateOutput(valEntity.getNegateOutput());
+            valModel.setRegex(valEntity.getRegex());
+            valModel.setValue(valEntity.getValue());
+            return valModel;
+        }).collect(Collectors.toList()));
+        return model;
+    }
+
+    private ClientScopePolicyValueEntity modelToEntity(ClientScopePolicyValueModel model, ClientScopePolicyEntity policy){
+        ClientScopePolicyValueEntity entity = new ClientScopePolicyValueEntity();
+        entity.setId(model.getId() != null ? model.getId() : KeycloakModelUtils.generateId());
+        entity.setNegateOutput(model.getNegateOutput());
+        entity.setRegex(model.getRegex());
+        entity.setValue(model.getValue());
+        entity.setClientScopePolicy(policy);
+        return entity;
     }
 
     @Override

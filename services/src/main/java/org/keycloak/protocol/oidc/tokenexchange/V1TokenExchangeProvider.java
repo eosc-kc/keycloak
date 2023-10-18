@@ -267,7 +267,7 @@ public class V1TokenExchangeProvider extends AbstractTokenExchangeProvider {
     }
 
     @Override
-    protected String getRequestedScope(AccessToken token, List<ClientModel> targetAudienceClients) {
+    protected String getRequestedScope(AccessToken token, List<ClientModel> targetAudienceClients, UserModel targetUser) {
         ClientModel targetClient = targetAudienceClients.get(0);
         // TODO Remove once more audiences are properly supported
         if (targetAudienceClients.size() > 1) {

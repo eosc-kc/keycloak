@@ -97,6 +97,14 @@ public class ClientScopeResource {
         return new ProtocolMappersResource(session, clientScope, auth, adminEvent, manageCheck, viewCheck);
     }
 
+    @Path("policies")
+    public ClientScopePolicyResource getClientScopePolicies() {
+        AdminPermissionEvaluator.RequirePermissionCheck manageCheck = () -> auth.clients().requireManage(clientScope);
+        AdminPermissionEvaluator.RequirePermissionCheck viewCheck = () -> auth.clients().requireView(clientScope);
+        return new ClientScopePolicyResource(session, clientScope, adminEvent, manageCheck, viewCheck);
+    }
+
+
     /**
      * Base path for managing the role scope mappings for the client scope
      *

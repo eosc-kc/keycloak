@@ -155,6 +155,11 @@ public enum ResourceType {
     /**
      *
      */
+    , CLIENT_SCOPE_POLICY
+
+    /**
+     *
+     */
     , CLIENT_SCOPE_MAPPING
 
     /**
