@@ -36,6 +36,8 @@ public class ClientScopeRepresentation {
 
     protected List<ProtocolMapperRepresentation> protocolMappers;
 
+    protected List<ClientScopePolicyRepresentation> policies;
+
     public String getId() {
         return id;
     }
@@ -83,6 +85,14 @@ public class ClientScopeRepresentation {
 
     public void setAttributes(Map<String, String> attributes) {
         this.attributes = attributes;
+    }
+
+    public List<ClientScopePolicyRepresentation> getPolicies() {
+        return policies;
+    }
+
+    public void setPolicies(List<ClientScopePolicyRepresentation> policies) {
+        this.policies = policies;
     }
 
     @Override

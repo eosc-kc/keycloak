@@ -18,6 +18,7 @@ Full Keycloak upstream jira issue can be shown if filtered by Fix version.
 - Id token lifespan [RCIAM-930](https://jira.argo.grnet.gr/browse/RCIAM-930)
 - Autoupdated SAML Client [RCIAM-1181](https://jira.argo.grnet.gr/browse/RCIAM-1181)
 - Configurable Claims for dynamic scopes, Filter dynamic scopes from access token scope [RCIAM-1190](https://jira.argo.grnet.gr/browse/RCIAM-1190)
+- Client scope policy [RCIAM-1241](https://jira.argo.grnet.gr/browse/RCIAM-1241)
 
 
 ### Changed

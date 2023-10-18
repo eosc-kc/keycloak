@@ -21,6 +21,7 @@ import jakarta.ws.rs.core.Response;
 
 import java.util.List;
 import java.util.function.Supplier;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.jboss.logging.Logger;
@@ -195,7 +196,7 @@ public class AuthorizationCodeGrantType extends OAuth2GrantTypeBase {
             throw new CorsErrorResponseException(cors, OAuthErrorException.INVALID_GRANT, cpe.getErrorDetail(), Response.Status.BAD_REQUEST);
         }
 
-        String scopeParam = codeData.getScope();
+        String scopeParam = TokenManager.clientScopePolicy(codeData.getScope(), user, realm.getClientScopesStream().collect(Collectors.toList()));
         ClientSessionContext clientSessionCtx = DefaultClientSessionContext.fromClientSessionAndScopeParameter(clientSession, scopeParam, session);
 
         updateClientSession(clientSession);
