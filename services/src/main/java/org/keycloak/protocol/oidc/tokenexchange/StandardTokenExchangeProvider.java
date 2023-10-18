@@ -22,6 +22,7 @@ package org.keycloak.protocol.oidc.tokenexchange;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
@@ -182,7 +183,7 @@ public class StandardTokenExchangeProvider extends AbstractTokenExchangeProvider
 
     // For now, include "scope" parameter as is
     @Override
-    protected String getRequestedScope(AccessToken token, List<ClientModel> targetAudienceClients) {
+    protected String getRequestedScope(AccessToken token, List<ClientModel> targetAudienceClients, UserModel targetUser) {
         String scope = formParams.getFirst(OAuth2Constants.SCOPE);
 
         boolean validScopes;
@@ -200,7 +201,7 @@ public class StandardTokenExchangeProvider extends AbstractTokenExchangeProvider
             throw new CorsErrorResponseException(cors, OAuthErrorException.INVALID_SCOPE, errorMessage, Response.Status.BAD_REQUEST);
         }
 
-        return scope;
+        return TokenManager.clientScopePolicy(scope, targetUser, realm.getClientScopesStream().collect(Collectors.toList()));
     }
 
     @Override

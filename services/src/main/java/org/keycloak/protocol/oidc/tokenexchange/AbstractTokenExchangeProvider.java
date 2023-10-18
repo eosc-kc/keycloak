@@ -225,7 +225,7 @@ public abstract class AbstractTokenExchangeProvider implements TokenExchangeProv
         event.detail(Details.REQUESTED_TOKEN_TYPE, requestedTokenType);
         List<ClientModel> targetAudienceClients = getTargetAudienceClients();
         validateAudience(token, disallowOnHolderOfTokenMismatch, targetAudienceClients);
-        String scope = getRequestedScope(token, targetAudienceClients);
+        String scope = getRequestedScope(token, targetAudienceClients, targetUser);
 
         try {
             setClientToContext(targetAudienceClients);
@@ -268,7 +268,7 @@ public abstract class AbstractTokenExchangeProvider implements TokenExchangeProv
         return authSession;
     }
 
-    protected abstract String getRequestedScope(AccessToken token, List<ClientModel> targetAudienceClients);
+    protected abstract String getRequestedScope(AccessToken token, List<ClientModel> targetAudienceClients, UserModel targetUser);
 
     protected void setClientToContext(List<ClientModel> targetAudienceClients) {
         // The client requesting exchange is set in the context
