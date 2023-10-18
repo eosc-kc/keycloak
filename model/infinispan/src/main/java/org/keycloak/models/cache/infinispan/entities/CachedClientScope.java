@@ -24,6 +24,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.keycloak.models.ClientScopeModel;
+import org.keycloak.models.ClientScopePolicyModel;
 import org.keycloak.models.RealmModel;
 import org.keycloak.models.RoleModel;
 
@@ -38,6 +39,7 @@ public class CachedClientScope extends AbstractCachedClientScope<ClientScopeMode
     private String realm;
     private String protocol;
     private Set<String> scope = new HashSet<>();
+    private Set<ClientScopePolicyModel> clientScopePolicies = new HashSet<>();
     private Map<String, String> attributes = new HashMap<>();
 
     public CachedClientScope(long revision, RealmModel realm, ClientScopeModel model) {
@@ -46,6 +48,7 @@ public class CachedClientScope extends AbstractCachedClientScope<ClientScopeMode
         description = model.getDescription();
         this.realm = realm.getId();
         protocol = model.getProtocol();
+        clientScopePolicies.addAll(model.getClientScopePoliciesStream().collect(Collectors.toSet()));
         scope.addAll(model.getScopeMappingsStream().map(RoleModel::getId).collect(Collectors.toSet()));
         attributes.putAll(model.getAttributes());
     }
@@ -60,6 +63,10 @@ public class CachedClientScope extends AbstractCachedClientScope<ClientScopeMode
 
     public String getRealm() {
         return realm;
+    }
+
+    public Set<ClientScopePolicyModel> getClientScopePolicies() {
+        return clientScopePolicies;
     }
 
     public String getProtocol() {
