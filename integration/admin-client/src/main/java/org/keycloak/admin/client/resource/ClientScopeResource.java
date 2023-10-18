@@ -35,6 +35,9 @@ public interface ClientScopeResource {
     @Path("protocol-mappers")
     ProtocolMappersResource getProtocolMappers();
 
+    @Path("policies")
+    ClientScopePolicyResource getClientScopePolicies();
+
     @Path("/scope-mappings")
     RoleMappingResource getScopeMappings();
 

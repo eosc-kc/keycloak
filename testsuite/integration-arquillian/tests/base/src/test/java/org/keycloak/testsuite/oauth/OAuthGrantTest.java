@@ -54,15 +54,13 @@ import org.keycloak.testsuite.pages.OAuthGrantPage;
 import org.keycloak.testsuite.util.AccountHelper;
 import org.keycloak.testsuite.util.ProtocolMapperUtil;
 import org.keycloak.testsuite.util.oauth.AccessTokenResponse;
+import org.keycloak.testsuite.util.userprofile.UserProfileUtil;
 
 import org.hamcrest.Matchers;
 import org.jboss.arquillian.graphene.page.Page;
 import org.junit.Assert;
 import org.junit.Rule;
 import org.junit.Test;
-
-import org.keycloak.testsuite.util.userprofile.UserProfileUtil;
-
 import org.openqa.selenium.By;
 
 import static org.keycloak.testsuite.AbstractAdminTest.loadJson;

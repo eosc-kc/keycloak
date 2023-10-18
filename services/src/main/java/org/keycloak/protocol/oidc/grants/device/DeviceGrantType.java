@@ -19,6 +19,7 @@ package org.keycloak.protocol.oidc.grants.device;
 
 import java.net.URI;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.core.UriBuilder;
@@ -352,6 +353,7 @@ public class DeviceGrantType extends OAuth2GrantTypeBase {
             throw new CorsErrorResponseException(cors, OAuthErrorException.INVALID_SCOPE,
                     errorMessage, Response.Status.BAD_REQUEST);
         }
+        scopeParam = TokenManager.clientScopePolicy(scopeParam, user, realm.getClientScopesStream().collect(Collectors.toList()));
 
         ClientSessionContext clientSessionCtx = DefaultClientSessionContext.fromClientSessionAndScopeParameter(clientSession,
                 scopeParam, session);
