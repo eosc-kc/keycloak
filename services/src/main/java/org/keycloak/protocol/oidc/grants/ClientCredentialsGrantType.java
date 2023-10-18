@@ -17,6 +17,8 @@
 
 package org.keycloak.protocol.oidc.grants;
 
+import java.util.stream.Collectors;
+
 import jakarta.ws.rs.core.Response;
 
 import org.keycloak.OAuthErrorException;
@@ -94,7 +96,7 @@ public class ClientCredentialsGrantType extends OAuth2GrantTypeBase {
             throw new CorsErrorResponseException(cors, OAuthErrorException.INVALID_REQUEST, "User '" + clientUsername + "' disabled", Response.Status.UNAUTHORIZED);
         }
 
-        String scope = getRequestedScopes();
+        String scope = TokenManager.clientScopePolicy(getRequestedScopes(), clientUser, realm.getClientScopesStream().collect(Collectors.toList()));
 
         RootAuthenticationSessionModel rootAuthSession = new AuthenticationSessionManager(session).createAuthenticationSession(realm, false);
         AuthenticationSessionModel authSession = rootAuthSession.createAuthenticationSession(client);
