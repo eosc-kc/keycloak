@@ -1134,6 +1134,8 @@ public class AuthenticationManager {
         if (nextApplicableAction != null) {
             return nextApplicableAction.getAlias();
         }
+        authSession.setClientNote(OIDCLoginProtocol.SCOPE_PARAM, TokenManager.clientScopePolicy(authSession.getClientNote(OIDCLoginProtocol.SCOPE_PARAM), authSession.getAuthenticatedUser(), realm.getClientScopesStream().collect(Collectors.toList())));
+        AuthenticationManager.setClientScopesInSession(session, authSession);
 
         final var client = authSession.getClient();
         if (client.isConsentRequired() || isOAuth2DeviceVerificationFlow(authSession)) {
@@ -1193,6 +1195,9 @@ public class AuthenticationManager {
 
         final var client = authSession.getClient();
         logger.debugv("processAccessCode: go to oauth page?: {0}", client.isConsentRequired());
+
+        authSession.setClientNote(OIDCLoginProtocol.SCOPE_PARAM, TokenManager.clientScopePolicy(authSession.getClientNote(OIDCLoginProtocol.SCOPE_PARAM), authSession.getAuthenticatedUser(), realm.getClientScopesStream().collect(Collectors.toList())));
+        AuthenticationManager.setClientScopesInSession(session, authSession);
 
         // https://tools.ietf.org/html/draft-ietf-oauth-device-flow-15#section-5.4
         // The spec says "The authorization server SHOULD display information about the device",

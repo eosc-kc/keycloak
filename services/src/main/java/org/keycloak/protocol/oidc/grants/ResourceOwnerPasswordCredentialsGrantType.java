@@ -92,15 +92,12 @@ public class ResourceOwnerPasswordCredentialsGrantType extends OAuth2GrantTypeBa
             throw new CorsErrorResponseException(cors, cpe.getError(), cpe.getErrorDetail(), cpe.getErrorStatus());
         }
 
-        String scope = getRequestedScopes();
-
         RootAuthenticationSessionModel rootAuthSession = new AuthenticationSessionManager(session).createAuthenticationSession(realm, false);
         AuthenticationSessionModel authSession = rootAuthSession.createAuthenticationSession(client);
 
         authSession.setProtocol(OIDCLoginProtocol.LOGIN_PROTOCOL);
         authSession.setAction(AuthenticatedClientSessionModel.Action.AUTHENTICATE.name());
         authSession.setClientNote(OIDCLoginProtocol.ISSUER, Urls.realmIssuer(session.getContext().getUri().getBaseUri(), realm.getName()));
-        authSession.setClientNote(OIDCLoginProtocol.SCOPE_PARAM, scope);
 
         AuthenticationFlowModel flow = AuthenticationFlowResolver.resolveDirectGrantFlow(authSession);
         String flowId = flow.getId();
@@ -132,6 +129,8 @@ public class ResourceOwnerPasswordCredentialsGrantType extends OAuth2GrantTypeBa
             throw new CorsErrorResponseException(cors, OAuthErrorException.INVALID_GRANT, errorMessage, Response.Status.BAD_REQUEST);
 
         }
+        String scope = TokenManager.clientScopePolicy(getRequestedScopes(), user, realm.getClientScopesStream().collect(Collectors.toList()));
+        authSession.setClientNote(OIDCLoginProtocol.SCOPE_PARAM, scope);
 
         AuthenticationManager.setClientScopesInSession(session, authSession);
 
