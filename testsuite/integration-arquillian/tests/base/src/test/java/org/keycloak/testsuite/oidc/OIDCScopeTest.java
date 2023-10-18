@@ -17,6 +17,7 @@
 
 package org.keycloak.testsuite.oidc;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -39,6 +40,8 @@ import org.keycloak.representations.AddressClaimSet;
 import org.keycloak.representations.IDToken;
 import org.keycloak.representations.RefreshToken;
 import org.keycloak.representations.idm.ClientRepresentation;
+import org.keycloak.representations.idm.ClientScopePolicyRepresentation;
+import org.keycloak.representations.idm.ClientScopePolicyValueRepresentation;
 import org.keycloak.representations.idm.ClientScopeRepresentation;
 import org.keycloak.representations.idm.EventRepresentation;
 import org.keycloak.representations.idm.GroupRepresentation;
@@ -674,6 +677,98 @@ public class OIDCScopeTest extends AbstractOIDCScopeTest {
                 .removeDetail(Details.REDIRECT_URI).assertEvent();
     }
 
+    @Test
+    public void testRemoveScopeWithPolicies() throws Exception {
+        //add user attribute and profile filtering ( equal and regex)
+        ClientScopeResource profileScope = ApiUtil.findClientScopeByName(testRealm(), "profile");
+        String policyId = null;
+        String profileScopeId = profileScope.toRepresentation().getId();
+        try {
+            ClientManager.realm(adminClient.realm("test")).clientId("test-app").removeClientScope(profileScopeId, true);
+            ClientManager.realm(adminClient.realm("test")).clientId("test-app").addClientScope(profileScopeId, false);
+            oauth.scope("profile");
+            ClientScopePolicyRepresentation policy = new ClientScopePolicyRepresentation();
+            policy.setUserAttribute("street");
+            List<ClientScopePolicyValueRepresentation> policyValueList = new ArrayList<>();
+            ClientScopePolicyValueRepresentation policyValue = new ClientScopePolicyValueRepresentation();
+            policyValue.setValue("test");
+            policyValue.setRegex(false);
+            policyValue.setNegateOutput(false);
+            policyValueList.add(policyValue);
+            policy.setClientScopePolicyValues(policyValueList);
+            Response response = profileScope.getClientScopePolicies().createClientScopePolicy(policy);
+            policyId = ApiUtil.getCreatedId(response);
+            response.close();
+            // Login. Assert that just 'profile' and 'email' data are there. 'Address' and 'phone' not
+            oauth.doLogin("john", "password");
+            EventRepresentation loginEvent = events.expectLogin()
+                    .user(userId)
+                    .assertEvent();
+
+            Tokens tokens = sendTokenRequest(loginEvent, userId, "openid email", "test-app");
+            AccessToken accessToken = tokens.accessToken;
+
+            assertProfile(accessToken, false);
+            assertEmail(accessToken, true);
+        } finally {
+            ClientManager.realm(adminClient.realm("test")).clientId("test-app").removeClientScope(profileScopeId, false);
+            ClientManager.realm(adminClient.realm("test")).clientId("test-app").addClientScope(profileScopeId, true);
+            oauth.scope(null);
+            if (policyId != null) {
+                profileScope.getClientScopePolicies().delete(policyId);
+            }
+        }
+
+    }
+
+    @Test
+    public void testKeepScopeWithPolicies() throws Exception {
+        //add user attribute and profile filtering ( equal and regex)
+        ClientScopeResource profileScope = ApiUtil.findClientScopeByName(testRealm(), "profile");
+        String policyId = null;
+        String profileScopeId = profileScope.toRepresentation().getId();
+        try {
+            ClientManager.realm(adminClient.realm("test")).clientId("test-app").removeClientScope(profileScopeId, true);
+            ClientManager.realm(adminClient.realm("test")).clientId("test-app").addClientScope(profileScopeId, false);
+            oauth.scope("profile");
+            ClientScopePolicyRepresentation policy = new ClientScopePolicyRepresentation();
+            policy.setUserAttribute("street");
+            List<ClientScopePolicyValueRepresentation> policyValueList = new ArrayList<>();
+            ClientScopePolicyValueRepresentation policyValue = new ClientScopePolicyValueRepresentation();
+            policyValue.setValue("E[a-z]* 5");
+            policyValue.setRegex(true);
+            policyValue.setNegateOutput(false);
+            policyValueList.add(policyValue);
+            ClientScopePolicyValueRepresentation policyValue2 = new ClientScopePolicyValueRepresentation();
+            policyValue2.setValue("grnet");
+            policyValue2.setRegex(false);
+            policyValue2.setNegateOutput(false);
+            policyValueList.add(policyValue2);
+            policy.setClientScopePolicyValues(policyValueList);
+            Response response = profileScope.getClientScopePolicies().createClientScopePolicy(policy);
+            policyId = ApiUtil.getCreatedId(response);
+            response.close();
+            // Login. Assert that just 'profile' and 'email' data are there. 'Address' and 'phone' not
+            oauth.doLogin("john", "password");
+            EventRepresentation loginEvent = events.expectLogin()
+                    .user(userId)
+                    .assertEvent();
+
+            Tokens tokens = sendTokenRequest(loginEvent, userId, "openid email profile", "test-app");
+            AccessToken accessToken = tokens.accessToken;
+
+            assertProfile(accessToken, true);
+            assertEmail(accessToken, true);
+        } finally {
+            ClientManager.realm(adminClient.realm("test")).clientId("test-app").removeClientScope(profileScopeId, false);
+            ClientManager.realm(adminClient.realm("test")).clientId("test-app").addClientScope(profileScopeId, true);
+            oauth.scope(null);
+            if (policyId != null) {
+                profileScope.getClientScopePolicies().delete(policyId);
+            }
+        }
+
+    }
 
 
 }

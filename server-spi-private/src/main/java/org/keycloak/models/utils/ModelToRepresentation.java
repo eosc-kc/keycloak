@@ -62,6 +62,7 @@ import org.keycloak.models.AuthenticatorConfigModel;
 import org.keycloak.models.CibaConfig;
 import org.keycloak.models.ClientModel;
 import org.keycloak.models.ClientScopeModel;
+import org.keycloak.models.ClientScopePolicyModel;
 import org.keycloak.models.Constants;
 import org.keycloak.models.FederatedIdentityModel;
 import org.keycloak.models.FederationMapperModel;
@@ -101,6 +102,8 @@ import org.keycloak.representations.idm.AuthenticationExecutionRepresentation;
 import org.keycloak.representations.idm.AuthenticationFlowRepresentation;
 import org.keycloak.representations.idm.AuthenticatorConfigRepresentation;
 import org.keycloak.representations.idm.ClientRepresentation;
+import org.keycloak.representations.idm.ClientScopePolicyRepresentation;
+import org.keycloak.representations.idm.ClientScopePolicyValueRepresentation;
 import org.keycloak.representations.idm.ClientScopeRepresentation;
 import org.keycloak.representations.idm.ComponentRepresentation;
 import org.keycloak.representations.idm.ConfigPropertyRepresentation;
@@ -841,9 +844,25 @@ public class ModelToRepresentation {
                 .map(ModelToRepresentation::toRepresentation).collect(Collectors.toList());
         if (!mappings.isEmpty())
             rep.setProtocolMappers(mappings);
+        rep.setPolicies(clientScopeModel.getClientScopePoliciesStream().map(ModelToRepresentation::toRepresentation).collect(Collectors.toList()));
 
         rep.setAttributes(new HashMap<>(clientScopeModel.getAttributes()));
 
+        return rep;
+    }
+
+    public static ClientScopePolicyRepresentation toRepresentation(ClientScopePolicyModel model){
+        ClientScopePolicyRepresentation rep = new ClientScopePolicyRepresentation();
+        rep.setId(model.getId());
+        rep.setUserAttribute(model.getUserAttribute());
+        rep.setClientScopePolicyValues(model.getClientScopePolicyValues().stream().map(valueModel -> {
+            ClientScopePolicyValueRepresentation valueRep = new ClientScopePolicyValueRepresentation();
+            valueRep.setId(valueModel.getId());
+            valueRep.setValue(valueModel.getValue());
+            valueRep.setNegateOutput(valueModel.getNegateOutput());
+            valueRep.setRegex(valueModel.getRegex());
+            return valueRep;
+        }).collect(Collectors.toList()));
         return rep;
     }
 
