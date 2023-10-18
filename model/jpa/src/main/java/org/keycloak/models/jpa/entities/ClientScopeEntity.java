@@ -17,6 +17,7 @@
 
 package org.keycloak.models.jpa.entities;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.LinkedList;
@@ -74,6 +75,9 @@ public class ClientScopeEntity {
     @OneToMany(cascade ={CascadeType.REMOVE}, orphanRemoval = true, mappedBy = "clientScope")
     protected Collection<ClientScopeAttributeEntity> attributes = new LinkedList<>();
 
+    @OneToMany(cascade ={CascadeType.REMOVE}, orphanRemoval = true, mappedBy = "clientScope")
+    protected Collection<ClientScopePolicyEntity> clientScopePolicies;
+
     @ElementCollection
     @Column(name="ROLE_ID")
     @CollectionTable(name="CLIENT_SCOPE_ROLE_MAPPING", joinColumns = { @JoinColumn(name="SCOPE_ID")})
@@ -120,6 +124,17 @@ public class ClientScopeEntity {
 
     public void setProtocolMappers(Collection<ProtocolMapperEntity> protocolMappers) {
         this.protocolMappers = protocolMappers;
+    }
+
+    public Collection<ClientScopePolicyEntity> getClientScopePolicies() {
+        if (clientScopePolicies == null) {
+            clientScopePolicies = new ArrayList<>();
+        }
+        return clientScopePolicies;
+    }
+
+    public void setClientScopePolicies(Collection<ClientScopePolicyEntity> clientScopePolicies) {
+        this.clientScopePolicies = clientScopePolicies;
     }
 
     public String getProtocol() {

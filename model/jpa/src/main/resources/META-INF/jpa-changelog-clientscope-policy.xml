@@ -1,0 +1,48 @@
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.1.xsd">
+
+    <changeSet author="eosc-kc" id="client-scope-policy">
+        <createTable tableName="CLIENT_SCOPE_POLICY">
+            <column name="ID" type="VARCHAR(36)">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="CLIENT_SCOPE_ID" type="VARCHAR(36)" >
+                <constraints nullable="false"/>
+            </column>
+            <column name="USER_ATTRIBUTE" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+        <addForeignKeyConstraint
+                constraintName="client_scope_policy_fk"
+                baseTableName="CLIENT_SCOPE_POLICY"
+                baseColumnNames="CLIENT_SCOPE_ID"
+                referencedTableName="CLIENT_SCOPE"
+                referencedColumnNames="ID"
+        />
+        <addUniqueConstraint tableName="CLIENT_SCOPE_POLICY" columnNames="CLIENT_SCOPE_ID, USER_ATTRIBUTE" constraintName="CLIENT_SCOPE_POLICY_UC"/>
+        <createTable tableName="CLIENT_SCOPE_POLICY_VALUE">
+            <column name="ID" type="VARCHAR(36)">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="CLIENT_SCOPE_POLICY_ID" type="VARCHAR(36)" >
+                <constraints nullable="false"/>
+            </column>
+            <column name="VALUE" type="VARCHAR(1024)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="NEGATE_OUTPUT" type="boolean" defaultValueBoolean="false">
+                <constraints nullable="false"/>
+            </column>
+            <column name="REGEX" type="boolean" defaultValueBoolean="false">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+        <addForeignKeyConstraint
+                constraintName="client_scope_policy_value_fk"
+                baseTableName="CLIENT_SCOPE_POLICY_VALUE"
+                baseColumnNames="CLIENT_SCOPE_POLICY_ID"
+                referencedTableName="CLIENT_SCOPE_POLICY"
+                referencedColumnNames="ID"
+        />
+    </changeSet>
+</databaseChangeLog>

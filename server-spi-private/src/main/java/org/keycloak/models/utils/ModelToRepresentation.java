@@ -52,6 +52,7 @@ import org.keycloak.provider.ProviderConfigProperty;
 import org.keycloak.representations.account.CredentialMetadataRepresentation;
 import org.keycloak.representations.account.LocalizedMessage;
 import org.keycloak.representations.idm.*;
+import org.keycloak.representations.idm.ClientScopePolicyRepresentation;
 import org.keycloak.representations.idm.authorization.*;
 import org.keycloak.storage.StorageId;
 import org.keycloak.util.JsonSerialization;
@@ -771,9 +772,25 @@ public class ModelToRepresentation {
                 .map(ModelToRepresentation::toRepresentation).collect(Collectors.toList());
         if (!mappings.isEmpty())
             rep.setProtocolMappers(mappings);
+        rep.setPolicies(clientScopeModel.getClientScopePoliciesStream().map(ModelToRepresentation::toRepresentation).collect(Collectors.toList()));
 
         rep.setAttributes(new HashMap<>(clientScopeModel.getAttributes()));
 
+        return rep;
+    }
+
+    public static ClientScopePolicyRepresentation toRepresentation(ClientScopePolicyModel model){
+        ClientScopePolicyRepresentation rep = new ClientScopePolicyRepresentation();
+        rep.setId(model.getId());
+        rep.setUserAttribute(model.getUserAttribute());
+        rep.setClientScopePolicyValues(model.getClientScopePolicyValues().stream().map(valueModel -> {
+            ClientScopePolicyValueRepresentation valueRep = new ClientScopePolicyValueRepresentation();
+            valueRep.setId(valueModel.getId());
+            valueRep.setValue(valueModel.getValue());
+            valueRep.setNegateOutput(valueModel.getNegateOutput());
+            valueRep.setRegex(valueModel.getRegex());
+            return valueRep;
+        }).collect(Collectors.toList()));
         return rep;
     }
 

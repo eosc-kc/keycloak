@@ -49,6 +49,8 @@ import org.keycloak.sessions.AuthenticationSessionModel;
 import org.keycloak.sessions.RootAuthenticationSessionModel;
 import org.keycloak.util.TokenUtil;
 
+import java.util.stream.Collectors;
+
 /**
  * OAuth 2.0 Resource Owner Password Credentials Grant
  * https://datatracker.ietf.org/doc/html/rfc6749#section-4.3
@@ -89,15 +91,12 @@ public class ResourceOwnerPasswordCredentialsGrantType extends OAuth2GrantTypeBa
             throw new CorsErrorResponseException(cors, cpe.getError(), cpe.getErrorDetail(), cpe.getErrorStatus());
         }
 
-        String scope = getRequestedScopes();
-
         RootAuthenticationSessionModel rootAuthSession = new AuthenticationSessionManager(session).createAuthenticationSession(realm, false);
         AuthenticationSessionModel authSession = rootAuthSession.createAuthenticationSession(client);
 
         authSession.setProtocol(OIDCLoginProtocol.LOGIN_PROTOCOL);
         authSession.setAction(AuthenticatedClientSessionModel.Action.AUTHENTICATE.name());
         authSession.setClientNote(OIDCLoginProtocol.ISSUER, Urls.realmIssuer(session.getContext().getUri().getBaseUri(), realm.getName()));
-        authSession.setClientNote(OIDCLoginProtocol.SCOPE_PARAM, scope);
 
         AuthenticationFlowModel flow = AuthenticationFlowResolver.resolveDirectGrantFlow(authSession);
         String flowId = flow.getId();
@@ -129,6 +128,8 @@ public class ResourceOwnerPasswordCredentialsGrantType extends OAuth2GrantTypeBa
             throw new CorsErrorResponseException(cors, OAuthErrorException.INVALID_GRANT, errorMessage, Response.Status.BAD_REQUEST);
 
         }
+        String scope = TokenManager.clientScopePolicy(getRequestedScopes(), user, realm.getClientScopesStream().collect(Collectors.toList()));
+        authSession.setClientNote(OIDCLoginProtocol.SCOPE_PARAM, scope);
 
         AuthenticationManager.setClientScopesInSession(session, authSession);
 

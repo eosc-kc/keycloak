@@ -20,6 +20,7 @@ package org.keycloak.models;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Stream;
 
 import org.keycloak.common.util.ObjectUtil;
 import org.keycloak.provider.ProviderEvent;
@@ -151,5 +152,18 @@ public interface ClientScopeModel extends ProtocolMapperContainerModel, ScopeCon
     default void setIncludeInOpenIDProviderMetadata(boolean includeInOpenIDProviderMetadata) {
         setAttribute(INCLUDE_IN_OPENID_PROVIDER_METADATA, String.valueOf(includeInOpenIDProviderMetadata));
     }
+
+    default Stream<ClientScopePolicyModel> getClientScopePoliciesStream(){
+        return Stream.of();
+    };
+
+    default ClientScopePolicyModel getClientScopePolicy(String id) { return null;}
+
+    default ClientScopePolicyModel addClientScopePolicy(ClientScopePolicyModel policy){return new ClientScopePolicyModel();};
+
+    default void removeClientScopePolicy(String id){};
+
+    default ClientScopePolicyModel updateClientScopePolicy(ClientScopePolicyModel policy){return new ClientScopePolicyModel();};
+
 
 }
