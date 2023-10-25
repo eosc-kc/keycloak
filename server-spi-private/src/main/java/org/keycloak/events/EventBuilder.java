@@ -129,9 +129,9 @@ public class EventBuilder {
 
     public EventBuilder user(UserModel user) {
         event.setUserId(user == null ? null : user.getId());
-        if (user.getAttributeStream(AUTHN_AUTHORITY).count() >0)
+        if (user != null && user.getAttributeStream(AUTHN_AUTHORITY).count() >0)
             detail(AUTHN_AUTHORITY,user.getAttributeStream(AUTHN_AUTHORITY).collect(Collectors.toList()));
-        if (user.getAttributeStream(VO_PERSON_ID).count() >0)
+        if (user != null && user.getAttributeStream(VO_PERSON_ID).count() >0)
             detail(VO_PERSON_ID,user.getAttributeStream(VO_PERSON_ID).collect(Collectors.toList()));
         return this;
     }
