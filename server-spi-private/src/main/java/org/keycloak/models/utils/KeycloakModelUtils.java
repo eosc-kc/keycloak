@@ -65,8 +65,14 @@ import org.keycloak.utils.KeycloakSessionUtil;
 import jakarta.transaction.InvalidTransactionException;
 import jakarta.transaction.SystemException;
 import jakarta.transaction.Transaction;
+import org.keycloak.utils.StringUtil;
+
 import javax.crypto.spec.SecretKeySpec;
 import java.math.BigInteger;
+import java.io.UnsupportedEncodingException;
+import java.net.URLEncoder;
+
+import java.nio.charset.StandardCharsets;
 import java.security.Key;
 import java.security.KeyPair;
 import java.security.PrivateKey;
@@ -1284,5 +1290,9 @@ public final class KeycloakModelUtils {
             acceptedClientProtocols = List.of(client.getProtocol());
         }
         return acceptedClientProtocols;
+    }
+
+    public static String base64AndUrlEncoding(String str) throws UnsupportedEncodingException {
+        return URLEncoder.encode(Base64.getEncoder().withoutPadding().encodeToString(str.getBytes()), StandardCharsets.UTF_8.toString());
     }
 }

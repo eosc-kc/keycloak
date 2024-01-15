@@ -107,7 +107,6 @@ import org.keycloak.services.scheduled.RemoveFederation;
 import org.keycloak.services.scheduled.UpdateFederation;
 import org.keycloak.timer.TimerProvider;
 import org.keycloak.util.JsonSerialization;
-import org.keycloak.utils.StringUtil;
 import org.keycloak.validation.ClientValidationProvider;
 import org.keycloak.validation.ValidationUtil;
 import org.w3c.dom.Document;
@@ -258,7 +257,7 @@ public class SAMLFederationProvider implements FederationProvider {
 
                 try {
                     //Idp parsing
-                    String alias = getBase64(entity.getEntityID());
+                    String alias = KeycloakModelUtils.base64AndUrlEncoding(entity.getEntityID());
                     IdentityProviderModel identityProviderModel = null;
 
                     //check if this federation has already included this IdP
@@ -763,10 +762,6 @@ public class SAMLFederationProvider implements FederationProvider {
     @Override
     public void close() {
         // TODO Auto-generated method stub
-    }
-
-    public static String getBase64(String str) throws UnsupportedEncodingException {
-    	return URLEncoder.encode(Base64.getEncoder().withoutPadding().encodeToString(str.getBytes()), StandardCharsets.UTF_8.toString());
     }
 
     @Override
