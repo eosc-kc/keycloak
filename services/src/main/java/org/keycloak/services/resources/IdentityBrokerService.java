@@ -82,7 +82,6 @@ import org.keycloak.broker.saml.SAMLEndpoint;
 import org.keycloak.broker.saml.SAMLIdentityProvider;
 import org.keycloak.broker.saml.SAMLIdentityProviderConfig;
 import org.keycloak.broker.saml.SAMLIdentityProviderFactory;
-import org.keycloak.broker.saml.federation.SAMLFederationProvider;
 import org.keycloak.broker.social.SocialIdentityProvider;
 import org.keycloak.common.ClientConnection;
 import org.keycloak.common.Profile;
@@ -528,7 +527,7 @@ public class IdentityBrokerService implements UserAuthenticationIdentityProvider
 
     private SAMLEndpoint getSAMLEndpoint(String issuer) throws UnsupportedEncodingException {
         //issuer should be the entityId -> alias is the url_encvode(of base64 entityid)
-        String alias = SAMLFederationProvider.getBase64(issuer);
+        String alias = KeycloakModelUtils.base64AndUrlEncoding(issuer);
         SAMLIdentityProvider identityProvider = getSAMLIdentityProvider(session, realmModel, alias);
         SAMLEndpoint endpoint = new SAMLEndpoint(session, identityProvider, identityProvider.getConfig(), this, identityProvider.getDestinationValidator());
         return  endpoint;

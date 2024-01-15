@@ -19,15 +19,11 @@ package org.keycloak.broker.saml.federation;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.StringWriter;
-import java.io.UnsupportedEncodingException;
 import java.net.URI;
-import java.net.URLEncoder;
-import java.nio.charset.StandardCharsets;
 import java.security.KeyPair;
 import java.security.cert.X509Certificate;
 import java.time.Instant;
 import java.util.ArrayList;
-import java.util.Base64;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -269,7 +265,7 @@ public class SAMLFederationProvider implements FederationProvider {
 
                 try {
                     //Idp parsing
-                    String alias = getBase64(entity.getEntityID());
+                    String alias = KeycloakModelUtils.base64AndUrlEncoding(entity.getEntityID());
                     IdentityProviderModel identityProviderModel = null;
 
                     //check if this federation has already included this IdP
@@ -774,10 +770,6 @@ public class SAMLFederationProvider implements FederationProvider {
     @Override
     public void close() {
         // TODO Auto-generated method stub
-    }
-
-    public static String getBase64(String str) throws UnsupportedEncodingException {
-    	return URLEncoder.encode(Base64.getEncoder().withoutPadding().encodeToString(str.getBytes()), StandardCharsets.UTF_8.toString());
     }
 
     @Override
