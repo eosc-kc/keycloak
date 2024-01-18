@@ -818,7 +818,7 @@ public final class KcOidcBrokerTest extends AbstractAdvancedBrokerTest {
             hardcodedEmail.getConfig().put(OIDCAttributeMapperHelper.INCLUDE_IN_ACCESS_TOKEN, "true");
             hardcodedEmail.getConfig().put(OIDCAttributeMapperHelper.INCLUDE_IN_ID_TOKEN, "true");
             hardcodedEmail.getConfig().put(OIDCAttributeMapperHelper.INCLUDE_IN_USERINFO, "true");
-            hardcodedEmail.getConfig().put(HardcodedClaim.CLAIM_VALUE, EMAIL.toUpperCase());
+            hardcodedEmail.getConfig().put(ProtocolMapperUtils.CLAIM_VALUE, EMAIL.toUpperCase());
             ClientScopeResource emailClientScope = ApiUtil.findClientScopeByName(providerRealmResource, "email");
             ProtocolMapperRepresentation emailMapper = ApiUtil.findProtocolMapperByName(emailClientScope, "email");
             emailClientScope.getProtocolMappers().delete(emailMapper.getId());

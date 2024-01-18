@@ -43,6 +43,7 @@ public class ProtocolMapperUtils {
 
     public static final String USER_ROLE = "user.role";
     public static final String USER_ATTRIBUTE = "user.attribute";
+    public static final String USER_ATTRIBUTE_VALUES = "user.attribute.values";
     public static final String USER_SESSION_NOTE = "user.session.note";
     public static final String MULTIVALUED = "multivalued";
     public static final String AGGREGATE_ATTRS = "aggregate.attrs";
@@ -50,6 +51,9 @@ public class ProtocolMapperUtils {
     public static final String USER_MODEL_PROPERTY_HELP_TEXT = "usermodel.prop.tooltip";
     public static final String USER_MODEL_ATTRIBUTE_LABEL = "usermodel.attr.label";
     public static final String USER_MODEL_ATTRIBUTE_HELP_TEXT = "usermodel.attr.tooltip";
+    public static final String USER_MODEL_CONDITIONAL_ATTRIBUTE_HELP_TEXT = "usermodel.conditional-attr.tooltip";
+    public static final String USER_MODEL_CONDITIONAL_VALUES_LABEL = "usermodel.conditional-values.label";
+    public static final String USER_MODEL_CONDITIONAL_VALUES_HELP_TEXT = "usermodel.conditional-values.tooltip";
 
     public static final String USER_MODEL_CLIENT_ROLE_MAPPING_CLIENT_ID = "usermodel.clientRoleMapping.clientId";
     public static final String USER_MODEL_CLIENT_ROLE_MAPPING_CLIENT_ID_LABEL = "usermodel.clientRoleMapping.clientId.label";
@@ -69,6 +73,18 @@ public class ProtocolMapperUtils {
     public static final String AGGREGATE_ATTRS_LABEL = "aggregate.attrs.label";
     public static final String MULTIVALUED_HELP_TEXT = "multivalued.tooltip";
     public static final String AGGREGATE_ATTRS_HELP_TEXT = "aggregate.attrs.tooltip";
+    public static final String IDP_ALIAS = "idp.alias";
+    public static final String IDP_ALIAS_LABEL = "idp-alias.label";
+    public static final String IDP_ALIAS_HELP_TEXT = "idp-alias.tooltip";
+    public static final String CLAIM_VALUE = "claim.value";
+    public static final String CLAIM_VALUE_LABEL = "claimValue";
+    public static final String CLAIM_VALUE_HELP_TEXT = "claim.value.tooltip";
+    public static final String CONDITIONAL_CLAIM_VALUE_HELP_TEXT = "conditional.claim-value.tooltip";
+    public static final String ATTRIBUTE_VALUE = "attribute.value";
+    public static final String ATTRIBUTE_VALUE_LABEL = "attributeValue";
+    public static final String ATTRIBUTE_VALUE_HELP_TEXT = "attribute.value.tooltip";
+    public static final String ATTRIBUTE_CONDITIONAL_VALUES_LABEL = "attribute.conditional-values.label";
+    public static final String ATTRIBUTE_CONDITIONAL_VALUES_HELP_TEXT = "attribute.conditional-values.tooltip";
 
     // Priority of SubMapper. It should be first to allow other mappers override the `sub` claim
     public static final int SUB_MAPPER = -10;
