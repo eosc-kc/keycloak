@@ -7,6 +7,7 @@ import java.util.stream.Stream;
 
 import org.keycloak.dom.saml.v2.assertion.AssertionType;
 import org.keycloak.dom.saml.v2.assertion.AttributeType;
+import org.keycloak.protocol.ProtocolMapperUtils;
 import org.keycloak.protocol.saml.mappers.AttributeStatementHelper;
 import org.keycloak.protocol.saml.mappers.HardcodedAttributeMapper;
 import org.keycloak.saml.common.constants.JBossSAMLURIConstants;
@@ -57,7 +58,7 @@ public class ProtocolMapperTest extends AbstractSamlTest {
                 createSamlProtocolMapper(HardcodedAttributeMapper.PROVIDER_ID,
                         AttributeStatementHelper.SAML_ATTRIBUTE_NAME, "HARDCODED_ATTRIBUTE",
                         AttributeStatementHelper.SAML_ATTRIBUTE_NAMEFORMAT, AttributeStatementHelper.BASIC,
-                        HardcodedAttributeMapper.ATTRIBUTE_VALUE, null
+                        ProtocolMapperUtils.ATTRIBUTE_VALUE, null
                 )
         ).update();
 

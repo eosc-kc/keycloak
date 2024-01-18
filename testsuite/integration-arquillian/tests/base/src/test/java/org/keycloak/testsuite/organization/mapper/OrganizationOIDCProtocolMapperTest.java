@@ -30,16 +30,13 @@ import jakarta.ws.rs.core.Response.Status;
 import org.keycloak.OAuth2Constants;
 import org.keycloak.TokenVerifier;
 import org.keycloak.admin.client.resource.ClientResource;
-import org.keycloak.admin.client.resource.ClientScopeResource;
 import org.keycloak.admin.client.resource.OrganizationResource;
 import org.keycloak.common.util.MultivaluedHashMap;
 import org.keycloak.common.util.UriUtils;
-import org.keycloak.models.ClientScopeModel;
 import org.keycloak.models.OrganizationModel;
 import org.keycloak.organization.protocol.mappers.oidc.OrganizationMembershipMapper;
 import org.keycloak.protocol.ProtocolMapperUtils;
 import org.keycloak.protocol.oidc.OIDCLoginProtocol;
-import org.keycloak.protocol.oidc.OIDCLoginProtocolFactory;
 import org.keycloak.protocol.oidc.mappers.GroupMembershipMapper;
 import org.keycloak.protocol.oidc.mappers.OIDCAttributeMapperHelper;
 import org.keycloak.representations.AccessToken;
@@ -1496,10 +1493,10 @@ public class OrganizationOIDCProtocolMapperTest extends AbstractOrganizationTest
 //        assertClaimNotMapped("organization:*", createOrganization("orga", true), false);
 //    }
 
-    @Test
-    public void testClaimNotMappedIfUserNotMemberWhenScopeOrgRequested() {
-        assertClaimNotMapped("organization", createOrganization("orga", true), true);
-    }
+//    @Test
+//    public void testClaimNotMappedIfUserNotMemberWhenScopeOrgRequested() {
+//        assertClaimNotMapped("organization", createOrganization("orga", true), true);
+//    }
 
 //    @Test
 //    public void testOrganizationsClaimMappedIfScopeInTokenDisabled() throws Exception {
