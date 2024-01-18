@@ -90,6 +90,7 @@ import static org.keycloak.testsuite.admin.ApiUtil.getCreatedId;
 import static org.keycloak.testsuite.util.ProtocolMapperUtil.createAddressMapper;
 import static org.keycloak.testsuite.util.ProtocolMapperUtil.createClaimMapper;
 import static org.keycloak.testsuite.util.ProtocolMapperUtil.createHardcodedClaim;
+import static org.keycloak.testsuite.util.ProtocolMapperUtil.createHardcodedClaimBasedOnAttribute;
 import static org.keycloak.testsuite.util.ProtocolMapperUtil.createHardcodedRole;
 import static org.keycloak.testsuite.util.ProtocolMapperUtil.createRoleNameMapper;
 import static org.keycloak.testsuite.util.ProtocolMapperUtil.createScriptMapper;
@@ -401,6 +402,7 @@ public class OIDCProtocolMappersTest extends AbstractKeycloakTest {
             ProtocolMapperRepresentation hard = createHardcodedClaim("hard", "hard", "coded", "String", true, true, true);
             app.getProtocolMappers().createMapper(hard).close();
             app.getProtocolMappers().createMapper(createHardcodedClaim("hard-nested", "nested.hard", "coded-nested", "String", true, true, true)).close();
+            app.getProtocolMappers().createMapper(createHardcodedClaimBasedOnAttribute("hard-nested-attributes", "hard_country", "America", "country","USA", true, true, true)).close();
             app.getProtocolMappers().createMapper(createClaimMapper("custom phone", "phone", "home_phone", "String", true, true, true, true)).close();
             app.getProtocolMappers().createMapper(createClaimMapper("nested phone", "phone", "home.phone", "String", true, true, true, true)).close();
             app.getProtocolMappers().createMapper(createClaimMapper("dotted phone", "phone", "home\\.phone", "String", true, true, true, true)).close();
@@ -443,6 +445,7 @@ public class OIDCProtocolMappersTest extends AbstractKeycloakTest {
             assertEquals("coded", idToken.getOtherClaims().get("hard"));
             Map nested = (Map) idToken.getOtherClaims().get("nested");
             assertEquals("coded-nested", nested.get("hard"));
+            assertEquals("America", idToken.getOtherClaims().get("hard_country"));
             nested = (Map) idToken.getOtherClaims().get("home");
             assertThat((List<String>) nested.get("phone"), hasItems("617-777-6666"));
 
@@ -480,6 +483,7 @@ public class OIDCProtocolMappersTest extends AbstractKeycloakTest {
             assertEquals("coded", accessToken.getOtherClaims().get("hard"));
             nested = (Map) accessToken.getOtherClaims().get("nested");
             assertEquals("coded-nested", nested.get("hard"));
+            assertEquals("America", accessToken.getOtherClaims().get("hard_country"));
             nested = (Map) accessToken.getOtherClaims().get("home");
             assertThat((List<String>) nested.get("phone"), hasItems("617-777-6666"));
             departments = (List<String>) idToken.getOtherClaims().get("department");
@@ -517,6 +521,7 @@ public class OIDCProtocolMappersTest extends AbstractKeycloakTest {
                 if (model.getName().equals("address")
                         || model.getName().equals("hard")
                         || model.getName().equals("hard-nested")
+                        || model.getName().equals("hard-nested-attributes")
                         || model.getName().equals("custom phone")
                         || model.getName().equals("dotted phone")
                         || model.getName().equals("departments")
