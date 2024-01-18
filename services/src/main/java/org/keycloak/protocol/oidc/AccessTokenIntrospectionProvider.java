@@ -180,7 +180,8 @@ public class AccessTokenIntrospectionProvider<T extends AccessToken> implements 
                 eventBuilder.success();
             } else {
                 tokenMetadata = JsonSerialization.createObjectNode();
-                logger.debug("Keycloak token introspection return false");
+                logger.warn("Keycloak token introspection return false");
+                eventBuilder.error(Errors.TOKEN_INTROSPECTION_FAILED);
                 tokenMetadata.put("active", false);
             }
 
@@ -196,7 +197,7 @@ public class AccessTokenIntrospectionProvider<T extends AccessToken> implements 
             return Response.ok(JsonSerialization.writeValueAsBytes(tokenMetadata)).type(MediaType.APPLICATION_JSON_TYPE).build();
         } catch (Exception e) {
             String clientId = accessToken != null ? accessToken.getIssuedFor() : "unknown";
-            logger.debugf(e, "Exception during Keycloak introspection for %s client in realm %s", clientId, realm.getName());
+            logger.warnf(e, "Exception during Keycloak introspection for %s client in realm %s", clientId, realm.getName());
             eventBuilder.detail(Details.REASON, e.getMessage());
             eventBuilder.error(Errors.TOKEN_INTROSPECTION_FAILED);
             throw new RuntimeException("Error creating token introspection response.", e);
@@ -309,7 +310,7 @@ public class AccessTokenIntrospectionProvider<T extends AccessToken> implements 
 
             return true;
         } catch (VerificationException e) {
-            logger.debugf("Introspection access token : JWT check failed: %s", e.getMessage());
+            logger.warnf("Introspection access token : JWT check failed: %s", e.getMessage());
             eventBuilder.detail(Details.REASON,"Access token JWT check failed");
             eventBuilder.error(Errors.INVALID_TOKEN);
             return false;
