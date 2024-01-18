@@ -194,7 +194,7 @@ public class KcOidcBrokerJWETest extends AbstractBrokerTest {
         claimMapper.setProtocolMapper(HardcodedClaim.PROVIDER_ID);
         Map<String, String> config = new HashMap<>();
         config.put(OIDCAttributeMapperHelper.TOKEN_CLAIM_NAME, "user-info");
-        config.put(HardcodedClaim.CLAIM_VALUE, "true");
+        config.put(ProtocolMapperUtils.CLAIM_VALUE, "true");
         config.put(OIDCAttributeMapperHelper.INCLUDE_IN_USERINFO, "true");
         config.put(OIDCAttributeMapperHelper.INCLUDE_IN_ACCESS_TOKEN, "false");
         config.put(OIDCAttributeMapperHelper.INCLUDE_IN_ID_TOKEN, "false");
