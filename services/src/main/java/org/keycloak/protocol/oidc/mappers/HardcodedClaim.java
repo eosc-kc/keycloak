@@ -21,6 +21,7 @@ import org.keycloak.models.ClientSessionContext;
 import org.keycloak.models.KeycloakSession;
 import org.keycloak.models.ProtocolMapperModel;
 import org.keycloak.models.UserSessionModel;
+import org.keycloak.protocol.ProtocolMapperUtils;
 import org.keycloak.protocol.oidc.OIDCLoginProtocol;
 import org.keycloak.provider.ProviderConfigProperty;
 import org.keycloak.representations.AccessTokenResponse;
@@ -42,16 +43,14 @@ public class HardcodedClaim extends AbstractOIDCProtocolMapper implements OIDCAc
 
     private static final List<ProviderConfigProperty> configProperties = new ArrayList<ProviderConfigProperty>();
 
-    public static final String CLAIM_VALUE = "claim.value";
-
     static {
         OIDCAttributeMapperHelper.addTokenClaimNameConfig(configProperties);
 
         ProviderConfigProperty property = new ProviderConfigProperty();
-        property.setName(CLAIM_VALUE);
-        property.setLabel("Claim value");
+        property.setName(ProtocolMapperUtils.CLAIM_VALUE);
+        property.setLabel(ProtocolMapperUtils.CLAIM_VALUE_LABEL);
         property.setType(ProviderConfigProperty.STRING_TYPE);
-        property.setHelpText("Value of the claim you want to hard code.  'true' and 'false can be used for boolean values.");
+        property.setHelpText(ProtocolMapperUtils.CLAIM_VALUE_HELP_TEXT);
         configProperties.add(property);
 
         OIDCAttributeMapperHelper.addJsonTypeConfig(configProperties);
@@ -87,7 +86,7 @@ public class HardcodedClaim extends AbstractOIDCProtocolMapper implements OIDCAc
 
     protected void setClaim(IDToken token, ProtocolMapperModel mappingModel, UserSessionModel userSession) {
 
-        String attributeValue = mappingModel.getConfig().get(CLAIM_VALUE);
+        String attributeValue = mappingModel.getConfig().get(ProtocolMapperUtils.CLAIM_VALUE);
         if (attributeValue == null) return;
         OIDCAttributeMapperHelper.mapClaim(token, mappingModel, attributeValue);
     }
@@ -96,7 +95,7 @@ public class HardcodedClaim extends AbstractOIDCProtocolMapper implements OIDCAc
     protected void setClaim(AccessTokenResponse accessTokenResponse, ProtocolMapperModel mappingModel, UserSessionModel userSession,
                             KeycloakSession keycloakSession, ClientSessionContext clientSessionCtx) {
 
-        String attributeValue = mappingModel.getConfig().get(CLAIM_VALUE);
+        String attributeValue = mappingModel.getConfig().get(ProtocolMapperUtils.CLAIM_VALUE);
         if (attributeValue == null) return;
         OIDCAttributeMapperHelper.mapClaim(accessTokenResponse, mappingModel, attributeValue);
     }
@@ -111,7 +110,7 @@ public class HardcodedClaim extends AbstractOIDCProtocolMapper implements OIDCAc
         mapper.setProtocol(OIDCLoginProtocol.LOGIN_PROTOCOL);
         Map<String, String> config = new HashMap<>();
         config.put(OIDCAttributeMapperHelper.TOKEN_CLAIM_NAME, hardcodedName);
-        config.put(CLAIM_VALUE, hardcodedValue);
+        config.put(ProtocolMapperUtils.CLAIM_VALUE, hardcodedValue);
         config.put(OIDCAttributeMapperHelper.JSON_TYPE, claimType);
         if (accessToken) config.put(OIDCAttributeMapperHelper.INCLUDE_IN_ACCESS_TOKEN, "true");
         if (idToken) config.put(OIDCAttributeMapperHelper.INCLUDE_IN_ID_TOKEN, "true");

@@ -12,6 +12,7 @@ import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.keycloak.models.utils.KeycloakModelUtils;
+import org.keycloak.protocol.ProtocolMapperUtils;
 import org.keycloak.protocol.oidc.OIDCLoginProtocol;
 import org.keycloak.protocol.oidc.mappers.HardcodedClaim;
 import org.keycloak.protocol.oidc.mappers.OIDCAttributeMapperHelper;
@@ -57,7 +58,7 @@ public class AccessTokenResponseTest extends AbstractKeycloakTest {
         customClaimHardcodedMapper.setProtocolMapper(HardcodedClaim.PROVIDER_ID);
         Map<String, String> config = new HashMap<>();
         config.put(OIDCAttributeMapperHelper.TOKEN_CLAIM_NAME, "custom_hardcoded_claim");
-        config.put(HardcodedClaim.CLAIM_VALUE, "custom_claim");
+        config.put(ProtocolMapperUtils.CLAIM_VALUE, "custom_claim");
         config.put(OIDCAttributeMapperHelper.INCLUDE_IN_ACCESS_TOKEN_RESPONSE, "true");
         customClaimHardcodedMapper.setConfig(config);
 

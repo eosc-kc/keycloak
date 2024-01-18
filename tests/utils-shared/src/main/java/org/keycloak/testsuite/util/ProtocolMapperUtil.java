@@ -2,17 +2,7 @@ package org.keycloak.testsuite.util;
 
 import org.keycloak.admin.client.resource.ProtocolMappersResource;
 import org.keycloak.models.utils.ModelToRepresentation;
-import org.keycloak.protocol.oidc.mappers.AddressMapper;
-import org.keycloak.protocol.oidc.mappers.AudienceProtocolMapper;
-import org.keycloak.protocol.oidc.mappers.HardcodedClaim;
-import org.keycloak.protocol.oidc.mappers.HardcodedRole;
-import org.keycloak.protocol.oidc.mappers.RoleNameMapper;
-import org.keycloak.protocol.oidc.mappers.SHA256PairwiseSubMapper;
-import org.keycloak.protocol.oidc.mappers.ScriptBasedOIDCProtocolMapper;
-import org.keycloak.protocol.oidc.mappers.UserAttributeMapper;
-import org.keycloak.protocol.oidc.mappers.UserClientRoleMappingMapper;
-import org.keycloak.protocol.oidc.mappers.UserRealmRoleMappingMapper;
-import org.keycloak.protocol.oidc.mappers.UserSessionNoteMapper;
+import org.keycloak.protocol.oidc.mappers.*;
 import org.keycloak.representations.idm.ProtocolMapperRepresentation;
 
 /**
@@ -68,6 +58,18 @@ public class ProtocolMapperUtil {
                                                                     boolean accessToken, boolean idToken, boolean introspectionEndpoint) {
         return ModelToRepresentation.toRepresentation(HardcodedClaim.create(name, hardcodedName, hardcodedValue,
                 claimType, accessToken, idToken, introspectionEndpoint));
+    }
+
+    public static ProtocolMapperRepresentation createHardcodedClaimBasedOnAttribute(String name, String hardcodedName,
+                                                                                    String hardcodedValue, String attribute, String attributeValues,
+                                                                    boolean accessToken, boolean idToken, boolean introspectionEndpoint) {
+        return ModelToRepresentation.toRepresentation(HardcodedClaimBasedOnAttributeMapper.create(name, hardcodedName, hardcodedValue, attribute, attributeValues, accessToken, idToken, introspectionEndpoint));
+    }
+
+    public static ProtocolMapperRepresentation createHardcodedClaimBasedOnIdP(String name, String hardcodedName,
+                                                                                    String hardcodedValue, String idpAlias,
+                                                                                    boolean accessToken, boolean idToken, boolean introspectionEndpoint) {
+        return ModelToRepresentation.toRepresentation(HardcodedClaimBasedOnIdPMapper.create(name, hardcodedName, hardcodedValue, idpAlias, accessToken, idToken, introspectionEndpoint));
     }
 
     /**

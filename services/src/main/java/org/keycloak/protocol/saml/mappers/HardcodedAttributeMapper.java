@@ -22,6 +22,7 @@ import org.keycloak.models.AuthenticatedClientSessionModel;
 import org.keycloak.models.KeycloakSession;
 import org.keycloak.models.ProtocolMapperModel;
 import org.keycloak.models.UserSessionModel;
+import org.keycloak.protocol.ProtocolMapperUtils;
 import org.keycloak.provider.ProviderConfigProperty;
 
 import java.util.ArrayList;
@@ -35,21 +36,20 @@ import java.util.List;
  */
 public class HardcodedAttributeMapper extends AbstractSAMLProtocolMapper implements SAMLAttributeStatementMapper {
     public static final String PROVIDER_ID = "saml-hardcode-attribute-mapper";
-    public static final String ATTRIBUTE_VALUE = "attribute.value";
+
     private static final List<ProviderConfigProperty> configProperties = new ArrayList<ProviderConfigProperty>();
 
     static {
         ProviderConfigProperty property;
         AttributeStatementHelper.setConfigProperties(configProperties);
         property = new ProviderConfigProperty();
-        property.setName(ATTRIBUTE_VALUE);
-        property.setLabel("Attribute value");
+        property.setName(ProtocolMapperUtils.ATTRIBUTE_VALUE);
+        property.setLabel(ProtocolMapperUtils.ATTRIBUTE_VALUE_LABEL);
         property.setType(ProviderConfigProperty.STRING_TYPE);
-        property.setHelpText("Value of the attribute you want to hard code.");
+        property.setHelpText(ProtocolMapperUtils.ATTRIBUTE_VALUE_HELP_TEXT);
         configProperties.add(property);
 
     }
-
 
 
     public List<ProviderConfigProperty> getConfigProperties() {
@@ -77,7 +77,7 @@ public class HardcodedAttributeMapper extends AbstractSAMLProtocolMapper impleme
 
     @Override
     public void transformAttributeStatement(AttributeStatementType attributeStatement, ProtocolMapperModel mappingModel, KeycloakSession session, UserSessionModel userSession, AuthenticatedClientSessionModel clientSession) {
-        String attributeValue = mappingModel.getConfig().get(ATTRIBUTE_VALUE);
+        String attributeValue = mappingModel.getConfig().get(ProtocolMapperUtils.ATTRIBUTE_VALUE);
         AttributeStatementHelper.addAttribute(attributeStatement, mappingModel, attributeValue);
 
     }
@@ -87,7 +87,7 @@ public class HardcodedAttributeMapper extends AbstractSAMLProtocolMapper impleme
         String mapperId = PROVIDER_ID;
         ProtocolMapperModel model = AttributeStatementHelper.createAttributeMapper(name, null, samlAttributeName, nameFormat, friendlyName,
                 mapperId);
-        model.getConfig().put(ATTRIBUTE_VALUE, value);
+        model.getConfig().put(ProtocolMapperUtils.ATTRIBUTE_VALUE, value);
         return model;
 
     }
