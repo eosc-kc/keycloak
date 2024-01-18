@@ -99,7 +99,7 @@ import static org.keycloak.protocol.oidc.OIDCLoginProtocolFactory.USERNAME;
 import static org.keycloak.protocol.oidc.OIDCLoginProtocolFactory.WEB_ORIGINS_SCOPE;
 import static org.keycloak.protocol.oidc.mappers.AbstractPairwiseSubMapper.PROVIDER_ID_SUFFIX;
 import static org.keycloak.protocol.oidc.mappers.AudienceProtocolMapper.INCLUDED_CLIENT_AUDIENCE;
-import static org.keycloak.protocol.oidc.mappers.HardcodedClaim.CLAIM_VALUE;
+import static org.keycloak.protocol.ProtocolMapperUtils.CLAIM_VALUE;
 import static org.keycloak.protocol.oidc.mappers.OIDCAttributeMapperHelper.INCLUDE_IN_ACCESS_TOKEN;
 import static org.keycloak.protocol.oidc.mappers.OIDCAttributeMapperHelper.INCLUDE_IN_INTROSPECTION;
 import static org.keycloak.protocol.oidc.mappers.OIDCAttributeMapperHelper.INCLUDE_IN_LIGHTWEIGHT_ACCESS_TOKEN;

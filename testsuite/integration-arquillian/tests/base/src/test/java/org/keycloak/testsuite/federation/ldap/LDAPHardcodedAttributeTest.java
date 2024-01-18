@@ -59,10 +59,10 @@ public class LDAPHardcodedAttributeTest extends AbstractLDAPTest {
 
          ComponentModel localeMapperModel = KeycloakModelUtils.createComponentModel("localeMapper", ctx.getLdapModel().getId(), HardcodedAttributeMapperFactory.PROVIDER_ID, LDAPStorageMapper.class.getName(),
                 HardcodedAttributeMapper.USER_MODEL_ATTRIBUTE, "locale",
-                HardcodedAttributeMapper.ATTRIBUTE_VALUE, "en");
+                 HardcodedAttributeMapper.ATTRIBUTE_VALUE, "en");
          ComponentModel emailVerifiedMapperModel = KeycloakModelUtils.createComponentModel("emailVerifiedMapper", ctx.getLdapModel().getId(), HardcodedAttributeMapperFactory.PROVIDER_ID, LDAPStorageMapper.class.getName(),
                 HardcodedAttributeMapper.USER_MODEL_ATTRIBUTE, "emailVerified",
-                HardcodedAttributeMapper.ATTRIBUTE_VALUE, "true");
+                 HardcodedAttributeMapper.ATTRIBUTE_VALUE, "true");
 
          appRealm.addComponentModel(localeMapperModel);
          appRealm.addComponentModel(emailVerifiedMapperModel);
@@ -101,7 +101,7 @@ public class LDAPHardcodedAttributeTest extends AbstractLDAPTest {
 
          ComponentModel usernameMapperModel = KeycloakModelUtils.createComponentModel("usernameMapper", ctx.getLdapModel().getId(), HardcodedAttributeMapperFactory.PROVIDER_ID, LDAPStorageMapper.class.getName(),
                 HardcodedAttributeMapper.USER_MODEL_ATTRIBUTE, "username",
-                HardcodedAttributeMapper.ATTRIBUTE_VALUE, "username");
+                 HardcodedAttributeMapper.ATTRIBUTE_VALUE, "username");
          appRealm.addComponentModel(usernameMapperModel);
       });
    }

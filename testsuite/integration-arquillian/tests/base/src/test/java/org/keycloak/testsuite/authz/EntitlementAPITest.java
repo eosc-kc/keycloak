@@ -80,6 +80,7 @@ import org.keycloak.models.RealmModel;
 import org.keycloak.models.cache.infinispan.authorization.StoreFactoryCacheSession;
 import org.keycloak.models.cache.infinispan.authorization.entities.ResourceQuery;
 import org.keycloak.models.utils.KeycloakModelUtils;
+import org.keycloak.protocol.ProtocolMapperUtils;
 import org.keycloak.protocol.oidc.OIDCLoginProtocol;
 import org.keycloak.protocol.oidc.mappers.HardcodedClaim;
 import org.keycloak.protocol.oidc.mappers.OIDCAttributeMapperHelper;
@@ -2076,7 +2077,7 @@ public class EntitlementAPITest extends AbstractAuthzTest {
         customClaimMapper.setProtocol(OIDCLoginProtocol.LOGIN_PROTOCOL);
         Map<String, String> config = new HashMap<>();
         config.put(OIDCAttributeMapperHelper.TOKEN_CLAIM_NAME, "custom_claim");
-        config.put(HardcodedClaim.CLAIM_VALUE, PUBLIC_TEST_CLIENT);
+        config.put(ProtocolMapperUtils.CLAIM_VALUE, PUBLIC_TEST_CLIENT);
         config.put(OIDCAttributeMapperHelper.INCLUDE_IN_ACCESS_TOKEN, "true");
         customClaimMapper.setConfig(config);
 
@@ -2084,7 +2085,7 @@ public class EntitlementAPITest extends AbstractAuthzTest {
 
         ClientResource client = getClient(getRealm(), RESOURCE_SERVER_TEST);
 
-        config.put(HardcodedClaim.CLAIM_VALUE, RESOURCE_SERVER_TEST);
+        config.put(ProtocolMapperUtils.CLAIM_VALUE, RESOURCE_SERVER_TEST);
 
         client.getProtocolMappers().createMapper(customClaimMapper);
 
@@ -2150,7 +2151,7 @@ public class EntitlementAPITest extends AbstractAuthzTest {
         customClaimMapper.setProtocol(OIDCLoginProtocol.LOGIN_PROTOCOL);
         Map<String, String> config = new HashMap<>();
         config.put(OIDCAttributeMapperHelper.TOKEN_CLAIM_NAME, "custom_claim");
-        config.put(HardcodedClaim.CLAIM_VALUE, PUBLIC_TEST_CLIENT);
+        config.put(ProtocolMapperUtils.CLAIM_VALUE, PUBLIC_TEST_CLIENT);
         config.put(OIDCAttributeMapperHelper.INCLUDE_IN_ACCESS_TOKEN, "true");
         customClaimMapper.setConfig(config);
 
@@ -2158,7 +2159,7 @@ public class EntitlementAPITest extends AbstractAuthzTest {
 
         ClientResource client = getClient(getRealm(), RESOURCE_SERVER_TEST);
 
-        config.put(HardcodedClaim.CLAIM_VALUE, RESOURCE_SERVER_TEST);
+        config.put(ProtocolMapperUtils.CLAIM_VALUE, RESOURCE_SERVER_TEST);
 
         client.getProtocolMappers().createMapper(customClaimMapper);
 

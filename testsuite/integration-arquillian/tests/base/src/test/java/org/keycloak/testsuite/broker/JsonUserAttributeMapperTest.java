@@ -7,6 +7,7 @@ import org.keycloak.admin.client.resource.ProtocolMappersResource;
 import org.keycloak.broker.oidc.mappers.AbstractJsonUserAttributeMapper;
 import org.keycloak.models.IdentityProviderMapperModel;
 import org.keycloak.models.IdentityProviderMapperSyncMode;
+import org.keycloak.protocol.ProtocolMapperUtils;
 import org.keycloak.protocol.oidc.mappers.HardcodedClaim;
 import org.keycloak.representations.idm.ClientRepresentation;
 import org.keycloak.representations.idm.IdentityProviderMapperRepresentation;
@@ -135,7 +136,7 @@ public class JsonUserAttributeMapperTest extends AbstractIdentityProviderMapperT
             }
         }
         assertThat(claimMapper, notNullValue());
-        claimMapper.getConfig().put(HardcodedClaim.CLAIM_VALUE, "{\"" + claim + "\": \"" + updatedValue + "\"}");
+        claimMapper.getConfig().put(ProtocolMapperUtils.CLAIM_VALUE, "{\"" + claim + "\": \"" + updatedValue + "\"}");
         adminClient.realm(bc.providerRealmName()).clients().get(brokerClient.getId()).getProtocolMappers().update(claimMapper.getId(), claimMapper);
     }
 
