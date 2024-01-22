@@ -85,6 +85,12 @@ public class ProtocolMapperUtils {
     public static final String ATTRIBUTE_VALUE_HELP_TEXT = "attribute.value.tooltip";
     public static final String ATTRIBUTE_CONDITIONAL_VALUES_LABEL = "attribute.conditional-values.label";
     public static final String ATTRIBUTE_CONDITIONAL_VALUES_HELP_TEXT = "attribute.conditional-values.tooltip";
+    public static final String IDP_ATTRIBUTE_NAME = "idp-attribute.name";
+    public static final String IDP_ATTRIBUTE_NAME_LABEL = "idp-attribute.name.label";
+    public static final String IDP_ATTRIBUTE_NAME_HELP_TEXT = "idp-attribute.name.tooltip";
+    public static final String IDP_ATTRIBUTE_VALUES = "idp-attribute.values";
+    public static final String IDP_ATTRIBUTE_VALUES_LABEL = "idp-attribute.values.label";
+    public static final String IDP_ATTRIBUTE_VALUES_HELP_TEXT = "idp-attribute.values.tooltip";
 
     // Priority of SubMapper. It should be first to allow other mappers override the `sub` claim
     public static final int SUB_MAPPER = -10;
