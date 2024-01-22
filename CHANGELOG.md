@@ -22,7 +22,7 @@ Full Keycloak upstream jira issue can be shown if filtered by Fix version.
 - Add authnAuthority and voPersonID user attribute to event details
 - Login events type for add, remove, suspend user from a group [RCIAM-1292](https://jira.argo.grnet.gr/browse/RCIAM-1292)
 - Enhanced TokenIntrospection and UserInfo events and logs
-- Mapper for generating SAML attribute values or Claim values using IdP alias or User Attribute values [Mapper for generating SAML attribute values or Claim values using other SAML attribute/Claim values as input](https://trello.com/c/8K46f2mo/1642-mapper-for-generating-saml-attribute-values-or-claim-values-using-other-saml-attribute-claim-values-as-input)
+- Mapper for generating SAML attribute values or Claim values using IdP alias or IdP entity attributes or User Attribute values [Mapper for generating SAML attribute values or Claim values using other SAML attribute/Claim values as input](https://trello.com/c/8K46f2mo/1642-mapper-for-generating-saml-attribute-values-or-claim-values-using-other-saml-attribute-claim-values-as-input)
 
 ### Changed
 - Change emailVerified User field with UserAttributeMappers (conditional trust email). [EOSC-KC-70](https://github.com/eosc-kc/keycloak/issues/70)

@@ -60,6 +60,8 @@ org.keycloak.protocol.oidc.mappers.SessionStateMapper
 org.keycloak.protocol.oidc.mappers.SubMapper
 org.keycloak.organization.protocol.mappers.saml.OrganizationMembershipMapper
 org.keycloak.protocol.oidc.mappers.HardcodedClaimBasedOnIdPMapper
+org.keycloak.protocol.oidc.mappers.HardcodedClaimBasedOnIdPAttributesMapper
 org.keycloak.protocol.oidc.mappers.HardcodedClaimBasedOnAttributeMapper
 org.keycloak.protocol.saml.mappers.HardcodedAttributeBasedOnAttributeMapper
 org.keycloak.protocol.saml.mappers.HardcodedAttributeBasedOnIdPMapper
+org.keycloak.protocol.saml.mappers.HardcodedClaimBasedOnIdPAttributesMapper
