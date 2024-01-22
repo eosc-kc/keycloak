@@ -63,6 +63,8 @@ org.keycloak.organization.protocol.mappers.saml.OrganizationMembershipMapper
 org.keycloak.organization.protocol.mappers.saml.OrganizationGroupMembershipMapper
 org.keycloak.protocol.saml.mappers.AuthnContextClassRefMapper
 org.keycloak.protocol.oidc.mappers.HardcodedClaimBasedOnIdPMapper
+org.keycloak.protocol.oidc.mappers.HardcodedClaimBasedOnIdPAttributesMapper
 org.keycloak.protocol.oidc.mappers.HardcodedClaimBasedOnAttributeMapper
 org.keycloak.protocol.saml.mappers.HardcodedAttributeBasedOnAttributeMapper
 org.keycloak.protocol.saml.mappers.HardcodedAttributeBasedOnIdPMapper
+org.keycloak.protocol.saml.mappers.HardcodedClaimBasedOnIdPAttributesMapper
