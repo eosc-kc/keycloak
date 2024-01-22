@@ -374,8 +374,7 @@ public class SAMLIdentityProviderConfig extends IdentityProviderModel {
     public List<EntityAttributes> getEntityAttributes() throws IOException {
         String principalsJson =getConfig().get(ENTITY_ATTRIBUTES);
         if (principalsJson != null ) {
-            return JsonSerialization.readValue(principalsJson, new TypeReference<List<EntityAttributes>>() {
-            });
+            return JsonSerialization.readValue(principalsJson, new TypeReference<List<EntityAttributes>>() {});
         } else {
             return new LinkedList<>();
         }
