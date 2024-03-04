@@ -1,7 +1,12 @@
 package org.keycloak.protocol.oidc.mappers;
 
-import com.fasterxml.jackson.core.type.TypeReference;
-import org.jboss.logging.Logger;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
 import org.keycloak.broker.saml.SAMLIdentityProviderConfig;
 import org.keycloak.events.Details;
 import org.keycloak.models.Constants;
@@ -14,12 +19,8 @@ import org.keycloak.provider.ProviderConfigProperty;
 import org.keycloak.representations.IDToken;
 import org.keycloak.util.JsonSerialization;
 
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import com.fasterxml.jackson.core.type.TypeReference;
+import org.jboss.logging.Logger;
 
 public class HardcodedClaimBasedOnIdPAttributesMapper extends AbstractOIDCProtocolMapper implements OIDCAccessTokenMapper, OIDCIDTokenMapper, UserInfoTokenMapper, TokenIntrospectionTokenMapper {
 
@@ -129,5 +130,3 @@ public class HardcodedClaimBasedOnIdPAttributesMapper extends AbstractOIDCProtoc
     }
 
 }
-
-
