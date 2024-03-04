@@ -506,14 +506,6 @@ public class SAMLIdentityProviderConfig extends IdentityProviderModel {
         getConfig().put(AUTO_UPDATE, String.valueOf(autoUpdate));
     }
 
-    public String getMetadataUrl() {
-        return getConfig().get(METADATA_URL);
-    }
-
-    public void setMetadataUrl(String metadataUrl) {
-        getConfig().put(METADATA_URL, metadataUrl);
-    }
-
     public Long getRefreshPeriod() {
         return getConfig().get(REFRESH_PERIOD) != null ? Long.valueOf(getConfig().get(REFRESH_PERIOD)) : null;
     }

@@ -62,6 +62,7 @@ export const ExtendedNonDiscoverySettings = () => {
           label="disableTypeClaimCheck"
         />
         <TextField field="config.defaultScope" label="scopes" />
+        <SwitchField label="passScope" field="config.passScope" />
         <FormGroupField label="prompt">
           <Controller
             name="config.prompt"
