@@ -41,13 +41,13 @@ public class AutoUpdateIdentityProviders implements ScheduledTask {
         }
         session.getContext().setRealm(realm);
         IdentityProviderModel idp = realm.getIdentityProviderByAlias(alias);
-        if (idp == null || idp.getConfig().get(IdentityProviderModel.METADATA_URL) == null) {
+        if (idp == null || idp.getConfig().get(IdentityProviderModel.METADATA_DESCRIPTOR_URL) == null) {
             TimerProvider timer = session.getProvider(TimerProvider.class);
             timer.cancelTask(realmId + "_AutoUpdateIdP_" + alias);
             throw new NotFoundException();
         }
         try {
-            String file = session.getProvider(HttpClientProvider.class).getString(idp.getConfig().get(IdentityProviderModel.METADATA_URL));
+            String file = session.getProvider(HttpClientProvider.class).getString(idp.getConfig().get(IdentityProviderModel.METADATA_DESCRIPTOR_URL));
             idp = getProviderFactoryById(session, idp.getProviderId()).parseConfig(session, file, idp);
             idp.getConfig().remove(IdentityProviderModel.LEGACY_HIDE_ON_LOGIN_ATTR);
             idp.getConfig().put(IdentityProviderModel.LAST_REFRESH_TIME, String.valueOf(Instant.now().toEpochMilli()));
