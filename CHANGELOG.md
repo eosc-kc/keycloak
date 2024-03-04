@@ -25,6 +25,7 @@ Full Keycloak upstream jira issue can be shown if filtered by Fix version.
 - Mapper for generating SAML attribute values or Claim values using IdP alias or IdP entity attributes or User Attribute values [Mapper for generating SAML attribute values or Claim values using other SAML attribute/Claim values as input](https://trello.com/c/8K46f2mo/1642-mapper-for-generating-saml-attribute-values-or-claim-values-using-other-saml-attribute-claim-values-as-input)
 - SAML IdP entity attributes [How to store IdP entity attributes in Keycloak](https://trello.com/c/wzF5s6Oi/2409-how-to-store-idp-entity-attributes-in-keycloak)
 - List<String> fields in protocol mappers [Fix problem with List<String> fields in client scopes & attribute mapper configuration](https://trello.com/c/TrJyTo1B/2349-fix-problem-with-liststring-fields-in-client-scopes-attribute-mapper-configuration)
+- Allow forwarding OIDC scopes to upstream OIDC Identity Provider in Keycloak [Allow forwarding OIDC scopes to upstream OIDC Identity Provider in Keycloak](https://trello.com/c/9I5SeGN6/2470-allow-forwarding-oidc-scopes-to-upstream-oidc-identity-provider-in-keycloak)
 
 ### Changed
 - Change emailVerified User field with UserAttributeMappers (conditional trust email). [EOSC-KC-70](https://github.com/eosc-kc/keycloak/issues/70)

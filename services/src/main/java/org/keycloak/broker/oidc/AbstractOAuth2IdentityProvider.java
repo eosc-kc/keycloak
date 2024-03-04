@@ -27,8 +27,10 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 import javax.crypto.SecretKey;
 import javax.crypto.spec.SecretKeySpec;
 
@@ -53,6 +55,7 @@ import org.keycloak.broker.provider.IdentityBrokerException;
 import org.keycloak.broker.provider.UserAuthenticationIdentityProvider;
 import org.keycloak.broker.provider.util.IdentityBrokerState;
 import org.keycloak.common.ClientConnection;
+import org.keycloak.common.Profile;
 import org.keycloak.common.util.SecretGenerator;
 import org.keycloak.common.util.Time;
 import org.keycloak.crypto.Algorithm;
@@ -526,11 +529,19 @@ public abstract class AbstractOAuth2IdentityProvider<C extends OAuth2IdentityPro
 
     protected UriBuilder createAuthorizationUrl(AuthenticationRequest request) {
         final UriBuilder uriBuilder = UriBuilder.fromUri(getConfig().getAuthorizationUrl())
-                .queryParam(OAUTH2_PARAMETER_SCOPE, getConfig().getDefaultScope())
                 .queryParam(OAUTH2_PARAMETER_STATE, request.getState().getEncoded())
                 .queryParam(OAUTH2_PARAMETER_RESPONSE_TYPE, "code")
                 .queryParam(OAUTH2_PARAMETER_CLIENT_ID, getConfig().getClientId())
                 .queryParam(OAUTH2_PARAMETER_REDIRECT_URI, request.getRedirectUri());
+
+        String clientScopeParam = request.getAuthenticationSession().getClientNote(OIDCLoginProtocol.SCOPE_PARAM);
+        if (getConfig().isPassScope() && clientScopeParam != null && !clientScopeParam.isEmpty() ) {
+            Set<String> defaultScpeSet = Arrays.stream(getConfig().getDefaultScope().split(" ")).map(s -> s.split(":")[0]).collect(Collectors.toSet());
+            String scopeValue = Profile.isFeatureEnabled(Profile.Feature.DYNAMIC_SCOPES) ? Arrays.stream(clientScopeParam.split(" ")).filter(sc -> defaultScpeSet.contains(sc.split(":")[0])).collect(Collectors.joining(" ")) : Arrays.stream(clientScopeParam.split(" ")).filter(sc -> defaultScpeSet.contains(sc)).collect(Collectors.joining(" "));
+            uriBuilder.queryParam(OAUTH2_PARAMETER_SCOPE, scopeValue);
+        } else {
+            uriBuilder.queryParam(OAUTH2_PARAMETER_SCOPE, getConfig().getDefaultScope());
+        }
         AuthenticationSessionModel authenticationSession = request.getAuthenticationSession();
         String loginHint = authenticationSession.getClientNote(OIDCLoginProtocol.LOGIN_HINT_PARAM);
 

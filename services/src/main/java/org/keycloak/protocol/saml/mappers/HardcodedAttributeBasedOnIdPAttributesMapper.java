@@ -1,7 +1,12 @@
 package org.keycloak.protocol.saml.mappers;
 
-import com.fasterxml.jackson.core.type.TypeReference;
-import org.jboss.logging.Logger;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
 import org.keycloak.broker.saml.SAMLIdentityProviderConfig;
 import org.keycloak.dom.saml.v2.assertion.AttributeStatementType;
 import org.keycloak.events.Details;
@@ -16,12 +21,8 @@ import org.keycloak.protocol.oidc.OIDCLoginProtocol;
 import org.keycloak.provider.ProviderConfigProperty;
 import org.keycloak.util.JsonSerialization;
 
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import com.fasterxml.jackson.core.type.TypeReference;
+import org.jboss.logging.Logger;
 
 public class HardcodedAttributeBasedOnIdPAttributesMapper extends AbstractSAMLProtocolMapper implements SAMLAttributeStatementMapper {
     private static final Logger logger = Logger.getLogger(HardcodedAttributeBasedOnIdPAttributesMapper.class);
