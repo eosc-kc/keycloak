@@ -69,7 +69,6 @@ public class IdentityProviderModel implements Serializable {
 
     //for SAML and OIDC providers
     public static final String AUTO_UPDATE = "autoUpdate";
-    public static final String METADATA_URL = "metadataUrl";
     public static final String REFRESH_PERIOD = "refreshPeriod";
     public static final String LAST_REFRESH_TIME = "lastRefreshTime";
 
