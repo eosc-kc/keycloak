@@ -35,7 +35,7 @@ export const AutoUpdateFields = ({
     <>
       {!hideMetadata && (
         <TextControl
-          name="config.metadataUrl"
+          name="config.metadataDescriptorUrl"
           label={
             protocol === "saml" ? t("metadataUrl") : t("discoveryEndpoint")
           }
