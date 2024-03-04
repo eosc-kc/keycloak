@@ -40,6 +40,7 @@ public class OAuth2IdentityProviderConfig extends IdentityProviderModel {
     public static final String JWT_X509_HEADERS_ENABLED = "jwtX509HeadersEnabled";
 
     public static final String REQUIRES_SHORT_STATE_PARAMETER = "requiresShortStateParameter";
+    public static final String PASS_SCOPE = "passScope";
 
     public OAuth2IdentityProviderConfig(IdentityProviderModel model) {
         super(model);
@@ -224,6 +225,14 @@ public class OAuth2IdentityProviderConfig extends IdentityProviderModel {
 
     public String getEmailClaim() {
         return getConfig().getOrDefault("emailClaim", IDToken.EMAIL);
+    }
+
+    public boolean isPassScope() {
+        return Boolean.valueOf(getConfig().get(PASS_SCOPE));
+    }
+
+    public void setPassScope(boolean passScope) {
+        getConfig().put(PASS_SCOPE, String.valueOf(passScope));
     }
 
     @Override

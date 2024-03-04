@@ -59,7 +59,7 @@ public class AutoUpdateIdentityProviderTest extends AbstractAdminTest {
             // Create new SAML identity provider using configuration retrieved from import-config
             //change some values( postBindingLogout,postBindingAuthnRequest from true to false, enabled false)  - add autoupdated values
             result.put(IdentityProviderModel.AUTO_UPDATE, "true");
-            result.put(IdentityProviderModel.METADATA_URL, "http://localhost:8880/saml-idp-metadata");
+            result.put(IdentityProviderModel.METADATA_DESCRIPTOR_URL, "http://localhost:8880/saml-idp-metadata");
             result.put(IdentityProviderModel.REFRESH_PERIOD, String.valueOf(30));
             result.put(SAMLIdentityProviderConfig.POST_BINDING_LOGOUT, "false");
             result.put(SAMLIdentityProviderConfig.POST_BINDING_AUTHN_REQUEST, "false");
@@ -144,7 +144,6 @@ public class AutoUpdateIdentityProviderTest extends AbstractAdminTest {
                 "entityAttributes",
                 "metadataDescriptorUrl",
                 "autoUpdate",
-                "metadataUrl",
                 "refreshPeriod"
         ));
         if (hasExecuted)
@@ -163,7 +162,7 @@ public class AutoUpdateIdentityProviderTest extends AbstractAdminTest {
         assertThat(config, hasEntry("idpEntityId", "http://localhost:8080/auth/realms/master"));
         assertThat(config, hasEntry(is("signingCertificate"), notNullValue()));
         assertThat(config, hasEntry("autoUpdate", "true"));
-        assertThat(config, hasEntry("metadataUrl", "http://localhost:8880/saml-idp-metadata"));
+        assertThat(config, hasEntry("metadataDescriptorUrl", "http://localhost:8880/saml-idp-metadata"));
         assertThat(config, hasEntry("refreshPeriod", String.valueOf(30)));
     }
 
@@ -195,7 +194,7 @@ public class AutoUpdateIdentityProviderTest extends AbstractAdminTest {
             // Create new OIDC identity provider using configuration retrieved from import-config
             //change some values( authorizationUrl,tokenUrl)  - add autoupdated values
             result.put(IdentityProviderModel.AUTO_UPDATE, "true");
-            result.put(IdentityProviderModel.METADATA_URL, "http://localhost:8880/oidc-idp");
+            result.put(IdentityProviderModel.METADATA_DESCRIPTOR_URL, "http://localhost:8880/oidc-idp");
             result.put(IdentityProviderModel.REFRESH_PERIOD, String.valueOf(60));
             result.put("authorizationUrl", "https://aai.egi.eu/oidc/authorize/new");
             result.put("tokenUrl", "https://aai.egi.eu/oidc/token/new");
@@ -227,7 +226,7 @@ public class AutoUpdateIdentityProviderTest extends AbstractAdminTest {
     }
 
     private void assertOidcConfig(Map<String, String> config, boolean hasExecuted) {
-        Set fields = Stream.of("issuer", "authorizationUrl", "tokenUrl", "userInfoUrl", "validateSignature", "useJwksUrl", "jwksUrl", "metadataDescriptorUrl", "syncMode", "autoUpdate", "metadataUrl", "refreshPeriod").collect(Collectors.toSet());
+        Set fields = Stream.of("issuer", "authorizationUrl", "tokenUrl", "userInfoUrl", "validateSignature", "useJwksUrl", "jwksUrl", "metadataDescriptorUrl", "syncMode", "autoUpdate", "refreshPeriod").collect(Collectors.toSet());
         //autoupdated has been executed -  add lastRefreshTime
         if (hasExecuted)
             fields.add("lastRefreshTime");
@@ -238,7 +237,7 @@ public class AutoUpdateIdentityProviderTest extends AbstractAdminTest {
         assertThat(config, hasEntry("useJwksUrl", "true"));
         assertThat(config, hasEntry("jwksUrl", "https://aai.egi.eu/oidc/jwk"));
         assertThat(config, hasEntry("autoUpdate", "true"));
-        assertThat(config, hasEntry("metadataUrl", "http://localhost:8880/oidc-idp"));
+        assertThat(config, hasEntry("metadataDescriptorUrl", "http://localhost:8880/oidc-idp"));
         assertThat(config, hasEntry("refreshPeriod", String.valueOf(60)));
     }
 

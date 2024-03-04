@@ -197,14 +197,6 @@ public class OIDCIdentityProviderConfig extends OAuth2IdentityProviderConfig {
         getConfig().put(AUTO_UPDATE, String.valueOf(autoUpdate));
     }
 
-    public String getMetadataUrl() {
-        return getConfig().get(METADATA_URL);
-    }
-
-    public void setMetadataUrl(String metadataUrl) {
-        getConfig().put(METADATA_URL, metadataUrl);
-    }
-
     public Long getRefreshPeriod() {
         return getConfig().get(AUTO_UPDATE) != null ? Long.valueOf(getConfig().get(REFRESH_PERIOD)) : null;
     }
@@ -227,6 +219,6 @@ public class OIDCIdentityProviderConfig extends OAuth2IdentityProviderConfig {
         SslRequired sslRequired = realm.getSslRequired();
         checkUrl(sslRequired, getJwksUrl(), "jwks_url");
         checkUrl(sslRequired, getLogoutUrl(), "logout_url");
-        checkUrl(sslRequired, getMetadataUrl(), METADATA_URL);
+        checkUrl(sslRequired, getMetadataDescriptorUrl(), METADATA_DESCRIPTOR_URL);
     }
 }
