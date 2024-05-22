@@ -18,6 +18,7 @@ import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.openqa.selenium.support.ui.Select;
 import org.openqa.selenium.support.ui.WebDriverWait;
 
+import java.time.Duration;
 import java.util.Optional;
 import java.util.function.Supplier;
 
@@ -46,7 +47,7 @@ public final class UIUtils {
 
     public static boolean currentTitleEquals(String url) {
         try {
-            (new WebDriverWait(getCurrentDriver(), 5)).until(ExpectedConditions.titleIs(url));
+            (new WebDriverWait(getCurrentDriver(), Duration.ofSeconds(5))).until(ExpectedConditions.titleIs(url));
         }
         catch (TimeoutException e) {
             return false;
