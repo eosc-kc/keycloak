@@ -59,7 +59,6 @@ public class KeycloakWebDriverConfigurator {
     }
 
     private void acceptAllSSLCerts(WebDriverConfiguration webDriverCfg, DesiredCapabilities capabilitiesToAdd) {
-        capabilitiesToAdd.setCapability(CapabilityType.ACCEPT_SSL_CERTS, true);
         capabilitiesToAdd.setCapability(CapabilityType.ACCEPT_INSECURE_CERTS, true);
     }
 

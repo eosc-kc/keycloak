@@ -26,6 +26,7 @@ import static org.keycloak.testsuite.util.WaitUtils.waitForPageToLoad;
 
 import java.net.URI;
 import java.net.URL;
+import java.time.Duration;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -183,7 +184,7 @@ public class OIDCAdapterClusterTest extends AbstractAdapterClusteredTest {
     }
 
     private void waitForCacheReplication(String appUrl, int expectedCount) {
-        new WebDriverWait(DroneUtils.getCurrentDriver(), 5) // Check every 500ms of 5 seconds
+        new WebDriverWait(DroneUtils.getCurrentDriver(), Duration.ofSeconds(5)) // Check every 500ms of 5 seconds
                 .until((driver) -> {
                     driver.navigate().to(appUrl + "/donotincrease");
                     waitForPageToLoad();
