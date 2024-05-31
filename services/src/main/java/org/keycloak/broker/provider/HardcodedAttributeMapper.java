@@ -52,7 +52,9 @@ public class HardcodedAttributeMapper extends AbstractIdentityProviderMapper {
         property.setName(ATTRIBUTE_VALUE);
         property.setLabel("User Attribute Value");
         property.setHelpText("Value you want to hardcode");
-        property.setType(ProviderConfigProperty.STRING_TYPE);
+        property.setType(ProviderConfigProperty.MULTIVALUED_STRING_TYPE);
+        property.setStringify(Boolean.TRUE);
+        property.setDefaultValue("");
         configProperties.add(property);
     }
 
@@ -94,15 +96,16 @@ public class HardcodedAttributeMapper extends AbstractIdentityProviderMapper {
     @Override
     public void preprocessFederatedIdentity(KeycloakSession session, RealmModel realm, IdentityProviderMapperModel mapperModel, BrokeredIdentityContext context) {
         String attribute = mapperModel.getConfig().get(ATTRIBUTE);
-        String attributeValue = mapperModel.getConfig().get(ATTRIBUTE_VALUE);
-        context.setUserAttribute(attribute, attributeValue);
+        List<String> attributeValues = new ArrayList<>();
+        attributeValues.addAll(Arrays.asList(mapperModel.getConfig().get(ATTRIBUTE_VALUE).split(Constants.CFG_DELIMITER)));
+        context.setUserAttribute(attribute, attributeValues);
     }
 
     @Override
     public void updateBrokeredUser(KeycloakSession session, RealmModel realm, UserModel user, IdentityProviderMapperModel mapperModel, BrokeredIdentityContext context) {
         String attribute = mapperModel.getConfig().get(ATTRIBUTE);
-        String attributeValue = mapperModel.getConfig().get(ATTRIBUTE_VALUE);
-        user.setSingleAttribute(attribute, attributeValue);
+        List<String> attributeValues = Arrays.asList(mapperModel.getConfig().get(ATTRIBUTE_VALUE).split(Constants.CFG_DELIMITER));
+        user.setAttribute(attribute, attributeValues);
     }
 
     @Override
