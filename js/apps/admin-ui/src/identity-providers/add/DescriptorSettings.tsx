@@ -325,6 +325,13 @@ const Fields = ({ readOnly }: DescriptorSettingsProps) => {
           controller={{ defaultValue: 0, rules: { min: 0, max: 2147483 } }}
           isDisabled={readOnly}
         />
+        <DefaultSwitchControl
+          name="config.omitAttributeConsumingServiceIndexAuthn"
+          label={t("omitAttributeConsumingServiceIndexAuthn")}
+          labelIcon={t("omitAttributeConsumingServiceIndexAuthnHelp")}
+          isDisabled={readOnly}
+          stringify
+        />
         <TextControl
           name="config.attributeConsumingServiceName"
           label={t("attributeConsumingServiceName")}
