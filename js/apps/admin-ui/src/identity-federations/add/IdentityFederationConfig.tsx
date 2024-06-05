@@ -203,7 +203,7 @@ const IdentityProviderFederationConfig = ({
       <DefaultSwitchControl
         name="config.omitAttributeConsumingServiceIndexAuthn"
         label={t("omitAttributeConsumingServiceIndexAuthn")}
-        labelIcon={t("omitAttributeConsumingServiceIndexAuthnHelp")}
+        labelIcon={t("omitAttributeConsumingServiceIndexAuthnFederationHelp")}
         isDisabled={readOnly}
         stringify
       />

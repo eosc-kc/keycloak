@@ -57,5 +57,9 @@ public class SAMLFederationModel extends FederationModel {
     public boolean isPostBindingLogoutReceivingRequest() {
         return Boolean.valueOf(getConfig().get(POST_BINDING_LOGOUT_RECEIVING_REQUEST));
     }
+
+    public boolean isOmitAttributeConsumingServiceIndexAuthn() {
+        return Boolean.valueOf(getConfig().get(OMIT_ATTRIBUTE_CONSUMING_SERVICE_INDEX_AUTHN));
+    }
 	
 }

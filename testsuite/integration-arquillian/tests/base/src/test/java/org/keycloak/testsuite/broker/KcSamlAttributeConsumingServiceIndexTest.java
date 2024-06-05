@@ -29,8 +29,10 @@ public final class KcSamlAttributeConsumingServiceIndexTest extends AbstractBrok
 
     @Test
     public void testAttributeConsumingServiceIndexNotSet() throws Exception {
-        // No Attribute Consuming Service Index set -> No attribute added to AuthnRequest
+        // omitAttributeConsumingServiceIndexAuthn true
         try (Closeable idpUpdater = new IdentityProviderAttributeUpdater(identityProviderResource)
+                .setAttribute(SAMLIdentityProviderConfig.OMIT_ATTRIBUTE_CONSUMING_SERVICE_INDEX_AUTHN, "true")
+                .setAttribute(SAMLIdentityProviderConfig.ATTRIBUTE_CONSUMING_SERVICE_INDEX, "15")
             .update())
         {
             // Build the login request document
