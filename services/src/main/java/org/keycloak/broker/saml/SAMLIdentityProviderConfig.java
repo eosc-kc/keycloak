@@ -77,6 +77,7 @@ public class SAMLIdentityProviderConfig extends IdentityProviderModel {
     public static final String SIGN_SP_METADATA = "signSpMetadata";
     public static final String ALLOW_CREATE = "allowCreate";
     public static final String ATTRIBUTE_CONSUMING_SERVICE_INDEX = "attributeConsumingServiceIndex";
+    public static final String OMIT_ATTRIBUTE_CONSUMING_SERVICE_INDEX_AUTHN = "omitAttributeConsumingServiceIndexAuthn";
     public static final String ATTRIBUTE_CONSUMING_SERVICE_NAME = "attributeConsumingServiceName";
     public static final String USE_METADATA_DESCRIPTOR_URL = "useMetadataDescriptorUrl";
     public static final String DESCRIPTOR_CACHE_SECONDS = "descriptorCacheSeconds";
@@ -424,22 +425,23 @@ public class SAMLIdentityProviderConfig extends IdentityProviderModel {
         getConfig().put(SIGN_SP_METADATA, String.valueOf(signSpMetadata));
     }
 
-    public boolean isAllowCreate() {
-        return Boolean.valueOf(getConfig().get(ALLOW_CREATE));
+    public boolean isOmitAttributeConsumingServiceIndexAuthn() {
+        return Boolean.valueOf(getConfig().get(OMIT_ATTRIBUTE_CONSUMING_SERVICE_INDEX_AUTHN));
     }
 
-    public void setAllowCreated(boolean allowCreate) {
-        getConfig().put(ALLOW_CREATE, String.valueOf(allowCreate));
+    public void setOmitAttributeConsumingServiceIndexAuthn(boolean omitAttributeConsumingServiceIndexAuthn) {
+        getConfig().put(OMIT_ATTRIBUTE_CONSUMING_SERVICE_INDEX_AUTHN, String.valueOf(omitAttributeConsumingServiceIndexAuthn));
     }
 
     public Integer getAttributeConsumingServiceIndex() {
-        Integer result = null;
+        //default value is 1
+        Integer result = 1;
         String strAttributeConsumingServiceIndex = getConfig().get(ATTRIBUTE_CONSUMING_SERVICE_INDEX);
         if (strAttributeConsumingServiceIndex != null && !strAttributeConsumingServiceIndex.isEmpty()) {
             try {
                 result = Integer.parseInt(strAttributeConsumingServiceIndex);
                 if (result < 0) {
-                    result = null;
+                    result = 1;
                 }
             } catch (NumberFormatException e) {
                 // ignore it and use null
@@ -454,6 +456,14 @@ public class SAMLIdentityProviderConfig extends IdentityProviderModel {
         } else {
             getConfig().put(ATTRIBUTE_CONSUMING_SERVICE_INDEX, String.valueOf(attributeConsumingServiceIndex));
         }
+    }
+
+    public boolean isAllowCreate() {
+        return Boolean.valueOf(getConfig().get(ALLOW_CREATE));
+    }
+
+    public void setAllowCreated(boolean allowCreate) {
+        getConfig().put(ALLOW_CREATE, String.valueOf(allowCreate));
     }
 
     public void setAttributeConsumingServiceName(String attributeConsumingServiceName) {
