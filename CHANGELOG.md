@@ -39,6 +39,7 @@ Full Keycloak upstream jira issue can be shown if filtered by Fix version.
 - Make optional the use of PKCE for Clients configured with PKCE only for Device Code Flow [RCIAM-1069](https://jira.argo.grnet.gr/browse/RCIAM-1069)
 - Protocol mapper that can combine multiple user attributes [RCIAM-1267](https://jira.argo.grnet.gr/browse/RCIAM-1267)
 - LinkedAccountRepresentation consists linkedUserID
+- Support for omitting attributeConsumingServiceIndex from authentication requests
 
 
 ### Fixed

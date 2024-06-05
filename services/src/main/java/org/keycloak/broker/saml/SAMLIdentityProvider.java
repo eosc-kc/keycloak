@@ -163,7 +163,7 @@ public class SAMLIdentityProvider extends AbstractIdentityProvider<SAMLIdentityP
             for (String authnContextDeclRef : getAuthnContextDeclRefUris())
                 requestedAuthnContext.addAuthnContextDeclRef(authnContextDeclRef);
 
-            Integer attributeConsumingServiceIndex = getConfig().getAttributeConsumingServiceIndex();
+            Integer attributeConsumingServiceIndex = getConfig().isOmitAttributeConsumingServiceIndexAuthn() ? null : getConfig().getAttributeConsumingServiceIndex();
 
             String loginHint = Booleans.isTrue(getConfig().isLoginHint()) ? request.getAuthenticationSession().getClientNote(OIDCLoginProtocol.LOGIN_HINT_PARAM) : null;
             Boolean allowCreate = null;
@@ -470,12 +470,11 @@ public class SAMLIdentityProvider extends AbstractIdentityProvider<SAMLIdentityP
                 });
 
             if (!metadataAttrProviders.isEmpty()) {
-                int attributeConsumingServiceIndex = getConfig().getAttributeConsumingServiceIndex() != null ? getConfig().getAttributeConsumingServiceIndex() : 1;
                 String attributeConsumingServiceName = getConfig().getAttributeConsumingServiceName();
                 //default value for attributeConsumingServiceName
                 if (attributeConsumingServiceName == null)
                     attributeConsumingServiceName = realm.getDisplayName() != null ? realm.getDisplayName() : realm.getName() ;
-                AttributeConsumingServiceType attributeConsumingService = new AttributeConsumingServiceType(attributeConsumingServiceIndex);
+                AttributeConsumingServiceType attributeConsumingService = new AttributeConsumingServiceType(getConfig().getAttributeConsumingServiceIndex());
                 attributeConsumingService.setIsDefault(true);
 
                 String currentLocale = realm.getDefaultLocale() == null ? "en" : realm.getDefaultLocale();
