@@ -299,8 +299,11 @@ public class SAMLFederationProvider implements FederationProvider {
                             config.put(SAMLIdentityProviderConfig.WANT_LOGOUT_REQUESTS_SIGNED, String.valueOf(model.isWantLogoutRequestsSigned()));
                             config.put(SAMLIdentityProviderConfig.ENTITY_ID, model.getConfig().get(SAMLIdentityProviderConfig.ENTITY_ID));
 
-                            config.put(SAMLIdentityProviderConfig.POST_BINDING_RESPONSE, String.valueOf(model.isPostBindingResponse()));
-                            config.put(SAMLIdentityProviderConfig.POST_BINDING_LOGOUT, String.valueOf(model.isPostBindingLogoutReceivingRequest()));
+								config.put(SAMLIdentityProviderConfig.POST_BINDING_RESPONSE, String.valueOf(model.isPostBindingResponse()));
+								config.put(SAMLIdentityProviderConfig.POST_BINDING_LOGOUT, String.valueOf(model.isPostBindingLogoutReceivingRequest()));
+								config.put(SAMLIdentityProviderConfig.OMIT_ATTRIBUTE_CONSUMING_SERVICE_INDEX_AUTHN, String.valueOf(model.isOmitAttributeConsumingServiceIndexAuthn()));
+								config.put(SAMLIdentityProviderConfig.ATTRIBUTE_CONSUMING_SERVICE_INDEX,  model.getConfig().get(SAMLIdentityProviderConfig.ATTRIBUTE_CONSUMING_SERVICE_INDEX));
+								config.put(SAMLIdentityProviderConfig.ATTRIBUTE_CONSUMING_SERVICE_NAME,  model.getConfig().get(SAMLIdentityProviderConfig.ATTRIBUTE_CONSUMING_SERVICE_NAME));
 
                             config.put("promotedLoginbutton", "false");
                             identityProviderModel.setConfig(config);
@@ -747,14 +750,7 @@ public class SAMLFederationProvider implements FederationProvider {
             identityProviderModel.getConfig().put(SAMLIdentityProviderConfig.MULTIPLE_PRINCIPALS, model.getConfig().get(SAMLIdentityProviderConfig.MULTIPLE_PRINCIPALS));
         }
 
-        //attribute consuming service index/name set federation only during creation
-        if (model.getConfig().get(SAMLIdentityProviderConfig.ATTRIBUTE_CONSUMING_SERVICE_INDEX) != null) {
-            identityProviderModel.getConfig().put(SAMLIdentityProviderConfig.ATTRIBUTE_CONSUMING_SERVICE_INDEX, model.getConfig().get(SAMLIdentityProviderConfig.ATTRIBUTE_CONSUMING_SERVICE_INDEX));
-        }
-        if (model.getConfig().get(SAMLIdentityProviderConfig.ATTRIBUTE_CONSUMING_SERVICE_NAME) != null) {
-            identityProviderModel.getConfig().put(SAMLIdentityProviderConfig.ATTRIBUTE_CONSUMING_SERVICE_NAME, model.getConfig().get(SAMLIdentityProviderConfig.ATTRIBUTE_CONSUMING_SERVICE_NAME));
-        }
-    }
+	}
 
     @Override
     public void removeFederation() {

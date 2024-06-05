@@ -11,6 +11,7 @@ import com.fasterxml.jackson.core.type.TypeReference;
 
 import static org.keycloak.broker.saml.SAMLIdentityProviderConfig.MULTIPLE_PRINCIPALS;
 import static org.keycloak.broker.saml.SAMLIdentityProviderConfig.NAME_ID_POLICY_FORMAT;
+import static org.keycloak.broker.saml.SAMLIdentityProviderConfig.OMIT_ATTRIBUTE_CONSUMING_SERVICE_INDEX_AUTHN;
 import static org.keycloak.broker.saml.SAMLIdentityProviderConfig.POST_BINDING_LOGOUT_RECEIVING_REQUEST;
 import static org.keycloak.broker.saml.SAMLIdentityProviderConfig.POST_BINDING_RESPONSE;
 import static org.keycloak.broker.saml.SAMLIdentityProviderConfig.WANT_ASSERTIONS_ENCRYPTED;
@@ -64,6 +65,10 @@ public class SAMLFederationModel extends FederationModel {
 
     public boolean isPostBindingLogoutReceivingRequest() {
         return Boolean.valueOf(getConfig().get(POST_BINDING_LOGOUT_RECEIVING_REQUEST));
+    }
+
+    public boolean isOmitAttributeConsumingServiceIndexAuthn() {
+        return Boolean.valueOf(getConfig().get(OMIT_ATTRIBUTE_CONSUMING_SERVICE_INDEX_AUTHN));
     }
 	
 }
