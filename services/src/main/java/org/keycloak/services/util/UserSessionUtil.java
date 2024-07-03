@@ -4,6 +4,9 @@ import java.util.Objects;
 import java.util.function.Consumer;
 
 import org.keycloak.OAuth2Constants;
+import org.keycloak.broker.oidc.OIDCIdentityProviderFactory;
+import org.keycloak.broker.saml.SAMLIdentityProviderConfig;
+import org.keycloak.broker.saml.SAMLIdentityProviderFactory;
 import org.keycloak.common.ClientConnection;
 import org.keycloak.common.Profile;
 import org.keycloak.common.constants.ServiceAccountConstants;
@@ -12,6 +15,7 @@ import org.keycloak.models.AuthenticatedClientSessionModel;
 import org.keycloak.models.ClientModel;
 import org.keycloak.models.ClientSessionContext;
 import org.keycloak.models.Constants;
+import org.keycloak.models.IdentityProviderModel;
 import org.keycloak.models.ImpersonationSessionNote;
 import org.keycloak.models.KeycloakSession;
 import org.keycloak.models.RealmModel;
@@ -30,6 +34,9 @@ import org.keycloak.services.managers.AuthenticationManager;
 import org.keycloak.services.managers.UserSessionManager;
 import org.keycloak.sessions.AuthenticationSessionModel;
 import org.keycloak.sessions.RootAuthenticationSessionModel;
+import org.keycloak.social.facebook.FacebookIdentityProviderFactory;
+import org.keycloak.social.google.GoogleIdentityProviderFactory;
+import org.keycloak.social.linkedin.LinkedInOIDCIdentityProviderFactory;
 import org.keycloak.util.TokenUtil;
 
 import org.jboss.logging.Logger;
@@ -37,6 +44,10 @@ import org.jboss.logging.Logger;
 public class UserSessionUtil {
 
     private static final Logger logger = Logger.getLogger(UserSessionUtil.class);
+    private static final String GOOGLE_ISSUER = "https://accounts.google.com";
+    private static final String LINKEDIN_ISSUER = "https://www.linkedin.com/oauth";
+    private static final String ORCID_ISSUER = "https://orcid.org";
+    private static final String FACEBOOK_ISSUER = "https://www.facebook.com";
 
     public static UserSessionValidationResult findValidSessionForIdentityCookie(KeycloakSession session, RealmModel realm, AccessToken token, Consumer<UserSessionModel> invalidSessionCallback) {
         return findValidSession(session, realm, token,  null, AccessTokenContext.SessionType.ONLINE, false, true, invalidSessionCallback);
@@ -290,5 +301,23 @@ public class UserSessionUtil {
         public String getError() {
             return error;
         }
+    }
+
+    public static String getAuthnAuthority(IdentityProviderModel idp) {
+        return switch (idp.getProviderId()) {
+            case SAMLIdentityProviderFactory.PROVIDER_ID ->
+                    idp.getConfig().get(SAMLIdentityProviderConfig.IDP_ENTITY_ID) != null ? idp.getConfig().get(SAMLIdentityProviderConfig.IDP_ENTITY_ID) : idp.getAlias();
+            case OIDCIdentityProviderFactory.PROVIDER_ID ->
+                    idp.getConfig().get("issuer") != null ? idp.getConfig().get("issuer") : idp.getAlias();
+            case GoogleIdentityProviderFactory.PROVIDER_ID -> GOOGLE_ISSUER;
+            case "orcid" -> ORCID_ISSUER;
+            case LinkedInOIDCIdentityProviderFactory.PROVIDER_ID -> LINKEDIN_ISSUER;
+            case FacebookIdentityProviderFactory.PROVIDER_ID -> FACEBOOK_ISSUER;
+            default -> idp.getAlias();
+        };
+    }
+
+    public static String getIdPName(IdentityProviderModel idp) {
+        return idp.getDisplayName() != null ? idp.getDisplayName() : idp.getAlias();
     }
 }
