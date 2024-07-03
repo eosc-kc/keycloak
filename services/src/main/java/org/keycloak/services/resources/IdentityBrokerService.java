@@ -995,6 +995,13 @@ public class IdentityBrokerService implements UserAuthenticationIdentityProvider
 
             event.detail(Details.IDENTITY_PROVIDER, providerAlias);
             event.detail(Details.IDENTITY_PROVIDER_USERNAME, context.getUsername());
+            event.detail(EventBuilder.AUTHN_AUTHORITY, UserSessionUtil.getAuthnAuthority(context.getIdpConfig()));
+            event.detail(EventBuilder.IDP_NAME, UserSessionUtil.getIdPName(context.getIdpConfig()));
+            Map<String,String> userSessionNotes= authSession.getUserSessionNotes();
+            if (userSessionNotes.containsKey(Details.IDENTITY_PROVIDER_AUTHN_AUTHORITIES)){
+                this.event.detail(Details.IDENTITY_PROVIDER_AUTHN_AUTHORITIES, userSessionNotes.get(Details.IDENTITY_PROVIDER_AUTHN_AUTHORITIES));
+            }
+
 
             // Ensure the first-broker-login flow was successfully finished
             String authProvider = authSession.getAuthNote(AbstractIdpAuthenticator.FIRST_BROKER_LOGIN_SUCCESS);
@@ -1189,10 +1196,20 @@ public class IdentityBrokerService implements UserAuthenticationIdentityProvider
         context.getIdp().authenticationFinished(authSession, context);
         authSession.setUserSessionNote(Details.IDENTITY_PROVIDER, providerAlias);
         authSession.setUserSessionNote(Details.IDENTITY_PROVIDER_USERNAME, context.getUsername());
+        String authnAuthority = UserSessionUtil.getAuthnAuthority(context.getIdpConfig());
+        authSession.setUserSessionNote(Details.IDENTITY_PROVIDER_ID, authnAuthority);
+
 
         event.detail(Details.IDENTITY_PROVIDER, providerAlias)
                 .detail(Details.IDENTITY_PROVIDER_USERNAME, context.getUsername())
-                .detail(Details.IDENTITY_PROVIDER_BROKER_SESSION_ID, context.getBrokerSessionId());
+                .detail(Details.IDENTITY_PROVIDER_BROKER_SESSION_ID, context.getBrokerSessionId())
+                .detail(EventBuilder.AUTHN_AUTHORITY, authnAuthority)
+                .detail(EventBuilder.IDP_NAME, UserSessionUtil.getIdPName(context.getIdpConfig()));
+
+        Map<String,String> userSessionNotes= authSession.getUserSessionNotes();
+        if (userSessionNotes.containsKey(Details.IDENTITY_PROVIDER_AUTHN_AUTHORITIES)){
+            this.event.detail(Details.IDENTITY_PROVIDER_AUTHN_AUTHORITIES, userSessionNotes.get(Details.IDENTITY_PROVIDER_AUTHN_AUTHORITIES));
+        }
 
         if (isDebugEnabled()) {
             logger.debugf("Performing local authentication for user [%s].", federatedUser);
@@ -1370,6 +1387,7 @@ public class IdentityBrokerService implements UserAuthenticationIdentityProvider
         if (userSession != null && userSession.getNote(Details.IDENTITY_PROVIDER) == null) {
             userSession.setNote(Details.IDENTITY_PROVIDER, context.getIdpConfig().getAlias());
             userSession.setNote(Details.IDENTITY_PROVIDER_USERNAME, context.getUsername());
+            userSession.setNote(Details.IDENTITY_PROVIDER_ID, UserSessionUtil.getAuthnAuthority(context.getIdpConfig()));
         }
 
         authSession.setAuthNote(IdpLinkAction.IDP_LINK_STATUS, RequiredActionContext.KcActionStatus.SUCCESS.name());
