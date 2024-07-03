@@ -28,7 +28,6 @@ import org.keycloak.broker.provider.IdpLinkAction;
 import org.keycloak.broker.saml.SAMLIdentityProvider;
 import org.keycloak.broker.saml.SAMLIdentityProviderConfig;
 import org.keycloak.broker.saml.SAMLIdentityProviderFactory;
-import org.keycloak.broker.saml.federation.SAMLFederationProvider;
 import org.keycloak.http.HttpRequest;
 import org.keycloak.OAuthErrorException;
 import org.keycloak.authentication.AuthenticationFlow;
@@ -110,6 +109,7 @@ import org.keycloak.services.util.AuthenticationFlowURLHelper;
 import org.keycloak.services.util.BrowserHistoryHelper;
 import org.keycloak.services.util.CacheControlUtil;
 import org.keycloak.services.util.DefaultClientSessionContext;
+import org.keycloak.services.util.UserSessionUtil;
 import org.keycloak.services.validation.Validation;
 import org.keycloak.sessions.AuthenticationSessionModel;
 import org.keycloak.sessions.RootAuthenticationSessionModel;
@@ -127,7 +127,6 @@ import jakarta.ws.rs.core.HttpHeaders;
 import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.core.Response.Status;
 import jakarta.ws.rs.core.UriBuilder;
-import org.keycloak.utils.StringUtil;
 
 import javax.xml.transform.TransformerException;
 import javax.xml.transform.TransformerFactory;
@@ -138,7 +137,6 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.URI;
-import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
@@ -847,6 +845,13 @@ public class IdentityBrokerService implements IdentityProvider.AuthenticationCal
 
             event.detail(Details.IDENTITY_PROVIDER, providerAlias);
             event.detail(Details.IDENTITY_PROVIDER_USERNAME, context.getUsername());
+            event.detail(EventBuilder.AUTHN_AUTHORITY, UserSessionUtil.getAuthnAuthority(context.getIdpConfig()));
+            event.detail(EventBuilder.IDP_NAME, UserSessionUtil.getIdPName(context.getIdpConfig()));
+            Map<String,String> userSessionNotes= authSession.getUserSessionNotes();
+            if (userSessionNotes.containsKey(Details.IDENTITY_PROVIDER_AUTHN_AUTHORITIES)){
+                this.event.detail(Details.IDENTITY_PROVIDER_AUTHN_AUTHORITIES, userSessionNotes.get(Details.IDENTITY_PROVIDER_AUTHN_AUTHORITIES));
+            }
+
 
             // Ensure the first-broker-login flow was successfully finished
             String authProvider = authSession.getAuthNote(AbstractIdpAuthenticator.FIRST_BROKER_LOGIN_SUCCESS);
@@ -864,6 +869,7 @@ public class IdentityBrokerService implements IdentityProvider.AuthenticationCal
 
             event.user(federatedUser);
             event.detail(Details.USERNAME, federatedUser.getUsername());
+
 
             if (context.getIdpConfig().isAddReadTokenRoleOnCreate()) {
                 ClientModel brokerClient = realmModel.getClientByClientId(Constants.BROKER_SERVICE_CLIENT_ID);
@@ -1038,10 +1044,20 @@ public class IdentityBrokerService implements IdentityProvider.AuthenticationCal
         context.getIdp().authenticationFinished(authSession, context);
         authSession.setUserSessionNote(Details.IDENTITY_PROVIDER, providerAlias);
         authSession.setUserSessionNote(Details.IDENTITY_PROVIDER_USERNAME, context.getUsername());
+        String authnAuthority = UserSessionUtil.getAuthnAuthority(context.getIdpConfig());
+        authSession.setUserSessionNote(Details.IDENTITY_PROVIDER_ID, authnAuthority);
+
 
         event.detail(Details.IDENTITY_PROVIDER, providerAlias)
                 .detail(Details.IDENTITY_PROVIDER_USERNAME, context.getUsername())
-                .detail(Details.IDENTITY_PROVIDER_BROKER_SESSION_ID, context.getBrokerSessionId());
+                .detail(Details.IDENTITY_PROVIDER_BROKER_SESSION_ID, context.getBrokerSessionId())
+                .detail(EventBuilder.AUTHN_AUTHORITY, authnAuthority)
+                .detail(EventBuilder.IDP_NAME, UserSessionUtil.getIdPName(context.getIdpConfig()));
+
+        Map<String,String> userSessionNotes= authSession.getUserSessionNotes();
+        if (userSessionNotes.containsKey(Details.IDENTITY_PROVIDER_AUTHN_AUTHORITIES)){
+            this.event.detail(Details.IDENTITY_PROVIDER_AUTHN_AUTHORITIES, userSessionNotes.get(Details.IDENTITY_PROVIDER_AUTHN_AUTHORITIES));
+        }
 
         if (isDebugEnabled()) {
             logger.debugf("Performing local authentication for user [%s].", federatedUser);
@@ -1212,6 +1228,7 @@ public class IdentityBrokerService implements IdentityProvider.AuthenticationCal
         if (userSession != null && userSession.getNote(Details.IDENTITY_PROVIDER) == null) {
             userSession.setNote(Details.IDENTITY_PROVIDER, context.getIdpConfig().getAlias());
             userSession.setNote(Details.IDENTITY_PROVIDER_USERNAME, context.getUsername());
+            userSession.setNote(Details.IDENTITY_PROVIDER_ID, UserSessionUtil.getAuthnAuthority(context.getIdpConfig()));
         }
 
         authSession.setAuthNote(IdpLinkAction.IDP_LINK_STATUS, RequiredActionContext.KcActionStatus.SUCCESS.name());
