@@ -76,6 +76,7 @@ import org.keycloak.models.ClientScopeModel;
 import org.keycloak.models.ClientSessionContext;
 import org.keycloak.models.Constants;
 import org.keycloak.models.DefaultActionTokenKey;
+import org.keycloak.models.IdentityProviderModel;
 import org.keycloak.models.KeycloakContext;
 import org.keycloak.models.KeycloakSession;
 import org.keycloak.models.RealmModel;
@@ -111,6 +112,7 @@ import org.keycloak.services.util.AuthenticationFlowURLHelper;
 import org.keycloak.services.util.BrowserHistoryHelper;
 import org.keycloak.services.util.CacheControlUtil;
 import org.keycloak.services.util.LocaleUtil;
+import org.keycloak.services.util.UserSessionUtil;
 import org.keycloak.sessions.AuthenticationSessionModel;
 import org.keycloak.sessions.RootAuthenticationSessionModel;
 
@@ -1114,8 +1116,14 @@ public class LoginActionsService {
         Map<String, String> userSessionNotes = authSession.getUserSessionNotes();
         String identityProvider = userSessionNotes.get(Details.IDENTITY_PROVIDER);
         if (identityProvider != null) {
+            IdentityProviderModel idp = authSession.getRealm().getIdentityProviderByAlias(identityProvider);
             event.detail(Details.IDENTITY_PROVIDER, identityProvider)
-                    .detail(Details.IDENTITY_PROVIDER_USERNAME, userSessionNotes.get(Details.IDENTITY_PROVIDER_USERNAME));
+                    .detail(Details.IDENTITY_PROVIDER_USERNAME, userSessionNotes.get(Details.IDENTITY_PROVIDER_USERNAME))
+                    .detail(EventBuilder.AUTHN_AUTHORITY, userSessionNotes.get(Details.IDENTITY_PROVIDER_ID))
+                    .detail(EventBuilder.IDP_NAME, UserSessionUtil.getIdPName(idp));
+            if (userSessionNotes.containsKey(Details.IDENTITY_PROVIDER_AUTHN_AUTHORITIES)){
+                this.event.detail(Details.IDENTITY_PROVIDER_AUTHN_AUTHORITIES, userSessionNotes.get(Details.IDENTITY_PROVIDER_AUTHN_AUTHORITIES));
+            }
         }
     }
 

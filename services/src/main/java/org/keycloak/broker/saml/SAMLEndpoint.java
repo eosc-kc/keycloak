@@ -95,6 +95,7 @@ import org.keycloak.protocol.saml.SamlProtocolUtils;
 import org.keycloak.protocol.saml.SamlService;
 import org.keycloak.protocol.saml.SamlSessionUtils;
 import org.keycloak.protocol.saml.preprocessor.SamlAuthenticationPreprocessor;
+import org.keycloak.representations.AuthnAuthorityRepresentation;
 import org.keycloak.rotation.HardcodedKeyLocator;
 import org.keycloak.rotation.KeyLocator;
 import org.keycloak.saml.SAML2LogoutResponseBuilder;
@@ -722,7 +723,10 @@ public class SAMLEndpoint {
                 if (authn != null && authn.getSessionIndex() != null) {
                     identity.setBrokerSessionId(config.getAlias() + "." + authn.getSessionIndex());
                  }
-
+                //check in order to add IDENTITY_PROVIDER_IDS
+                if ( authn != null && authn.getAuthnContext() != null && !authn.getAuthnContext().getAuthenticatingAuthority().isEmpty()) {
+                    authSession.setUserSessionNote(Details.IDENTITY_PROVIDER_AUTHN_AUTHORITIES, JsonSerialization.writeValueAsString(authn.getAuthnContext().getAuthenticatingAuthority().stream().map(x -> new AuthnAuthorityRepresentation(x.toString())).toList()));
+                }
 
                 return callback.authenticated(identity);
             } catch (WebApplicationException e) {
