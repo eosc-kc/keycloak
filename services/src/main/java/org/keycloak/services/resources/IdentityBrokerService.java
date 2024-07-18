@@ -397,7 +397,13 @@ public class IdentityBrokerService implements UserAuthenticationIdentityProvider
 
     public Response performClientInitiatedAccountLogin(String providerAlias, ClientSessionCode<AuthenticationSessionModel> clientSessionCode) {
         try {
-            UserAuthenticationIdentityProvider<?> identityProvider = getIdentityProvider(session, providerAlias);
+            IdentityProviderModel identityProviderModel = session.identityProviders().getByAlias(providerAlias);
+            if (identityProviderModel == null) {
+                throw new IdentityBrokerException("Identity Provider [" + providerAlias + "] not found.");
+            }
+            UserAuthenticationIdentityProvider<?> identityProvider = getIdentityProvider(session, identityProviderModel, UserAuthenticationIdentityProvider.class);
+            if((identityProviderModel.getFederations() != null && identityProviderModel.getFederations().size() > 0))
+                providerAlias = null;
             Response response = identityProvider.performLogin(createAuthenticationRequest(identityProvider, providerAlias, clientSessionCode));
 
             if (response != null) {

@@ -127,6 +127,8 @@ public class SAMLFederationProvider implements FederationProvider {
 	private static final String CATEGORY_CLIENTS= "Clients";
 	private static final String CATEGORY_IDPS= "Identity Providers";
 	private static final int MAX_LOGO_LENGTH = 4000;
+	private static final int DEFAULT_BATCH_SIZE = 1000;
+	private static final String FEDERATION_INSERT_BATCH_SIZE = "federationInsertBatchSize";
 	private List<ProtocolMapperModel> defaultSAMLMappers;
 
     protected final KeycloakSession session;
@@ -188,9 +190,9 @@ public class SAMLFederationProvider implements FederationProvider {
     }
 
 	@Override
-    public synchronized void updateSamlEntities() {
+    public void updateSamlEntities() {
 
-        logger.info("Started updating the SAML federation (id): " + model.getInternalId());
+        logger.info("Started updating the SAML federation (id): " + model.getAlias());
 
         RealmModel realm = session.realms().getRealm(realmId);
         session.getContext().setRealm(realm);
@@ -198,8 +200,9 @@ public class SAMLFederationProvider implements FederationProvider {
 
         List<EntityDescriptorType> entities = new ArrayList<EntityDescriptorType>();
         Date validUntil = null;
+        InputStream inputStream = null;
         try {
-            InputStream inputStream = session.getProvider(HttpClientProvider.class).get(model.getUrl());
+            inputStream = session.getProvider(HttpClientProvider.class).get(model.getUrl());
             Object parsedObject = SAMLParser.getInstance().parse(inputStream);
             EntitiesDescriptorType entitiesDescriptorType = (EntitiesDescriptorType) parsedObject;
             if (entitiesDescriptorType.getValidUntil() != null) {
@@ -209,6 +212,13 @@ public class SAMLFederationProvider implements FederationProvider {
             entities = getEntityDescriptors(entitiesDescriptorType);
         } catch (ParsingException | IOException e) {
             e.printStackTrace();
+        } finally {
+            try {
+                if (inputStream != null)
+                    inputStream.close();
+            } catch (IOException e) {
+                logger.error("Cannot close InputStream");
+            }
         }
 
         if (entities.isEmpty()) {
@@ -231,17 +241,22 @@ public class SAMLFederationProvider implements FederationProvider {
 
         ClientValidationProvider clientValidationProvider = session.getProvider(ClientValidationProvider.class);
         //values = "All" or "Identity Providers" or "Clients"
-        String category = model.getCategory();
-        defaultSAMLMappers = CATEGORY_IDPS.equals(category) ?
+        defaultSAMLMappers = CATEGORY_IDPS.equals(model.getCategory()) ?
                 null :
                 realm.getDefaultClientScopesStream(false).filter(scope -> "saml".equals(scope.getProtocol())).flatMap(scope -> scope.getProtocolMappersStream().filter(mapper -> UserAttributeStatementMapper.PROVIDER_ID.equals(mapper.getProtocolMapper()))).distinct().collect(Collectors.toList());
 
 
+        logger.info("Start parsing the SAML federation (id): " + model.getAlias());
+
+        Integer addIdPsBatchSize = realm.getAttribute(FEDERATION_INSERT_BATCH_SIZE, DEFAULT_BATCH_SIZE);
+        boolean reExecute = false;
         for (EntityDescriptorType entity : entities) {
 
             if (!parseEntity(entity)) {
                 continue;
             }
+
+            logger.debug("Start parsing the entity with (entityID): " + entity.getEntityID());
 
             IDPSSODescriptorType idpDescriptor = null;
             SPSSODescriptorType spDescriptorType = null;
@@ -252,11 +267,11 @@ public class SAMLFederationProvider implements FederationProvider {
             for (EntityDescriptorType.EDTChoiceType edtChoiceType : entity.getChoiceType()) {
                 List<EntityDescriptorType.EDTDescriptorChoiceType> descriptors = edtChoiceType.getDescriptors();
 
-                if (!CATEGORY_CLIENTS.equals(category) && !descriptors.isEmpty() && descriptors.get(0).getIdpDescriptor() != null) {
+                if (!CATEGORY_CLIENTS.equals(model.getCategory()) && !descriptors.isEmpty() && descriptors.get(0).getIdpDescriptor() != null) {
                     idpDescriptor = descriptors.get(0).getIdpDescriptor();
                 }
 
-                if (!CATEGORY_IDPS.equals(category) && !descriptors.isEmpty() && descriptors.get(0).getSpDescriptor() != null) {
+                if (!CATEGORY_IDPS.equals(model.getCategory()) && !descriptors.isEmpty() && descriptors.get(0).getSpDescriptor() != null) {
                     spDescriptorType = descriptors.get(0).getSpDescriptor();
                 }
             }
@@ -280,6 +295,11 @@ public class SAMLFederationProvider implements FederationProvider {
                         if (previous != null) {
                             identityProviderModel = new SAMLIdentityProviderConfig(previous);
                         } else {
+                            if (addedIdps.size() > addIdPsBatchSize) {
+                                reExecute = true;
+                                //do not parse and add more than addIdPsBatchSize IdPs
+                                continue;
+                            }
                             // initialize idp values
                             // set alias and default values
                             identityProviderModel = new SAMLIdentityProviderConfig();
@@ -294,16 +314,16 @@ public class SAMLFederationProvider implements FederationProvider {
                             config.put(IdentityProviderModel.SYNC_MODE, model.getConfig().get(IdentityProviderModel.SYNC_MODE));
                             config.put("loginHint", "false");
 
-                            config.put(SAMLIdentityProviderConfig.WANT_ASSERTIONS_ENCRYPTED, model.getWantAssertionsEncrypted());
+                            config.put(SAMLIdentityProviderConfig.WANT_ASSERTIONS_ENCRYPTED, "optional".equals(model.getWantAssertionsEncrypted()) ? "false" : model.getWantAssertionsEncrypted());
                             config.put(SAMLIdentityProviderConfig.WANT_ASSERTIONS_SIGNED, String.valueOf(model.isWantAssertionsSigned()));
                             config.put(SAMLIdentityProviderConfig.WANT_LOGOUT_REQUESTS_SIGNED, String.valueOf(model.isWantLogoutRequestsSigned()));
                             config.put(SAMLIdentityProviderConfig.ENTITY_ID, model.getConfig().get(SAMLIdentityProviderConfig.ENTITY_ID));
 
-								config.put(SAMLIdentityProviderConfig.POST_BINDING_RESPONSE, String.valueOf(model.isPostBindingResponse()));
-								config.put(SAMLIdentityProviderConfig.POST_BINDING_LOGOUT, String.valueOf(model.isPostBindingLogoutReceivingRequest()));
-								config.put(SAMLIdentityProviderConfig.OMIT_ATTRIBUTE_CONSUMING_SERVICE_INDEX_AUTHN, String.valueOf(model.isOmitAttributeConsumingServiceIndexAuthn()));
-								config.put(SAMLIdentityProviderConfig.ATTRIBUTE_CONSUMING_SERVICE_INDEX,  model.getConfig().get(SAMLIdentityProviderConfig.ATTRIBUTE_CONSUMING_SERVICE_INDEX));
-								config.put(SAMLIdentityProviderConfig.ATTRIBUTE_CONSUMING_SERVICE_NAME,  model.getConfig().get(SAMLIdentityProviderConfig.ATTRIBUTE_CONSUMING_SERVICE_NAME));
+                            config.put(SAMLIdentityProviderConfig.POST_BINDING_RESPONSE, String.valueOf(model.isPostBindingResponse()));
+                            config.put(SAMLIdentityProviderConfig.POST_BINDING_LOGOUT, String.valueOf(model.isPostBindingLogoutReceivingRequest()));
+                            config.put(SAMLIdentityProviderConfig.OMIT_ATTRIBUTE_CONSUMING_SERVICE_INDEX_AUTHN, String.valueOf(model.isOmitAttributeConsumingServiceIndexAuthn()));
+                            config.put(SAMLIdentityProviderConfig.ATTRIBUTE_CONSUMING_SERVICE_INDEX, model.getConfig().get(SAMLIdentityProviderConfig.ATTRIBUTE_CONSUMING_SERVICE_INDEX));
+                            config.put(SAMLIdentityProviderConfig.ATTRIBUTE_CONSUMING_SERVICE_NAME, model.getConfig().get(SAMLIdentityProviderConfig.ATTRIBUTE_CONSUMING_SERVICE_NAME));
 
                             config.put("promotedLoginbutton", "false");
                             identityProviderModel.setConfig(config);
@@ -367,11 +387,23 @@ public class SAMLFederationProvider implements FederationProvider {
                 }
 
             }
+            logger.debug("Finishing parsing the entity with (entityID): " + entity.getEntityID());
         }
+
+        logger.info("finish parsing the SAML federation (id): " + model.getAlias());
         removeClients(existingClientModels, realm);
 
-		model.setLastMetadataRefreshTimestamp(new Date().getTime());
+        if (!reExecute) {
+            model.setLastMetadataRefreshTimestamp(new Date().getTime());
+        }
         taskExecutionFederation(model, addedIdps, updatedIdps, existingIdps, realm, idpsStorage);
+        if (reExecute) {
+            TimerProvider timer = session.getProvider(TimerProvider.class);
+            UpdateFederation updateFederation = new UpdateFederation(model.getInternalId(),realmId);
+            ClusterAwareScheduledTaskRunner taskRunner = new ClusterAwareScheduledTaskRunner(session.getKeycloakSessionFactory(), updateFederation,300 * 1000);
+            timer.scheduleOnce(taskRunner, 300 * 1000, "UpdateFederationPart" + Instant.now().toString());
+        }
+
 
         logger.info("Finished updating IdPs of federation (id): " + model.getInternalId());
     }
@@ -559,23 +591,32 @@ public class SAMLFederationProvider implements FederationProvider {
             authority = entity.getExtensions().getRegistrationInfo().getRegistrationAuthority().toString();
         }
 
-        return model.getEntityIdAllowList().contains(entity.getEntityID())
-                || (authority != null && model.getRegistrationAuthorityAllowList().contains(authority))
-                || (model.getCategoryAllowList() != null && entity.getExtensions()!= null && entity.getExtensions().getEntityAttributes() != null
-                && containsAttribute(model.getCategoryAllowList(), entity.getExtensions().getEntityAttributes().getAttribute()))
-                || (model.getEntityIdAllowList().isEmpty() && model.getRegistrationAuthorityAllowList().isEmpty()
-                && model.getCategoryAllowList().isEmpty()
-                && (model.getEntityIdDenyList().isEmpty() || !model.getEntityIdDenyList().contains(entity.getEntityID()))
-                && (model.getCategoryDenyList().isEmpty() || entity.getExtensions()== null ||entity.getExtensions().getEntityAttributes() == null
-                || !containsAttribute(model.getCategoryDenyList(),
-                entity.getExtensions().getEntityAttributes().getAttribute()))
-                && (model.getRegistrationAuthorityDenyList().isEmpty()
-                || !model.getRegistrationAuthorityDenyList().contains(authority)));
+		return model.getEntityIdAllowList().contains(entity.getEntityID())
+				|| (authority != null && model.getRegistrationAuthorityAllowList().contains(authority))
+				|| (model.getCategoryAllowList() != null && entity.getExtensions()!= null && entity.getExtensions().getEntityAttributes() != null
+				&& containsAttributeAll(model.getCategoryAllowList(), entity.getExtensions().getEntityAttributes().getAttribute()))
+				|| (model.getEntityIdAllowList().isEmpty() && model.getRegistrationAuthorityAllowList().isEmpty()
+				&& model.getCategoryAllowList().isEmpty()
+				&& (model.getEntityIdDenyList().isEmpty() || !model.getEntityIdDenyList().contains(entity.getEntityID()))
+				&& (model.getCategoryDenyList().isEmpty() || entity.getExtensions()== null ||entity.getExtensions().getEntityAttributes() == null
+				|| !containsAttributeAtLeastOne(model.getCategoryDenyList(),
+				entity.getExtensions().getEntityAttributes().getAttribute()))
+				&& (model.getRegistrationAuthorityDenyList().isEmpty()
+				|| !model.getRegistrationAuthorityDenyList().contains(authority)));
     }
 
-    private boolean containsAttribute(Map<String, List<String>> map, List<AttributeType> attributes) {
-        return attributes.stream().filter(attr -> map.containsKey(attr.getName()) && attr.getAttributeValue().size() == map.get(attr.getName()).size() && attr.getAttributeValue().stream().map(Object::toString).collect(Collectors.toList()).containsAll(map.get(attr.getName()))).count() > 0;
+    private boolean containsAttributeAll(Map<String, List<String>> map, List<AttributeType> attributes) {
+        return attributes.stream()
+            .filter(attr -> map.containsKey(attr.getName()) && attr.getAttributeValue().stream().map(Object::toString).collect(Collectors.toList())
+                    .containsAll(map.get(attr.getName())))
+            .count() > 0;
 
+    }
+
+    private boolean containsAttributeAtLeastOne(Map<String, List<String>> map, List<AttributeType> attributes) {
+	return attributes.stream()
+			.filter(attr -> map.containsKey(attr.getName()) && attr.getAttributeValue().stream().map(Object::toString).anyMatch(map.get(attr.getName())::contains))
+			.count() > 0;
     }
 
     private void taskExecutionFederation(FederationModel federationModel, List<IdentityProviderModel> addIdPs, List<IdentityProviderModel> updatedIdPs, List<IdentityProviderModel> removedIdPs, RealmModel realm, IdentityProviderStorageProvider idpsStorage) {
@@ -783,25 +824,24 @@ public class SAMLFederationProvider implements FederationProvider {
                 authnBindingLogout = JBossSAMLURIConstants.SAML_HTTP_POST_BINDING.getUri();
             }
 
-            URI endpoint = uriInfo.getBaseUriBuilder().path("realms").path(realm.getName()).path("broker").path("endpoint").build();
+            URI endpoint = uriInfo.getBaseUriBuilder().path("realms").path(realm.getName()).path("broker").path("endpoint")
+                .build();
 
-            boolean wantAuthnRequestsSigned = model.isWantAuthnRequestsSigned();
-            boolean wantLogoutRequestsSigned = model.isWantLogoutRequestsSigned();
-            boolean wantAssertionsSigned = model.isWantAssertionsSigned();
-            String wantAssertionsEncrypted = model.getWantAssertionsEncrypted();
-            String entityId = getEntityId(uriInfo, realm);
-            String nameIDPolicyFormat = model.getNameIDPolicyFormat();
-
-            // We export all keys for algorithm RS256, both active and passive so IDP is able to verify signature even
-            //  if a key rotation happens in the meantime
-            List<KeyDescriptorType> signingKeys = session.keys().getKeysStream(realm, KeyUse.SIG, Algorithm.RS256).filter(key -> key.getCertificate() != null).sorted(SamlService::compareKeys).map(key -> {
-                try {
-                    return SPMetadataDescriptor.buildKeyInfoElement(key.getKid(), PemUtils.encodeCertificate(key.getCertificate()));
-                } catch (ParserConfigurationException e) {
-                    logger.warn("Failed to export SAML SP Metadata!", e);
-                    throw new RuntimeException(e);
-                }
-            }).map(key -> SPMetadataDescriptor.buildKeyDescriptorType(key, KeyTypes.SIGNING, null)).collect(Collectors.toList());
+			// We export all keys for algorithm RS256, both active and passive so IDP is able to verify signature even
+			//  if a key rotation happens in the meantime
+			List<KeyDescriptorType> signingKeys = session.keys().getKeysStream(realm, KeyUse.SIG, Algorithm.RS256)
+					.filter(key -> key.getCertificate() != null)
+					.sorted(SamlService::compareKeys)
+					.map(key -> {
+						try {
+							return SPMetadataDescriptor.buildKeyInfoElement(key.getKid(), PemUtils.encodeCertificate(key.getCertificate()));
+						} catch (ParserConfigurationException e) {
+							logger.warn("Failed to export SAML SP Metadata!", e);
+							throw new RuntimeException(e);
+						}
+					})
+					.map(key -> SPMetadataDescriptor.buildKeyDescriptorType(key, KeyTypes.SIGNING, null))
+					.collect(Collectors.toList());
 
             // We export only active ENC keys so IDP uses different key as soon as possible if a key rotation happens
             // String encAlg = model.getConfig().getEncryptionAlgorithm();
@@ -823,8 +863,8 @@ public class SAMLFederationProvider implements FederationProvider {
             XMLStreamWriter writer = StaxUtil.getXMLStreamWriter(sw);
             SAMLMetadataWriter metadataWriter = new SAMLMetadataWriter(writer);
 
-			EntityDescriptorType entityDescriptor = SPMetadataDescriptor.buildSPDescriptor(authnBinding, authnBindingLogout, endpoint, endpoint, wantAuthnRequestsSigned, wantLogoutRequestsSigned,
-                wantAssertionsSigned,  !"false".equals(wantAssertionsEncrypted), entityId, nameIDPolicyFormat, signingKeys, encryptionKeys);
+			EntityDescriptorType entityDescriptor = SPMetadataDescriptor.buildSPDescriptor(authnBinding, authnBindingLogout, endpoint, endpoint, model.isWantAuthnRequestsSigned(), model.isWantLogoutRequestsSigned(),
+					model.isWantAssertionsSigned(), !"false".equals(model.getWantAssertionsEncrypted()), getEntityId(uriInfo, realm), model.getNameIDPolicyFormat(), signingKeys, encryptionKeys);
 
             // Create the AttributeConsumingService if at least one attribute importer mapper exists
             List<FederationMapperModel> mappers = model.getFederationMapperModels().stream().filter(mapper -> "saml-user-attribute-idp-mapper".equals(mapper.getIdentityProviderMapper())).collect(Collectors.toList());
