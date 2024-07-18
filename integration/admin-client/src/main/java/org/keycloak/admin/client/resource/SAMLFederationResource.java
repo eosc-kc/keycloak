@@ -65,4 +65,8 @@ public interface SAMLFederationResource {
     @Path("instances/{id}/mappers/{mapperId}/idp/{action}")
     public void massIdPMapperAction(@PathParam("id") String id, @PathParam("mapperId") String mapperId, @PathParam("action") String action);
 
+    @POST
+    @Path("instances/{id}/refresh")
+    public Response resfreshFederation(@PathParam("id") String internalId);
+
 }
