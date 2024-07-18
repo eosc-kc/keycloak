@@ -20,7 +20,6 @@ package org.keycloak.services.resources.admin;
 import java.io.IOException;
 import java.security.cert.X509Certificate;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Function;
 import java.util.stream.Stream;
@@ -37,9 +36,7 @@ import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.MultivaluedMap;
 import jakarta.ws.rs.core.Response;
 
-import org.keycloak.broker.provider.IdentityProvider;
 import org.keycloak.broker.provider.IdentityProviderFactory;
-import org.keycloak.broker.social.SocialIdentityProvider;
 import org.keycloak.common.util.PemUtils;
 import org.keycloak.common.util.StreamUtil;
 import org.keycloak.connections.httpclient.HttpClientProvider;
@@ -57,7 +54,6 @@ import org.keycloak.models.utils.KeycloakModelUtils;
 import org.keycloak.models.utils.ModelToRepresentation;
 import org.keycloak.models.utils.RepresentationToModel;
 import org.keycloak.models.utils.StripSecretsUtils;
-import org.keycloak.provider.ProviderFactory;
 import org.keycloak.representations.idm.CertificateRepresentation;
 import org.keycloak.representations.idm.IdentityProviderRepresentation;
 import org.keycloak.services.ErrorResponse;
@@ -67,6 +63,7 @@ import org.keycloak.services.resources.admin.fgap.AdminPermissionEvaluator;
 import org.keycloak.services.scheduled.AutoUpdateIdentityProviders;
 import org.keycloak.services.scheduled.ClusterAwareScheduledTaskRunner;
 import org.keycloak.services.util.CertificateInfoHelper;
+import org.keycloak.services.util.ResourcesUtil;
 import org.keycloak.timer.TimerProvider;
 import org.keycloak.utils.ReservedCharValidator;
 import org.keycloak.utils.StringUtil;
@@ -114,7 +111,7 @@ public class IdentityProvidersResource {
     @Operation( summary = "Get the identity provider factory for that provider id")
     public IdentityProviderFactory getIdentityProviderFactory(@Parameter(description = "The provider id to get the factory") @PathParam("provider_id") String providerId) {
         this.auth.realm().requireViewIdentityProviders();
-        IdentityProviderFactory providerFactory = getProviderFactoryById(providerId);
+        IdentityProviderFactory providerFactory = ResourcesUtil.getProviderFactoryById(session, providerId);
         if (providerFactory != null) {
             return providerFactory;
         }
@@ -138,7 +135,7 @@ public class IdentityProvidersResource {
         }
         String providerId = formDataMap.getFirst("providerId").asString();
         String config = StreamUtil.readString(formDataMap.getFirst("file").asInputStream());
-        IdentityProviderFactory<?> providerFactory = getProviderFactoryById(providerId);
+        IdentityProviderFactory<?> providerFactory = ResourcesUtil.getProviderFactoryById(session, providerId);
         return providerFactory.parseConfig(session, config, new IdentityProviderModel()).getConfig();
     }
 
@@ -193,7 +190,7 @@ public class IdentityProvidersResource {
         String providerId = data.get("providerId").toString();
         String from = data.get("fromUrl").toString();
         String file = session.getProvider(HttpClientProvider.class).getString(from);
-        IdentityProviderFactory providerFactory = getProviderFactoryById(providerId);
+        IdentityProviderFactory providerFactory = ResourcesUtil.getProviderFactoryById(session, providerId);
         Map<String, String> config = providerFactory.parseConfig(session, file, new IdentityProviderModel()).getConfig();
         // add the URL just if needed by the identity provider
         config.put(IdentityProviderModel.METADATA_DESCRIPTOR_URL, from);
@@ -316,16 +313,4 @@ public class IdentityProvidersResource {
         return new IdentityProviderResource(this.auth, realm, session, identityProviderModel, adminEvent);
     }
 
-    private IdentityProviderFactory<?> getProviderFactoryById(String providerId) {
-        return getProviderFactories()
-                .filter(providerFactory -> Objects.equals(providerId, providerFactory.getId()))
-                .map(IdentityProviderFactory.class::cast)
-                .findFirst()
-                .orElse(null);
-    }
-
-    private Stream<ProviderFactory> getProviderFactories() {
-        return Stream.concat(session.getKeycloakSessionFactory().getProviderFactoriesStream(IdentityProvider.class),
-                session.getKeycloakSessionFactory().getProviderFactoriesStream(SocialIdentityProvider.class));
-    }
 }
