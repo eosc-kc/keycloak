@@ -87,8 +87,8 @@ public class FederationModel implements Serializable {
 		this.setEntityIdAllowList(model.getEntityIdAllowList() != null ? model.getEntityIdAllowList() : new HashSet<String>());
 		this.setRegistrationAuthorityDenyList(model.getRegistrationAuthorityDenyList() != null ? model.getRegistrationAuthorityDenyList() : new HashSet<String>());
         this.setRegistrationAuthorityAllowList(model.getRegistrationAuthorityAllowList() != null ? model.getRegistrationAuthorityAllowList() : new HashSet<String>());
-        this.setCategoryDenyList(model.getRegistrationAuthorityDenyList() != null ? model.getCategoryDenyList() : new HashMap<String,List<String>>());
-        this.setCategoryAllowList(model.getRegistrationAuthorityAllowList() != null ? model.getCategoryAllowList() : new HashMap<String,List<String>>());
+        this.setCategoryDenyList(model.getCategoryDenyList() != null ? model.getCategoryDenyList() : new HashMap<String,List<String>>());
+        this.setCategoryAllowList(model.getCategoryAllowList() != null ? model.getCategoryAllowList() : new HashMap<String,List<String>>());
 		this.setLastMetadataRefreshTimestamp(model.getLastMetadataRefreshTimestamp());
         this.setValidUntilTimestamp(model.getValidUntilTimestamp());
 		this.setConfig(model.getConfig());

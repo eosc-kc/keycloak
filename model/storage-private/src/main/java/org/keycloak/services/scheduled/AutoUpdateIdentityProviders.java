@@ -51,7 +51,7 @@ public class AutoUpdateIdentityProviders implements ScheduledTask {
             idp = getProviderFactoryById(session, idp.getProviderId()).parseConfig(session, file, idp);
             idp.getConfig().remove(IdentityProviderModel.LEGACY_HIDE_ON_LOGIN_ATTR);
             idp.getConfig().put(IdentityProviderModel.LAST_REFRESH_TIME, String.valueOf(Instant.now().toEpochMilli()));
-            realm.updateIdentityProvider(idp);
+            session.identityProviders().update(idp);
         } catch (Exception e) {
             e.printStackTrace();
         }
