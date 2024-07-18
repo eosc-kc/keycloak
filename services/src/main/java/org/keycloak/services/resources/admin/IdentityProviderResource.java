@@ -16,6 +16,7 @@
  */
 package org.keycloak.services.resources.admin;
 
+import java.io.IOException;
 import java.time.Instant;
 import java.util.Collections;
 import java.util.Map;
@@ -42,6 +43,7 @@ import org.keycloak.broker.provider.IdentityProviderFactory;
 import org.keycloak.broker.provider.IdentityProviderMapper;
 import org.keycloak.broker.social.SocialIdentityProvider;
 import org.keycloak.common.Profile;
+import org.keycloak.connections.httpclient.HttpClientProvider;
 import org.keycloak.events.admin.OperationType;
 import org.keycloak.events.admin.ResourceType;
 import org.keycloak.models.FederatedIdentityModel;
@@ -68,6 +70,7 @@ import org.keycloak.services.resources.admin.fgap.AdminPermissionManagement;
 import org.keycloak.services.resources.admin.fgap.AdminPermissions;
 import org.keycloak.services.scheduled.AutoUpdateIdentityProviders;
 import org.keycloak.services.scheduled.ClusterAwareScheduledTaskRunner;
+import org.keycloak.services.util.ResourcesUtil;
 import org.keycloak.timer.TimerProvider;
 import org.keycloak.utils.ProfileHelper;
 
@@ -114,7 +117,7 @@ public class IdentityProviderResource {
     @NoCache
     @Produces(MediaType.APPLICATION_JSON)
     @Tag(name = KeycloakOpenAPI.Admin.Tags.IDENTITY_PROVIDERS)
-    @Operation( summary = "Get the identity provider")
+    @Operation(summary = "Get the identity provider")
     public IdentityProviderRepresentation getIdentityProvider() {
         this.auth.realm().requireViewIdentityProviders();
 
@@ -198,6 +201,33 @@ public class IdentityProviderResource {
         }
     }
 
+    @POST
+    @Path("refresh")
+    @Tag(name = KeycloakOpenAPI.Admin.Tags.IDENTITY_PROVIDERS)
+    @Operation(summary = "Refresh autoupdated identity provider")
+    public Response refreshIdP() {
+        this.auth.realm().requireManageIdentityProviders();
+
+        if (identityProviderModel == null) {
+            throw new jakarta.ws.rs.NotFoundException();
+        }
+
+        if (identityProviderModel.getConfig().get(IdentityProviderModel.METADATA_DESCRIPTOR_URL) != null) {
+            throw ErrorResponse.error("This is not auto updated IdP", BAD_REQUEST);
+        }
+
+        try {
+            String file = session.getProvider(HttpClientProvider.class).getString(identityProviderModel.getConfig().get(IdentityProviderModel.METADATA_DESCRIPTOR_URL));
+            IdentityProviderModel  idp = ResourcesUtil.getProviderFactoryById(session, identityProviderModel.getProviderId()).parseConfig(session, file, identityProviderModel);
+            idp.getConfig().remove(IdentityProviderModel.LEGACY_HIDE_ON_LOGIN_ATTR);
+            idp.getConfig().put(IdentityProviderModel.LAST_REFRESH_TIME, String.valueOf(Instant.now().toEpochMilli()));
+            session.identityProviders().update(idp);
+        } catch (IOException e) {
+            throw ErrorResponse.error("Problem refresh Identity Provider", BAD_REQUEST);
+        }
+        return Response.noContent().build();
+    }
+
     private void updateIdpFromRep(IdentityProviderRepresentation providerRep, RealmModel realm, KeycloakSession session) {
 
         if (!identityProviderModel.getInternalId().equals(providerRep.getInternalId())) {
@@ -209,6 +239,8 @@ public class IdentityProviderResource {
         if (updated.getConfig() != null && ComponentRepresentation.SECRET_VALUE.equals(updated.getConfig().get("clientSecret"))) {
             updated.getConfig().put("clientSecret", identityProviderModel.getConfig() != null ? identityProviderModel.getConfig().get("clientSecret") : null);
         }
+
+        updated.getConfig().put(IdentityProviderModel.LAST_REFRESH_TIME, identityProviderModel.getConfig().get(IdentityProviderModel.LAST_REFRESH_TIME));
 
         session.identityProviders().update(updated);
         // update in case of legacy hide on login attr was used.
@@ -245,7 +277,7 @@ public class IdentityProviderResource {
     private void createScheduleTask(TimerProvider timer, String alias, long delay, long interval) {
         AutoUpdateIdentityProviders autoUpdateProvider = new AutoUpdateIdentityProviders(alias, realm.getId());
         ClusterAwareScheduledTaskRunner taskRunner = new ClusterAwareScheduledTaskRunner(session.getKeycloakSessionFactory(), autoUpdateProvider, interval);
-        timer.schedule(taskRunner, delay < 0 ? 0 : delay, interval, realm.getId()+"_AutoUpdateIdP_" + alias);
+        timer.schedule(taskRunner, delay < 1000 ? 1000 : delay, interval, realm.getId() + "_AutoUpdateIdP_" + alias);
     }
 
     private static void updateUsersAfterProviderAliasChange(Stream<UserModel> users, String oldProviderId, String newProviderId, RealmModel realm, KeycloakSession session) {
@@ -368,7 +400,7 @@ public class IdentityProviderResource {
     @Path("mappers")
     @Consumes(MediaType.APPLICATION_JSON)
     @Tag(name = KeycloakOpenAPI.Admin.Tags.IDENTITY_PROVIDERS)
-    @Operation( summary = "Add a mapper to identity provider")
+    @Operation(summary = "Add a mapper to identity provider")
     public Response addMapper(IdentityProviderMapperRepresentation mapper) {
         this.auth.realm().requireManageIdentityProviders();
 
