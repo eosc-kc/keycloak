@@ -132,10 +132,9 @@ public class SAMLIdentityProviderFactory extends AbstractIdentityProviderFactory
                 samlIdentityProviderConfig.setLoginHint(false);
 
                 List<String> nameIdFormatList = idpDescriptor.getNameIDFormat();
-                //change NameIDPolicyFormat only for new IdP and for not existing previous NameIDPolicyFormat in nameIdFormatList
-                if (nameIdFormatList != null && !nameIdFormatList.isEmpty() && ( samlIdentityProviderConfig.getNameIDPolicyFormat() == null || !nameIdFormatList.contains(samlIdentityProviderConfig.getNameIDPolicyFormat())))
-                        samlIdentityProviderConfig.setNameIDPolicyFormat(nameIdFormatList.get(0));
-
+                 //change NameIDPolicyFormat only for new IdP and if NameIDPolicyFormat exists and nameIdFormatList
+                if (nameIdFormatList != null && !nameIdFormatList.isEmpty() && ( samlIdentityProviderConfig.getInternalId() == null || samlIdentityProviderConfig.getNameIDPolicyFormat() != null ))
+                            samlIdentityProviderConfig.setNameIDPolicyFormat(nameIdFormatList.get(0));
 
                 List<KeyDescriptorType> keyDescriptor = idpDescriptor.getKeyDescriptor();
                 String defaultCertificate = null;

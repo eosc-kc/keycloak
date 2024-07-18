@@ -31,6 +31,7 @@ Full Keycloak upstream jira issue can be shown if filtered by Fix version.
 - Handling authenticating authority(ies) in user session
 - Add user session name to ClaimToUserSessionNoteMapper
 - Refresh token flow may check oidc idp  refresh token valid
+- Refresh SAML federation and auto-updated IdP
 
 ### Changed
 - Change emailVerified User field with UserAttributeMappers (conditional trust email). [EOSC-KC-70](https://github.com/eosc-kc/keycloak/issues/70)

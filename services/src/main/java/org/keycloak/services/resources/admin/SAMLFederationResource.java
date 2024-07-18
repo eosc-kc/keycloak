@@ -165,6 +165,21 @@ public class SAMLFederationResource {
         return representation;
     }
 
+    @POST
+    @Path("instances/{id}/refresh")
+    public Response resfreshFederation(@PathParam("id") String internalId) {
+        this.auth.realm().requireManageIdentityProviders();
+        //create alias representation
+        FederationModel model = realm.getSAMLFederationById(internalId);
+        if (model == null) {
+            throw new NotFoundException();
+        }
+
+        FederationProvider federationProvider = SAMLFederationProviderFactory.getSAMLFederationProviderFactoryById(session, model.getProviderId()).create(session,model,this.realm.getId());
+        federationProvider.updateSamlEntities();
+        return Response.noContent().build();
+    }
+
     /**
      * Delete the identity provider federation, along with all its IdPs
      *

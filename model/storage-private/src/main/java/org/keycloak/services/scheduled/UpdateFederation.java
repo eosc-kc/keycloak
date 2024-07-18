@@ -28,11 +28,16 @@ public class UpdateFederation implements ScheduledTask {
 		logger.info(" Updating identity providers of federation with id " + federationId + " and realm id " + realmId);
 		RealmModel realm = session.realms().getRealm(realmId);
 		if ( realm != null) {
-            session.getContext().setRealm(realm);
-			FederationModel federationModel = realm.getSAMLFederationById(federationId);
-			SAMLFederationProviderFactory samlFederationProviderFactory = SAMLFederationProviderFactory.getSAMLFederationProviderFactoryById(session, federationModel.getProviderId());
-			FederationProvider federationProvider = samlFederationProviderFactory.create(session, federationModel, realmId);
-			federationProvider.updateSamlEntities();
+			session.getContext().setRealm(realm);
+                        FederationModel federationModel = realm.getSAMLFederationById(federationId);
+			try {
+				SAMLFederationProviderFactory samlFederationProviderFactory = SAMLFederationProviderFactory.getSAMLFederationProviderFactoryById(session, federationModel.getProviderId());
+				FederationProvider federationProvider = samlFederationProviderFactory.create(session, federationModel, realmId);
+				federationProvider.updateSamlEntities();
+			} catch(Exception e){
+					e.printStackTrace();
+					logger.warn("Problem during updating IdPs of federation (id): " + federationModel.getInternalId());
+			}
 		} else {
 			//realm has been removed. remove this task
 			TimerProvider timer = session.getProvider(TimerProvider.class);
