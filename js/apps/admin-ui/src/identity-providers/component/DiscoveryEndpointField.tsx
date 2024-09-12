@@ -1,10 +1,12 @@
 import { FormGroup, Spinner, Switch } from "@patternfly/react-core";
 import debouncePromise from "p-debounce";
 import { ReactNode, useMemo, useState } from "react";
-import { useFormContext } from "react-hook-form";
+import { useFormContext, useWatch} from "react-hook-form";
 import { useTranslation } from "react-i18next";
 import { HelpItem, TextControl } from "@keycloak/keycloak-ui-shared";
 import { useAdminClient } from "../../admin-client";
+import { DefaultSwitchControl } from "../../components/SwitchControl";
+import IdentityProviderRepresentation from "@keycloak/keycloak-admin-client/lib/defs/identityProviderRepresentation";
 
 type DiscoveryEndpointFieldProps = {
   id: string;
@@ -34,7 +36,14 @@ export const DiscoveryEndpointField = ({
     Object.keys(result).map((k) => setValue(`config.${k}`, result[k]));
   };
 
-  const discover = async (fromUrl: string) => {
+  const { control } = useFormContext<IdentityProviderRepresentation>();
+
+  const autoUpdated = useWatch({
+    control,
+    name: "config.autoUpdate",
+  });
+
+ const discover = async (fromUrl: string) => {
     setDiscovering(true);
     try {
       const result = await adminClient.identityProviders.importFromUrl({
@@ -43,12 +52,20 @@ export const DiscoveryEndpointField = ({
       });
       setupForm(result);
       setDiscoveryResult(result);
+      setValue("config.metadataUrl", fromUrl);
     } catch (error) {
       return (error as Error).message;
     } finally {
       setDiscovering(false);
     }
   };
+
+//   useEffect(() => {
+//         if (id === "saml" || id === "oidc") {
+//           setValue("config.metadataUrl", fromUrl);
+//         }
+//       }, [fromUrl]);
+
 
   const discoverDebounced = useMemo(() => debouncePromise(discover, 1000), []);
 
@@ -116,6 +133,11 @@ export const DiscoveryEndpointField = ({
         />
       )}
       {!discovery && fileUpload}
+      <DefaultSwitchControl
+                name="config.autoUpdate"
+                label={t("autoUpdate")}
+                stringify
+       />
       {discovery && !errors.discoveryError && children(true)}
       {!discovery && children(false)}
     </>

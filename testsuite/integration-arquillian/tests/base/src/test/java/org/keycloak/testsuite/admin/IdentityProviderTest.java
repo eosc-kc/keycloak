@@ -57,9 +57,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import javax.xml.crypto.dsig.XMLSignature;
 
+import org.jboss.logging.Logger;
 import org.jboss.resteasy.plugins.providers.multipart.MultipartFormDataOutput;
 import org.junit.Test;
 import org.keycloak.admin.client.resource.IdentityProviderResource;
@@ -116,6 +119,8 @@ import jakarta.ws.rs.core.Response;
  * @author <a href="mailto:sthorger@redhat.com">Stian Thorgersen</a>
  */
 public class IdentityProviderTest extends AbstractAdminTest {
+
+    private static final Logger log = Logger.getLogger(IdentityProviderTest.class);
 
     // Certificate imported from
     private static final String SIGNING_CERT_1 = "MIICmzCCAYMCBgFUYnC0OjANBgkqhkiG9w0BAQsFADARMQ8wDQY"
@@ -1132,6 +1137,43 @@ public class IdentityProviderTest extends AbstractAdminTest {
         Assert.assertEquals(enabledFromMetadata,enabled);
         assertSamlConfig(config, postBindingResponse, true);
         assertThat(config, hasEntry("signingCertificate", expectedSigningCertificates));
+    }
+
+    private void assertSamlConfigAutoUpdated(Map<String, String> config, boolean hasExecuted) {
+        // import endpoint simply converts IDPSSODescriptor into key value pairs.
+        // check that saml-idp-metadata.xml was properly converted into key value pairs
+        //System.out.println(config);
+        Set fields = Stream.of("validateSignature",
+                "singleLogoutServiceUrl",
+                "postBindingLogout",
+                "postBindingResponse",
+                "postBindingAuthnRequest",
+                "singleSignOnServiceUrl",
+                "wantAuthnRequestsSigned",
+                "nameIDPolicyFormat",
+                "signingCertificate",
+                "addExtensionsElementWithKeyInfo",
+                "loginHint",
+                "hideOnLoginPage",
+                "autoUpdate",
+                "metadataDescriptorUrl").collect(Collectors.toSet());
+        //autoupdated has been executed -  add lastRefreshTime
+        if (hasExecuted)
+            fields.add("lastRefreshTime");
+        assertThat(config.keySet(), containsInAnyOrder(fields.toArray()));
+        assertThat(config, hasEntry("validateSignature", "true"));
+        assertThat(config, hasEntry("singleLogoutServiceUrl", "http://localhost:8080/auth/realms/master/protocol/saml"));
+        assertThat(config, hasEntry("postBindingResponse", "true"));
+        assertThat(config, hasEntry("postBindingAuthnRequest", String.valueOf(hasExecuted)));
+        assertThat(config, hasEntry("postBindingLogout", String.valueOf(hasExecuted)));
+        assertThat(config, hasEntry("singleSignOnServiceUrl", "http://localhost:8080/auth/realms/master/protocol/saml"));
+        assertThat(config, hasEntry("wantAuthnRequestsSigned", "true"));
+        assertThat(config, hasEntry("addExtensionsElementWithKeyInfo", "false"));
+        assertThat(config, hasEntry("nameIDPolicyFormat", "urn:oasis:names:tc:SAML:2.0:nameid-format:persistent"));
+        assertThat(config, hasEntry("hideOnLoginPage", "true"));
+        assertThat(config, hasEntry(is("signingCertificate"), notNullValue()));
+        assertThat(config, hasEntry("autoUpdate", "true"));
+        assertThat(config, hasEntry("metadataDescriptorUrl", "http://localhost:8880/saml-idp-metadata"));
     }
 
     private void assertSamlExport(String body, boolean postBindingResponse) throws ParsingException, URISyntaxException {

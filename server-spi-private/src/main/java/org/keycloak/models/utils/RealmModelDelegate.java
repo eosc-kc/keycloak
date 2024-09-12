@@ -1155,4 +1155,24 @@ public class RealmModelDelegate implements RealmModel {
     public void setOrganizationsEnabled(boolean organizationsEnabled) {
         delegate.setOrganizationsEnabled(organizationsEnabled);
     }
+
+    @Override
+    public Long getAutoUpdatedIdPsInterval() {
+        return delegate.getAutoUpdatedIdPsInterval();
+    }
+
+    @Override
+    public void setAutoUpdatedIdPsInterval(Long autoUpdatedIdPsInterval) {
+        delegate.setAutoUpdatedIdPsInterval(autoUpdatedIdPsInterval);
+    }
+
+    @Override
+    public Long getAutoUpdatedIdPsLastRefreshTime() {
+        return delegate.getAutoUpdatedIdPsLastRefreshTime();
+    }
+
+    @Override
+    public void setAutoUpdatedIdPsLastRefreshTime(Long autoUpdatedIdPsLastRefreshTime) {
+        delegate.setAutoUpdatedIdPsLastRefreshTime(autoUpdatedIdPsLastRefreshTime);
+    }
 }

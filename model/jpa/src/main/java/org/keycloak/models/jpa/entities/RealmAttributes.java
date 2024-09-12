@@ -57,4 +57,6 @@ public interface RealmAttributes {
     String FIRST_BROKER_LOGIN_FLOW_ID = "firstBrokerLoginFlowId";
 
     String ORGANIZATIONS_ENABLED = "organizationsEnabled";
+    String AUTO_UPDATED_IDPS_INTERVAL = "autoUpdatedIdPsInterval";
+    String AUTO_UPDATED_IDPS_REFRESH_TIME = "autoUpdatedIdPsLastRefreshTime";
 }

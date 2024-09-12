@@ -20,7 +20,7 @@ import {
   StackItem,
 } from "@patternfly/react-core";
 import { useEffect, useState } from "react";
-import { Controller, FormProvider, useForm } from "react-hook-form";
+import { Controller, FormProvider, useForm, useFormContext } from "react-hook-form";
 import { useTranslation } from "react-i18next";
 import { useAdminClient } from "../admin-client";
 import { DefaultSwitchControl } from "../components/SwitchControl";
@@ -36,6 +36,7 @@ import {
 } from "../util";
 import useIsFeatureEnabled, { Feature } from "../utils/useIsFeatureEnabled";
 import { UIRealmRepresentation } from "./RealmSettingsTabs";
+import { TimeSelector } from "../components/time-selector/TimeSelector";
 
 type RealmSettingsGeneralTabProps = {
   realm: UIRealmRepresentation;
@@ -108,9 +109,14 @@ function RealmSettingsGeneralTabForm({
     setValue,
     formState: { errors },
   } = form;
+  const { watch } = useFormContext();
   const isFeatureEnabled = useIsFeatureEnabled();
   const isOrganizationsEnabled = isFeatureEnabled(Feature.Organizations);
   const isOpenid4vciEnabled = isFeatureEnabled(Feature.OpenId4VCI);
+
+  const autoUpdatedIdPsInterval =  watch("autoUpdatedIdPsInterval") as unknown as string;
+
+  const autoUpdatedIdPsLastRefreshTime = watch("autoUpdatedIdPsLastRefreshTime") as unknown as string;
 
   const setupForm = () => {
     convertToFormValues(realm, setValue);
@@ -239,6 +245,41 @@ function RealmSettingsGeneralTabForm({
               value: t(`unmanagedAttributePolicy.${policy}`),
             }))}
           />
+          <FormGroup
+            label={t("autoUpdatedIdPsInterval")}
+            fieldId="autoUpdatedIdPsInterval"
+            labelIcon={
+              <HelpItem
+                helpText={t("autoUpdatedIdPsIntervalHelp")}
+                fieldLabelId="autoUpdatedIdPsInterval"
+              />
+            }
+          >
+            <Controller
+              name="autoUpdatedIdPsInterval"
+              control={control}
+              render={({ field }) => (
+                <TimeSelector
+                  units={["minute", "hour", "day"]}
+                  value={field.value}
+                  onChange={field.onChange}
+                />
+              )}
+            />
+          </FormGroup>
+           {autoUpdatedIdPsInterval && !!autoUpdatedIdPsLastRefreshTime && (
+             <FormGroup
+               label={t("autoUpdatedIdPsLastRefreshTime")}
+               labelIcon={
+                 <HelpItem
+                   helpText={t("autoUpdatedIdPsLastRefreshTime")}
+                   fieldLabelId="autoUpdatedIdPsLastRefreshTime"
+                 />
+                }
+             >
+             {new Date(parseInt(autoUpdatedIdPsLastRefreshTime)).toLocaleString()}
+             </FormGroup>
+           )}
           <FormGroup
             label={t("endpoints")}
             labelIcon={
