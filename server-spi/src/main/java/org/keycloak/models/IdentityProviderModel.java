@@ -55,6 +55,8 @@ public class IdentityProviderModel implements Serializable {
     public static final String POST_BROKER_LOGIN_FLOW_ID = "postBrokerLoginFlowId";
     public static final String SEARCH = "search";
     public static final String SYNC_MODE = "syncMode";
+    //for SAML and OIDC providers
+    public static final String AUTO_UPDATE = "autoUpdate";
 
     private String internalId;
 

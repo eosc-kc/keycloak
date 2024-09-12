@@ -34,7 +34,7 @@ export const DiscoveryEndpointField = ({
     Object.keys(result).map((k) => setValue(`config.${k}`, result[k]));
   };
 
-  const discover = async (fromUrl: string) => {
+ const discover = async (fromUrl: string) => {
     setDiscovering(true);
     try {
       const result = await adminClient.identityProviders.importFromUrl({

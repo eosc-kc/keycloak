@@ -207,4 +207,9 @@ public class RealmAttributeUpdater extends ServerResourceUpdater<RealmAttributeU
         rep.setRegistrationAllowed(registrationAllowed);
         return this;
     }
+
+    public RealmAttributeUpdater setAutoUpdatedIdPsInterval(Long autoUpdatedIdPsInterval) {
+        rep.setAutoUpdatedIdPsInterval(autoUpdatedIdPsInterval);
+        return this;
+    }
 }

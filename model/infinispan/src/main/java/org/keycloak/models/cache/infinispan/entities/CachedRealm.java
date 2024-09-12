@@ -72,6 +72,8 @@ public class CachedRealm extends AbstractExtendableRevisioned {
     protected boolean identityFederationEnabled;
     protected boolean editUsernameAllowed;
     protected boolean organizationsEnabled;
+    protected Long autoUpdatedIdPsInterval;
+    protected Long autoUpdatedIdPsLastRefreshTime;
     //--- brute force settings
     protected boolean bruteForceProtected;
     protected boolean permanentLockout;
@@ -740,5 +742,13 @@ public class CachedRealm extends AbstractExtendableRevisioned {
 
     public Map<String, RequiredActionConfigModel> getRequiredActionProviderConfigs() {
         return requiredActionProviderConfigs;
+    }
+
+    public Long getAutoUpdatedIdPsInterval() {
+        return autoUpdatedIdPsInterval;
+    }
+
+    public Long getAutoUpdatedIdPsLastRefreshTime() {
+        return autoUpdatedIdPsLastRefreshTime;
     }
 }
