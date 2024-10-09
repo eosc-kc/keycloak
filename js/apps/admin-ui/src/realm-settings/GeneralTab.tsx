@@ -20,7 +20,7 @@ import {
   StackItem,
 } from "@patternfly/react-core";
 import { useEffect, useState } from "react";
-import { Controller, FormProvider, useForm, useFormContext } from "react-hook-form";
+import { Controller, FormProvider, useForm, useFormContext, useWatch } from "react-hook-form";
 import { useTranslation } from "react-i18next";
 import { useAdminClient } from "../admin-client";
 import { DefaultSwitchControl } from "../components/SwitchControl";
@@ -109,14 +109,19 @@ function RealmSettingsGeneralTabForm({
     setValue,
     formState: { errors },
   } = form;
-  const { watch } = useFormContext();
   const isFeatureEnabled = useIsFeatureEnabled();
   const isOrganizationsEnabled = isFeatureEnabled(Feature.Organizations);
   const isOpenid4vciEnabled = isFeatureEnabled(Feature.OpenId4VCI);
 
-  const autoUpdatedIdPsInterval =  watch("autoUpdatedIdPsInterval") as unknown as string;
+  const autoUpdatedIdPsInterval = useWatch({
+     control,
+     name: "autoUpdatedIdPsInterval",
+  });
 
-  const autoUpdatedIdPsLastRefreshTime = watch("autoUpdatedIdPsLastRefreshTime") as unknown as string;
+  const autoUpdatedIdPsLastRefreshTime = useWatch({
+       control,
+       name: "autoUpdatedIdPsLastRefreshTime",
+   });
 
   const setupForm = () => {
     convertToFormValues(realm, setValue);
@@ -261,7 +266,7 @@ function RealmSettingsGeneralTabForm({
               render={({ field }) => (
                 <TimeSelector
                   units={["minute", "hour", "day"]}
-                  value={field.value}
+                  value={field.value!}
                   onChange={field.onChange}
                 />
               )}
@@ -277,7 +282,7 @@ function RealmSettingsGeneralTabForm({
                  />
                 }
              >
-             {new Date(parseInt(autoUpdatedIdPsLastRefreshTime)).toLocaleString()}
+             {new Date(autoUpdatedIdPsLastRefreshTime).toLocaleString()}
              </FormGroup>
            )}
           <FormGroup

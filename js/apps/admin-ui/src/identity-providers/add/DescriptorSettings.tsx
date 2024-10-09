@@ -70,8 +70,7 @@ const Fields = ({ readOnly }: DescriptorSettingsProps) => {
           readOnly={readOnly}
           rules={{
             required: {
-              value: useMetadataDescriptorUrl === "true" || autoUpdated === "true",
-              message: t("required"),
+              value: useMetadataDescriptorUrl === "true" || autoUpdated === "true",message: t("required")
             }
           }}
         />
