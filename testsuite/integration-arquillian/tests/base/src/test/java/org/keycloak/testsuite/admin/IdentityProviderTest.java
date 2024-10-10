@@ -1344,7 +1344,7 @@ public class IdentityProviderTest extends AbstractAdminTest {
     @Test
     public void testAutoUpdatedSAMLIdP() throws Exception {
 
-        Undertow httpService = Undertow.builder().addHttpListener(8880, "localhost", new HttpHandler() {
+        Undertow httpService = Undertow.builder().addHttpListener(8888, "localhost", new HttpHandler() {
             @Override
             public void handleRequest(HttpServerExchange exchange) throws Exception {
                 if (exchange.getRequestURI().endsWith("/saml-idp-metadata")) {
@@ -1395,7 +1395,7 @@ public class IdentityProviderTest extends AbstractAdminTest {
 
     @Test
     public void testAutoUpdatedOIDCIdP() throws Exception {
-        Undertow httpService = Undertow.builder().addHttpListener(8880, "localhost", new HttpHandler() {
+        Undertow httpService = Undertow.builder().addHttpListener(8889, "localhost", new HttpHandler() {
             @Override
             public void handleRequest(HttpServerExchange exchange) throws Exception {
                 if (exchange.getRequestURI().endsWith("/oidc-idp")) {
