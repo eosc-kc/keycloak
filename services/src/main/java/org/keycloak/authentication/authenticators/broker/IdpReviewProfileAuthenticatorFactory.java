@@ -104,7 +104,7 @@ public class IdpReviewProfileAuthenticatorFactory implements AuthenticatorFactor
         property.setName(UPDATE_PROFILE_ON_FIRST_LOGIN);
         property.setLabel("Update Profile on First Login");
         property.setType(ProviderConfigProperty.LIST_TYPE);
-        List<String> updateProfileValues = Arrays.asList(IdentityProviderRepresentation.UPFLM_ON, IdentityProviderRepresentation.UPFLM_MISSING, IdentityProviderRepresentation.UPFLM_OFF);
+        List<String> updateProfileValues = Arrays.asList(IdentityProviderRepresentation.UPFLM_ON, IdentityProviderRepresentation.UPFLM_MISSING, IdentityProviderRepresentation.UPFLM_MISSING_ONLY, IdentityProviderRepresentation.UPFLM_OFF);
         property.setOptions(updateProfileValues);
         property.setDefaultValue(IdentityProviderRepresentation.UPFLM_MISSING);
         property.setHelpText("Define conditions under which a user has to review and update his profile after first-time login. Value 'On' means that"

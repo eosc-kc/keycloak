@@ -35,7 +35,7 @@ import java.util.List;
 public interface LoginFormsProvider extends Provider {
 
     String UPDATE_PROFILE_CONTEXT_ATTR = "updateProfileCtx";
-    String IS_UPDATE_PROFILE = "isUpdateProfile";
+    String UPDATE_PROFILE_FIRST_LOGIN = "updateProfileFirstLogin";
     String TERMS_ACCEPTANCE_REQUIRED = "termsAcceptanceRequired";
 
     String IDENTITY_PROVIDER_BROKER_CONTEXT = "identityProviderBrokerCtx";

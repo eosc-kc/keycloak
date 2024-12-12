@@ -64,14 +64,15 @@ public class IdpConfirmLinkAuthenticator extends AbstractIdpAuthenticator {
         MultivaluedMap<String, String> formData = context.getHttpRequest().getDecodedFormParameters();
 
         String action = formData.getFirst("submitAction");
-        if (action != null && action.equals("updateProfile")) {
-            context.resetFlow(() -> {
-                AuthenticationSessionModel authSession = context.getAuthenticationSession();
-
-                serializedCtx.saveToAuthenticationSession(authSession, BROKERED_CONTEXT_NOTE);
-                authSession.setAuthNote(ENFORCE_UPDATE_PROFILE, "true");
-            });
-        } else if (action != null && action.equals("linkAccount")) {
+//        if (action != null && action.equals("updateProfile")) {
+//            context.resetFlow(() -> {
+//                AuthenticationSessionModel authSession = context.getAuthenticationSession();
+//
+//                serializedCtx.saveToAuthenticationSession(authSession, BROKERED_CONTEXT_NOTE);
+//                authSession.setAuthNote(ENFORCE_UPDATE_PROFILE, "true");
+//            });
+//        } else
+        if (action != null && action.equals("linkAccount")) {
             context.success();
         } else {
             throw new AuthenticationFlowException("Unknown action: " + action,

@@ -12,7 +12,7 @@
                     </div>
                     <div class="${properties.kcInputWrapperClass!}">
                         <input type="text" id="username" name="username" value="${(user.username!'')}"
-                               class="${properties.kcInputClass!}" <#if isUpdateProfile?has_content && !isUpdateProfile>readonly</#if>
+                               class="${properties.kcInputClass!}" <#if (updateProfileFirstLogin?has_content && updateProfileFirstLogin == 'off') || ( updateProfileFirstLogin?has_content && updateProfileFirstLogin == 'missing-only' && user.username?has_content)>disabled</#if>
                                aria-invalid="<#if messagesPerField.existsError('username')>true</#if>"
                         />
 
@@ -31,7 +31,7 @@
                     </div>
                     <div class="${properties.kcInputWrapperClass!}">
                         <input type="text" id="email" name="email" value="${(user.email!'')}"
-                               class="${properties.kcInputClass!}" <#if isUpdateProfile?has_content && !isUpdateProfile>readonly</#if>
+                               class="${properties.kcInputClass!}" <#if (updateProfileFirstLogin?has_content && updateProfileFirstLogin == 'off') || ( updateProfileFirstLogin?has_content && updateProfileFirstLogin == 'missing-only' && user.email?has_content) >disabled</#if>
                                aria-invalid="<#if messagesPerField.existsError('email')>true</#if>"
                         />
 
@@ -50,7 +50,7 @@
                 </div>
                 <div class="${properties.kcInputWrapperClass!}">
                     <input type="text" id="firstName" name="firstName" value="${(user.firstName!'')}"
-                           class="${properties.kcInputClass!}" <#if isUpdateProfile?has_content && !isUpdateProfile>readonly</#if>
+                           class="${properties.kcInputClass!}" <#if (updateProfileFirstLogin?has_content && updateProfileFirstLogin == 'off') || ( updateProfileFirstLogin?has_content && updateProfileFirstLogin == 'missing-only' && user.firstName?has_content)>disabled</#if>
                            aria-invalid="<#if messagesPerField.existsError('firstName')>true</#if>"
                     />
 
@@ -68,7 +68,7 @@
                 </div>
                 <div class="${properties.kcInputWrapperClass!}">
                     <input type="text" id="lastName" name="lastName" value="${(user.lastName!'')}"
-                           class="${properties.kcInputClass!}" <#if isUpdateProfile?has_content && !isUpdateProfile>readonly</#if>
+                           class="${properties.kcInputClass!}" <#if (updateProfileFirstLogin?has_content && updateProfileFirstLogin == 'off') || ( updateProfileFirstLogin?has_content && updateProfileFirstLogin == 'missing-only' && user.lastName?has_content)>disabled</#if>
                            aria-invalid="<#if messagesPerField.existsError('lastName')>true</#if>"
                     />
 

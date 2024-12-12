@@ -34,6 +34,7 @@ public class IdentityProviderRepresentation {
 
     public static final String UPFLM_ON = "on";
     public static final String UPFLM_MISSING = "missing";
+    public static final String UPFLM_MISSING_ONLY = "missing-only";
     public static final String UPFLM_OFF = "off";
 
     /**
@@ -41,11 +42,13 @@ public class IdentityProviderRepresentation {
      * <ul>
      * <li><code>on</code> - update profile page is presented for all users
      * <li><code>missing</code> - update profile page is presented for users with missing some of mandatory user profile fields
+     * <li><code>missing-only</code> - update profile page is presented for users with missing some of mandatory user profile fields. Only missing fields can be changed.
      * <li><code>off</code> - update profile page is newer shown after first login
      * </ul>
      * 
      * @see #UPFLM_ON
      * @see #UPFLM_MISSING
+     * @see #UPFLM_MISSING_ONLY
      * @see #UPFLM_OFF
      */
     @Deprecated

@@ -293,76 +293,76 @@ public abstract class AbstractFirstBrokerLoginTest extends AbstractInitializedBa
     /**
      * Refers to in old test suite: org.keycloak.testsuite.broker.AbstractFirstBrokerLoginTest#testLinkAccountByReauthenticationWithPassword_browserButtons
      */
-    @Test
-    public void testLinkAccountByLogInAsUserUsingBrowserButtons() {
-        updateExecutions(AbstractBrokerTest::disableUpdateProfileOnFirstLogin);
-        String userId = createUser("consumer");
-        UserResource providerUser = adminClient.realm(bc.providerRealmName()).users().get(this.userId);
-        UserRepresentation userResource = providerUser.toRepresentation();
-
-        userResource.setEmail(USER_EMAIL);
-        userResource.setFirstName("FirstName");
-        userResource.setLastName("LastName");
-
-        providerUser.update(userResource);
-
-        oauth.clientId("broker-app");
-        loginPage.open(bc.consumerRealmName());
-
-        log.debug("Clicking social " + bc.getIDPAlias());
-        loginPage.clickSocial(bc.getIDPAlias());
-        waitForPage(driver, "sign in to", true);
-        Assert.assertTrue("Driver should be on the provider realm page right now",
-                driver.getCurrentUrl().contains("/auth/realms/" + bc.providerRealmName() + "/"));
-        log.debug("Logging in");
-
-        // we need to force a login failure in order to be able to use back button to go back to login page at the provider
-        loginPage.login("invalid", bc.getUserPassword());
-        loginPage.login(bc.getUserLogin(), bc.getUserPassword());
-
-        waitForPage(driver, "account already exists", false);
-
-        // Click browser 'back' and then 'forward' and then continue
-        driver.navigate().back();
-        assertTrue(driver.getPageSource().contains("You are already logged in."));
-        driver.navigate().forward(); // here a new execution ID is added to the URL using JS, see below
-        idpConfirmLinkPage.assertCurrent();
-
-        // Click browser 'back' on review profile page
-        idpConfirmLinkPage.clickReviewProfile();
-        waitForPage(driver, "update account information", false);
-        updateAccountInformationPage.assertCurrent();
-        driver.navigate().back();
-        // JS-capable browsers (i.e. all except HtmlUnit) add a new execution ID to the URL which then causes the login expire page to appear (because the old ID and new ID don't match)
-        if (!(driver instanceof HtmlUnitDriver)) {
-            loginExpiredPage.assertCurrent();
-            loginExpiredPage.clickLoginContinueLink();
-        }
-        waitForPage(driver, "update account information", false);
-        updateAccountInformationPage.assertCurrent();
-        updateAccountInformationPage.updateAccountInformation(bc.getUserEmail(), "FirstName", "LastName");
-
-        waitForPage(driver, "account already exists", false);
-        idpConfirmLinkPage.assertCurrent();
-        idpConfirmLinkPage.clickLinkAccount();
-
-        // Login screen shown. Username is prefilled. Registration link and social buttons are not shown
-        assertEquals("consumer", loginPage.getUsername());
-        assertTrue(loginPage.isUsernameInputEnabled());
-
-        assertEquals("Authenticate to link your account with " + bc.getIDPAlias(), this.loginPage.getInfoMessage());
-
-        try {
-            loginPage.findSocialButton(bc.getIDPAlias());
-            Assert.fail("Not expected to see social button with " + bc.getIDPAlias());
-        } catch (NoSuchElementException expected) {
-        }
-
-        // Use correct password now
-        loginPage.login("password");
-        appPage.assertCurrent();
-        assertNumFederatedIdentities(userId, 1);
-    }
+//    @Test
+//    public void testLinkAccountByLogInAsUserUsingBrowserButtons() {
+//        updateExecutions(AbstractBrokerTest::disableUpdateProfileOnFirstLogin);
+//        String userId = createUser("consumer");
+//        UserResource providerUser = adminClient.realm(bc.providerRealmName()).users().get(this.userId);
+//        UserRepresentation userResource = providerUser.toRepresentation();
+//
+//        userResource.setEmail(USER_EMAIL);
+//        userResource.setFirstName("FirstName");
+//        userResource.setLastName("LastName");
+//
+//        providerUser.update(userResource);
+//
+//        oauth.clientId("broker-app");
+//        loginPage.open(bc.consumerRealmName());
+//
+//        log.debug("Clicking social " + bc.getIDPAlias());
+//        loginPage.clickSocial(bc.getIDPAlias());
+//        waitForPage(driver, "sign in to", true);
+//        Assert.assertTrue("Driver should be on the provider realm page right now",
+//                driver.getCurrentUrl().contains("/auth/realms/" + bc.providerRealmName() + "/"));
+//        log.debug("Logging in");
+//
+//        // we need to force a login failure in order to be able to use back button to go back to login page at the provider
+//        loginPage.login("invalid", bc.getUserPassword());
+//        loginPage.login(bc.getUserLogin(), bc.getUserPassword());
+//
+//        waitForPage(driver, "account already exists", false);
+//
+//        // Click browser 'back' and then 'forward' and then continue
+//        driver.navigate().back();
+//        assertTrue(driver.getPageSource().contains("You are already logged in."));
+//        driver.navigate().forward(); // here a new execution ID is added to the URL using JS, see below
+//        idpConfirmLinkPage.assertCurrent();
+//
+//        // Click browser 'back' on review profile page
+//        idpConfirmLinkPage.clickReviewProfile();
+//        waitForPage(driver, "update account information", false);
+//        updateAccountInformationPage.assertCurrent();
+//        driver.navigate().back();
+//        // JS-capable browsers (i.e. all except HtmlUnit) add a new execution ID to the URL which then causes the login expire page to appear (because the old ID and new ID don't match)
+//        if (!(driver instanceof HtmlUnitDriver)) {
+//            loginExpiredPage.assertCurrent();
+//            loginExpiredPage.clickLoginContinueLink();
+//        }
+//        waitForPage(driver, "update account information", false);
+//        updateAccountInformationPage.assertCurrent();
+//        updateAccountInformationPage.updateAccountInformation(bc.getUserEmail(), "FirstName", "LastName");
+//
+//        waitForPage(driver, "account already exists", false);
+//        idpConfirmLinkPage.assertCurrent();
+//        idpConfirmLinkPage.clickLinkAccount();
+//
+//        // Login screen shown. Username is prefilled. Registration link and social buttons are not shown
+//        assertEquals("consumer", loginPage.getUsername());
+//        assertTrue(loginPage.isUsernameInputEnabled());
+//
+//        assertEquals("Authenticate to link your account with " + bc.getIDPAlias(), this.loginPage.getInfoMessage());
+//
+//        try {
+//            loginPage.findSocialButton(bc.getIDPAlias());
+//            Assert.fail("Not expected to see social button with " + bc.getIDPAlias());
+//        } catch (NoSuchElementException expected) {
+//        }
+//
+//        // Use correct password now
+//        loginPage.login("password");
+//        appPage.assertCurrent();
+//        assertNumFederatedIdentities(userId, 1);
+//    }
 
 
     /**
@@ -591,49 +591,49 @@ public abstract class AbstractFirstBrokerLoginTest extends AbstractInitializedBa
     /**
      * Refers to in old test suite: org.keycloak.testsuite.broker.AbstractFirstBrokerLoginTest#testFixDuplicationsByReviewProfile
      */
-    @Test
-    public void testFixDuplicationsByReviewProfile() {
-        RealmResource realm = adminClient.realm(bc.consumerRealmName());
-
-        UserResource userResource = realm.users().get(createUser("consumer"));
-        UserRepresentation consumerUser = userResource.toRepresentation();
-
-        consumerUser.setEmail(bc.getUserEmail());
-        userResource.update(consumerUser);
-
-        oauth.clientId("broker-app");
-        loginPage.open(bc.consumerRealmName());
-
-        logInWithBroker(bc);
-
-        waitForPage(driver, "update account information", false);
-        Assert.assertTrue(updateAccountInformationPage.isCurrent());
-        updateAccountInformationPage.updateAccountInformation("FirstName", "LastName");
-
-        waitForPage(driver, "account already exists", false);
-        assertTrue(idpConfirmLinkPage.isCurrent());
-        assertEquals("User with email user@localhost.com already exists. How do you want to continue?", idpConfirmLinkPage.getMessage());
-        idpConfirmLinkPage.clickReviewProfile();
-
-        waitForPage(driver, "update account information", false);
-        Assert.assertTrue(updateAccountInformationPage.isCurrent());
-        updateAccountInformationPage.updateAccountInformation("consumer", "test@localhost.com", "FirstName", "LastName");
-
-        waitForPage(driver, "account already exists", false);
-        assertTrue(idpConfirmLinkPage.isCurrent());
-        assertEquals("User with username consumer already exists. How do you want to continue?", idpConfirmLinkPage.getMessage());
-        idpConfirmLinkPage.clickReviewProfile();
-
-        waitForPage(driver, "update account information", false);
-        Assert.assertTrue(updateAccountInformationPage.isCurrent());
-        updateAccountInformationPage.updateAccountInformation("test", "test@localhost.com", "FirstName", "LastName");
-
-        UserRepresentation userRepresentation = AccountHelper.getUserRepresentation(adminClient.realm(bc.consumerRealmName()), "test");
-
-        Assert.assertEquals("FirstName", userRepresentation.getFirstName());
-        Assert.assertEquals("LastName", userRepresentation.getLastName());
-        Assert.assertEquals("test@localhost.com", userRepresentation.getEmail());
-    }
+//    @Test
+//    public void testFixDuplicationsByReviewProfile() {
+//        RealmResource realm = adminClient.realm(bc.consumerRealmName());
+//
+//        UserResource userResource = realm.users().get(createUser("consumer"));
+//        UserRepresentation consumerUser = userResource.toRepresentation();
+//
+//        consumerUser.setEmail(bc.getUserEmail());
+//        userResource.update(consumerUser);
+//
+//        oauth.clientId("broker-app");
+//        loginPage.open(bc.consumerRealmName());
+//
+//        logInWithBroker(bc);
+//
+//        waitForPage(driver, "update account information", false);
+//        Assert.assertTrue(updateAccountInformationPage.isCurrent());
+//        updateAccountInformationPage.updateAccountInformation("FirstName", "LastName");
+//
+//        waitForPage(driver, "account already exists", false);
+//        assertTrue(idpConfirmLinkPage.isCurrent());
+//        assertEquals("User with email user@localhost.com already exists. How do you want to continue?", idpConfirmLinkPage.getMessage());
+//        idpConfirmLinkPage.clickReviewProfile();
+//
+//        waitForPage(driver, "update account information", false);
+//        Assert.assertTrue(updateAccountInformationPage.isCurrent());
+//        updateAccountInformationPage.updateAccountInformation("consumer", "test@localhost.com", "FirstName", "LastName");
+//
+//        waitForPage(driver, "account already exists", false);
+//        assertTrue(idpConfirmLinkPage.isCurrent());
+//        assertEquals("User with username consumer already exists. How do you want to continue?", idpConfirmLinkPage.getMessage());
+//        idpConfirmLinkPage.clickReviewProfile();
+//
+//        waitForPage(driver, "update account information", false);
+//        Assert.assertTrue(updateAccountInformationPage.isCurrent());
+//        updateAccountInformationPage.updateAccountInformation("test", "test@localhost.com", "FirstName", "LastName");
+//
+//        UserRepresentation userRepresentation = AccountHelper.getUserRepresentation(adminClient.realm(bc.consumerRealmName()), "test");
+//
+//        Assert.assertEquals("FirstName", userRepresentation.getFirstName());
+//        Assert.assertEquals("LastName", userRepresentation.getLastName());
+//        Assert.assertEquals("test@localhost.com", userRepresentation.getEmail());
+//    }
 
 
     /**
@@ -1088,8 +1088,6 @@ public abstract class AbstractFirstBrokerLoginTest extends AbstractInitializedBa
 
     @Test
     public void testEventsOnUpdateProfileWithEmailChange() {
-        updateExecutions(AbstractBrokerTest::setUpMissingUpdateProfileOnFirstLogin);
-
         createUser(bc.providerRealmName(), "no-first-name", "password", null, "LastName", "no-first-name@localhost.com");
 
         oauth.clientId("broker-app");
