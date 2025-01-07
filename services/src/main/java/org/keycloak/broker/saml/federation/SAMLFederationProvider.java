@@ -373,7 +373,9 @@ public class SAMLFederationProvider extends AbstractIdPFederationProvider <SAMLF
 				}
 			});
 
-			model.setLastMetadataRefreshTimestamp(new Date().getTime());
+			if (!reExecute) {
+				model.setLastMetadataRefreshTimestamp(new Date().getTime());
+			}
 			realm.taskExecutionFederation(model, addedIdps, updatedIdps, existingIdps);
 			if (reExecute) {
 				TimerProvider timer = session.getProvider(TimerProvider.class);

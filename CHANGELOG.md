@@ -13,6 +13,7 @@ Our Keycloak version is working well with PostgreSQL database. For using other S
 ## [Unreleased]
 ### Fixed
 - Handling of changed profile information during sign-up when review profile is set to "missing" or T&C is requested
+- Add value to lastrefresh in saml federation only after SAML federation is finished adding all IdPs
 
 ## [22.0.11-1.11] - 2024-11-19
 
