@@ -40,6 +40,7 @@ import org.keycloak.dom.saml.v2.protocol.AuthnRequestType;
 import org.keycloak.dom.saml.v2.protocol.LogoutRequestType;
 import org.keycloak.dom.saml.v2.protocol.ResponseType;
 import org.keycloak.events.EventBuilder;
+import org.keycloak.models.Constants;
 import org.keycloak.models.FederatedIdentityModel;
 import org.keycloak.models.IdentityProviderMapperModel;
 import org.keycloak.models.KeyManager;
@@ -47,6 +48,7 @@ import org.keycloak.models.KeycloakSession;
 import org.keycloak.models.RealmModel;
 import org.keycloak.models.UserSessionModel;
 import org.keycloak.protocol.oidc.OIDCLoginProtocol;
+import org.keycloak.protocol.oidc.utils.AcrUtils;
 import org.keycloak.protocol.saml.JaxrsSAML2BindingBuilder;
 import org.keycloak.protocol.saml.SamlProtocol;
 import org.keycloak.protocol.saml.SamlService;
@@ -146,6 +148,14 @@ public class SAMLIdentityProvider extends AbstractIdentityProvider<SAMLIdentityP
 
             for (String authnContextDeclRef : getAuthnContextDeclRefUris())
                 requestedAuthnContext.addAuthnContextDeclRef(authnContextDeclRef);
+
+            String requestedLoa = request.getAuthenticationSession().getClientNote(Constants.REQUESTED_LEVEL_OF_AUTHENTICATION);
+            if (getConfig().isPassSetMfa() && requestedLoa != null) {
+                Entry<String, Integer> loaEntry = AcrUtils.getAcrLoaMap(request.getAuthenticationSession().getClient()).entrySet().stream().filter(entry -> entry.getValue().equals(Integer.valueOf(requestedLoa))).findFirst().get();
+                if (loaEntry != null) {
+                    requestedAuthnContext.addAuthnContextClassRef(loaEntry.getKey());
+                }
+            }
 
             Integer attributeConsumingServiceIndex = getConfig().isOmitAttributeConsumingServiceIndexAuthn() ? null : getConfig().getAttributeConsumingServiceIndex();
 

@@ -367,10 +367,10 @@ public abstract class AbstractOAuth2IdentityProvider<C extends OAuth2IdentityPro
             uriBuilder.queryParam(OAuth2Constants.PROMPT, prompt);
         }
 
-        String acr = request.getAuthenticationSession().getClientNote(OAuth2Constants.ACR_VALUES);
-        if (acr != null) {
-            uriBuilder.queryParam(OAuth2Constants.ACR_VALUES, acr);
-        }
+//        String acr = request.getAuthenticationSession().getClientNote(OAuth2Constants.ACR_VALUES);
+//        if (acr != null) {
+//            uriBuilder.queryParam(OAuth2Constants.ACR_VALUES, acr);
+//        }
         String forwardParameterConfig = getConfig().getForwardParameters() != null ? getConfig().getForwardParameters(): "";
         List<String> forwardParameters = Arrays.asList(forwardParameterConfig.split("\\s*,\\s*"));
         for(String forwardParameter: forwardParameters) {
