@@ -126,42 +126,41 @@ public class IdpReviewProfileAuthenticator extends AbstractIdpAuthenticator {
         event.event(EventType.UPDATE_PROFILE).detail(Details.CONTEXT, UserProfileContext.IDP_REVIEW.name());
         MultivaluedMap<String, String> formData = context.getHttpRequest().getDecodedFormParameters();
         String updateProfileFirstLogin = calculateUpdateProfileFirstLogin(context);
+        //for security reason keep old values equal to broken data
+        if (IdentityProviderRepresentation.UPFLM_MISSING_ONLY.equals(updateProfileFirstLogin)) {
+            if (userCtx.getUsername() != null) {
+                formData.put("username", Stream.of(userCtx.getUsername()).toList());
+            }
+            if (userCtx.getEmail() != null) {
+                formData.put("email", Stream.of(userCtx.getEmail()).toList());
+            }
+            if (userCtx.getFirstName() != null) {
+                formData.put("firstName", Stream.of(userCtx.getFirstName()).toList());
+            }
+            if (userCtx.getLastName() != null) {
+                formData.put("lastName", Stream.of(userCtx.getLastName()).toList());
+            }
+        } else  if (IdentityProviderRepresentation.UPFLM_OFF.equals(updateProfileFirstLogin)) {
+            formData.put("username", Stream.of(userCtx.getUsername()).toList());
+            if (userCtx.getEmail() != null) {
+                formData.put("email", Stream.of(userCtx.getEmail()).toList());
+            } else {
+                formData.remove("email");
+            }
+            if (userCtx.getFirstName() != null) {
+                formData.put("firstName", Stream.of(userCtx.getFirstName()).toList());
+            } else {
+                formData.remove("firstName");
+            }
+            if (userCtx.getLastName() != null) {
+                formData.put("lastName", Stream.of(userCtx.getLastName()).toList());
+            }  else {
+                formData.remove("lastName");
+            }
+        }
 
         if (enabledRequiredAction && ! formData.containsKey(TERMS_FIELD)) {
-            //for security reason keep old values equal to broken data
-            if (IdentityProviderRepresentation.UPFLM_MISSING_ONLY.equals(updateProfileFirstLogin)) {
-                if (userCtx.getUsername() != null) {
-                    formData.put("username", Stream.of(userCtx.getUsername()).toList());
-                }
-                if (userCtx.getEmail() != null) {
-                    formData.put("email", Stream.of(userCtx.getEmail()).toList());
-                }
-                if (userCtx.getFirstName() != null) {
-                    formData.put("firstName", Stream.of(userCtx.getFirstName()).toList());
-                }
-                if (userCtx.getLastName() != null) {
-                    formData.put("lastName", Stream.of(userCtx.getLastName()).toList());
-                }
-            } else  if (IdentityProviderRepresentation.UPFLM_OFF.equals(updateProfileFirstLogin)) {
-                formData.put("username", Stream.of(userCtx.getUsername()).toList());
-                if (userCtx.getEmail() != null) {
-                    formData.put("email", Stream.of(userCtx.getEmail()).toList());
-                } else {
-                    formData.remove("email");
-                }
-                if (userCtx.getFirstName() != null) {
-                    formData.put("firstName", Stream.of(userCtx.getFirstName()).toList());
-                } else {
-                    formData.remove("firstName");
-                }
-                if (userCtx.getLastName() != null) {
-                    formData.put("lastName", Stream.of(userCtx.getLastName()).toList());
-                }  else {
-                    formData.remove("lastName");
-                }
-            }
-
-            Response challengeForTerms = context.form()
+           Response challengeForTerms = context.form()
                     .setErrors(Collections.singletonList(new FormMessage(TERMS_FIELD, "termsAcceptanceRequired")))
                     .setAttribute(LoginFormsProvider.UPDATE_PROFILE_CONTEXT_ATTR, userCtx)
                     .setAttribute(LoginFormsProvider.UPDATE_PROFILE_FIRST_LOGIN, updateProfileFirstLogin)
@@ -223,38 +222,7 @@ public class IdpReviewProfileAuthenticator extends AbstractIdpAuthenticator {
             attributes.remove(TERMS_FIELD);
             attributes.put(TermsAndConditions.USER_ATTRIBUTE, Arrays.asList(Integer.toString(Time.currentTime())));
         }
-        //for security reason keep old values equal to broken data
-        if (IdentityProviderRepresentation.UPFLM_MISSING_ONLY.equals(updateProfileFirstLogin)) {
-            if (userCtx.getUsername() != null) {
-                attributes.put("username", Stream.of(userCtx.getUsername()).toList());
-            }
-            if (userCtx.getEmail() != null) {
-                attributes.put("email", Stream.of(userCtx.getEmail()).toList());
-            }
-            if (userCtx.getFirstName() != null) {
-                attributes.put("firstName", Stream.of(userCtx.getFirstName()).toList());
-            }
-            if (userCtx.getLastName() != null) {
-                attributes.put("lastName", Stream.of(userCtx.getLastName()).toList());
-            }
-        } else  if (IdentityProviderRepresentation.UPFLM_OFF.equals(updateProfileFirstLogin)) {
-            attributes.put("username", Stream.of(userCtx.getUsername()).toList());
-            if (userCtx.getEmail() != null) {
-                attributes.put("email", Stream.of(userCtx.getEmail()).toList());
-            } else {
-                attributes.remove("email");
-            }
-            if (userCtx.getFirstName() != null) {
-                attributes.put("firstName", Stream.of(userCtx.getFirstName()).toList());
-            } else {
-                attributes.remove("firstName");
-            }
-            if (userCtx.getLastName() != null) {
-                attributes.put("lastName", Stream.of(userCtx.getLastName()).toList());
-            }  else {
-                attributes.remove("lastName");
-            }
-        }
+
         UserProfile profile = profileProvider.create(UserProfileContext.IDP_REVIEW, attributes, updatedProfile, formData.containsKey(TERMS_FIELD));
 
         try {
