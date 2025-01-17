@@ -128,6 +128,39 @@ public class IdpReviewProfileAuthenticator extends AbstractIdpAuthenticator {
         String updateProfileFirstLogin = calculateUpdateProfileFirstLogin(context);
 
         if (enabledRequiredAction && ! formData.containsKey(TERMS_FIELD)) {
+            //for security reason keep old values equal to broken data
+            if (IdentityProviderRepresentation.UPFLM_MISSING_ONLY.equals(updateProfileFirstLogin)) {
+                if (userCtx.getUsername() != null) {
+                    formData.put("username", Stream.of(userCtx.getUsername()).toList());
+                }
+                if (userCtx.getEmail() != null) {
+                    formData.put("email", Stream.of(userCtx.getEmail()).toList());
+                }
+                if (userCtx.getFirstName() != null) {
+                    formData.put("firstName", Stream.of(userCtx.getFirstName()).toList());
+                }
+                if (userCtx.getLastName() != null) {
+                    formData.put("lastName", Stream.of(userCtx.getLastName()).toList());
+                }
+            } else  if (IdentityProviderRepresentation.UPFLM_OFF.equals(updateProfileFirstLogin)) {
+                formData.put("username", Stream.of(userCtx.getUsername()).toList());
+                if (userCtx.getEmail() != null) {
+                    formData.put("email", Stream.of(userCtx.getEmail()).toList());
+                } else {
+                    formData.remove("email");
+                }
+                if (userCtx.getFirstName() != null) {
+                    formData.put("firstName", Stream.of(userCtx.getFirstName()).toList());
+                } else {
+                    formData.remove("firstName");
+                }
+                if (userCtx.getLastName() != null) {
+                    formData.put("lastName", Stream.of(userCtx.getLastName()).toList());
+                }  else {
+                    formData.remove("lastName");
+                }
+            }
+
             Response challengeForTerms = context.form()
                     .setErrors(Collections.singletonList(new FormMessage(TERMS_FIELD, "termsAcceptanceRequired")))
                     .setAttribute(LoginFormsProvider.UPDATE_PROFILE_CONTEXT_ATTR, userCtx)
@@ -135,7 +168,6 @@ public class IdpReviewProfileAuthenticator extends AbstractIdpAuthenticator {
                     .setAttribute(LoginFormsProvider.TERMS_ACCEPTANCE_REQUIRED, enabledRequiredAction)
                     .setFormData(formData)
                     .createUpdateProfilePage();
-
             context.challenge(challengeForTerms);
 
             return;
