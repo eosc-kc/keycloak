@@ -610,3 +610,7 @@ ul#kc-totp-supported-apps {
     overflow: hidden;
     overflow-y: auto;
 }
+
+.dnone {
+	display: none;
+}

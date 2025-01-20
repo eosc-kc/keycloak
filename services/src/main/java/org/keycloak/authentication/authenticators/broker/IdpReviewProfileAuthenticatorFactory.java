@@ -40,6 +40,7 @@ public class IdpReviewProfileAuthenticatorFactory implements AuthenticatorFactor
 
     public static final String UPDATE_PROFILE_ON_FIRST_LOGIN = "update.profile.on.first.login";
     public static final String TERMS_AND_CONDITIONS = "terms_and_conditions";
+    public static final String HIDE_USERNAME = "hide_username";
 
     @Override
     public Authenticator create(KeycloakSession session) {
@@ -111,6 +112,12 @@ public class IdpReviewProfileAuthenticatorFactory implements AuthenticatorFactor
                 + " page for reviewing profile will be displayed and user can review and update his profile. Value 'off' means that page won't be displayed."
                 + " Value 'missing' means that page is displayed just when some required attribute is missing (wasn't downloaded from identity provider). Value 'missing' is the default one."
                 + " WARN: In case that user clicks 'Review profile info' on link duplications page, the update page will be always displayed. You would need to disable this authenticator to never display the page.");
+        configProperties.add(property);
+        property = new ProviderConfigProperty();
+        property.setName(HIDE_USERNAME);
+        property.setLabel("Hide username");
+        property.setType(ProviderConfigProperty.BOOLEAN_TYPE);
+        property.setHelpText("Hide username. If username is hidden, user could not change his username during first broker login.");
         configProperties.add(property);
         property = new ProviderConfigProperty();
         property.setName(TERMS_AND_CONDITIONS);
