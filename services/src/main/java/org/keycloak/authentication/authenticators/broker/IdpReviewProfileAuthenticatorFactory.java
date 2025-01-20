@@ -117,7 +117,7 @@ public class IdpReviewProfileAuthenticatorFactory implements AuthenticatorFactor
         property.setName(HIDE_USERNAME);
         property.setLabel("Hide username");
         property.setType(ProviderConfigProperty.BOOLEAN_TYPE);
-        property.setHelpText("Hide username. If username is hidden, user could not change his username during first broker login.");
+        property.setHelpText("Hides the username field during the first broker login flow. When hidden, the username cannot be modified during this process.");
         configProperties.add(property);
         property = new ProviderConfigProperty();
         property.setName(TERMS_AND_CONDITIONS);
