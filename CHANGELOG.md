@@ -14,6 +14,7 @@ Our Keycloak version is working well with PostgreSQL database. For using other S
 
 ### Fixed
 -Fix bug when user without accepting terms and conditions, click sign up
+- Add Keycloak tag 22.0.13 [version 22.0.11](https://github.com/keycloak/keycloak/commits/22.0.13/)
 
 ## [22.0.11-1.12] - 2025-01-10
 
