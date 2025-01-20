@@ -84,6 +84,7 @@ public class IdpReviewProfileAuthenticator extends AbstractIdpAuthenticator {
                     .setAttribute(LoginFormsProvider.UPDATE_PROFILE_CONTEXT_ATTR, userCtx)
                     .setAttribute(LoginFormsProvider.UPDATE_PROFILE_FIRST_LOGIN, updateProfileFirstLogin)
                     .setAttribute(LoginFormsProvider.TERMS_ACCEPTANCE_REQUIRED, enabledRequiredAction)
+                    .setAttribute(IdpReviewProfileAuthenticatorFactory.HIDE_USERNAME, Boolean.valueOf(context.getAuthenticatorConfig().getConfig().get(IdpReviewProfileAuthenticatorFactory.HIDE_USERNAME)))
                     .setFormData(null)
                     .createUpdateProfilePage();
             context.challenge(challengeResponse);
@@ -165,6 +166,7 @@ public class IdpReviewProfileAuthenticator extends AbstractIdpAuthenticator {
                     .setAttribute(LoginFormsProvider.UPDATE_PROFILE_CONTEXT_ATTR, userCtx)
                     .setAttribute(LoginFormsProvider.UPDATE_PROFILE_FIRST_LOGIN, updateProfileFirstLogin)
                     .setAttribute(LoginFormsProvider.TERMS_ACCEPTANCE_REQUIRED, enabledRequiredAction)
+                    .setAttribute(IdpReviewProfileAuthenticatorFactory.HIDE_USERNAME, Boolean.valueOf(context.getAuthenticatorConfig().getConfig().get(IdpReviewProfileAuthenticatorFactory.HIDE_USERNAME)))
                     .setFormData(formData)
                     .createUpdateProfilePage();
             context.challenge(challengeForTerms);
@@ -242,6 +244,7 @@ public class IdpReviewProfileAuthenticator extends AbstractIdpAuthenticator {
                     .setAttribute(LoginFormsProvider.UPDATE_PROFILE_CONTEXT_ATTR, userCtx)
                     .setAttribute(LoginFormsProvider.UPDATE_PROFILE_FIRST_LOGIN, updateProfileFirstLogin)
                     .setAttribute(LoginFormsProvider.TERMS_ACCEPTANCE_REQUIRED, enabledRequiredAction)
+                    .setAttribute(IdpReviewProfileAuthenticatorFactory.HIDE_USERNAME, Boolean.valueOf(context.getAuthenticatorConfig().getConfig().get(IdpReviewProfileAuthenticatorFactory.HIDE_USERNAME)))
                     .setFormData(formData)
                     .createUpdateProfilePage();
 
