@@ -53,7 +53,7 @@ jobs:
           mv ./quarkus/dist/target/keycloak-999.0.0-SNAPSHOT.tar.gz ./keycloak-999.0.0-SNAPSHOT.tar.gz
 
       - name: Upload Keycloak dist
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: keycloak
           path: keycloak-999.0.0-SNAPSHOT.tar.gz
@@ -257,7 +257,7 @@ jobs:
           SPLIT_INDEX: ${{ strategy.job-index }}
 
       - name: Upload server logs
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: server-log-${{ matrix.container }}-${{ matrix.browser }}
           path: ~/server.log

@@ -35,7 +35,7 @@
     <packaging>pom</packaging>
 
     <properties>
-        <project.version.npm>22.0.14rc1</project.version.npm>
+        <project.version.npm>22.0.13</project.version.npm>
 
         <asciidoctor.plugin.version>1.5.8</asciidoctor.plugin.version>
 
@@ -47,7 +47,7 @@
 
         <quarkus.version>3.2.12.Final</quarkus.version>
         <quarkus.build.version>3.2.12.Final</quarkus.build.version>
-        <eosc-kc.version>${project.version}-1.13</eosc-kc.version>
+        <eosc-kc.version>${project.version}-1.14rc1</eosc-kc.version>
 
         <project.build-time>${timestamp}</project.build-time>
 
