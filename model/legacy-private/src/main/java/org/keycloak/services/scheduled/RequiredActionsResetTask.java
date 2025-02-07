@@ -7,6 +7,7 @@ import org.keycloak.timer.ScheduledTask;
 
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class RequiredActionsResetTask implements ScheduledTask {
 
@@ -20,7 +21,7 @@ public class RequiredActionsResetTask implements ScheduledTask {
                 if(!requiredActionProviderModel.isEnabled() || requiredActionProviderModel.getConfig().get(INTERVAL_NUM)==null || requiredActionProviderModel.getConfig().get(UNIT_MULTIPLIER)==null)
                     return;
                 if(requiredActionProviderModel.getProviderId().equals(UserModel.RequiredAction.TERMS_AND_CONDITIONS.name())){
-                    session.users().searchForUserStream(realmModel, new HashMap<>()).forEach(user -> {
+                    session.users().searchForUserStream(realmModel, Map.of(UserModel.INCLUDE_SERVICE_ACCOUNT, "false")).forEach(user -> {
                         if(expiredOrFirsttime(user, requiredActionProviderModel))
                             user.addRequiredAction(UserModel.RequiredAction.TERMS_AND_CONDITIONS.name());
                     });

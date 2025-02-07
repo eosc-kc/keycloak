@@ -35,7 +35,7 @@
     <packaging>pom</packaging>
 
     <properties>
-        <project.version.npm>22.0.13</project.version.npm>
+        <project.version.npm>22.0.14rc1</project.version.npm>
 
         <asciidoctor.plugin.version>1.5.8</asciidoctor.plugin.version>
 
