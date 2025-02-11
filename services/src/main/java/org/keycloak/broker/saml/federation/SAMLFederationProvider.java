@@ -698,7 +698,7 @@ public class SAMLFederationProvider implements FederationProvider {
 
         // check for hide on login attibute - for update if condition is false set value to false
         List<SAMLIdentityProviderConfig.EntityAttributes> entityAttributes = new ArrayList<>();
-        if (entity.getExtensions() != null && entity.getExtensions().getEntityAttributes() != null) {
+        if (entity.getExtensions() != null && entity.getExtensions().getEntityAttributes() != null && entity.getExtensions().getEntityAttributes().getAttribute() != null) {
             Boolean hideOnLoginPage = false;
             for (AttributeType attribute : entity.getExtensions().getEntityAttributes().getAttribute()) {
                 SAMLIdentityProviderConfig.EntityAttributes entityAttr = new SAMLIdentityProviderConfig.EntityAttributes();
