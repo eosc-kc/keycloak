@@ -17,6 +17,8 @@
 
 package org.keycloak.models;
 
+import java.util.Arrays;
+import java.util.List;
 import java.util.Map;
 import java.util.stream.Stream;
 
@@ -126,8 +128,8 @@ public interface ClientScopeModel extends ProtocolMapperContainerModel, ScopeCon
         return getAttribute(DYNAMIC_SCOPE_REGEXP);
     }
 
-    default String getDynamicScopeUserAttribute() {
-        return getAttribute(DYNAMIC_SCOPE_USER_ATTRIBUTE);
+    default List<String> getDynamicScopeUserAttribute() {
+        return getAttribute(DYNAMIC_SCOPE_USER_ATTRIBUTE) == null ? null : Arrays.asList(getAttribute(DYNAMIC_SCOPE_USER_ATTRIBUTE).split("##"));
     }
 
     default String getFilteredClaim() {

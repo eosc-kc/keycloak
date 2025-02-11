@@ -18,6 +18,7 @@ Our Keycloak version is working well with PostgreSQL database. For using other S
 
 ### Fixed
 - Fix bugs in hardcored protocol mappers
+- Correct filtering multivalue user attribute in dynamic scope
 
 ## [22.0.13-1.13] - 2025-01-22
 

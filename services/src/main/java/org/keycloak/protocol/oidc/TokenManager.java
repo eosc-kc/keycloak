@@ -873,16 +873,16 @@ public class TokenManager {
                         finalToken.getOtherClaims().put(filterClaim, list);
                     }
                     if (filtering)
-                        scopeList.removeIf(x -> x.contains(cs.getName() + ":") && list.stream().noneMatch(val -> val.toString().equals(x.replace(cs.getName()+ ":",""))) && (cs.getAttribute(ClientScopeModel.DYNAMIC_SCOPE_USER_ATTRIBUTE) == null || (cs.getAttribute(ClientScopeModel.DYNAMIC_SCOPE_USER_ATTRIBUTE) != null && ! user.getAttributeStream(cs.getAttribute(ClientScopeModel.DYNAMIC_SCOPE_USER_ATTRIBUTE)).collect(Collectors.toList()).contains(x.replace(cs.getName()+ ":","")))));
+                        scopeList.removeIf(x -> x.contains(cs.getName() + ":") && list.stream().noneMatch(val -> val.toString().equals(x.replace(cs.getName()+ ":",""))) && (cs.getDynamicScopeUserAttribute() == null || (cs.getDynamicScopeUserAttribute() != null && ! cs.getDynamicScopeUserAttribute().stream().anyMatch(userAttribute -> user.getAttributeStream(userAttribute).collect(Collectors.toList()).contains(x.replace(cs.getName()+ ":",""))))));
                 } else if (requestedValues.size() > 0) {
                     if (!requestedValues.contains(value.toString())) {
                         finalToken.getOtherClaims().remove(filterClaim);
                     }
                     if (filtering)
-                        scopeList.removeIf(x -> x.contains(cs.getName() + ":") && !value.toString().equals(x.replace(cs.getName()+ ":","")) && (cs.getAttribute(ClientScopeModel.DYNAMIC_SCOPE_USER_ATTRIBUTE) == null || (cs.getAttribute(ClientScopeModel.DYNAMIC_SCOPE_USER_ATTRIBUTE) != null && ! user.getAttributeStream(cs.getAttribute(ClientScopeModel.DYNAMIC_SCOPE_USER_ATTRIBUTE)).collect(Collectors.toList()).contains(x.replace(cs.getName()+ ":","")))));
+                        scopeList.removeIf(x -> x.contains(cs.getName() + ":") && !value.toString().equals(x.replace(cs.getName()+ ":","")) && (cs.getDynamicScopeUserAttribute() == null || (cs.getDynamicScopeUserAttribute() != null && ! cs.getDynamicScopeUserAttribute().stream().anyMatch(userAttribute -> user.getAttributeStream(userAttribute).collect(Collectors.toList()).contains(x.replace(cs.getName()+ ":",""))))));
                 }
             } else if (filtering) {
-                scopeList.removeIf(x -> x.contains(cs.getName() + ":") && (cs.getAttribute(ClientScopeModel.DYNAMIC_SCOPE_USER_ATTRIBUTE) == null || (cs.getAttribute(ClientScopeModel.DYNAMIC_SCOPE_USER_ATTRIBUTE) != null && ! user.getAttributeStream(cs.getAttribute(ClientScopeModel.DYNAMIC_SCOPE_USER_ATTRIBUTE)).collect(Collectors.toList()).contains(x.replace(cs.getName()+ ":","")))));
+                scopeList.removeIf(x -> x.contains(cs.getName() + ":") && (cs.getDynamicScopeUserAttribute() == null || (cs.getDynamicScopeUserAttribute() != null && ! cs.getDynamicScopeUserAttribute().stream().anyMatch(userAttribute -> user.getAttributeStream(userAttribute).collect(Collectors.toList()).contains(x.replace(cs.getName()+ ":",""))))));
             }
         });
         return scopeList.stream().collect(Collectors.joining(" "));
