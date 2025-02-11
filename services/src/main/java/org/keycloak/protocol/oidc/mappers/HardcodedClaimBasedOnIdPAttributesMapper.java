@@ -123,9 +123,8 @@ public class HardcodedClaimBasedOnIdPAttributesMapper extends AbstractOIDCProtoc
                 }
 
                 if (idpEntityAttribute != null && possibleAttributeValues.stream().allMatch(x -> idpEntityAttribute.getValues().contains(x)) && (!secondAttribute || (idpEntityAttribute2 != null && possibleAttributeValues2.stream().allMatch(x -> idpEntityAttribute.getValues().contains(x))))) {
-                    String attributeValue = mappingModel.getConfig().get(ProtocolMapperUtils.CLAIM_VALUE);
-                    if (attributeValue == null) return;
-                    OIDCAttributeMapperHelper.mapClaim(token, mappingModel, attributeValue);
+                    List<String> attributeValues = Arrays.asList(mappingModel.getConfig().get(ProtocolMapperUtils.CLAIM_VALUE).split(Constants.CFG_DELIMITER));
+                    OIDCAttributeMapperHelper.mapClaim(token, mappingModel, attributeValues.size() ==1 ? attributeValues.get(0) : attributeValues);
                 }
             } catch (IOException e) {
                 logger.warn("problem executing HardcodedAttributeBasedOnIdPAttributesMapper");

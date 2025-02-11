@@ -77,9 +77,8 @@ public class HardcodedClaimBasedOnIdPMapper extends AbstractOIDCProtocolMapper i
             String userIdP = userSession.getNote(Details.IDENTITY_PROVIDER);
 
             if (userIdP != null && idpsAlias.contains(userIdP)) {
-                String attributeValue = mappingModel.getConfig().get(ProtocolMapperUtils.CLAIM_VALUE);
-                if (attributeValue == null) return;
-                OIDCAttributeMapperHelper.mapClaim(token, mappingModel, attributeValue);
+                List<String> attributeValues = Arrays.asList(mappingModel.getConfig().get(ProtocolMapperUtils.CLAIM_VALUE).split(Constants.CFG_DELIMITER));
+                OIDCAttributeMapperHelper.mapClaim(token, mappingModel, attributeValues.size() ==1 ? attributeValues.get(0) : attributeValues);
             }
 
     }
