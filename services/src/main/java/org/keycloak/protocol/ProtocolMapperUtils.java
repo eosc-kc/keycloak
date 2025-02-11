@@ -84,11 +84,17 @@ public class ProtocolMapperUtils {
     public static final String ATTRIBUTE_CONDITIONAL_VALUES_LABEL = "attribute.conditional-values.label";
     public static final String ATTRIBUTE_CONDITIONAL_VALUES_HELP_TEXT = "attribute.conditional-values.tooltip";
     public static final String IDP_ATTRIBUTE_NAME = "idp-attribute.name";
+    public static final String IDP_ATTRIBUTE_NAME2 = "idp-attribute.name2";
     public static final String IDP_ATTRIBUTE_NAME_LABEL = "idp-attribute.name.label";
     public static final String IDP_ATTRIBUTE_NAME_HELP_TEXT = "idp-attribute.name.tooltip";
+    public static final String IDP_ATTRIBUTE_NAME2_LABEL = "idp-attribute.name2.label";
+    public static final String IDP_ATTRIBUTE_NAME2_HELP_TEXT = "idp-attribute.name2.tooltip";
     public static final String IDP_ATTRIBUTE_VALUES = "idp-attribute.values";
+    public static final String IDP_ATTRIBUTE_VALUES2 = "idp-attribute.values2";
     public static final String IDP_ATTRIBUTE_VALUES_LABEL = "idp-attribute.values.label";
     public static final String IDP_ATTRIBUTE_VALUES_HELP_TEXT = "idp-attribute.values.tooltip";
+    public static final String IDP_ATTRIBUTE_VALUES2_LABEL = "idp-attribute.values2.label";
+    public static final String IDP_ATTRIBUTE_VALUES2_HELP_TEXT = "idp-attribute.values2.tooltip";
 
     // Role name mapper can move some roles to different positions
     public static final int PRIORITY_ROLE_NAMES_MAPPER = 10;

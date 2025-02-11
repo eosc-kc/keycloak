@@ -631,7 +631,7 @@ public class SAMLFederationProvider extends AbstractIdPFederationProvider <SAMLF
         // check for hide on login attibute - for update if condition is false set value to false
         identityProviderModel.getConfig().put("hideOnLoginPage", "false");
 		List<SAMLIdentityProviderConfig.EntityAttributes> entityAttributes = new ArrayList<>();
-        if (entity.getExtensions() != null && entity.getExtensions().getEntityAttributes() != null) {
+        if (entity.getExtensions() != null && entity.getExtensions().getEntityAttributes() != null && entity.getExtensions().getEntityAttributes().getAttribute() != null && !entity.getExtensions().getEntityAttributes().getAttribute().isEmpty()) {
             for (AttributeType attribute : entity.getExtensions().getEntityAttributes().getAttribute()) {
 				SAMLIdentityProviderConfig.EntityAttributes entityAttr = new SAMLIdentityProviderConfig.EntityAttributes();
 				entityAttr.setName(attribute.getName());

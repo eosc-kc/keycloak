@@ -208,6 +208,14 @@
     "values": {
       "label": "Identity Provider attribute values",
       "tooltip": "Identity Provider attribute values. Identity Provider attributes must match all declared values. "
+    },
+    "name2": {
+      "label": "Identity Provider attribute name 2",
+      "tooltip": "Optionally second Identity Provider attribute name. If provided, both Identity Provider attributes must be applied."
+    },
+    "values2": {
+      "label": "Identity Provider attribute values 2",
+      "tooltip": "Optionally second Identity Provider attribute values. Second Identity Provider attributes must match all declared values. "
     }
 },
   "conditional" : {

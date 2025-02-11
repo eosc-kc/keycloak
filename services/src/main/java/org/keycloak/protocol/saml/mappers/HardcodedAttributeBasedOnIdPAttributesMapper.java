@@ -96,7 +96,7 @@ public class HardcodedAttributeBasedOnIdPAttributesMapper extends AbstractSAMLPr
                 List<SAMLIdentityProviderConfig.EntityAttributes> idpEntityAttributes = JsonSerialization.readValue(entityAttributesJson, new TypeReference<List<SAMLIdentityProviderConfig.EntityAttributes>>() {});
 
                 List<String> possibleAttributeValues = Arrays.asList(mappingModel.getConfig().get(ProtocolMapperUtils.IDP_ATTRIBUTE_VALUES).split(Constants.CFG_DELIMITER));
-                SAMLIdentityProviderConfig.EntityAttributes idpEntityAttribute = idpEntityAttributes.stream().filter(x -> mappingModel.getConfig().get(ProtocolMapperUtils.IDP_ATTRIBUTE_NAME).equals(x.getName())).findFirst().orElse(null);
+                SAMLIdentityProviderConfig.EntityAttributes idpEntityAttribute = idpEntityAttributes == null ? null : idpEntityAttributes.stream().filter(x -> mappingModel.getConfig().get(ProtocolMapperUtils.IDP_ATTRIBUTE_NAME).equals(x.getName())).findFirst().orElse(null);
 
                 if (idpEntityAttribute != null && possibleAttributeValues.stream().allMatch(x -> idpEntityAttribute.getValues().contains(x))) {
                     List<String> attributeValues = Arrays.asList(mappingModel.getConfig().get(ProtocolMapperUtils.ATTRIBUTE_VALUE).split(Constants.CFG_DELIMITER));

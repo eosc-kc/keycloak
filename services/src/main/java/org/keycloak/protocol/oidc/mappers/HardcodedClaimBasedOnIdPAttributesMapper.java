@@ -47,6 +47,22 @@ public class HardcodedClaimBasedOnIdPAttributesMapper extends AbstractOIDCProtoc
         configProperties.add(property);
 
         property = new ProviderConfigProperty();
+        property.setName(ProtocolMapperUtils.IDP_ATTRIBUTE_NAME2);
+        property.setLabel(ProtocolMapperUtils.IDP_ATTRIBUTE_NAME2_LABEL);
+        property.setHelpText(ProtocolMapperUtils.IDP_ATTRIBUTE_NAME2_HELP_TEXT);
+        property.setType(ProviderConfigProperty.STRING_TYPE);
+        configProperties.add(property);
+
+        property = new ProviderConfigProperty();
+        property.setName(ProtocolMapperUtils.IDP_ATTRIBUTE_VALUES2);
+        property.setLabel(ProtocolMapperUtils.IDP_ATTRIBUTE_VALUES2_LABEL);
+        property.setHelpText(ProtocolMapperUtils.IDP_ATTRIBUTE_VALUES2_HELP_TEXT);
+        property.setType(ProviderConfigProperty.MULTIVALUED_STRING_TYPE);
+        property.setStringify(Boolean.TRUE);
+        property.setDefaultValue("");
+        configProperties.add(property);
+
+        property = new ProviderConfigProperty();
         property.setName(ProtocolMapperUtils.CLAIM_VALUE);
         property.setLabel(ProtocolMapperUtils.CLAIM_VALUE_LABEL);
         property.setHelpText(ProtocolMapperUtils.CONDITIONAL_CLAIM_VALUE_HELP_TEXT);
@@ -95,11 +111,21 @@ public class HardcodedClaimBasedOnIdPAttributesMapper extends AbstractOIDCProtoc
                 List<SAMLIdentityProviderConfig.EntityAttributes> idpEntityAttributes = JsonSerialization.readValue(entityAttributesJson, new TypeReference<List<SAMLIdentityProviderConfig.EntityAttributes>>() {});
 
                 List<String> possibleAttributeValues = Arrays.asList(mappingModel.getConfig().get(ProtocolMapperUtils.IDP_ATTRIBUTE_VALUES).split(Constants.CFG_DELIMITER));
-                SAMLIdentityProviderConfig.EntityAttributes idpEntityAttribute = idpEntityAttributes.stream().filter(x -> mappingModel.getConfig().get(ProtocolMapperUtils.IDP_ATTRIBUTE_NAME).equals(x.getName())).findFirst().orElse(null);
+                SAMLIdentityProviderConfig.EntityAttributes idpEntityAttribute = idpEntityAttributes == null ? null : idpEntityAttributes.stream().filter(x -> mappingModel.getConfig().get(ProtocolMapperUtils.IDP_ATTRIBUTE_NAME).equals(x.getName())).findFirst().orElse(null);
 
-                if (idpEntityAttribute != null && possibleAttributeValues.stream().allMatch(x -> idpEntityAttribute.getValues().contains(x))) {
-                    List<String> attributeValues = Arrays.asList(mappingModel.getConfig().get(ProtocolMapperUtils.CLAIM_VALUE).split(Constants.CFG_DELIMITER));
-                    OIDCAttributeMapperHelper.mapClaim(token, mappingModel, attributeValues.size() == 1 ? attributeValues.get(0) : attributeValues);
+                boolean secondAttribute = false;
+                List<String> possibleAttributeValues2 = new ArrayList<>();
+                SAMLIdentityProviderConfig.EntityAttributes idpEntityAttribute2 = null;
+                if (idpEntityAttributes != null && mappingModel.getConfig().get(ProtocolMapperUtils.IDP_ATTRIBUTE_NAME2) != null){
+                    secondAttribute = true;
+                    possibleAttributeValues2 = Arrays.asList(mappingModel.getConfig().get(ProtocolMapperUtils.IDP_ATTRIBUTE_VALUES).split(Constants.CFG_DELIMITER));
+                    idpEntityAttribute2 = idpEntityAttributes.stream().filter(x -> mappingModel.getConfig().get(ProtocolMapperUtils.IDP_ATTRIBUTE_NAME).equals(x.getName())).findFirst().orElse(null);
+                }
+
+                if (idpEntityAttribute != null && possibleAttributeValues.stream().allMatch(x -> idpEntityAttribute.getValues().contains(x)) && (!secondAttribute || (idpEntityAttribute2 != null && possibleAttributeValues2.stream().allMatch(x -> idpEntityAttribute.getValues().contains(x))))) {
+                    String attributeValue = mappingModel.getConfig().get(ProtocolMapperUtils.CLAIM_VALUE);
+                    if (attributeValue == null) return;
+                    OIDCAttributeMapperHelper.mapClaim(token, mappingModel, attributeValue);
                 }
             } catch (IOException e) {
                 logger.warn("problem executing HardcodedAttributeBasedOnIdPAttributesMapper");

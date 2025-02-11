@@ -14,6 +14,10 @@ Our Keycloak version is working well with PostgreSQL database. For using other S
 
 ### Changed
 - Exclude service account users from renewing terms and conditions
+- Add extra entity attribute on Hardcoded Claim Based on IdP Attribute mapper
+
+### Fixed
+- Fix bugs in hardcored protocol mappers
 
 ## [22.0.13-1.13] - 2025-01-22
 
