@@ -63,6 +63,13 @@ public class HardcodedClaimBasedOnIdPAttributesMapper extends AbstractOIDCProtoc
         configProperties.add(property);
 
         property = new ProviderConfigProperty();
+        property.setName(ProtocolMapperUtils.MULTIVALUED);
+        property.setLabel(ProtocolMapperUtils.MULTIVALUED_LABEL);
+        property.setHelpText(ProtocolMapperUtils.MULTIVALUED_HELP_TEXT);
+        property.setType(ProviderConfigProperty.BOOLEAN_TYPE);
+        configProperties.add(property);
+
+        property = new ProviderConfigProperty();
         property.setName(ProtocolMapperUtils.CLAIM_VALUE);
         property.setLabel(ProtocolMapperUtils.CLAIM_VALUE_LABEL);
         property.setHelpText(ProtocolMapperUtils.CONDITIONAL_CLAIM_VALUE_HELP_TEXT);
