@@ -10,7 +10,7 @@ Full Keycloak upstream jira issue can be shown if filtered by Fix version.
 
 Our Keycloak version is working well with PostgreSQL database. For using other SQL databases, text field in database need to be evaluated.
 
-## [Unreleased]
+## [22.0.13-1.14] - 2025-02-13
 
 ### Changed
 - Exclude service account users from renewing terms and conditions
