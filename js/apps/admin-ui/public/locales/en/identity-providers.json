@@ -204,5 +204,7 @@
   "autoUpdate":"Auto Update",
   "deletedSuccessIdentityProvider": "Identity provider successfully deleted.",
   "deleteErrorIdentityProvider": "Could not delete the identity provider {{error}}",
-  "empty": "<EMPTY>"
+  "empty": "<EMPTY>",
+  "passSetMfa": "Pass and set MFA",
+  "claimsParameterSupported": "Claims Parameter Supported"
 }

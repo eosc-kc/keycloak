@@ -40,6 +40,7 @@ import org.keycloak.dom.saml.v2.protocol.AuthnRequestType;
 import org.keycloak.dom.saml.v2.protocol.LogoutRequestType;
 import org.keycloak.dom.saml.v2.protocol.ResponseType;
 import org.keycloak.events.EventBuilder;
+import org.keycloak.models.Constants;
 import org.keycloak.models.FederatedIdentityModel;
 import org.keycloak.models.IdentityProviderMapperModel;
 import org.keycloak.models.KeyManager;
@@ -47,6 +48,7 @@ import org.keycloak.models.KeycloakSession;
 import org.keycloak.models.RealmModel;
 import org.keycloak.models.UserSessionModel;
 import org.keycloak.protocol.oidc.OIDCLoginProtocol;
+import org.keycloak.protocol.oidc.utils.AcrUtils;
 import org.keycloak.protocol.saml.JaxrsSAML2BindingBuilder;
 import org.keycloak.protocol.saml.SamlProtocol;
 import org.keycloak.protocol.saml.SamlService;
@@ -92,18 +94,24 @@ import java.security.KeyPair;
 import java.security.cert.X509Certificate;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Comparator;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
+
+import static org.keycloak.models.Constants.NO_LOA;
 
 /**
  * @author Pedro Igor
  */
 public class SAMLIdentityProvider extends AbstractIdentityProvider<SAMLIdentityProviderConfig> {
     protected static final Logger logger = Logger.getLogger(SAMLIdentityProvider.class);
+    private final List<String> authnContextClassRefs = Stream.of("https://refeds.org/profile/sfa","urn:oasis:names:tc:SAML:2.0:ac:classes:PasswordProtectedTransport","urn:oasis:names:tc:SAML:2.0:ac:classes:Password").collect(Collectors.toList());
 
     private final DestinationValidator destinationValidator;
     public SAMLIdentityProvider(KeycloakSession session, SAMLIdentityProviderConfig config, DestinationValidator destinationValidator) {
@@ -146,6 +154,14 @@ public class SAMLIdentityProvider extends AbstractIdentityProvider<SAMLIdentityP
 
             for (String authnContextDeclRef : getAuthnContextDeclRefUris())
                 requestedAuthnContext.addAuthnContextDeclRef(authnContextDeclRef);
+
+            String requestedLoa = request.getAuthenticationSession().getClientNote(Constants.REQUESTED_LEVEL_OF_AUTHENTICATION);
+            int requestedLoaNumber = requestedLoa == null ? NO_LOA : Integer.parseInt(requestedLoa);
+            String previouslyAuthenticatedNote = request.getAuthenticationSession().getClientNote(Constants.LEVEL_OF_AUTHENTICATION);
+            if (getConfig().isPassSetMfa() && requestedLoaNumber > (previouslyAuthenticatedNote == null ? NO_LOA : Integer.parseInt(previouslyAuthenticatedNote))) {
+                AcrUtils.getAcrLoaMap(realm).entrySet().stream().sorted(Map.Entry.<String, Integer>comparingByValue(Comparator.reverseOrder()))
+                        .map(Map.Entry::getKey).forEach(x ->requestedAuthnContext.addAuthnContextClassRef(x));
+            }
 
             Integer attributeConsumingServiceIndex = getConfig().isOmitAttributeConsumingServiceIndexAuthn() ? null : getConfig().getAttributeConsumingServiceIndex();
 

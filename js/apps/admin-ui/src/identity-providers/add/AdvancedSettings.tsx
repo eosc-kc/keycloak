@@ -110,6 +110,12 @@ export const AdvancedSettings = ({ isOIDC, isSAML }: AdvancedSettingsProps) => {
     defaultValue: "false",
   });
   const claimFilterRequired = filteredByClaim === "true";
+  const passSetMfa = useWatch({
+      control,
+      name: "config.passSetMfa",
+      defaultValue: "false",
+    });
+    const claimsParameterSupportedRequired = passSetMfa === "true";
   return (
     <>
       {!isOIDC && !isSAML && (
@@ -232,6 +238,18 @@ export const AdvancedSettings = ({ isOIDC, isSAML }: AdvancedSettingsProps) => {
             />
           </FormGroup>
         </>
+      )}
+      {(isSAML || isOIDC) && (
+        <SwitchField
+          field="config.passSetMfa"
+          label="passSetMfa"
+        />
+      )}
+      {isOIDC && claimsParameterSupportedRequired && (
+        <SwitchField
+          field="config.claimsParameterSupported"
+          label="claimsParameterSupported"
+        />
       )}
       <LoginFlow
         field="firstBrokerLoginFlowAlias"
