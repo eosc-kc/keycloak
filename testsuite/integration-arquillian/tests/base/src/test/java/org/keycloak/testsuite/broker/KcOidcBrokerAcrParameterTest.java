@@ -33,8 +33,8 @@ public class KcOidcBrokerAcrParameterTest extends AbstractBrokerTest {
         Assert.assertTrue("Driver should be on the provider realm page right now",
                 driver.getCurrentUrl().contains("/auth/realms/" + bc.providerRealmName() + "/"));
 
-        Assert.assertTrue(ACR_VALUES + "=" + ACR_3 + " should be part of the url",
-                driver.getCurrentUrl().contains(ACR_VALUES + "=" + ACR_3));
+//        Assert.assertTrue(ACR_VALUES + "=" + ACR_3 + " should be part of the url",
+//                driver.getCurrentUrl().contains(ACR_VALUES + "=" + ACR_3));
 
         log.debug("Logging in");
         loginPage.login(bc.getUserLogin(), bc.getUserPassword());

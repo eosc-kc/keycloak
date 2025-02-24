@@ -52,6 +52,8 @@ public class IdentityProviderModel implements Serializable {
     public static final String LAST_REFRESH_TIME = "lastRefreshTime";
     public static final String LOGO_URI = "logoUri";
 
+    public static final String PASS_SET_MFA = "passSetMfa";
+
     private String internalId;
 
     /**

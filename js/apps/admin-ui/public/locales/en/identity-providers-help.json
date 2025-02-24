@@ -113,5 +113,7 @@
   "logoUri": "Logo URI for showing in login and linked account page",
   "perEntityIds": "IdPs that will be parsed",
   "perRegistrationAuthority": "IdPs with these registration authorities will be parsed",
-  "perEntityCategory":"Entity categories that will be parsed"
+  "perEntityCategory":"Entity categories that will be parsed",
+  "passSetMfa": "Pass MFA requested by client to IdP. If IdP successfully respond with specific MFA, set this value as level-of-authentication.",
+  "claimsParameterSupported": "For MFA. If it is true, acr claim request with essential false will be sent. Otherwise, acr_values parameter will be sent."
 }

@@ -80,6 +80,7 @@ public class OIDCIdentityProviderFactory extends AbstractIdentityProviderFactory
             config.setJwksUrl(null);
         }
         config.setTokenIntrospectionUrl(rep.getIntrospectionEndpoint());
+        config.setClaimsParameterSupported(rep.getClaimsParameterSupported() != null ? rep.getClaimsParameterSupported() : false);
         return config;
     }
 

@@ -491,6 +491,14 @@ public class SAMLIdentityProviderConfig extends IdentityProviderModel {
         getConfig().put(LAST_REFRESH_TIME, String.valueOf(lastRefreshTime));
     }
 
+    public void setPassSetMfa(boolean passSetMfa) {
+        getConfig().put(IdentityProviderModel.PASS_SET_MFA, String.valueOf(passSetMfa));
+    }
+
+    public boolean isPassSetMfa() {
+        return Boolean.valueOf(getConfig().get(IdentityProviderModel.PASS_SET_MFA));
+    }
+
     @Override
     public void validate(RealmModel realm) {
         super.validate(realm);

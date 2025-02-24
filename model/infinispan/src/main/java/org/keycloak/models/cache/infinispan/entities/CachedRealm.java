@@ -253,9 +253,30 @@ public class CachedRealm extends AbstractExtendableRevisioned {
         this.federations  = model.getSAMLFederations();
 
         this.identityProviders = model.getIdentityProvidersStream().sorted((x,y)->{
-            Integer guiOrderX = x.getConfig() != null && x.getConfig().get("guiOrder") != null ? Integer.valueOf(x.getConfig().get("guiOrder")) : Integer.MAX_VALUE;
-            Integer guiOrderY = y.getConfig() != null && y.getConfig().get("guiOrder") != null ? Integer.valueOf(y.getConfig().get("guiOrder")) : Integer.MAX_VALUE;
-            return guiOrderX.equals(guiOrderY) ? (x.getDisplayName() != null && y.getDisplayName()!= null ? x.getDisplayName().compareTo(y.getDisplayName()) : Integer.MAX_VALUE) : (guiOrderX < guiOrderY ? Integer.MIN_VALUE : Integer.MAX_VALUE);
+            // Determine guiOrder values with default to Integer.MAX_VALUE
+            Integer guiOrderX = x.getConfig() != null && x.getConfig().get("guiOrder") != null
+                    ? Integer.valueOf(x.getConfig().get("guiOrder"))
+                    : Integer.MAX_VALUE;
+            Integer guiOrderY = y.getConfig() != null && y.getConfig().get("guiOrder") != null
+                    ? Integer.valueOf(y.getConfig().get("guiOrder"))
+                    : Integer.MAX_VALUE;
+
+            // Compare guiOrder values
+            int guiOrderComparison = guiOrderX.compareTo(guiOrderY);
+            if (guiOrderComparison != 0) {
+                return guiOrderComparison;
+            }
+
+            // Compare display names if guiOrder values are equal
+            if (x.getDisplayName() == null && y.getDisplayName() == null) {
+                return 0; // Both are null, considered equal
+            } else if (x.getDisplayName() == null) {
+                return 1; // Nulls are sorted last
+            } else if (y.getDisplayName() == null) {
+                return -1; // Nulls are sorted last
+            }
+
+            return x.getDisplayName().compareTo(y.getDisplayName()); // Compare non-null display names
         }).collect(Collectors.toList());
         this.identityProviders = Collections.unmodifiableList(this.identityProviders);
 
