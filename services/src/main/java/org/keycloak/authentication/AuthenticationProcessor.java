@@ -1137,6 +1137,11 @@ public class AuthenticationProcessor {
                 .detail(Details.USERNAME, username)
                 .session(userSession);
 
+        String authAuthorities = userSession.getNotes().get(Details.IDENTITY_PROVIDER_AUTHN_AUTHORITIES);
+        if (authAuthorities != null ){
+            event.detail(Details.IDENTITY_PROVIDER_AUTHN_AUTHORITIES, authAuthorities);
+        }
+
         return clientSessionCtx;
     }
 
