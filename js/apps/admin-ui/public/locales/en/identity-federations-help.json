@@ -12,5 +12,6 @@
     "attributeConsumingServiceIndex":"Index of the Attribute Consuming Service profile to request during authentication",
     "omitAttributeConsumingServiceIndexAuthn": "Indicates whether to include the configured Attribute Consuming Service Index in authentication requests send to IDPs in the federation. Defaults to 'false'. This setting is only applied when creating the IDPs.",
     "attributeConsumingServiceName":"Name of the Attribute Consuming Service profile to advertise in the SP metadata. Default value equal to the realm display name when configured, otherwise equal to the realm name.",
-    "signSpMetadata":"Enable/disable signature of the provider SAML metadata"
+    "signSpMetadata":"Enable/disable signature of the provider SAML metadata",
+    "passSetMfa": "Pass MFA requested by client to IdP. If IdP successfully respond with specific MFA, set this value as level-of-authentication."
 }

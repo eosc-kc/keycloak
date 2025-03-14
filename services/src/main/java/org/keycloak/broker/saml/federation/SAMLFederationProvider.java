@@ -298,6 +298,7 @@ public class SAMLFederationProvider extends AbstractIdPFederationProvider <SAMLF
 								config.put(SAMLIdentityProviderConfig.OMIT_ATTRIBUTE_CONSUMING_SERVICE_INDEX_AUTHN, String.valueOf(model.isOmitAttributeConsumingServiceIndexAuthn()));
 								config.put(SAMLIdentityProviderConfig.ATTRIBUTE_CONSUMING_SERVICE_INDEX,  model.getConfig().get(SAMLIdentityProviderConfig.ATTRIBUTE_CONSUMING_SERVICE_INDEX));
 								config.put(SAMLIdentityProviderConfig.ATTRIBUTE_CONSUMING_SERVICE_NAME,  model.getConfig().get(SAMLIdentityProviderConfig.ATTRIBUTE_CONSUMING_SERVICE_NAME));
+								config.put(IdentityProviderModel.PASS_SET_MFA, String.valueOf(model.isPassSetMfa()));
 
 								config.put("promotedLoginbutton", "false");
 								identityProviderModel.setConfig(config);

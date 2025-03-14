@@ -330,6 +330,11 @@ const IdentityProviderFederationConfig = ({
         label="signSpMetadata"
         isReadOnly={false}
       />
+      <SwitchField
+        field="config.passSetMfa"
+        label="passSetMfa"
+        isReadOnly={false}
+      />
     </>
   );
 };

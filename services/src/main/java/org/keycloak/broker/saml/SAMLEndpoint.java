@@ -29,11 +29,13 @@ import org.keycloak.common.VerificationException;
 import org.keycloak.dom.saml.v2.assertion.AssertionType;
 import org.keycloak.dom.saml.v2.assertion.AttributeStatementType;
 import org.keycloak.dom.saml.v2.assertion.AttributeType;
+import org.keycloak.dom.saml.v2.assertion.AuthnContextClassRefType;
 import org.keycloak.dom.saml.v2.assertion.AuthnStatementType;
 import org.keycloak.dom.saml.v2.assertion.NameIDType;
 import org.keycloak.dom.saml.v2.assertion.SubjectConfirmationDataType;
 import org.keycloak.dom.saml.v2.assertion.SubjectConfirmationType;
 import org.keycloak.dom.saml.v2.assertion.SubjectType;
+import org.keycloak.dom.saml.v2.assertion.URIType;
 import org.keycloak.dom.saml.v2.protocol.LogoutRequestType;
 import org.keycloak.dom.saml.v2.protocol.RequestAbstractType;
 import org.keycloak.dom.saml.v2.protocol.ResponseType;
@@ -646,11 +648,12 @@ public class SAMLEndpoint {
                 }
 
                 //set loa if it configured and IdP return appropriate value
-                if (config.isPassSetMfa() && authn.getAuthnContext() != null && authn.getAuthnContext().getSequence() != null && authn.getAuthnContext().getSequence().getClassRef() != null ) {
-                    Integer idpLoa = AcrUtils.getAcrLoaMap(authSession.getClient()).get(authn.getAuthnContext().getSequence().getClassRef().getValue());
+                if (config.isPassSetMfa() && authn.getAuthnContext() != null && authn.getAuthnContext().getURIType().isEmpty()) {
+                    URIType authnContextClassRefType = authn.getAuthnContext().getURIType().stream().filter(x -> x instanceof AuthnContextClassRefType).findFirst().orElse(null);
+                    Integer idpLoa = authnContextClassRefType != null ? AcrUtils.getAcrLoaMap(authSession.getClient()).get(authnContextClassRefType.getValue()) : null;
                     AcrStore acrStore = new AcrStore(session, authSession);
                     //set idp acr loa only if it is higher than current loa
-                    if (idpLoa != null  && idpLoa > acrStore.getLevelOfAuthenticationFromCurrentAuthentication()){
+                    if (idpLoa != null && idpLoa > acrStore.getLevelOfAuthenticationFromCurrentAuthentication()) {
                         acrStore.setLevelAuthenticated(idpLoa);
                     }
                 }

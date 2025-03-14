@@ -19,6 +19,7 @@
     "omitAttributeConsumingServiceIndexAuthn": "Omit Attribute Consuming Service Index from AuthnRequests",
     "attributeConsumingServiceName":"Attribute Consuming Service Name",
     "signSpMetadata":"Sign Service Provider Metadata",
+    "passSetMfa": "Pass and set MFA",
     "samlFederationV2":"SAML v2.0 Federation",
     "getStarted": "To get started, select a provider from the list below",
     "deletedSuccessIdentityFederation":"Identity Federation Deleted Successfully",
