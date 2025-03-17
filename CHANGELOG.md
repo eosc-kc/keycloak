@@ -10,10 +10,10 @@ Full Keycloak upstream jira issue can be shown if filtered by Fix version.
 
 Our Keycloak version is working well with PostgreSQL database. For using other SQL databases, text field in database need to be evaluated.
 
-## [Unreleased]
+## [22.0.13-1.15] - 2025-03-17
 
 ### Added
-- Signalling Multi-Factor Authentication (MFA) requests to OIDC, SAML Identity Providers and SAML Federation
+- Signalling of Multi-Factor Authentication (MFA) requests to OIDC and SAML (individual and federation) Identity Providers. Note: MFA signalled from SAML IdPs is not handled in this version.
 - User Attribute Template Importer mapper
 
 ### Fixed
