@@ -648,9 +648,8 @@ public class SAMLEndpoint {
                 }
 
                 //set loa if it configured and IdP return appropriate value
-                if (config.isPassSetMfa() && authn.getAuthnContext() != null && authn.getAuthnContext().getURIType().isEmpty()) {
-                    URIType authnContextClassRefType = authn.getAuthnContext().getURIType().stream().filter(x -> x instanceof AuthnContextClassRefType).findFirst().orElse(null);
-                    Integer idpLoa = authnContextClassRefType != null ? AcrUtils.getAcrLoaMap(authSession.getClient()).get(authnContextClassRefType.getValue()) : null;
+                if (config.isPassSetMfa() && authn.getAuthnContext() != null && authn.getAuthnContext().getSequence() != null && authn.getAuthnContext().getSequence().getClassRef() != null ) {
+                    Integer idpLoa = AcrUtils.getAcrLoaMap(authSession.getClient()).get(authn.getAuthnContext().getSequence().getClassRef().getValue());
                     AcrStore acrStore = new AcrStore(session, authSession);
                     //set idp acr loa only if it is higher than current loa
                     if (idpLoa != null && idpLoa > acrStore.getLevelOfAuthenticationFromCurrentAuthentication()) {
