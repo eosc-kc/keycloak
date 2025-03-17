@@ -14,6 +14,7 @@ Our Keycloak version is working well with PostgreSQL database. For using other S
 
 ### Added
 - Signalling Multi-Factor Authentication (MFA) requests to OIDC, SAML Identity Providers and SAML Federation
+- User Attribute Template Importer mapper
 
 ### Fixed
 - Add authnAuthorities to login event when login is done via cookie
