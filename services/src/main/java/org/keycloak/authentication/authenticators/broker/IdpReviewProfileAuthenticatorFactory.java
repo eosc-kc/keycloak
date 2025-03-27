@@ -41,6 +41,7 @@ public class IdpReviewProfileAuthenticatorFactory implements AuthenticatorFactor
     public static final String UPDATE_PROFILE_ON_FIRST_LOGIN = "update.profile.on.first.login";
     public static final String TERMS_AND_CONDITIONS = "terms_and_conditions";
     public static final String HIDE_USERNAME = "hideUsername";
+    public static final String CREATE_UID = "createUid";
 
     @Override
     public Authenticator create(KeycloakSession session) {
@@ -126,6 +127,12 @@ public class IdpReviewProfileAuthenticatorFactory implements AuthenticatorFactor
         property.setHelpText("Enable this option to require users to accept terms and conditions before their profile is recorded."
                 +"This ensures compliance with data regulation frameworks like GDPR on first login."
                 +"You also need to enable the 'Terms and Conditions' Required action for this to take effect.");
+        configProperties.add(property);
+        property = new ProviderConfigProperty();
+        property.setName(CREATE_UID);
+        property.setLabel("Create Uid");
+        property.setType(ProviderConfigProperty.BOOLEAN_TYPE);
+        property.setHelpText("Enabling this option user must create a unique uid.");
         configProperties.add(property);
     }
 

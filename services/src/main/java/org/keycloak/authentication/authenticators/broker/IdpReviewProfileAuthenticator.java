@@ -58,6 +58,10 @@ public class IdpReviewProfileAuthenticator extends AbstractIdpAuthenticator {
 
     private static final Logger logger = Logger.getLogger(IdpReviewProfileAuthenticator.class);
     private static final String TERMS_FIELD ="termsAccepted";
+    private static final String TERMS_FIELD_REQUIRED ="termsAcceptanceRequired";
+    private static final String UID ="uid";
+    private static final String UID_NOT_UNIQUE ="uidNotUnique";
+    private static final String UID_REQUIRED ="uidRequired";
     private boolean enabledRequiredAction= false;
     @Override
     public boolean requiresUser() {
@@ -85,6 +89,7 @@ public class IdpReviewProfileAuthenticator extends AbstractIdpAuthenticator {
                     .setAttribute(LoginFormsProvider.UPDATE_PROFILE_FIRST_LOGIN, updateProfileFirstLogin)
                     .setAttribute(LoginFormsProvider.TERMS_ACCEPTANCE_REQUIRED, enabledRequiredAction)
                     .setAttribute(IdpReviewProfileAuthenticatorFactory.HIDE_USERNAME, Boolean.valueOf(context.getAuthenticatorConfig().getConfig().get(IdpReviewProfileAuthenticatorFactory.HIDE_USERNAME)))
+                    .setAttribute(IdpReviewProfileAuthenticatorFactory.CREATE_UID, Boolean.valueOf(context.getAuthenticatorConfig().getConfig().get(IdpReviewProfileAuthenticatorFactory.CREATE_UID)))
                     .setFormData(null)
                     .createUpdateProfilePage();
             context.challenge(challengeResponse);
@@ -162,17 +167,48 @@ public class IdpReviewProfileAuthenticator extends AbstractIdpAuthenticator {
 
         if (enabledRequiredAction && ! formData.containsKey(TERMS_FIELD)) {
            Response challengeForTerms = context.form()
-                    .setErrors(Collections.singletonList(new FormMessage(TERMS_FIELD, "termsAcceptanceRequired")))
+                    .setErrors(Collections.singletonList(new FormMessage(TERMS_FIELD, TERMS_FIELD_REQUIRED)))
                     .setAttribute(LoginFormsProvider.UPDATE_PROFILE_CONTEXT_ATTR, userCtx)
                     .setAttribute(LoginFormsProvider.UPDATE_PROFILE_FIRST_LOGIN, updateProfileFirstLogin)
                     .setAttribute(LoginFormsProvider.TERMS_ACCEPTANCE_REQUIRED, enabledRequiredAction)
                     .setAttribute(IdpReviewProfileAuthenticatorFactory.HIDE_USERNAME, Boolean.valueOf(context.getAuthenticatorConfig().getConfig().get(IdpReviewProfileAuthenticatorFactory.HIDE_USERNAME)))
+                    .setAttribute(IdpReviewProfileAuthenticatorFactory.CREATE_UID, Boolean.valueOf(context.getAuthenticatorConfig().getConfig().get(IdpReviewProfileAuthenticatorFactory.CREATE_UID)))
                     .setFormData(formData)
                     .createUpdateProfilePage();
             context.challenge(challengeForTerms);
 
             return;
         }
+
+        if (Boolean.valueOf(context.getAuthenticatorConfig().getConfig().get(IdpReviewProfileAuthenticatorFactory.CREATE_UID))) {
+            if (formData.get("attributes.uid") == null || formData.get("attributes.uid").get(0) == null) {
+                Response challengeForUid = context.form()
+                        .setErrors(Collections.singletonList(new FormMessage(UID, UID_REQUIRED)))
+                        .setAttribute(LoginFormsProvider.UPDATE_PROFILE_CONTEXT_ATTR, userCtx)
+                        .setAttribute(LoginFormsProvider.UPDATE_PROFILE_FIRST_LOGIN, updateProfileFirstLogin)
+                        .setAttribute(LoginFormsProvider.TERMS_ACCEPTANCE_REQUIRED, enabledRequiredAction)
+                        .setAttribute(IdpReviewProfileAuthenticatorFactory.HIDE_USERNAME, Boolean.valueOf(context.getAuthenticatorConfig().getConfig().get(IdpReviewProfileAuthenticatorFactory.HIDE_USERNAME)))
+                        .setAttribute(IdpReviewProfileAuthenticatorFactory.CREATE_UID, Boolean.valueOf(context.getAuthenticatorConfig().getConfig().get(IdpReviewProfileAuthenticatorFactory.CREATE_UID)))
+                        .setFormData(formData)
+                        .createUpdateProfilePage();
+                context.challenge(challengeForUid);
+                return;
+            }
+            Map<String, String> params = Map.of(UID, formData.get("attributes.uid").get(0), UserModel.EXACT, "true");
+            if ( context.getSession().users().getUsersCount(context.getRealm(), params) > 0) {
+                Response challengeForUid = context.form()
+                        .setErrors(Collections.singletonList(new FormMessage(UID, UID_NOT_UNIQUE)))
+                        .setAttribute(LoginFormsProvider.UPDATE_PROFILE_CONTEXT_ATTR, userCtx)
+                        .setAttribute(LoginFormsProvider.UPDATE_PROFILE_FIRST_LOGIN, updateProfileFirstLogin)
+                        .setAttribute(LoginFormsProvider.TERMS_ACCEPTANCE_REQUIRED, enabledRequiredAction)
+                        .setAttribute(IdpReviewProfileAuthenticatorFactory.HIDE_USERNAME, Boolean.valueOf(context.getAuthenticatorConfig().getConfig().get(IdpReviewProfileAuthenticatorFactory.HIDE_USERNAME)))
+                        .setFormData(formData)
+                        .createUpdateProfilePage();
+                context.challenge(challengeForUid);
+                return;
+            }
+        }
+
         UserModelDelegate updatedProfile = new UserModelDelegate(null) {
 
             @Override
@@ -245,11 +281,11 @@ public class IdpReviewProfileAuthenticator extends AbstractIdpAuthenticator {
                     .setAttribute(LoginFormsProvider.UPDATE_PROFILE_FIRST_LOGIN, updateProfileFirstLogin)
                     .setAttribute(LoginFormsProvider.TERMS_ACCEPTANCE_REQUIRED, enabledRequiredAction)
                     .setAttribute(IdpReviewProfileAuthenticatorFactory.HIDE_USERNAME, Boolean.valueOf(context.getAuthenticatorConfig().getConfig().get(IdpReviewProfileAuthenticatorFactory.HIDE_USERNAME)))
+                    .setAttribute(IdpReviewProfileAuthenticatorFactory.CREATE_UID, Boolean.valueOf(context.getAuthenticatorConfig().getConfig().get(IdpReviewProfileAuthenticatorFactory.CREATE_UID)))
                     .setFormData(formData)
                     .createUpdateProfilePage();
 
             context.challenge(challenge);
-
             return;
         }
 
