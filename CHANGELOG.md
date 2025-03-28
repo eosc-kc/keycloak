@@ -10,6 +10,14 @@ Full Keycloak upstream jira issue can be shown if filtered by Fix version.
 
 Our Keycloak version is working well with PostgreSQL database. For using other SQL databases, text field in database need to be evaluated.
 
+## [Unreleased]
+
+### Fixed
+- MFA signalled from SAML IdPs is handled
+
+### Added
+- Being possible to create unique user uid during Identity Broker Sign up
+
 ## [22.0.13-1.15] - 2025-03-17
 
 ### Added
