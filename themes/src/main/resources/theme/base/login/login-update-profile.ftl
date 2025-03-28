@@ -79,7 +79,24 @@
                     </#if>
                 </div>
             </div>
-
+            <#if createUid??>
+                <div class="${properties.kcFormGroupClass!}">
+                    <div class="${properties.kcLabelWrapperClass!}">
+                        <label for="uid" class="${properties.kcLabelClass!}">${msg("uid")}</label>
+                    </div>
+                    <div class="${properties.kcInputWrapperClass!}">
+                        <input type="text" id="user.attributes.uid" name="user.attributes.uid" value="${(user.attributes.uid!'')}"
+                            class="${properties.kcInputClass!}"
+                            aria-invalid="<#if messagesPerField.existsError('user.attributes.uid')>true</#if>"
+                        />
+                        <#if messagesPerField.existsError('uid')>
+                            <span id="input-error-uid" class="${properties.kcInputErrorMessageClass!}" aria-live="polite">
+                                ${kcSanitize(messagesPerField.get('user.attributes.uid'))?no_esc}
+                            </span>
+                        </#if>
+                    </div>
+                </div>
+            </#if>
             <@registerCommons.termsAcceptance/>
             <div class="${properties.kcFormGroupClass!}">
                 <div id="kc-form-options" class="${properties.kcFormOptionsClass!}">
