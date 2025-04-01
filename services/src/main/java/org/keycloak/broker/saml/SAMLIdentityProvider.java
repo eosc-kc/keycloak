@@ -102,7 +102,6 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import static org.keycloak.models.Constants.NO_LOA;
 
@@ -111,7 +110,6 @@ import static org.keycloak.models.Constants.NO_LOA;
  */
 public class SAMLIdentityProvider extends AbstractIdentityProvider<SAMLIdentityProviderConfig> {
     protected static final Logger logger = Logger.getLogger(SAMLIdentityProvider.class);
-    private final List<String> authnContextClassRefs = Stream.of("https://refeds.org/profile/sfa","urn:oasis:names:tc:SAML:2.0:ac:classes:PasswordProtectedTransport","urn:oasis:names:tc:SAML:2.0:ac:classes:Password").collect(Collectors.toList());
 
     private final DestinationValidator destinationValidator;
     public SAMLIdentityProvider(KeycloakSession session, SAMLIdentityProviderConfig config, DestinationValidator destinationValidator) {
@@ -158,8 +156,9 @@ public class SAMLIdentityProvider extends AbstractIdentityProvider<SAMLIdentityP
             String requestedLoa = request.getAuthenticationSession().getClientNote(Constants.REQUESTED_LEVEL_OF_AUTHENTICATION);
             int requestedLoaNumber = requestedLoa == null ? NO_LOA : Integer.parseInt(requestedLoa);
             String previouslyAuthenticatedNote = request.getAuthenticationSession().getClientNote(Constants.LEVEL_OF_AUTHENTICATION);
-            if (getConfig().isPassSetMfa() && requestedLoaNumber > (previouslyAuthenticatedNote == null ? NO_LOA : Integer.parseInt(previouslyAuthenticatedNote))) {
-                AcrUtils.getAcrLoaMap(realm).entrySet().stream().sorted(Map.Entry.<String, Integer>comparingByValue(Comparator.reverseOrder()))
+            int previouslyAuthenticatedNoteNumber = previouslyAuthenticatedNote == null ? NO_LOA : Integer.parseInt(previouslyAuthenticatedNote);
+            if (getConfig().isPassSetMfa() && requestedLoaNumber > previouslyAuthenticatedNoteNumber) {
+                AcrUtils.getAcrLoaMap(realm).entrySet().stream().filter(entry -> requestedLoaNumber >= entry.getValue()).sorted(Map.Entry.<String, Integer>comparingByValue(Comparator.reverseOrder()))
                         .map(Map.Entry::getKey).forEach(x ->requestedAuthnContext.addAuthnContextClassRef(x));
             }
 

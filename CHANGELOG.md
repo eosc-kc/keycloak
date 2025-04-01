@@ -18,6 +18,9 @@ Our Keycloak version is working well with PostgreSQL database. For using other S
 ### Added
 - Being possible to create unique user uid during Identity Broker Sign up
 
+### Changed
+- Process to SAML only LOAs equal or smaller than requested
+
 ## [22.0.13-1.15] - 2025-03-17
 
 ### Added

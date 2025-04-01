@@ -60,7 +60,6 @@ import org.keycloak.protocol.saml.SamlSessionUtils;
 import org.keycloak.protocol.saml.preprocessor.SamlAuthenticationPreprocessor;
 import org.keycloak.protocol.saml.SAMLDecryptionKeysLocator;
 import org.keycloak.representations.AuthnAuthorityRepresentation;
-import org.keycloak.representations.IDToken;
 import org.keycloak.saml.SAML2LogoutResponseBuilder;
 import org.keycloak.saml.SAMLRequestParser;
 import org.keycloak.saml.common.constants.GeneralConstants;
