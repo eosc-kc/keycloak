@@ -63,6 +63,9 @@ public class IdpReviewProfileAuthenticator extends AbstractIdpAuthenticator {
     private static final String UID ="uid";
     private static final String UID_NOT_UNIQUE ="uidNotUnique";
     private static final String UID_REQUIRED ="uidRequired";
+    private static final String UID_MAX_LENGTH ="uidMaxLength";
+    private static final String UID_INVALID_CHARACTERS ="uidInvalidCharacters";
+    private static final String UID_INVALID_START ="uidInvalidStart";
     private boolean enabledRequiredAction= false;
     @Override
     public boolean requiresUser() {
@@ -195,7 +198,54 @@ public class IdpReviewProfileAuthenticator extends AbstractIdpAuthenticator {
                 context.challenge(challengeForUid);
                 return;
             }
-            Map<String, String> params = Map.of(UID, formData.get(USER_UID).get(0), UserModel.EXACT, "true");
+            String uid = formData.get(USER_UID).get(0);
+
+            // Check length
+            if (uid.length() > 32) {
+                Response challengeForUid = context.form()
+                        .setErrors(Collections.singletonList(new FormMessage(USER_UID, UID_MAX_LENGTH)))
+                        .setAttribute(LoginFormsProvider.UPDATE_PROFILE_CONTEXT_ATTR, userCtx)
+                        .setAttribute(LoginFormsProvider.UPDATE_PROFILE_FIRST_LOGIN, updateProfileFirstLogin)
+                        .setAttribute(LoginFormsProvider.TERMS_ACCEPTANCE_REQUIRED, enabledRequiredAction)
+                        .setAttribute(IdpReviewProfileAuthenticatorFactory.HIDE_USERNAME, Boolean.valueOf(context.getAuthenticatorConfig().getConfig().get(IdpReviewProfileAuthenticatorFactory.HIDE_USERNAME)))
+                        .setAttribute(IdpReviewProfileAuthenticatorFactory.CREATE_UID, Boolean.valueOf(context.getAuthenticatorConfig().getConfig().get(IdpReviewProfileAuthenticatorFactory.CREATE_UID)))
+                        .setFormData(formData)
+                        .createUpdateProfilePage();
+                context.challenge(challengeForUid);
+                return;
+            }
+
+            // Check if starts with digit or dash
+            if (uid.matches("^[0-9-].*")) {
+                Response challengeForUid = context.form()
+                        .setErrors(Collections.singletonList(new FormMessage(USER_UID, UID_INVALID_START)))
+                        .setAttribute(LoginFormsProvider.UPDATE_PROFILE_CONTEXT_ATTR, userCtx)
+                        .setAttribute(LoginFormsProvider.UPDATE_PROFILE_FIRST_LOGIN, updateProfileFirstLogin)
+                        .setAttribute(LoginFormsProvider.TERMS_ACCEPTANCE_REQUIRED, enabledRequiredAction)
+                        .setAttribute(IdpReviewProfileAuthenticatorFactory.HIDE_USERNAME, Boolean.valueOf(context.getAuthenticatorConfig().getConfig().get(IdpReviewProfileAuthenticatorFactory.HIDE_USERNAME)))
+                        .setAttribute(IdpReviewProfileAuthenticatorFactory.CREATE_UID, Boolean.valueOf(context.getAuthenticatorConfig().getConfig().get(IdpReviewProfileAuthenticatorFactory.CREATE_UID)))
+                        .setFormData(formData)
+                        .createUpdateProfilePage();
+                context.challenge(challengeForUid);
+                return;
+            }
+
+            // Check for valid characters (only lowercase letters, digits, dashes, underscores, and dots)
+            if (!uid.matches("^[a-z0-9._-]*$")) {
+                Response challengeForUid = context.form()
+                        .setErrors(Collections.singletonList(new FormMessage(USER_UID, UID_INVALID_CHARACTERS)))
+                        .setAttribute(LoginFormsProvider.UPDATE_PROFILE_CONTEXT_ATTR, userCtx)
+                        .setAttribute(LoginFormsProvider.UPDATE_PROFILE_FIRST_LOGIN, updateProfileFirstLogin)
+                        .setAttribute(LoginFormsProvider.TERMS_ACCEPTANCE_REQUIRED, enabledRequiredAction)
+                        .setAttribute(IdpReviewProfileAuthenticatorFactory.HIDE_USERNAME, Boolean.valueOf(context.getAuthenticatorConfig().getConfig().get(IdpReviewProfileAuthenticatorFactory.HIDE_USERNAME)))
+                        .setAttribute(IdpReviewProfileAuthenticatorFactory.CREATE_UID, Boolean.valueOf(context.getAuthenticatorConfig().getConfig().get(IdpReviewProfileAuthenticatorFactory.CREATE_UID)))
+                        .setFormData(formData)
+                        .createUpdateProfilePage();
+                context.challenge(challengeForUid);
+                return;
+            }
+
+            Map<String, String> params = Map.of(UID, uid, UserModel.EXACT, "true");
             if ( context.getSession().users().getUsersCount(context.getRealm(), params) > 0) {
                 Response challengeForUid = context.form()
                         .setErrors(Collections.singletonList(new FormMessage(USER_UID, UID_NOT_UNIQUE)))

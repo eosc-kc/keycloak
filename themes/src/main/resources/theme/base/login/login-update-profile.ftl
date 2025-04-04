@@ -79,7 +79,7 @@
                     </#if>
                 </div>
             </div>
-            <#if createUid??>
+            <#if createUid?? && createUid>
                 <div class="${properties.kcFormGroupClass!}">
                     <div class="${properties.kcLabelWrapperClass!}">
                         <label for="uid" class="${properties.kcLabelClass!}">${msg("uid")}</label>
