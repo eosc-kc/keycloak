@@ -67,6 +67,16 @@ a#kc-current-locale-link::after {
     color: #0099d3;
 }
 
+.pf-info-tooltip {
+    color: #0a559c;
+    cursor: pointer;
+    transition: color 0.3s ease;
+}
+
+.pf-info-tooltip:hover {
+    color: #0099d3;
+}
+
 #kc-logo {
     width: 100%;
 }

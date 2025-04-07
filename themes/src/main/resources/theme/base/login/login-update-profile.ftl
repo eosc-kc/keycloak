@@ -82,7 +82,12 @@
             <#if createUid?? && createUid>
                 <div class="${properties.kcFormGroupClass!}">
                     <div class="${properties.kcLabelWrapperClass!}">
-                        <label for="uid" class="${properties.kcLabelClass!}">${msg("uid")}</label>
+                        <label for="uid" class="${properties.kcLabelClass!}">
+                            ${msg("uid")}
+                            <span class="kc-tooltip-icon pf-info-tooltip" title="${msg("uidTooltip")}">
+                                <i class="pf-icon pf-icon-info"></i>
+                            </span>
+                        </label>
                     </div>
                     <div class="${properties.kcInputWrapperClass!}">
                         <input type="text" id="user.attributes.uid" name="user.attributes.uid" value="${(user.attributes.uid!'')}"
