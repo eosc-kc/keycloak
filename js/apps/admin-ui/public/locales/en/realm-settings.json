@@ -172,6 +172,7 @@
   },
   "selectATheme": "Select a theme",
   "placeholderText": "Select one",
+  "defaultIdpAcrValue": "Default identity provider acr value",
   "userManagedAccess": "User-managed access",
   "userProfileEnabled": "User Profile Enabled",
   "endpoints": "Endpoints",

@@ -90,14 +90,17 @@ public class ConditionalLoaAuthenticator implements ConditionalAuthenticator, Au
         if (newLoa == null) {
             return;
         }
-        int maxAge = getMaxAge(context);
-        if (maxAge == 0) {
-            logger.tracef("Skip updating authenticated level '%d' in condition '%s' for future authentications due max-age set to 0", newLoa, context.getAuthenticatorConfig().getAlias());
-            acrStore.setLevelAuthenticatedToCurrentRequest(newLoa);
-        } else {
-            logger.tracef("Updating LoA to '%d' in the condition '%s' when authenticating session '%s'. Max age is %d.",
-                    newLoa, context.getAuthenticatorConfig().getAlias(), authSession.getParentSession().getId(), maxAge);
-            acrStore.setLevelAuthenticated(newLoa);
+        int currentAuthenticationLoa = acrStore.getLevelOfAuthenticationFromCurrentAuthentication();
+        if (currentAuthenticationLoa < newLoa) {
+            int maxAge = getMaxAge(context);
+            if (maxAge == 0) {
+                logger.tracef("Skip updating authenticated level '%d' in condition '%s' for future authentications due max-age set to 0", newLoa, context.getAuthenticatorConfig().getAlias());
+                acrStore.setLevelAuthenticatedToCurrentRequest(newLoa);
+            } else {
+                logger.tracef("Updating LoA to '%d' in the condition '%s' when authenticating session '%s'. Max age is %d.",
+                        newLoa, context.getAuthenticatorConfig().getAlias(), authSession.getParentSession().getId(), maxAge);
+                acrStore.setLevelAuthenticated(newLoa);
+            }
         }
     }
 

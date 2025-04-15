@@ -11,6 +11,7 @@ import {
   Stack,
   StackItem,
   Switch,
+  TextInput,
 } from "@patternfly/react-core";
 import { useEffect, useState } from "react";
 import { Controller, FormProvider, useForm } from "react-hook-form";
@@ -188,6 +189,35 @@ export const RealmSettingsGeneralTab = ({
               name={convertAttributeNameToForm("attributes.acr.loa.map")}
             />
           </FormProvider>
+        </FormGroup>
+        <FormGroup
+          label={t("defaultIdpAcrValue")}
+          labelIcon={
+            <HelpItem
+              helpText={t("realm-settings-help:defaultIdpAcrValue")}
+              fieldLabelId="identity-providers:defaultIdpAcrValue"
+            />
+          }
+          fieldId="kc-default-idp-acr-value"
+        >
+          <Controller
+            name="attributes.defaultIdpAcrValue"
+            control={control}
+            defaultValue=""
+            render={({ field }) => (
+              <TextInput
+                id="kc-default-idp-acr-value"
+                type="number"
+                value={field.value}
+                data-testid="defaultIdpAcrValue"
+                min={0}
+                onChange={(value) => {
+                  const num = Number(value);
+                  field.onChange(value === "" ? value : num < 0 ? 0 : num);
+                }}
+              />
+            )}
+          />
         </FormGroup>
         <FormGroup
           hasNoPaddingTop

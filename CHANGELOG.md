@@ -10,6 +10,15 @@ Full Keycloak upstream jira issue can be shown if filtered by Fix version.
 
 Our Keycloak version is working well with PostgreSQL database. For using other SQL databases, text field in database need to be evaluated.
 
+## [Unreleased]
+
+### Fixed
+- Do not ask for mfa in first user login (with enabled mfa browser authentication)
+- Send Identity Providers acr value to browser authentication flow
+
+### Added
+- Default acr value for Identity Providers login
+
 ## [22.0.13-1.16] - 2025-04-11
 
 ### Fixed
