@@ -15,9 +15,13 @@ Our Keycloak version is working well with PostgreSQL database. For using other S
 ### Fixed
 - Do not ask for mfa in first user login (with enabled mfa browser authentication)
 - Send Identity Providers acr value to browser authentication flow
+- Support value request parameter in the claims request
 
 ### Added
 - Default acr value for Identity Providers login
+
+### Changed
+- Return error for any not configured acr
 
 ## [22.0.13-1.16] - 2025-04-11
 

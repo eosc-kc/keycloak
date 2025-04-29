@@ -348,8 +348,9 @@ public class LevelOfAssuranceFlowTest extends AbstractTestRealmKeycloakTest {
         openLoginFormWithAcrClaim(true, "silver");
         authenticateWithUsernamePassword();
         assertLoggedInWithAcr("silver");
+        // step-up to unknown acr
         openLoginFormWithAcrClaim(false, "iron");
-        assertLoggedInWithAcr("silver"); // Return silver without need to re-authenticate due maxAge for "silver" condition did not timed-out yet
+        assertErrorPage("Invalid parameter: claims");
     }
 
     @Test
@@ -379,10 +380,9 @@ public class LevelOfAssuranceFlowTest extends AbstractTestRealmKeycloakTest {
     }
 
     @Test
-    public void optionalUnknownClaimSucceeds() {
+    public void optionalUnknownClaimFails() {
         openLoginFormWithAcrClaim(false, "iron");
-        authenticateWithUsernamePassword();
-        assertLoggedInWithAcr("silver");
+        assertErrorPage("Invalid parameter: claims");
     }
 
     @Test
@@ -908,9 +908,15 @@ public class LevelOfAssuranceFlowTest extends AbstractTestRealmKeycloakTest {
     }
 
     public static void openLoginFormWithAcrClaim(OAuthClient oauth, boolean essential, String... acrValues) {
+        //in order to test both values and value
+        //setValue only for essential false and only one value
         ClaimsRepresentation.ClaimValue<String> acrClaim = new ClaimsRepresentation.ClaimValue<>();
         acrClaim.setEssential(essential);
-        acrClaim.setValues(Arrays.asList(acrValues));
+        if (essential || acrValues.length > 1) {
+            acrClaim.setValues(Arrays.asList(acrValues));
+        } else {
+            acrClaim.setValue(acrValues[0]);
+        }
 
         ClaimsRepresentation claims = new ClaimsRepresentation();
         claims.setIdTokenClaims(Collections.singletonMap(IDToken.ACR, acrClaim));
@@ -918,6 +924,7 @@ public class LevelOfAssuranceFlowTest extends AbstractTestRealmKeycloakTest {
         oauth.claims(claims);
         oauth.openLoginForm();
     }
+
 
     private void authenticateWithUsernamePassword() {
         loginPage.assertCurrent();

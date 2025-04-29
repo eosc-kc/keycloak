@@ -329,16 +329,10 @@ public class AuthorizationEndpoint extends AuthorizationEndpointBase {
                 Integer loa = acrLoaMap.get(acr);
                 return loa == null ? Integer.parseInt(acr) : loa;
             } catch (NumberFormatException e) {
-                // this is an unknown acr. In case of an essential claim, we directly reject authentication as we cannot met the specification requirement. Otherwise fallback to minimum LoA
                 boolean essential = Boolean.parseBoolean(authenticationSession.getClientNote(Constants.FORCE_LEVEL_OF_AUTHENTICATION));
-                if (essential) {
-                    logger.errorf("Requested essential acr value '%s' is not a number and it is not mapped in the ACR-To-Loa mappings of realm or client. Please doublecheck ACR-to-LOA mapping or correct ACR passed in the 'claims' parameter.", acr);
-                    event.error(Errors.INVALID_REQUEST);
-                    throw new ErrorPageException(session, authenticationSession, Response.Status.BAD_REQUEST, Messages.INVALID_PARAMETER, OIDCLoginProtocol.CLAIMS_PARAM);
-                } else {
-                    logger.warnf("Requested acr value '%s' is not a number and it is not mapped in the ACR-To-Loa mappings of realm or client. Please doublecheck ACR-to-LOA mapping or correct used ACR.", acr);
-                    return Constants.MINIMUM_LOA;
-                }
+                logger.errorf("Acr value '%s' is not a number and it is not mapped in the ACR-To-Loa mappings of realm or client. Please doublecheck ACR-to-LOA mapping or correct ACR passed in the 'claims' or 'acr_values' parameter.", acr);
+                event.error(Errors.INVALID_REQUEST);
+                throw new ErrorPageException(session, authenticationSession, Response.Status.BAD_REQUEST, Messages.INVALID_PARAMETER, !essential && request.getAcr() != null && request.getAcr().contains(acr) ? OIDCLoginProtocol.ACR_PARAM : OIDCLoginProtocol.CLAIMS_PARAM);
             }
         }).min().ifPresent(loa -> authenticationSession.setClientNote(Constants.REQUESTED_LEVEL_OF_AUTHENTICATION, String.valueOf(loa)));
 
