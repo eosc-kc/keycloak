@@ -69,6 +69,17 @@ public class IdentityProviderAuthenticator implements Authenticator {
             String defaultProvider = context.getAuthenticatorConfig().getConfig().get(IdentityProviderAuthenticatorFactory.DEFAULT_PROVIDER);
             LOG.tracef("Redirecting: default provider set to %s", defaultProvider);
             redirect(context, defaultProvider);
+        } else if (context.getAuthenticatorConfig() != null && Boolean.valueOf(context.getAuthenticatorConfig().getConfig().get(IdentityProviderAuthenticatorFactory.AUTHENTICATED_PROVIDER)) && context.getAuthenticationSession().getUserSessionNotes().get(Details.IDENTITY_PROVIDER) != null) {
+            if (context.getForwardedErrorMessage() != null) {
+                LOG.infof("Should redirect to remote IdP but forwardedError has value '%s', skipping this authenticator...", context.getForwardedErrorMessage());
+                context.attempted();
+
+                return;
+            }
+
+            String defaultProvider = context.getAuthenticationSession().getUserSessionNotes().get(Details.IDENTITY_PROVIDER);
+            LOG.tracef("Redirecting: default provider set to %s", defaultProvider);
+            redirect(context, defaultProvider);
         } else {
             LOG.tracef("No default provider set or %s query parameter provided", AdapterConstants.KC_IDP_HINT);
             context.attempted();
@@ -76,11 +87,8 @@ public class IdentityProviderAuthenticator implements Authenticator {
     }
 
     private void redirect(AuthenticationFlowContext context, String providerId) {
-       Optional<IdentityProviderModel> idp = context.getRealm().getIdentityProvidersStream()
-                .filter(IdentityProviderModel::isEnabled)
-                .filter(identityProvider -> Objects.equals(providerId, identityProvider.getAlias()))
-                .findFirst();
-        if (idp.isPresent()) {
+       IdentityProviderModel idp = context.getRealm().getIdentityProviderByAlias(providerId);
+        if (idp != null && idp.isEnabled()) {
             context.getAuthenticationSession().setAuthNote(AuthenticationProcessor.CLIENT_FLOW_ID, context.getFlowId());
             context.getAuthenticationSession().setAuthNote(AuthenticationProcessor.CLIENT_AUTHENTICATION_EXECUTION, context.getExecution().getId());
             String accessCode = new ClientSessionCode<>(context.getSession(), context.getRealm(), context.getAuthenticationSession()).getOrGenerateCode();
@@ -91,7 +99,7 @@ public class IdentityProviderAuthenticator implements Authenticator {
                     .build();
             // will forward the request to the IDP with prompt=none if the IDP accepts forwards with prompt=none.
             if ("none".equals(context.getAuthenticationSession().getClientNote(OIDCLoginProtocol.PROMPT_PARAM)) &&
-                    Boolean.valueOf(idp.get().getConfig().get(ACCEPTS_PROMPT_NONE))) {
+                    Boolean.valueOf(idp.getConfig().get(ACCEPTS_PROMPT_NONE))) {
                 context.getAuthenticationSession().setAuthNote(AuthenticationProcessor.FORWARDED_PASSIVE_LOGIN, "true");
             }
             LOG.debugf("Redirecting to %s", providerId);
