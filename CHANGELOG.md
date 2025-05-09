@@ -18,6 +18,7 @@ Our Keycloak version is working well with PostgreSQL database. For using other S
 - Support value request parameter in the claims request
 - Messages for Condition - Level of Authentication
 - Fix problems for MFA with already login user
+- Return appropriate error and login error for failed client flow after IdP login
 
 ### Added
 - Default acr value for Identity Providers login

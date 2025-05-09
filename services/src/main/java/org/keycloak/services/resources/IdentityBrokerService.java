@@ -1047,18 +1047,25 @@ public class IdentityBrokerService implements IdentityProvider.AuthenticationCal
                     .setUriInfo(session.getContext().getUri())
                     .setRequest(request);
             processor.setAutheticatedUser(federatedUser);
-            AcrStore acrStore = new AcrStore(session, processor.getAuthenticationSession());
-            if (levelOfAuthentication != null) {
-                acrStore.setLevelAuthenticated(Integer.valueOf(levelOfAuthentication));
-            } else if (realmModel.getAttribute(Constants.DEFAULT_IDP_ACR_VALUE) != null){
-                acrStore.setLevelAuthenticated(Integer.valueOf((realmModel.getAttribute(Constants.DEFAULT_IDP_ACR_VALUE))));
-            }
-            AuthenticationFlow authenticationFlow = processor.createFlowExecution(flowId, model);
-            //maybe find next flow
-            Response challenge = authenticationFlow.continueClientAuthAfterIdPLogin(model);
-            if (challenge != null) return challenge;
-            if (!authenticationFlow.isSuccessful()) {
-                throw new AuthenticationFlowException(authenticationFlow.getFlowExceptions());
+
+            try {
+                AcrStore acrStore = new AcrStore(session, processor.getAuthenticationSession());
+                if (levelOfAuthentication != null) {
+                    acrStore.setLevelAuthenticated(Integer.valueOf(levelOfAuthentication));
+                } else if (realmModel.getAttribute(Constants.DEFAULT_IDP_ACR_VALUE) != null) {
+                    acrStore.setLevelAuthenticated(Integer.valueOf((realmModel.getAttribute(Constants.DEFAULT_IDP_ACR_VALUE))));
+                }
+                AuthenticationFlow authenticationFlow = processor.createFlowExecution(flowId, model);
+                //maybe find next flow
+                Response challenge = authenticationFlow.continueClientAuthAfterIdPLogin(model);
+                if (challenge != null) return challenge;
+                if (!authenticationFlow.isSuccessful()) {
+                    throw new AuthenticationFlowException(authenticationFlow.getFlowExceptions());
+                }
+
+            } catch (Exception e) {
+                event.event(EventType.LOGIN_ERROR);
+                return processor.handleBrowserException(e);
             }
         } else {
             logger.warn("CLIENT_AUTHENTICATION_EXECUTION and CLIENT_FLOW_ID are not included in the authenticationSession");
