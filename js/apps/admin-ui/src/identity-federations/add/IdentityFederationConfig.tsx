@@ -131,7 +131,7 @@ const IdentityProviderFederationConfig = ({
               onToggle={(isExpanded) => setNamedPolicyDropdownOpen(isExpanded)}
               isOpen={namedPolicyDropdownOpen}
               onSelect={(_, value) => {
-                field.onChange(value === "isNull" ? null : value);
+                field.onChange(value);
                 setNamedPolicyDropdownOpen(false);
               }}
               selections={field.value}

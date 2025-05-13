@@ -21,6 +21,9 @@ export default function AddIdentityFederation() {
 
   const onSubmit = async (samlFederation: IdentityFederationRepresentation) => {
     try {
+      if (samlFederation.config?.nameIDPolicyFormat === "isNull") {
+        delete samlFederation.config.nameIDPolicyFormat;
+      }
       await adminClient.identityFederations.create({
         ...cleanEmptyStrings(samlFederation),
         providerId: id,

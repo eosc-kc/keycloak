@@ -182,7 +182,7 @@ const Fields = ({ readOnly }: DescriptorSettingsProps) => {
               onToggle={(isExpanded) => setNamedPolicyDropdownOpen(isExpanded)}
               isOpen={namedPolicyDropdownOpen}
               onSelect={(_, value) => {
-                field.onChange(value === "isNull" ? null : value); // Sets to null if "empty" is selected
+                field.onChange(value); // Sets to null if "empty" is selected
                 setNamedPolicyDropdownOpen(false);
               }}
               selections={field.value}

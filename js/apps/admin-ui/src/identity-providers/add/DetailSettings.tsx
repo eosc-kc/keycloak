@@ -250,8 +250,8 @@ export default function DetailSettings() {
   const save = async (savedProvider?: IdentityProviderRepresentation) => {
     const p = savedProvider || getValues();
     // Remove nameIDPolicyFormat if it is null or undefined
-    if (p.config?.nameIDPolicyFormat == null) {
-      delete p.config?.nameIDPolicyFormat;
+    if (p.config?.nameIDPolicyFormat === "isNull") {
+      delete p.config.nameIDPolicyFormat;
       delete provider?.config?.nameIDPolicyFormat;
     }
     if (p.config?.authnContextClassRefs)

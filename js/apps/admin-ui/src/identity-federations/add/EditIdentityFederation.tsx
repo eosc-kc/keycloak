@@ -43,6 +43,10 @@ export default function EditIdentityFederation() {
     identityFederation: IdentityFederationRepresentation,
   ) => {
     try {
+      if (identityFederation.config?.nameIDPolicyFormat === "isNull") {
+        delete identityFederation.config.nameIDPolicyFormat;
+      }
+      console.log(identityFederation.config?.nameIDPolicyFormat);
       await adminClient.identityFederations.create({
         ...cleanEmptyStrings(identityFederation),
       });
