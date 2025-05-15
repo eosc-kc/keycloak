@@ -92,7 +92,11 @@ public class ConditionalLoaAuthenticator implements ConditionalAuthenticator, Au
             return;
         }
         int currentAuthenticationLoa = acrStore.getLevelOfAuthenticationFromCurrentAuthentication();
-        if (currentAuthenticationLoa < newLoa) {
+        if (Boolean.valueOf(context.getAuthenticatorConfig().getConfig().get(CHECK_REQUIRED_LOA)) && acrStore.isLevelOfAuthenticationForced() && !acrStore.isLevelOfAuthenticationSatisfiedFromCurrentAuthentication(context.getTopLevelFlow()) ){
+            //if it is set check for forced level based on current authenticator loa (mainly IdP return) => else return error
+            throwAuthenticationErrorForForcedLoa(acrStore, newLoa);
+        }
+        if (!Boolean.valueOf(context.getAuthenticatorConfig().getConfig().get(CHECK_REQUIRED_LOA)) && currentAuthenticationLoa < newLoa) {
             int maxAge = getMaxAge(context);
             if (maxAge == 0) {
                 logger.tracef("Skip updating authenticated level '%d' in condition '%s' for future authentications due max-age set to 0", newLoa, context.getAuthenticatorConfig().getAlias());
