@@ -19,6 +19,7 @@ Our Keycloak version is working well with PostgreSQL database. For using other S
 - Messages for Condition - Level of Authentication
 - Fix problems for MFA with already login user
 - Return appropriate error and login error for failed client flow after IdP login
+- Fix duplication bug when searching custom user attributes
 
 ### Added
 - Default acr value for Identity Providers login

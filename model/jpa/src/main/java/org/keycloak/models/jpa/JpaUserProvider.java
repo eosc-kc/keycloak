@@ -664,7 +664,7 @@ public class JpaUserProvider implements UserProvider, UserCredentialStore {
         CriteriaBuilder qb = em.getCriteriaBuilder();
         CriteriaQuery<Long> userQuery = qb.createQuery(Long.class);
         Root<UserEntity> from = userQuery.from(UserEntity.class);
-        Expression<Long> count = qb.count(from);
+        Expression<Long> count = qb.countDistinct(from);
 
         userQuery = userQuery.select(count);
         List<Predicate> restrictions = predicates(params, from);
@@ -688,7 +688,7 @@ public class JpaUserProvider implements UserProvider, UserCredentialStore {
 
         CriteriaQuery<Long> countQuery = cb.createQuery(Long.class);
         Root<UserEntity> root = countQuery.from(UserEntity.class);
-        countQuery.select(cb.count(root));
+        countQuery.select(cb.countDistinct(root));
 
         List<Predicate> restrictions = predicates(params, root);
         restrictions.add(cb.equal(root.get("realmId"), realm.getId()));
@@ -731,7 +731,7 @@ public class JpaUserProvider implements UserProvider, UserCredentialStore {
     @SuppressWarnings("unchecked")
     public Stream<UserModel> searchForUserStream(RealmModel realm, Map<String, String> attributes, Integer firstResult, Integer maxResults) {
         CriteriaBuilder builder = em.getCriteriaBuilder();
-        CriteriaQuery<UserEntity> queryBuilder = builder.createQuery(UserEntity.class);
+        CriteriaQuery<UserEntity> queryBuilder = builder.createQuery(UserEntity.class).distinct(true);
         Root<UserEntity> root = queryBuilder.from(UserEntity.class);
 
         List<Predicate> predicates = predicates(attributes, root);
