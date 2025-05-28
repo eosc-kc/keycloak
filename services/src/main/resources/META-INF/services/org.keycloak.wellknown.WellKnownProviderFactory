@@ -16,4 +16,5 @@
 #
 
 org.keycloak.protocol.oidc.OIDCWellKnownProviderFactory
+org.keycloak.protocol.oidc.federation.OpenIdFederationWellKnownProviderFactory
 org.keycloak.authorization.config.UmaWellKnownProviderFactory

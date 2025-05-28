@@ -184,6 +184,7 @@
         <awaitility.version>4.1.1</awaitility.version>
         <assertj-core.version>3.22.0</assertj-core.version>
         <testcontainers.version>1.17.5</testcontainers.version>
+        <nimbus-jose-jwt.version>9.48</nimbus-jose-jwt.version>
 
         <!-- Maven Plugins -->
         <maven.plugin.plugin.version>3.9.0</maven.plugin.plugin.version>
@@ -1621,6 +1622,11 @@
                 <groupId>commons-lang</groupId>
                 <artifactId>commons-lang</artifactId>
                 <version>${commons-lang.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.nimbusds</groupId>
+                <artifactId>nimbus-jose-jwt</artifactId>
+                <version>${nimbus-jose-jwt.version}</version>
             </dependency>
 
             <!-- used in server-dist build while provisioning the distribution -->

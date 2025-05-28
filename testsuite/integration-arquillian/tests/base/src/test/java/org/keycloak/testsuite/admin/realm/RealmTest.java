@@ -217,7 +217,8 @@ public class RealmTest extends AbstractAdminTest {
                 OAuth2DeviceConfig.OAUTH2_DEVICE_CODE_LIFESPAN,
                 OAuth2DeviceConfig.OAUTH2_DEVICE_POLLING_INTERVAL,
                 ParConfig.PAR_REQUEST_URI_LIFESPAN,
-                RealmAttributes.CLAIMS_SUPPORTED
+                RealmAttributes.CLAIMS_SUPPORTED,
+                RealmAttributes.OPENID_FEDERATION_ENABLED
         );
 
         // This attribute is represented in Legacy store as attribute and for Map store as a field
@@ -226,8 +227,9 @@ public class RealmTest extends AbstractAdminTest {
             expectedAttributesCount++;
         }
 
-        assertThat(attributesKeys.size(), CoreMatchers.is(expectedAttributesCount));
         assertThat(attributesKeys, CoreMatchers.is(expectedAttributes));
+        assertThat(attributesKeys.size(), CoreMatchers.is(expectedAttributesCount));
+
     }
 
     @Test

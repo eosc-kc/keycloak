@@ -196,6 +196,7 @@ public class DefaultTokenManager implements TokenManager {
             case ADMIN:
                 return getSignatureAlgorithm(null);
             case ACCESS:
+            case ENTITY_STATEMENT:
                 return getSignatureAlgorithm(OIDCConfigAttributes.ACCESS_TOKEN_SIGNED_RESPONSE_ALG);
             case ID:
             case LOGOUT:
@@ -209,7 +210,7 @@ public class DefaultTokenManager implements TokenManager {
         }
     }
 
-    private String getSignatureAlgorithm(String clientAttribute) {
+    public String getSignatureAlgorithm(String clientAttribute) {
         RealmModel realm = session.getContext().getRealm();
         ClientModel client = session.getContext().getClient();
 

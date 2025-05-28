@@ -30,7 +30,9 @@ import org.keycloak.models.RealmModel;
 import org.keycloak.protocol.LoginProtocol;
 import org.keycloak.protocol.LoginProtocolFactory;
 import org.keycloak.services.CorsErrorResponseException;
+import org.keycloak.services.clientregistration.ClientRegistrationAuth;
 import org.keycloak.services.clientregistration.ClientRegistrationService;
+import org.keycloak.services.clientregistration.openid_federation.OpenIdFederationClientRegistrationService;
 import org.keycloak.services.managers.RealmManager;
 import org.keycloak.services.resource.RealmResourceProvider;
 import org.keycloak.services.resources.account.AccountLoader;
@@ -166,6 +168,16 @@ public class RealmsResource {
         resolveRealmAndUpdateSession(name);
         EventBuilder event = new EventBuilder(session.getContext().getRealm(), session, session.getContext().getConnection());
         return new ClientRegistrationService(session, event);
+    }
+
+    @Path("{realm}/openid-federation/clients-registrations")
+    public OpenIdFederationClientRegistrationService getOpenIdFederationClientsService(final @PathParam("realm") String name) {
+        resolveRealmAndUpdateSession(name);
+        EventBuilder event = new EventBuilder(session.getContext().getRealm(), session, session.getContext().getConnection());
+        OpenIdFederationClientRegistrationService provider = new OpenIdFederationClientRegistrationService(session);
+        provider.setEvent(event);
+        provider.setAuth(new ClientRegistrationAuth(session, provider, event, "openid-connect"));
+        return provider;
     }
 
     @Path("{realm}/clients-managements")
