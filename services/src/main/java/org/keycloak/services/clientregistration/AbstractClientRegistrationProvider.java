@@ -17,6 +17,7 @@
 
 package org.keycloak.services.clientregistration;
 
+import java.net.URI;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -24,21 +25,34 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+
+import org.keycloak.OAuth2Constants;
+import org.keycloak.common.util.Time;
 import org.keycloak.events.EventBuilder;
 import org.keycloak.events.EventType;
 import org.keycloak.models.*;
 import org.keycloak.models.utils.ModelToRepresentation;
 import org.keycloak.models.utils.RepresentationToModel;
+import org.keycloak.protocol.oidc.OIDCAdvancedConfigWrapper;
+import org.keycloak.protocol.oidc.OIDCConfigAttributes;
+import org.keycloak.protocol.oidc.mappers.AbstractPairwiseSubMapper;
+import org.keycloak.protocol.oidc.mappers.PairwiseSubMapperHelper;
+import org.keycloak.protocol.oidc.mappers.SHA256PairwiseSubMapper;
+import org.keycloak.protocol.oidc.utils.SubjectType;
 import org.keycloak.protocol.saml.SamlConfigAttributes;
 import org.keycloak.representations.idm.ClientRepresentation;
+import org.keycloak.representations.idm.ProtocolMapperRepresentation;
 import org.keycloak.representations.oidc.OIDCClientRepresentation;
 import org.keycloak.services.ErrorResponseException;
 import org.keycloak.services.ForbiddenException;
 import org.keycloak.services.clientpolicy.ClientPolicyException;
 import org.keycloak.services.clientpolicy.context.DynamicClientRegisteredContext;
 import org.keycloak.services.clientpolicy.context.DynamicClientUpdatedContext;
+import org.keycloak.services.clientregistration.oidc.DescriptionConverter;
+import org.keycloak.services.clientregistration.oidc.OIDCClientRegistrationContext;
 import org.keycloak.services.clientregistration.policy.ClientRegistrationPolicyManager;
 import org.keycloak.services.clientregistration.policy.RegistrationAuth;
 import org.keycloak.services.managers.ClientManager;
@@ -65,6 +79,75 @@ public abstract class AbstractClientRegistrationProvider implements ClientRegist
 
     public AbstractClientRegistrationProvider(KeycloakSession session) {
         this.session = session;
+    }
+
+    protected OIDCClientRepresentation createOidcClient(OIDCClientRepresentation clientOIDC, KeycloakSession session, Long exp){
+        ClientRepresentation client = DescriptionConverter.toInternal(session, clientOIDC);
+        List<String> grantTypes = clientOIDC.getGrantTypes();
+
+        if (grantTypes != null && grantTypes.contains(OAuth2Constants.UMA_GRANT_TYPE)) {
+            client.setAuthorizationServicesEnabled(true);
+        }
+
+        if (!(grantTypes == null || grantTypes.contains(OAuth2Constants.REFRESH_TOKEN))) {
+            OIDCAdvancedConfigWrapper.fromClientRepresentation(client).setUseRefreshToken(false);
+        }
+
+        if (exp != null)
+            client.getAttributes().put(OIDCConfigAttributes.EXPIRATION_TIME, exp.toString() );
+
+        OIDCClientRegistrationContext oidcContext = new OIDCClientRegistrationContext(session, client, this, clientOIDC);
+        client = create(oidcContext);
+
+        ClientModel clientModel = session.getContext().getRealm().getClientByClientId(client.getClientId());
+        updatePairwiseSubMappers(clientModel, SubjectType.parse(clientOIDC.getSubjectType()), clientOIDC.getSectorIdentifierUri());
+        updateClientRepWithProtocolMappers(clientModel, client);
+
+        validateClient(clientModel, clientOIDC, true);
+
+        URI uri = session.getContext().getUri().getAbsolutePathBuilder().path(client.getClientId()).build();
+        clientOIDC = DescriptionConverter.toExternalResponse(session, client, uri);
+        clientOIDC.setClientIdIssuedAt(Time.currentTime());
+        return clientOIDC;
+    }
+
+    protected void updatePairwiseSubMappers(ClientModel clientModel, SubjectType subjectType, String sectorIdentifierUri) {
+        if (subjectType == SubjectType.PAIRWISE) {
+
+            // See if we have existing pairwise mapper and update it. Otherwise create new
+            AtomicBoolean foundPairwise = new AtomicBoolean(false);
+
+            clientModel.getProtocolMappersStream().filter((ProtocolMapperModel mapping) -> {
+                if (mapping.getProtocolMapper().endsWith(AbstractPairwiseSubMapper.PROVIDER_ID_SUFFIX)) {
+                    foundPairwise.set(true);
+                    return true;
+                } else {
+                    return false;
+                }
+            }).collect(Collectors.toList()).forEach((ProtocolMapperModel mapping) -> {
+                PairwiseSubMapperHelper.setSectorIdentifierUri(mapping, sectorIdentifierUri);
+                clientModel.updateProtocolMapper(mapping);
+            });
+
+            // We don't have existing pairwise mapper. So create new
+            if (!foundPairwise.get()) {
+                ProtocolMapperRepresentation newPairwise = SHA256PairwiseSubMapper.createPairwiseMapper(sectorIdentifierUri, null);
+                clientModel.addProtocolMapper(RepresentationToModel.toModel(newPairwise));
+            }
+
+        } else {
+            // Rather find and remove all pairwise mappers
+            clientModel.getProtocolMappersStream()
+                    .filter(mapperRep -> mapperRep.getProtocolMapper().endsWith(AbstractPairwiseSubMapper.PROVIDER_ID_SUFFIX))
+                    .collect(Collectors.toList())
+                    .forEach(clientModel::removeProtocolMapper);
+        }
+    }
+
+    protected void updateClientRepWithProtocolMappers(ClientModel clientModel, ClientRepresentation rep) {
+        List<ProtocolMapperRepresentation> mappings =
+                clientModel.getProtocolMappersStream().map(ModelToRepresentation::toRepresentation).collect(Collectors.toList());
+        rep.setProtocolMappers(mappings);
     }
 
     public ClientRepresentation create(ClientRegistrationContext context) {

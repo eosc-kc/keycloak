@@ -87,6 +87,8 @@ public final class OIDCConfigAttributes {
 
     public static final String POST_LOGOUT_REDIRECT_URIS = "post.logout.redirect.uris";
 
+    public static final String EXPIRATION_TIME = "expiration.time";
+
     private OIDCConfigAttributes() {
     }
 

@@ -209,6 +209,10 @@
             <groupId>org.keycloak</groupId>
             <artifactId>keycloak-model-legacy-private</artifactId>
         </dependency>
+        <dependency>
+            <groupId>com.nimbusds</groupId>
+            <artifactId>nimbus-jose-jwt</artifactId>
+        </dependency>
     </dependencies>
     <build>
         <plugins>

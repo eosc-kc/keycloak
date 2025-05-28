@@ -53,6 +53,19 @@ public interface RealmAttributes {
     String WEBAUTHN_POLICY_AVOID_SAME_AUTHENTICATOR_REGISTER = "webAuthnPolicyAvoidSameAuthenticatorRegister";
     String WEBAUTHN_POLICY_ACCEPTABLE_AAGUIDS = "webAuthnPolicyAcceptableAaguids";
 
+    String OPENID_FEDERATION_ENABLED = "openidFederationEnabled";
+    String OPENID_FEDERATION_ORGANIZATION_NAME = "openidFederationOrganizationName";
+    String OPENID_FEDERATION_CONTACTS = "openIdFederationContacts";
+    String OPENID_FEDERATION_LOGO_URI = "openIdFederationLogoUri";
+    String OPENID_FEDERATION_POLICY_URI = "openIdFederationPolicyUri";
+    String OPENID_FEDERATION_HOMEPAGE_URI = "openIdFederationHomepageUri";
+    String OPENID_FEDERATION_AUTHORITY_HINTS = "openidFederationAuthorityHints";
+    String OPENID_FEDERATION_TRUST_ANCHORS = "openidFederationTrustAnchors";
+    String OPENID_FEDERATION_CLIENT_REGISTRATION_TYPES_SUPPORTED = "openidFederationClientRegistrationTypesSupported";
+    String OPENID_FEDERATION_LIFESPAN = "openidFederationLifespan";
+    String OPENID_FEDERATION_RESOLVE_ENDPOINT = "openIdFederationResolveEndpoint";
+    String OPENID_FEDERATION_HISTORICAL_KEYS_ENDPOINT = "openIdFederationHistoricalKeysEndpoint";
+
     String ADMIN_EVENTS_EXPIRATION = "adminEventsExpiration";
     String CLAIMS_SUPPORTED = "claimsSupported";
 

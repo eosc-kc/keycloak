@@ -23,6 +23,7 @@ import org.keycloak.authentication.ClientAuthenticator;
 import org.keycloak.authentication.ClientAuthenticatorFactory;
 import org.keycloak.common.constants.ServiceAccountConstants;
 import org.keycloak.common.util.Time;
+import org.keycloak.exportimport.util.ExportUtils;
 import org.keycloak.models.ClientModel;
 import org.keycloak.models.KeycloakSession;
 import org.keycloak.models.ProtocolMapperModel;
@@ -98,21 +99,21 @@ public class ClientManager {
 
     public boolean removeClient(RealmModel realm, ClientModel client) {
         if (!isInternalClient(realm.getName(), client.getClientId()) && realm.removeClient(client.getId())) {
-            UserSessionProvider sessions = realmManager.getSession().sessions();
-            if (sessions != null) {
-                sessions.onClientRemoved(realm, client.getId());
-            }
-
-            AuthenticationSessionProvider authSessions = realmManager.getSession().authenticationSessions();
-            if (authSessions != null) {
-                authSessions.onClientRemoved(realm, client);
-            }
-
-            UserModel serviceAccountUser = realmManager.getSession().users().getServiceAccount(client);
-            if (serviceAccountUser != null) {
-                new UserManager(realmManager.getSession()).removeUser(realm, serviceAccountUser);
-            }
-
+//            UserSessionProvider sessions = realmManager.getSession().sessions();
+//            if (sessions != null) {
+//                sessions.onClientRemoved(realm, client.getId());
+//            }
+//
+//            AuthenticationSessionProvider authSessions = realmManager.getSession().authenticationSessions();
+//            if (authSessions != null) {
+//                authSessions.onClientRemoved(realm, client);
+//            }
+//
+//            UserModel serviceAccountUser = realmManager.getSession().users().getServiceAccount(client);
+//            if (serviceAccountUser != null) {
+//                new UserManager(realmManager.getSession()).removeUser(realm, serviceAccountUser);
+//            }
+            ExportUtils.removeClientRelatedEntities(realmManager.getSession(), realm, client);
             return true;
         } else {
             return false;

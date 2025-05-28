@@ -763,6 +763,19 @@ public class RealmAdapter implements CachedRealmModel {
     }
 
     @Override
+    public OpenIdFederationConfig getOpenIdFederationConfig() {
+        if (isUpdated()) return updated.getOpenIdFederationConfig();
+        return cached.getOpenIdFederationConfig();
+    }
+
+    @Override
+    public void setOpenIdFederationConfig(OpenIdFederationConfig config) {
+        getDelegateForUpdate();
+        updated.setOpenIdFederationConfig(config);
+    }
+
+
+    @Override
     public RoleModel getRoleById(String id) {
         if (isUpdated()) return updated.getRoleById(id);
         return cacheSession.getRoleById(this, id);

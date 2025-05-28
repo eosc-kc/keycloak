@@ -34,7 +34,9 @@ import org.keycloak.models.KeycloakSession;
 import org.keycloak.models.RealmModel;
 import org.keycloak.models.RoleContainerModel;
 import org.keycloak.models.RoleModel;
+import org.keycloak.models.UserManager;
 import org.keycloak.models.UserModel;
+import org.keycloak.models.UserSessionProvider;
 import org.keycloak.models.utils.ModelToRepresentation;
 import org.keycloak.representations.idm.ClientRepresentation;
 import org.keycloak.representations.idm.ComponentExportRepresentation;
@@ -48,6 +50,7 @@ import org.keycloak.representations.idm.RolesRepresentation;
 import org.keycloak.representations.idm.ScopeMappingRepresentation;
 import org.keycloak.representations.idm.UserConsentRepresentation;
 import org.keycloak.representations.idm.UserRepresentation;
+import org.keycloak.sessions.AuthenticationSessionProvider;
 import org.keycloak.storage.federated.UserFederatedStorageProvider;
 
 import java.io.IOException;
@@ -583,6 +586,23 @@ public class ExportUtils {
     
     private static UserFederatedStorageProvider userFederatedStorage(KeycloakSession session) {
         return session.getProvider(UserFederatedStorageProvider.class);
+    }
+
+    public static void removeClientRelatedEntities(KeycloakSession session, RealmModel realm, ClientModel client){
+        UserSessionProvider sessions = session.sessions();
+        if (sessions != null) {
+            sessions.onClientRemoved(realm, client.getId());
+        }
+
+        AuthenticationSessionProvider authSessions = session.authenticationSessions();
+        if (authSessions != null) {
+            authSessions.onClientRemoved(realm, client);
+        }
+
+        UserModel serviceAccountUser = session.users().getServiceAccount(client);
+        if (serviceAccountUser != null) {
+            new UserManager(session).removeUser(realm, serviceAccountUser);
+        }
     }
 
 }

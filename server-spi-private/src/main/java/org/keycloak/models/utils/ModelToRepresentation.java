@@ -503,6 +503,24 @@ public class ModelToRepresentation {
         rep.setWebAuthnPolicyPasswordlessAvoidSameAuthenticatorRegister(webAuthnPolicy.isAvoidSameAuthenticatorRegister());
         rep.setWebAuthnPolicyPasswordlessAcceptableAaguids(webAuthnPolicy.getAcceptableAaguids());
 
+        if (!realm.isOpenIdFederationConfig()) {
+            rep.setOpenIdFederationEnabled(false);
+        } else {
+            OpenIdFederationConfig openIdFederationConfig =  realm.getOpenIdFederationConfig();
+            rep.setOpenIdFederationEnabled(true);
+            rep.setOpenIdFederationOrganizationName(openIdFederationConfig.getOrganizationName());
+            rep.setOpenIdFederationContacts(openIdFederationConfig.getContacts());
+            rep.setOpenIdFederationLogoUri(openIdFederationConfig.getLogoUri());
+            rep.setOpenIdFederationPolicyUri(openIdFederationConfig.getPolicyUri());
+            rep.setOpenIdFederationHomepageUri(openIdFederationConfig.getHomepageUri());
+            rep.setOpenIdFederationAuthorityHints(openIdFederationConfig.getAuthorityHints());
+            rep.setOpenIdFederationTrustAnchors(openIdFederationConfig.getTrustAnchors());
+            rep.setOpenIdFederationClientRegistrationTypesSupported(openIdFederationConfig.getClientRegistrationTypesSupported().stream().map(x -> x.name()).collect(Collectors.toList()));
+            rep.setOpenIdFederationLifespan(openIdFederationConfig.getLifespan());
+            rep.setOpenIdFederationResolveEndpoint(openIdFederationConfig.getFederationResolveEndpoint());
+            rep.setOpenIdFederationHistoricalKeysEndpoint(openIdFederationConfig.getFederationHistoricalKeysEndpoint());
+        }
+
         CibaConfig cibaPolicy = realm.getCibaPolicy();
         Map<String, String> attrMap = Optional.ofNullable(rep.getAttributes()).orElse(new HashMap<>());
         attrMap.put(CibaConfig.CIBA_BACKCHANNEL_TOKEN_DELIVERY_MODE, cibaPolicy.getBackchannelTokenDeliveryMode());
