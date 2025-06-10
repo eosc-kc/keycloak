@@ -3,7 +3,6 @@ package org.keycloak.representations.openid_federation;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-@JsonIgnoreProperties(ignoreUnknown = true)
 public class Metadata {
 
     @JsonProperty("openid_provider")
@@ -14,6 +13,15 @@ public class Metadata {
 
     @JsonProperty("openid_relying_party")
     private RPMetadata relyingPartyMetadata;
+
+    @JsonProperty("oauth_authorization_server")
+    private OauthAuthorizationServer oauthAuthorizationServer;
+
+    @JsonProperty("oauth_client")
+    private OauthClient oauthClient;
+
+    @JsonProperty("oauth_resource")
+    private OauthResource oauthResource;
 
     public OPMetadata getOpenIdProviderMetadata() {
         return openIdProviderMetadata;

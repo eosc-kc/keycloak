@@ -212,7 +212,7 @@ public class RealmTest extends AbstractAdminTest {
 
         Set<String> attributesKeys = rep2.getAttributes().keySet();
 
-        int expectedAttributesCount = 4;
+        int expectedAttributesCount = 5;
         final Set<String> expectedAttributes = Sets.newHashSet(
                 OAuth2DeviceConfig.OAUTH2_DEVICE_CODE_LIFESPAN,
                 OAuth2DeviceConfig.OAUTH2_DEVICE_POLLING_INTERVAL,
@@ -227,8 +227,8 @@ public class RealmTest extends AbstractAdminTest {
             expectedAttributesCount++;
         }
 
-        assertThat(attributesKeys, CoreMatchers.is(expectedAttributes));
         assertThat(attributesKeys.size(), CoreMatchers.is(expectedAttributesCount));
+        assertThat(attributesKeys, CoreMatchers.is(expectedAttributes));
 
     }
 
