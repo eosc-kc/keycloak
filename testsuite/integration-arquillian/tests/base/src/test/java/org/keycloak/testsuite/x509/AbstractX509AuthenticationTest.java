@@ -63,8 +63,6 @@ import org.keycloak.testsuite.util.HtmlUnitBrowser;
 import org.keycloak.testsuite.util.RealmBuilder;
 import org.keycloak.testsuite.util.UserBuilder;
 import org.keycloak.testsuite.util.WaitUtils;
-import org.keycloak.userprofile.UserProfileConstants;
-import org.keycloak.utils.StringUtil;
 import org.openqa.selenium.WebDriver;
 
 import java.lang.reflect.Field;
