@@ -265,13 +265,10 @@ public class TrustChainProcessor {
 
     public TrustChainForExplicit findAcceptableMetadataPolicyChain(List<TrustChainForExplicit> trustChainForExplicits, EntityStatement statement) {
         TrustChainForExplicit validChain = null;
-        RPMetadataPolicy opPolicy = createMetadataPolicies();
         EntityStatement current = statement;
         for (TrustChainForExplicit chain : trustChainForExplicits) {
             try {
-                RPMetadataPolicy finalPolicy = MetadataPolicyUtils
-                        .combineClientPolicies(chain.getCombinedPolicy(), opPolicy);
-                current = MetadataPolicyUtils.applyPoliciesToRPStatement(current, finalPolicy);
+                current = MetadataPolicyUtils.applyPoliciesToRPStatement(current, chain.getCombinedPolicy());
                 validChain = chain;
                 break;
             } catch (MetadataPolicyCombinationException | MetadataPolicyException e) {
@@ -280,21 +277,5 @@ public class TrustChainProcessor {
         }
         return validChain;
     }
-
-    /**
-     * only for allowed Response_types.
-     * Keycloak implementation raise validation error if an invalid Response_types exists
-     * @return
-     */
-    private RPMetadataPolicy createMetadataPolicies() {
-        PolicyList<String> policy = new PolicyList<>();
-        policy.setSubsetOf(ALLOWED_RESPONSE_TYPES);
-        policy.setEssential(false);
-        RPMetadataPolicy rpPolicy = new RPMetadataPolicy();
-        rpPolicy.setResponseTypes(policy);
-        return rpPolicy;
-
-    }
-
 
 }

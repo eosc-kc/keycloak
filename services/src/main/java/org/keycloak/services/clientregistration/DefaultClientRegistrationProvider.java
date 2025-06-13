@@ -17,6 +17,7 @@
 
 package org.keycloak.services.clientregistration;
 
+import org.keycloak.events.EventType;
 import org.keycloak.models.ClientModel;
 import org.keycloak.models.KeycloakSession;
 import org.keycloak.models.utils.RepresentationToModel;
@@ -65,7 +66,7 @@ public class DefaultClientRegistrationProvider extends AbstractClientRegistratio
             }
         }
 
-        client = create(context);
+        client = create(context, EventType.CLIENT_REGISTER);
         validateClient(client, true);
         URI uri = session.getContext().getUri().getAbsolutePathBuilder().path(client.getClientId()).build();
         return Response.created(uri).entity(client).build();

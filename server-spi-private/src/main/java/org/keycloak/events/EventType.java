@@ -129,6 +129,10 @@ public enum EventType implements EnumWithStableIndex {
     CLIENT_REGISTER_ERROR(0x10000 + CLIENT_REGISTER.getStableIndex(), true),
     CLIENT_UPDATE(41, true),
     CLIENT_UPDATE_ERROR(0x10000 + CLIENT_UPDATE.getStableIndex(), true),
+    FEDERATION_CLIENT_REGISTER(56, true),
+    FEDERATION_CLIENT_REGISTER_ERROR(0x10000 + CLIENT_REGISTER.getStableIndex(), true),
+    FEDERATION_CLIENT_UPDATE(57, true),
+    FEDERATION_CLIENT_UPDATE_ERROR(0x10000 + CLIENT_UPDATE.getStableIndex(), true),
     CLIENT_DELETE(42, true),
     CLIENT_DELETE_ERROR(0x10000 + CLIENT_DELETE.getStableIndex(), true),
 

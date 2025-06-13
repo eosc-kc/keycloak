@@ -97,7 +97,7 @@ public abstract class AbstractClientRegistrationProvider implements ClientRegist
             client.getAttributes().put(OIDCConfigAttributes.EXPIRATION_TIME, exp.toString() );
 
         OIDCClientRegistrationContext oidcContext = new OIDCClientRegistrationContext(session, client, this, clientOIDC);
-        client = create(oidcContext);
+        client = create(oidcContext, exp == null ? EventType.CLIENT_REGISTER : EventType.FEDERATION_CLIENT_REGISTER);
 
         ClientModel clientModel = session.getContext().getRealm().getClientByClientId(client.getClientId());
         updatePairwiseSubMappers(clientModel, SubjectType.parse(clientOIDC.getSubjectType()), clientOIDC.getSectorIdentifierUri());
@@ -150,10 +150,10 @@ public abstract class AbstractClientRegistrationProvider implements ClientRegist
         rep.setProtocolMappers(mappings);
     }
 
-    public ClientRepresentation create(ClientRegistrationContext context) {
+    public ClientRepresentation create(ClientRegistrationContext context, EventType eventType) {
         ClientRepresentation client = context.getClient();
 
-        event.event(EventType.CLIENT_REGISTER);
+        event.event(eventType);
 
         RegistrationAuth registrationAuth = auth.requireCreate(context);
 
