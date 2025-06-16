@@ -92,5 +92,6 @@
     <include file="META-INF/jpa-changelog-client-offline-session.xml"/>
     <include file="META-INF/jpa-changelog-federation.xml"/>
     <include file="META-INF/jpa-changelog-remove-indexes.xml"/>
+    <include file="META-INF/jpa-changelog-group-attributes.xml"/>
 
 </databaseChangeLog>

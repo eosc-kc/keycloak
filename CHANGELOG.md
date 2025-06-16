@@ -10,6 +10,11 @@ Full Keycloak upstream jira issue can be shown if filtered by Fix version.
 
 Our Keycloak version is working well with PostgreSQL database. For using other SQL databases, text field in database need to be evaluated.
 
+## [Unreleased]
+
+### Changed
+- Group attribute value as text in database
+
 ## [22.0.13-1.17] - 2025-05-28
 
 ### Fixed
