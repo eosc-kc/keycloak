@@ -76,14 +76,10 @@ public class OpenIdFederationClientRegistrationService extends AbstractClientReg
                     if (rPMetadata.getClientId() == null) {
                         rPMetadata.setClientId(statement.getIssuer());
                     }
-                    //error or update???
-                    if (session.getContext().getRealm().getClientByClientId(rPMetadata.getClientId()) != null) {
-                        throw new ErrorResponseException(Errors.INVALID_METADATA, "Client with this entity identifier exists", Response.Status.BAD_REQUEST);
-                    }
 
                     RPMetadata rPMetadataResponse = new RPMetadata();
                     try {
-                        rPMetadataResponse = (RPMetadata) createOidcClient(rPMetadata, session, statement.getExp());
+                        rPMetadataResponse = session.getContext().getRealm().getClientByClientId(rPMetadata.getClientId()) == null ? (RPMetadata) createOidcClient(rPMetadata, session, statement.getExp()) : (RPMetadata) updateOidcClient(rPMetadata.getClientId(), rPMetadata, session, statement.getExp());
                     } catch (ClientRegistrationException cre) {
                         ServicesLogger.LOGGER.clientRegistrationException(cre.getMessage());
                         throw new ErrorResponseException(Errors.INVALID_METADATA, "Client metadata invalid", Response.Status.BAD_REQUEST);

@@ -100,23 +100,9 @@ public class OIDCClientRegistrationProvider extends AbstractClientRegistrationPr
     @Produces(MediaType.APPLICATION_JSON)
     public Response updateOIDC(@PathParam("clientId") String clientId, OIDCClientRepresentation clientOIDC) {
         try {
-            ClientRepresentation client = DescriptionConverter.toInternal(session, clientOIDC);
-            OIDCClientRegistrationContext oidcContext = new OIDCClientRegistrationContext(session, client, this, clientOIDC);
-            client = update(clientId, oidcContext);
 
-            ClientModel clientModel = session.getContext().getRealm().getClientByClientId(client.getClientId());
-            updatePairwiseSubMappers(clientModel, SubjectType.parse(clientOIDC.getSubjectType()), clientOIDC.getSectorIdentifierUri());
-            updateClientRepWithProtocolMappers(clientModel, client);
-
-            client.setSecret(clientModel.getSecret());
-            client.getAttributes().put(ClientSecretConstants.CLIENT_SECRET_EXPIRATION,clientModel.getAttribute(ClientSecretConstants.CLIENT_SECRET_EXPIRATION));
-            client.getAttributes().put(ClientSecretConstants.CLIENT_SECRET_CREATION_TIME,clientModel.getAttribute(ClientSecretConstants.CLIENT_SECRET_CREATION_TIME));
-
-            validateClient(clientModel, clientOIDC, false);
-
-            URI uri = session.getContext().getUri().getAbsolutePathBuilder().path(client.getClientId()).build();
-            clientOIDC = DescriptionConverter.toExternalResponse(session, client, uri);
-            return Response.ok(clientOIDC).build();
+            OIDCClientRepresentation updatedClient = updateOidcClient(clientId, clientOIDC, session, null);
+            return Response.ok(updatedClient).build();
         } catch (ClientRegistrationException cre) {
             ServicesLogger.LOGGER.clientRegistrationException(cre.getMessage());
             throw new ErrorResponseException(ErrorCodes.INVALID_CLIENT_METADATA, "Client metadata invalid", Response.Status.BAD_REQUEST);

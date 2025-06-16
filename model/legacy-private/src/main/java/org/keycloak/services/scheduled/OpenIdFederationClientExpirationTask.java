@@ -50,10 +50,8 @@ public class OpenIdFederationClientExpirationTask implements ScheduledTask {
             TimerProvider timer = session.getProvider(TimerProvider.class);
             timer.cancelTask("OpenIdFederationClientExpirationTask_" + id);
         } else {
-            //what???
-            if (realm.removeClient(id)) {
-                ExportUtils.removeClientRelatedEntities(session, realm, client);
-            }
+            client.setEnabled(false);
+            client.updateClient();
         }
     }
 }

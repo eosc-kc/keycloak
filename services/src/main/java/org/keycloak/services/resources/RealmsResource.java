@@ -29,13 +29,13 @@ import org.keycloak.models.KeycloakSession;
 import org.keycloak.models.RealmModel;
 import org.keycloak.protocol.LoginProtocol;
 import org.keycloak.protocol.LoginProtocolFactory;
+import org.keycloak.protocol.oidc.federation.OpenIdFederationWellKnownProvider;
 import org.keycloak.services.CorsErrorResponseException;
 import org.keycloak.services.clientregistration.ClientRegistrationAuth;
 import org.keycloak.services.clientregistration.ClientRegistrationService;
 import org.keycloak.services.clientregistration.openid_federation.OpenIdFederationClientRegistrationService;
 import org.keycloak.services.managers.RealmManager;
 import org.keycloak.services.resource.RealmResourceProvider;
-import org.keycloak.services.resources.account.AccountLoader;
 import org.keycloak.services.util.CacheControlUtil;
 import org.keycloak.services.util.ResolveRelative;
 import org.keycloak.utils.ProfileHelper;
@@ -196,13 +196,6 @@ public class RealmsResource {
         session.getContext().setRealm(realm);
     }
 
-    @Path("{realm}/account")
-    public Object getAccountService(final @PathParam("realm") String name) {
-        resolveRealmAndUpdateSession(name);
-        EventBuilder event = new EventBuilder(session.getContext().getRealm(), session, session.getContext().getConnection());
-        return new AccountLoader(session, event);
-    }
-
     @Path("{realm}")
     public PublicRealmResource getRealmResource(final @PathParam("realm") String name) {
         resolveRealmAndUpdateSession(name);
@@ -248,6 +241,9 @@ public class RealmsResource {
 
         if (wellKnown != null) {
             ResponseBuilder responseBuilder = Response.ok(wellKnown.getConfig()).cacheControl(CacheControlUtil.noCache());
+            if (wellKnown instanceof OpenIdFederationWellKnownProvider) {
+                responseBuilder.header("Content-Type", "application/entity-statement+jwt");
+            }
             return Cors.add(session.getContext().getHttpRequest(), responseBuilder).allowedOrigins("*").auth().build();
         }
 

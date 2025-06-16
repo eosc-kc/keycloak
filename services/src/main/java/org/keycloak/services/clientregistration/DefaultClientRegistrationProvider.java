@@ -88,7 +88,7 @@ public class DefaultClientRegistrationProvider extends AbstractClientRegistratio
     public Response updateDefault(@PathParam("clientId") String clientId, ClientRepresentation client) {
         DefaultClientRegistrationContext context = new DefaultClientRegistrationContext(session, client, this);
         ResourceServerRepresentation authorizationSettings = client.getAuthorizationSettings();
-        client = update(clientId, context);
+        client = update(clientId, context, null);
         updateAuthorizationSettings(client, authorizationSettings);
         validateClient(client, false);
         return Response.ok(client).build();
