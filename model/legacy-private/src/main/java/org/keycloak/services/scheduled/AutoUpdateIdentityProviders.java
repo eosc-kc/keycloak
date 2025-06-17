@@ -1,6 +1,5 @@
 package org.keycloak.services.scheduled;
 
-import java.io.IOException;
 import java.io.InputStream;
 import java.time.Instant;
 import java.util.Objects;
