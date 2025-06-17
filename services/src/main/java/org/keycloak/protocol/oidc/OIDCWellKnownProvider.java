@@ -89,7 +89,7 @@ public class OIDCWellKnownProvider implements WellKnownProvider {
     // KEYCLOAK-7451 OAuth Authorization Server Metadata for Proof Key for Code Exchange
     public static final List<String> DEFAULT_CODE_CHALLENGE_METHODS_SUPPORTED = list(OAuth2Constants.PKCE_METHOD_PLAIN, OAuth2Constants.PKCE_METHOD_S256);
 
-    private final KeycloakSession session;
+    protected final KeycloakSession session;
     private final Map<String, Object> openidConfigOverride;
     private final boolean includeClientScopes;
 

@@ -32,6 +32,7 @@ import org.keycloak.migration.MigrationProvider;
 import org.keycloak.migration.migrators.MigrateTo8_0_0;
 import org.keycloak.migration.migrators.MigrationUtils;
 import org.keycloak.models.*;
+import org.keycloak.models.enums.ClientRegistrationTypeEnum;
 import org.keycloak.models.utils.ComponentUtil;
 import org.keycloak.models.utils.DefaultAuthenticationFlows;
 import org.keycloak.models.utils.DefaultKeyProviders;
@@ -250,6 +251,8 @@ public class LegacyExportImportManager implements ExportImportManager {
 
         webAuthnPolicy = getWebAuthnPolicyPasswordless(rep);
         newRealm.setWebAuthnPolicyPasswordless(webAuthnPolicy);
+
+        newRealm.setOpenIdFederationConfig(getOpenIdFederationConfig(rep));
 
         updateCibaSettings(rep, newRealm);
 
@@ -811,6 +814,8 @@ public class LegacyExportImportManager implements ExportImportManager {
         webAuthnPolicy = getWebAuthnPolicyPasswordless(rep);
         realm.setWebAuthnPolicyPasswordless(webAuthnPolicy);
 
+        realm.setOpenIdFederationConfig(getOpenIdFederationConfig(rep));
+
         updateCibaSettings(rep, realm);
         updateParSettings(rep, realm);
         session.clientPolicy().updateRealmModelFromRepresentation(realm, rep);
@@ -1210,7 +1215,6 @@ public class LegacyExportImportManager implements ExportImportManager {
         return webAuthnPolicy;
     }
 
-
     private static WebAuthnPolicy getWebAuthnPolicyPasswordless(RealmRepresentation rep) {
         WebAuthnPolicy webAuthnPolicy = new WebAuthnPolicy();
 
@@ -1261,6 +1265,27 @@ public class LegacyExportImportManager implements ExportImportManager {
 
         return webAuthnPolicy;
     }
+
+    private static OpenIdFederationConfig getOpenIdFederationConfig(RealmRepresentation rep) {
+        if (rep.getOpenIdFederationEnabled() != null && rep.getOpenIdFederationEnabled()) {
+            OpenIdFederationConfig config = new OpenIdFederationConfig();
+            config.setOrganizationName(rep.getOpenIdFederationOrganizationName());
+            config.setContacts(rep.getOpenIdFederationContacts());
+            config.setLogoUri(rep.getOpenIdFederationLogoUri());
+            config.setPolicyUri(rep.getOpenIdFederationPolicyUri());
+            config.setHomepageUri(rep.getOpenIdFederationHomepageUri());
+            config.setAuthorityHints(rep.getOpenIdFederationAuthorityHints());
+            config.setTrustAnchors(rep.getOpenIdFederationTrustAnchors());
+            config.setClientRegistrationTypesSupported(rep.getOpenIdFederationClientRegistrationTypesSupported().stream().map(x -> ClientRegistrationTypeEnum.valueOf(x)).collect(Collectors.toList()));
+            config.setLifespan(rep.getOpenIdFederationLifespan());
+            config.setFederationResolveEndpoint(rep.getOpenIdFederationResolveEndpoint());
+            config.setFederationHistoricalKeysEndpoint(rep.getOpenIdFederationHistoricalKeysEndpoint());
+            return config;
+        } else {
+            return null;
+        }
+    }
+
     public static Map<String, String> importAuthenticationFlows(KeycloakSession session, RealmModel newRealm, RealmRepresentation rep) {
         Map<String, String> mappedFlows = new HashMap<>();
         if (rep.getAuthenticationFlows() == null) {

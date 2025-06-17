@@ -37,6 +37,7 @@ import org.keycloak.protocol.oidc.OIDCLoginProtocolFactory;
 import org.keycloak.protocol.oidc.OIDCLoginProtocolService;
 import org.keycloak.protocol.oidc.OIDCWellKnownProvider;
 import org.keycloak.protocol.oidc.OIDCWellKnownProviderFactory;
+import org.keycloak.protocol.oidc.federation.OpenIdFederationWellKnownProviderFactory;
 import org.keycloak.protocol.oidc.representations.MTLSEndpointAliases;
 import org.keycloak.protocol.oidc.representations.OIDCConfigurationRepresentation;
 import org.keycloak.protocol.oidc.utils.OIDCResponseType;
@@ -44,6 +45,8 @@ import org.keycloak.protocol.oidc.OIDCLoginProtocol;
 import org.keycloak.representations.IDToken;
 import org.keycloak.representations.idm.ClientScopeRepresentation;
 import org.keycloak.representations.idm.RealmRepresentation;
+import org.keycloak.representations.openid_federation.EntityStatement;
+import org.keycloak.representations.openid_federation.OPMetadata;
 import org.keycloak.services.clientregistration.ClientRegistrationService;
 import org.keycloak.services.clientregistration.oidc.OIDCClientRegistrationProviderFactory;
 import org.keycloak.services.resources.Cors;
@@ -122,113 +125,166 @@ public class OIDCWellKnownProviderTest extends AbstractKeycloakTest {
         Client client = AdminClientUtil.createResteasyClient();
         try {
             OIDCConfigurationRepresentation oidcConfig = getOIDCDiscoveryRepresentation(client, OAuthClient.AUTH_SERVER_ROOT);
+            testOidc(oidcConfig);
 
-            // URIs are filled
-            assertEquals(oidcConfig.getAuthorizationEndpoint(), OIDCLoginProtocolService.authUrl(UriBuilder.fromUri(OAuthClient.AUTH_SERVER_ROOT)).build("test").toString());
-            assertEquals(oidcConfig.getTokenEndpoint(), oauth.getAccessTokenUrl());
-            assertEquals(oidcConfig.getUserinfoEndpoint(), OIDCLoginProtocolService.userInfoUrl(UriBuilder.fromUri(OAuthClient.AUTH_SERVER_ROOT)).build("test").toString());
-            assertEquals(oidcConfig.getJwksUri(), oauth.getCertsUrl("test"));
+        } finally {
+            client.close();
+        }
+    }
+
+    private void testOidc(OIDCConfigurationRepresentation oidcConfig ){
+        // URIs are filled
+        assertEquals(oidcConfig.getAuthorizationEndpoint(), OIDCLoginProtocolService.authUrl(UriBuilder.fromUri(OAuthClient.AUTH_SERVER_ROOT)).build("test").toString());
+        assertEquals(oidcConfig.getTokenEndpoint(), oauth.getAccessTokenUrl());
+        assertEquals(oidcConfig.getUserinfoEndpoint(), OIDCLoginProtocolService.userInfoUrl(UriBuilder.fromUri(OAuthClient.AUTH_SERVER_ROOT)).build("test").toString());
+        assertEquals(oidcConfig.getJwksUri(), oauth.getCertsUrl("test"));
 
 
-            String registrationUri = UriBuilder
-                    .fromUri(OAuthClient.AUTH_SERVER_ROOT)
-                    .path(RealmsResource.class)
-                    .path(RealmsResource.class, "getClientsService")
-                    .path(ClientRegistrationService.class, "provider")
-                    .build("test", OIDCClientRegistrationProviderFactory.ID)
-                    .toString();
-            assertEquals(oidcConfig.getRegistrationEndpoint(), registrationUri);
+        String registrationUri = UriBuilder
+                .fromUri(OAuthClient.AUTH_SERVER_ROOT)
+                .path(RealmsResource.class)
+                .path(RealmsResource.class, "getClientsService")
+                .path(ClientRegistrationService.class, "provider")
+                .build("test", OIDCClientRegistrationProviderFactory.ID)
+                .toString();
+        assertEquals(oidcConfig.getRegistrationEndpoint(), registrationUri);
 
-            // Support standard + implicit + hybrid flow
-            assertContains(oidcConfig.getResponseTypesSupported(), OAuth2Constants.CODE, OIDCResponseType.ID_TOKEN, "id_token token", "code id_token", "code token", "code id_token token");
-            assertEquals(oidcConfig.getGrantTypesSupported().size(),7);
-            assertContains(oidcConfig.getGrantTypesSupported(), OAuth2Constants.AUTHORIZATION_CODE, OAuth2Constants.IMPLICIT,
+        // Support standard + implicit + hybrid flow
+        assertContains(oidcConfig.getResponseTypesSupported(), OAuth2Constants.CODE, OIDCResponseType.ID_TOKEN, "id_token token", "code id_token", "code token", "code id_token token");
+        assertEquals(oidcConfig.getGrantTypesSupported().size(),7);
+        assertContains(oidcConfig.getGrantTypesSupported(), OAuth2Constants.AUTHORIZATION_CODE, OAuth2Constants.IMPLICIT,
                 OAuth2Constants.DEVICE_CODE_GRANT_TYPE);
-            assertContains(oidcConfig.getResponseModesSupported(), "query", "fragment", "form_post", "jwt", "query.jwt", "fragment.jwt", "form_post.jwt");
+        assertContains(oidcConfig.getResponseModesSupported(), "query", "fragment", "form_post", "jwt", "query.jwt", "fragment.jwt", "form_post.jwt");
 
-            Assert.assertNames(oidcConfig.getSubjectTypesSupported(), "pairwise", "public");
+        Assert.assertNames(oidcConfig.getSubjectTypesSupported(), "pairwise", "public");
 
-            // Signature algorithms
-            Assert.assertNames(oidcConfig.getIdTokenSigningAlgValuesSupported(), Algorithm.PS256, Algorithm.PS384, Algorithm.PS512, Algorithm.RS256, Algorithm.RS384, Algorithm.RS512, Algorithm.ES256, Algorithm.ES384, Algorithm.ES512, Algorithm.HS256, Algorithm.HS384, Algorithm.HS512);
-            Assert.assertNames(oidcConfig.getUserInfoSigningAlgValuesSupported(), "none", Algorithm.PS256, Algorithm.PS384, Algorithm.PS512, Algorithm.RS256, Algorithm.RS384, Algorithm.RS512, Algorithm.ES256, Algorithm.ES384, Algorithm.ES512, Algorithm.HS256, Algorithm.HS384, Algorithm.HS512);
-            Assert.assertNames(oidcConfig.getRequestObjectSigningAlgValuesSupported(), "none", Algorithm.PS256, Algorithm.PS384, Algorithm.PS512, Algorithm.RS256, Algorithm.RS384, Algorithm.RS512, Algorithm.ES256, Algorithm.ES384, Algorithm.ES512, Algorithm.HS256, Algorithm.HS384, Algorithm.HS512);
-            Assert.assertNames(oidcConfig.getAuthorizationSigningAlgValuesSupported(), Algorithm.PS256, Algorithm.PS384, Algorithm.PS512, Algorithm.RS256, Algorithm.RS384, Algorithm.RS512, Algorithm.ES256, Algorithm.ES384, Algorithm.ES512, Algorithm.HS256, Algorithm.HS384, Algorithm.HS512);
+        // Signature algorithms
+        Assert.assertNames(oidcConfig.getIdTokenSigningAlgValuesSupported(), Algorithm.PS256, Algorithm.PS384, Algorithm.PS512, Algorithm.RS256, Algorithm.RS384, Algorithm.RS512, Algorithm.ES256, Algorithm.ES384, Algorithm.ES512, Algorithm.HS256, Algorithm.HS384, Algorithm.HS512);
+        Assert.assertNames(oidcConfig.getUserInfoSigningAlgValuesSupported(), "none", Algorithm.PS256, Algorithm.PS384, Algorithm.PS512, Algorithm.RS256, Algorithm.RS384, Algorithm.RS512, Algorithm.ES256, Algorithm.ES384, Algorithm.ES512, Algorithm.HS256, Algorithm.HS384, Algorithm.HS512);
+        Assert.assertNames(oidcConfig.getRequestObjectSigningAlgValuesSupported(), "none", Algorithm.PS256, Algorithm.PS384, Algorithm.PS512, Algorithm.RS256, Algorithm.RS384, Algorithm.RS512, Algorithm.ES256, Algorithm.ES384, Algorithm.ES512, Algorithm.HS256, Algorithm.HS384, Algorithm.HS512);
+        Assert.assertNames(oidcConfig.getAuthorizationSigningAlgValuesSupported(), Algorithm.PS256, Algorithm.PS384, Algorithm.PS512, Algorithm.RS256, Algorithm.RS384, Algorithm.RS512, Algorithm.ES256, Algorithm.ES384, Algorithm.ES512, Algorithm.HS256, Algorithm.HS384, Algorithm.HS512);
 
-            // request object encryption algorithms
-            Assert.assertNames(oidcConfig.getRequestObjectEncryptionAlgValuesSupported(), JWEConstants.RSA_OAEP, JWEConstants.RSA_OAEP_256, JWEConstants.RSA1_5);
-            Assert.assertNames(oidcConfig.getRequestObjectEncryptionEncValuesSupported(), JWEConstants.A256GCM, JWEConstants.A192GCM, JWEConstants.A128GCM, JWEConstants.A128CBC_HS256, JWEConstants.A192CBC_HS384, JWEConstants.A256CBC_HS512);
+        // request object encryption algorithms
+        Assert.assertNames(oidcConfig.getRequestObjectEncryptionAlgValuesSupported(), JWEConstants.RSA_OAEP, JWEConstants.RSA_OAEP_256, JWEConstants.RSA1_5);
+        Assert.assertNames(oidcConfig.getRequestObjectEncryptionEncValuesSupported(), JWEConstants.A256GCM, JWEConstants.A192GCM, JWEConstants.A128GCM, JWEConstants.A128CBC_HS256, JWEConstants.A192CBC_HS384, JWEConstants.A256CBC_HS512);
 
-            // Encryption algorithms
-            Assert.assertNames(oidcConfig.getIdTokenEncryptionAlgValuesSupported(), JWEConstants.RSA1_5, JWEConstants.RSA_OAEP, JWEConstants.RSA_OAEP_256);
-            Assert.assertNames(oidcConfig.getIdTokenEncryptionEncValuesSupported(), JWEConstants.A128CBC_HS256, JWEConstants.A128GCM, JWEConstants.A192CBC_HS384, JWEConstants.A192GCM, JWEConstants.A256CBC_HS512, JWEConstants.A256GCM);
-            Assert.assertNames(oidcConfig.getAuthorizationEncryptionAlgValuesSupported(), JWEConstants.RSA1_5, JWEConstants.RSA_OAEP, JWEConstants.RSA_OAEP_256);
-            Assert.assertNames(oidcConfig.getAuthorizationEncryptionEncValuesSupported(), JWEConstants.A128CBC_HS256, JWEConstants.A128GCM, JWEConstants.A192CBC_HS384, JWEConstants.A192GCM, JWEConstants.A256CBC_HS512, JWEConstants.A256GCM);
-            Assert.assertNames(oidcConfig.getUserInfoEncryptionAlgValuesSupported(), JWEConstants.RSA1_5, JWEConstants.RSA_OAEP, JWEConstants.RSA_OAEP_256);
-            Assert.assertNames(oidcConfig.getUserInfoEncryptionEncValuesSupported(), JWEConstants.A128CBC_HS256, JWEConstants.A128GCM, JWEConstants.A192CBC_HS384, JWEConstants.A192GCM, JWEConstants.A256CBC_HS512, JWEConstants.A256GCM);
+        // Encryption algorithms
+        Assert.assertNames(oidcConfig.getIdTokenEncryptionAlgValuesSupported(), JWEConstants.RSA1_5, JWEConstants.RSA_OAEP, JWEConstants.RSA_OAEP_256);
+        Assert.assertNames(oidcConfig.getIdTokenEncryptionEncValuesSupported(), JWEConstants.A128CBC_HS256, JWEConstants.A128GCM, JWEConstants.A192CBC_HS384, JWEConstants.A192GCM, JWEConstants.A256CBC_HS512, JWEConstants.A256GCM);
+        Assert.assertNames(oidcConfig.getAuthorizationEncryptionAlgValuesSupported(), JWEConstants.RSA1_5, JWEConstants.RSA_OAEP, JWEConstants.RSA_OAEP_256);
+        Assert.assertNames(oidcConfig.getAuthorizationEncryptionEncValuesSupported(), JWEConstants.A128CBC_HS256, JWEConstants.A128GCM, JWEConstants.A192CBC_HS384, JWEConstants.A192GCM, JWEConstants.A256CBC_HS512, JWEConstants.A256GCM);
+        Assert.assertNames(oidcConfig.getUserInfoEncryptionAlgValuesSupported(), JWEConstants.RSA1_5, JWEConstants.RSA_OAEP, JWEConstants.RSA_OAEP_256);
+        Assert.assertNames(oidcConfig.getUserInfoEncryptionEncValuesSupported(), JWEConstants.A128CBC_HS256, JWEConstants.A128GCM, JWEConstants.A192CBC_HS384, JWEConstants.A192GCM, JWEConstants.A256CBC_HS512, JWEConstants.A256GCM);
 
-            // Client authentication
-            Assert.assertNames(oidcConfig.getTokenEndpointAuthMethodsSupported(), "client_secret_basic", "client_secret_post", "private_key_jwt", "client_secret_jwt", "tls_client_auth");
-            Assert.assertNames(oidcConfig.getTokenEndpointAuthSigningAlgValuesSupported(), Algorithm.PS256, Algorithm.PS384, Algorithm.PS512, Algorithm.RS256, Algorithm.RS384, Algorithm.RS512, Algorithm.ES256, Algorithm.ES384, Algorithm.ES512, Algorithm.HS256, Algorithm.HS384, Algorithm.HS512);
-            // NOTE: Those are overriden in "oidc-well-known-config-override.json" and they are tested in testDefaultProviderCustomizations
-            //Assert.assertNames(oidcConfig.getIntrospectionEndpointAuthMethodsSupported(), "private_key_jwt", "client_secret_jwt", "tls_client_auth", "custom_nonexisting_authenticator");
-            Assert.assertNames(oidcConfig.getIntrospectionEndpointAuthSigningAlgValuesSupported(), Algorithm.PS256,
+        // Client authentication
+        Assert.assertNames(oidcConfig.getTokenEndpointAuthMethodsSupported(), "client_secret_basic", "client_secret_post", "private_key_jwt", "client_secret_jwt", "tls_client_auth");
+        Assert.assertNames(oidcConfig.getTokenEndpointAuthSigningAlgValuesSupported(), Algorithm.PS256, Algorithm.PS384, Algorithm.PS512, Algorithm.RS256, Algorithm.RS384, Algorithm.RS512, Algorithm.ES256, Algorithm.ES384, Algorithm.ES512, Algorithm.HS256, Algorithm.HS384, Algorithm.HS512);
+        // NOTE: Those are overriden in "oidc-well-known-config-override.json" and they are tested in testDefaultProviderCustomizations
+        //Assert.assertNames(oidcConfig.getIntrospectionEndpointAuthMethodsSupported(), "private_key_jwt", "client_secret_jwt", "tls_client_auth", "custom_nonexisting_authenticator");
+        Assert.assertNames(oidcConfig.getIntrospectionEndpointAuthSigningAlgValuesSupported(), Algorithm.PS256,
                 Algorithm.PS384, Algorithm.PS512, Algorithm.RS256, Algorithm.RS384, Algorithm.RS512, Algorithm.ES256,
                 Algorithm.ES384, Algorithm.ES512, Algorithm.HS256, Algorithm.HS384, Algorithm.HS512);
 
-            // Claims
-            assertContains(oidcConfig.getClaimsSupported(), IDToken.NAME, IDToken.EMAIL, IDToken.PREFERRED_USERNAME, IDToken.FAMILY_NAME, IDToken.ACR);
-            Assert.assertNames(oidcConfig.getClaimTypesSupported(), "normal");
-            Assert.assertTrue(oidcConfig.getClaimsParameterSupported());
+        // Claims
+        assertContains(oidcConfig.getClaimsSupported(), IDToken.NAME, IDToken.EMAIL, IDToken.PREFERRED_USERNAME, IDToken.FAMILY_NAME, IDToken.ACR);
+        Assert.assertNames(oidcConfig.getClaimTypesSupported(), "normal");
+        Assert.assertTrue(oidcConfig.getClaimsParameterSupported());
 
-            // Scopes supported
-            List<String> expectedScopeList = Stream.of(OAuth2Constants.SCOPE_OPENID, OAuth2Constants.OFFLINE_ACCESS,
-                    OAuth2Constants.SCOPE_PROFILE, OAuth2Constants.SCOPE_EMAIL, OAuth2Constants.SCOPE_PHONE, OAuth2Constants.SCOPE_ADDRESS, OIDCLoginProtocolFactory.ACR_SCOPE,
-                    OIDCLoginProtocolFactory.ROLES_SCOPE, OIDCLoginProtocolFactory.WEB_ORIGINS_SCOPE, OIDCLoginProtocolFactory.MICROPROFILE_JWT_SCOPE).collect(Collectors.toList());
-            assertScopesSupportedMatchesWithRealm(oidcConfig, expectedScopeList);
+        // Scopes supported
+        List<String> expectedScopeList = Stream.of(OAuth2Constants.SCOPE_OPENID, OAuth2Constants.OFFLINE_ACCESS,
+                OAuth2Constants.SCOPE_PROFILE, OAuth2Constants.SCOPE_EMAIL, OAuth2Constants.SCOPE_PHONE, OAuth2Constants.SCOPE_ADDRESS, OIDCLoginProtocolFactory.ACR_SCOPE,
+                OIDCLoginProtocolFactory.ROLES_SCOPE, OIDCLoginProtocolFactory.WEB_ORIGINS_SCOPE, OIDCLoginProtocolFactory.MICROPROFILE_JWT_SCOPE).collect(Collectors.toList());
+        assertScopesSupportedMatchesWithRealm(oidcConfig, expectedScopeList);
 
-            // Request and Request_Uri
-            Assert.assertTrue(oidcConfig.getRequestParameterSupported());
-            Assert.assertTrue(oidcConfig.getRequestUriParameterSupported());
-            Assert.assertTrue(oidcConfig.getRequireRequestUriRegistration());
+        // Request and Request_Uri
+        Assert.assertTrue(oidcConfig.getRequestParameterSupported());
+        Assert.assertTrue(oidcConfig.getRequestUriParameterSupported());
+        Assert.assertTrue(oidcConfig.getRequireRequestUriRegistration());
 
-            // KEYCLOAK-7451 OAuth Authorization Server Metadata for Proof Key for Code Exchange
-            // PKCE support
-            Assert.assertNames(oidcConfig.getCodeChallengeMethodsSupported(), OAuth2Constants.PKCE_METHOD_PLAIN, OAuth2Constants.PKCE_METHOD_S256);
+        // KEYCLOAK-7451 OAuth Authorization Server Metadata for Proof Key for Code Exchange
+        // PKCE support
+        Assert.assertNames(oidcConfig.getCodeChallengeMethodsSupported(), OAuth2Constants.PKCE_METHOD_PLAIN, OAuth2Constants.PKCE_METHOD_S256);
 
-            // KEYCLOAK-6771 Certificate Bound Token
-            // https://tools.ietf.org/html/draft-ietf-oauth-mtls-08#section-6.2
-            Assert.assertTrue(oidcConfig.getTlsClientCertificateBoundAccessTokens());
-            MTLSEndpointAliases mtlsEndpointAliases = oidcConfig.getMtlsEndpointAliases();
-            Assert.assertEquals(oidcConfig.getTokenEndpoint(), mtlsEndpointAliases.getTokenEndpoint());
-            Assert.assertEquals(oidcConfig.getRevocationEndpoint(), mtlsEndpointAliases.getRevocationEndpoint());
+        // KEYCLOAK-6771 Certificate Bound Token
+        // https://tools.ietf.org/html/draft-ietf-oauth-mtls-08#section-6.2
+        Assert.assertTrue(oidcConfig.getTlsClientCertificateBoundAccessTokens());
+        MTLSEndpointAliases mtlsEndpointAliases = oidcConfig.getMtlsEndpointAliases();
+        Assert.assertEquals(oidcConfig.getTokenEndpoint(), mtlsEndpointAliases.getTokenEndpoint());
+        Assert.assertEquals(oidcConfig.getRevocationEndpoint(), mtlsEndpointAliases.getRevocationEndpoint());
 
-            // CIBA
-            assertEquals(oidcConfig.getBackchannelAuthenticationEndpoint(), oauth.getBackchannelAuthenticationUrl());
-            assertContains(oidcConfig.getGrantTypesSupported(), OAuth2Constants.CIBA_GRANT_TYPE);
-            Assert.assertNames(oidcConfig.getBackchannelTokenDeliveryModesSupported(), "poll", "ping");
-            Assert.assertNames(oidcConfig.getBackchannelAuthenticationRequestSigningAlgValuesSupported(), Algorithm.PS256, Algorithm.PS384, Algorithm.PS512, Algorithm.RS256, Algorithm.RS384, Algorithm.RS512, Algorithm.ES256, Algorithm.ES384, Algorithm.ES512);
+        // CIBA
+        assertEquals(oidcConfig.getBackchannelAuthenticationEndpoint(), oauth.getBackchannelAuthenticationUrl());
+        assertContains(oidcConfig.getGrantTypesSupported(), OAuth2Constants.CIBA_GRANT_TYPE);
+        Assert.assertNames(oidcConfig.getBackchannelTokenDeliveryModesSupported(), "poll", "ping");
+        Assert.assertNames(oidcConfig.getBackchannelAuthenticationRequestSigningAlgValuesSupported(), Algorithm.PS256, Algorithm.PS384, Algorithm.PS512, Algorithm.RS256, Algorithm.RS384, Algorithm.RS512, Algorithm.ES256, Algorithm.ES384, Algorithm.ES512);
 
-            Assert.assertTrue(oidcConfig.getBackchannelLogoutSupported());
-            Assert.assertTrue(oidcConfig.getBackchannelLogoutSessionSupported());
+        Assert.assertTrue(oidcConfig.getBackchannelLogoutSupported());
+        Assert.assertTrue(oidcConfig.getBackchannelLogoutSessionSupported());
 
-            // Token Revocation
-            assertEquals(oidcConfig.getRevocationEndpoint(), oauth.getTokenRevocationUrl());
-            Assert.assertNames(oidcConfig.getRevocationEndpointAuthMethodsSupported(), "client_secret_basic",
+        // Token Revocation
+        assertEquals(oidcConfig.getRevocationEndpoint(), oauth.getTokenRevocationUrl());
+        Assert.assertNames(oidcConfig.getRevocationEndpointAuthMethodsSupported(), "client_secret_basic",
                 "client_secret_post", "private_key_jwt", "client_secret_jwt", "tls_client_auth");
-            Assert.assertNames(oidcConfig.getRevocationEndpointAuthSigningAlgValuesSupported(), Algorithm.PS256,
+        Assert.assertNames(oidcConfig.getRevocationEndpointAuthSigningAlgValuesSupported(), Algorithm.PS256,
                 Algorithm.PS384, Algorithm.PS512, Algorithm.RS256, Algorithm.RS384, Algorithm.RS512, Algorithm.ES256,
                 Algorithm.ES384, Algorithm.ES512, Algorithm.HS256, Algorithm.HS384, Algorithm.HS512);
 
-            assertEquals(oidcConfig.getDeviceAuthorizationEndpoint(), oauth.getDeviceAuthorizationUrl());
+        assertEquals(oidcConfig.getDeviceAuthorizationEndpoint(), oauth.getDeviceAuthorizationUrl());
 
-            // Pushed Authorization Request (PAR)
-            assertEquals(oauth.getParEndpointUrl(), oidcConfig.getPushedAuthorizationRequestEndpoint());
-            assertEquals(Boolean.FALSE, oidcConfig.getRequirePushedAuthorizationRequests());
+        // Pushed Authorization Request (PAR)
+        assertEquals(oauth.getParEndpointUrl(), oidcConfig.getPushedAuthorizationRequestEndpoint());
+        assertEquals(Boolean.FALSE, oidcConfig.getRequirePushedAuthorizationRequests());
 
-            // frontchannel logout
-            assertTrue(oidcConfig.getFrontChannelLogoutSessionSupported());
-            assertTrue(oidcConfig.getFrontChannelLogoutSupported());
+        // frontchannel logout
+        assertTrue(oidcConfig.getFrontChannelLogoutSessionSupported());
+        assertTrue(oidcConfig.getFrontChannelLogoutSupported());
+    }
 
+    @Test
+    public void testOpenIdFederationDiscovery() {
+        Client client = AdminClientUtil.createResteasyClient();
+        try {
+            RealmResource testRealm = adminClient.realm("test");
+            RealmRepresentation realmRep = testRealm.toRepresentation();
+            realmRep.setOpenIdFederationEnabled(true);
+            realmRep.setOpenIdFederationOrganizationName("Keycloak");
+            realmRep.setOpenIdFederationResolveEndpoint("https://edugain.org/resolve");
+            realmRep.setOpenIdFederationTrustAnchors(Stream.of("https://edugain.org/trust-anchor").collect(Collectors.toList()));
+            realmRep.setOpenIdFederationAuthorityHints(Stream.of("https://edugain.org/federation").collect(Collectors.toList()));
+            realmRep.setOpenIdFederationClientRegistrationTypesSupported(Stream.of("EXPLICIT").collect(Collectors.toList()));
+            testRealm.update(realmRep);
+
+            //When Open Id Federation is configured
+            EntityStatement statement = getOIDCFederationDiscoveryRepresentation(client, OAuthClient.AUTH_SERVER_ROOT);
+            Assert.assertNotNull("Entity Statement can not desirialize", statement);
+            String mainUrl = RealmsResource.realmBaseUrl(UriBuilder.fromUri(OAuthClient.AUTH_SERVER_ROOT)).build("test").toString();
+            assertEquals(mainUrl, statement.getIssuer());
+            assertEquals(mainUrl, statement.getSubject());
+            assertEquals("https://edugain.org/federation", statement.getAuthorityHints().get(0));
+            Assert.assertNotNull(statement.getMetadata().getFederationEntity());
+            assertEquals("Keycloak", statement.getMetadata().getFederationEntity().getCommonMetadata().getOrganizationName());
+            assertEquals("https://edugain.org/resolve", statement.getMetadata().getFederationEntity().getFederationResolveEndpoint());
+            OPMetadata op = statement.getMetadata().getOpenIdProviderMetadata();
+            assertEquals(1, op.getClientRegistrationTypes().size());
+            assertEquals("explicit", op.getClientRegistrationTypes().get(0));
+            assertEquals(UriBuilder.fromUri(OAuthClient.AUTH_SERVER_ROOT).path(RealmsResource.class).path(RealmsResource.class, "getOpenIdFederationClientsService").build("test").toString(), op.getFederationRegistrationEndpoint());
+            testOidc(op);
+            String x = RealmAttributes.CLAIMS_SUPPORTED;
+
+            realmRep.getAttributes().put(RealmAttributes.OPENID_FEDERATION_ENABLED, Boolean.FALSE.toString());
+            testRealm.update(realmRep);
+        } finally {
+            client.close();
+        }
+    }
+
+    @Test
+    public void testWithoutOpenIdFederationDiscovery() {
+        Client client = AdminClientUtil.createResteasyClient();
+        try {
+            //When no Open Id Federation is configured
+            int responseStatus = getOIDCFederationDiscoveryConfiguration(client, OAuthClient.AUTH_SERVER_ROOT).getStatus();
+            assertEquals(responseStatus, 404);
         } finally {
             client.close();
         }
@@ -367,7 +423,6 @@ public class OIDCWellKnownProviderTest extends AbstractKeycloakTest {
     }
 
     @Test
-    
     public void testDefaultProviderCustomizations() throws IOException {
         Client client = AdminClientUtil.createResteasyClient();
         String showScopeId = null;
@@ -483,6 +538,22 @@ public class OIDCWellKnownProviderTest extends AbstractKeycloakTest {
 
         return response.readEntity(String.class);
     }
+
+    private EntityStatement getOIDCFederationDiscoveryRepresentation(Client client, String uriTemplate) {
+        String jwtFederation = getOIDCFederationDiscoveryConfiguration(client, uriTemplate).readEntity(String.class);
+        EntityStatement statement = null;
+        statement = oauth.verifyToken(jwtFederation, EntityStatement.class);
+        return statement;
+    }
+
+    private Response getOIDCFederationDiscoveryConfiguration(Client client, String uriTemplate) {
+        UriBuilder builder = UriBuilder.fromUri(uriTemplate);
+        URI oidcDiscoveryUri = RealmsResource.wellKnownProviderUrl(builder).build("test", OpenIdFederationWellKnownProviderFactory.PROVIDER_ID);
+        WebTarget oidcDiscoveryTarget = client.target(oidcDiscoveryUri);
+
+        return oidcDiscoveryTarget.request().get();
+    }
+
 
     private void assertContains(List<String> actual, String... expected) {
         for (String exp : expected) {
