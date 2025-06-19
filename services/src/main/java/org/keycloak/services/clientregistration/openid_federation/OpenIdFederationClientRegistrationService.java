@@ -23,6 +23,7 @@ import org.keycloak.services.Urls;
 import org.keycloak.services.clientregistration.AbstractClientRegistrationProvider;
 import org.keycloak.services.clientregistration.ClientRegistrationException;
 import org.keycloak.urls.UrlType;
+import org.keycloak.util.TokenUtil;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -88,8 +89,9 @@ public class OpenIdFederationClientRegistrationService extends AbstractClientReg
                     rPMetadataResponse.setClientRegistrationTypes(Stream.of(ClientRegistrationTypeEnum.EXPLICIT.getValue()).collect(Collectors.toList()));
                     rPMetadataResponse.setCommonMetadata(rPMetadata.getCommonMetadata());
                     EntityStatementExplicitResponse responseStatement = new EntityStatementExplicitResponse(statement, Urls.realmIssuer(session.getContext().getUri(UrlType.FRONTEND).getBaseUri(), session.getContext().getRealm().getName()), rPMetadata, validChain.getTrustAnchorId(), validChain.getLeafId());
+                    responseStatement.type(TokenUtil.EXPLICIT_REGISTRATION_RESPONSE_JWT);
                     String token = session.tokens().encode(responseStatement);
-                    return Response.ok(token).build();
+                    return Response.ok(token).header("Content-Type", TokenUtil.APPLICATION_EXPLICIT_REGISTRATION_RESPONSE_JWT).build();
                 } else {
                     return Response.status(Response.Status.BAD_REQUEST).entity("Not accepted rp metadata").build();
                 }
@@ -106,6 +108,9 @@ public class OpenIdFederationClientRegistrationService extends AbstractClientReg
     }
 
     private void validationRules(EntityStatement statement) {
+        if (TokenUtil.ENTITY_STATEMENT_JWT.equals(statement.getType())) {
+            throw new ErrorResponseException(Errors.INVALID_REQUEST, "No correct typ header.", Response.Status.NOT_FOUND);
+        }
         if (statement.getIssuer() == null) {
             throw new ErrorResponseException(Errors.INVALID_ISSUER, "No issuer in the request.", Response.Status.NOT_FOUND);
         }

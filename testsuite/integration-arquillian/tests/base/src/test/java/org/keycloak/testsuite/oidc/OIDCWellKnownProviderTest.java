@@ -70,6 +70,8 @@ import jakarta.ws.rs.client.Invocation;
 import jakarta.ws.rs.client.WebTarget;
 import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.core.UriBuilder;
+import org.keycloak.util.TokenUtil;
+
 import java.io.IOException;
 import java.net.URI;
 import java.util.HashMap;
@@ -252,10 +254,12 @@ public class OIDCWellKnownProviderTest extends AbstractKeycloakTest {
             realmRep.setOpenIdFederationTrustAnchors(Stream.of("https://edugain.org/trust-anchor").collect(Collectors.toList()));
             realmRep.setOpenIdFederationAuthorityHints(Stream.of("https://edugain.org/federation").collect(Collectors.toList()));
             realmRep.setOpenIdFederationClientRegistrationTypesSupported(Stream.of("EXPLICIT").collect(Collectors.toList()));
+            realmRep.setOpenIdFederationEntityTypes(Stream.of("OPENID_PROVIDER").collect(Collectors.toList()));
             testRealm.update(realmRep);
 
             //When Open Id Federation is configured
             EntityStatement statement = getOIDCFederationDiscoveryRepresentation(client, OAuthClient.AUTH_SERVER_ROOT);
+            assertEquals(TokenUtil.ENTITY_STATEMENT_JWT, statement.getType());
             Assert.assertNotNull("Entity Statement can not desirialize", statement);
             String mainUrl = RealmsResource.realmBaseUrl(UriBuilder.fromUri(OAuthClient.AUTH_SERVER_ROOT)).build("test").toString();
             assertEquals(mainUrl, statement.getIssuer());

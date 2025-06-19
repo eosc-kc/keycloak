@@ -6,6 +6,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import org.keycloak.TokenCategory;
 import org.keycloak.jose.jwk.JSONWebKeySet;
+import org.keycloak.representations.AccessToken;
 import org.keycloak.representations.JsonWebToken;
 
 import java.util.List;
@@ -144,6 +145,11 @@ public class EntityStatement extends JsonWebToken {
     @Override
     public TokenCategory getCategory() {
         return TokenCategory.ENTITY_STATEMENT; //treat it as an access token (use asymmetric crypto algorithms)
+    }
+
+    @Override
+    public AccessToken type(String type) {
+        return (AccessToken) super.type(type);
     }
 
     @JsonAnyGetter

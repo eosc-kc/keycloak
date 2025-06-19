@@ -62,6 +62,7 @@ public interface RealmAttributes {
     String OPENID_FEDERATION_AUTHORITY_HINTS = "openidFederationAuthorityHints";
     String OPENID_FEDERATION_TRUST_ANCHORS = "openidFederationTrustAnchors";
     String OPENID_FEDERATION_CLIENT_REGISTRATION_TYPES_SUPPORTED = "openidFederationClientRegistrationTypesSupported";
+    String OPENID_FEDERATION_ENTITY_TYPES = "openidFederationEntityTypes";
     String OPENID_FEDERATION_LIFESPAN = "openidFederationLifespan";
     String OPENID_FEDERATION_RESOLVE_ENDPOINT = "openIdFederationResolveEndpoint";
     String OPENID_FEDERATION_HISTORICAL_KEYS_ENDPOINT = "openIdFederationHistoricalKeysEndpoint";

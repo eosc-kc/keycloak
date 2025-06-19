@@ -516,6 +516,7 @@ public class ModelToRepresentation {
             rep.setOpenIdFederationAuthorityHints(openIdFederationConfig.getAuthorityHints());
             rep.setOpenIdFederationTrustAnchors(openIdFederationConfig.getTrustAnchors());
             rep.setOpenIdFederationClientRegistrationTypesSupported(openIdFederationConfig.getClientRegistrationTypesSupported().stream().map(x -> x.name()).collect(Collectors.toList()));
+            rep.setOpenIdFederationEntityTypes(openIdFederationConfig.getEntityTypes().stream().map(x -> x.name()).collect(Collectors.toList()));
             rep.setOpenIdFederationLifespan(openIdFederationConfig.getLifespan());
             rep.setOpenIdFederationResolveEndpoint(openIdFederationConfig.getFederationResolveEndpoint());
             rep.setOpenIdFederationHistoricalKeysEndpoint(openIdFederationConfig.getFederationHistoricalKeysEndpoint());

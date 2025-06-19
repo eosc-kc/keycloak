@@ -2,6 +2,7 @@ package org.keycloak.models;
 
 import org.jboss.logging.Logger;
 import org.keycloak.models.enums.ClientRegistrationTypeEnum;
+import org.keycloak.models.enums.EntityTypeEnum;
 
 import java.io.Serializable;
 import java.util.List;
@@ -19,6 +20,8 @@ public class OpenIdFederationConfig  implements Serializable {
     private List<String> trustAnchors;
 
     private List<ClientRegistrationTypeEnum> clientRegistrationTypesSupported;
+
+    private List<EntityTypeEnum> entityTypes;
 
     private Integer lifespan;
     // default 1 day - duration
@@ -75,6 +78,14 @@ public class OpenIdFederationConfig  implements Serializable {
 
     public void setClientRegistrationTypesSupported(List<ClientRegistrationTypeEnum> clientRegistrationTypesSupported) {
         this.clientRegistrationTypesSupported = clientRegistrationTypesSupported;
+    }
+
+    public List<EntityTypeEnum> getEntityTypes() {
+        return entityTypes;
+    }
+
+    public void setEntityTypes(List<EntityTypeEnum> entityTypes) {
+        this.entityTypes = entityTypes;
     }
 
     public List<String> getAuthorityHints() {

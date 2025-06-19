@@ -39,6 +39,7 @@ import org.keycloak.services.resource.RealmResourceProvider;
 import org.keycloak.services.resources.account.AccountLoader;
 import org.keycloak.services.util.CacheControlUtil;
 import org.keycloak.services.util.ResolveRelative;
+import org.keycloak.util.TokenUtil;
 import org.keycloak.utils.ProfileHelper;
 import org.keycloak.wellknown.WellKnownProvider;
 import org.keycloak.wellknown.WellKnownProviderFactory;
@@ -250,7 +251,7 @@ public class RealmsResource {
         if (wellKnown != null) {
             ResponseBuilder responseBuilder = Response.ok(wellKnown.getConfig()).cacheControl(CacheControlUtil.noCache());
             if (wellKnown instanceof OpenIdFederationWellKnownProvider) {
-                responseBuilder.header("Content-Type", "application/entity-statement+jwt");
+                responseBuilder.header("Content-Type", TokenUtil.APPLICATION_ENTITY_STATEMENT_JWT);
             }
             return Cors.add(session.getContext().getHttpRequest(), responseBuilder).allowedOrigins("*").auth().build();
         }

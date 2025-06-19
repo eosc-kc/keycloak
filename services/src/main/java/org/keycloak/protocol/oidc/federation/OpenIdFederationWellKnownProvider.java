@@ -14,6 +14,7 @@ import org.keycloak.models.KeycloakSession;
 import org.keycloak.models.OpenIdFederationConfig;
 import org.keycloak.models.RealmModel;
 import org.keycloak.models.enums.ClientRegistrationTypeEnum;
+import org.keycloak.models.enums.EntityTypeEnum;
 import org.keycloak.protocol.oidc.OIDCWellKnownProvider;
 import org.keycloak.protocol.oidc.representations.OIDCConfigurationRepresentation;
 import org.keycloak.representations.openid_federation.CommonMetadata;
@@ -25,6 +26,7 @@ import org.keycloak.services.Urls;
 import org.keycloak.services.resources.RealmsResource;
 import org.keycloak.urls.UrlType;
 import org.keycloak.util.JsonSerialization;
+import org.keycloak.util.TokenUtil;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -49,22 +51,26 @@ public class OpenIdFederationWellKnownProvider extends OIDCWellKnownProvider {
         UriInfo frontendUriInfo = session.getContext().getUri(UrlType.FRONTEND);
         UriInfo backendUriInfo = session.getContext().getUri(UrlType.BACKEND);
         OpenIdFederationConfig openIdFederationConfig = realm.getOpenIdFederationConfig();
+        Metadata metadata = new Metadata();
 
-        OPMetadata opMetadata;
-        try {
-            opMetadata = from(((OIDCConfigurationRepresentation) super.getConfig()));
-        } catch (IOException e) {
-            throw new InternalServerErrorException("Could not form the configuration response");
-        }
+        if (openIdFederationConfig.getEntityTypes().contains(EntityTypeEnum.OPENID_PROVIDER)) {
+            OPMetadata opMetadata;
+            try {
+                opMetadata = from(((OIDCConfigurationRepresentation) super.getConfig()));
+            } catch (IOException e) {
+                throw new InternalServerErrorException("Could not form the configuration response");
+            }
 
-        if (openIdFederationConfig.getClientRegistrationTypesSupported().contains(ClientRegistrationTypeEnum.EXPLICIT)) {
-           opMetadata.setFederationRegistrationEndpoint(backendUriInfo.getBaseUriBuilder().clone().path(RealmsResource.class).path(RealmsResource.class, "getOpenIdFederationClientsService").build(realm.getName()).toString());
+            if (openIdFederationConfig.getClientRegistrationTypesSupported().contains(ClientRegistrationTypeEnum.EXPLICIT)) {
+                opMetadata.setFederationRegistrationEndpoint(backendUriInfo.getBaseUriBuilder().clone().path(RealmsResource.class).path(RealmsResource.class, "getOpenIdFederationClientsService").build(realm.getName()).toString());
+            }
+            opMetadata.setClientRegistrationTypes(openIdFederationConfig.getClientRegistrationTypesSupported().stream().map(ClientRegistrationTypeEnum::getValue).collect(Collectors.toList()));
+            opMetadata.setContacts(openIdFederationConfig.getContacts());
+            opMetadata.setLogoUri(openIdFederationConfig.getLogoUri());
+            opMetadata.setPolicyUri(openIdFederationConfig.getPolicyUri());
+            opMetadata.setCommonMetadata(commonMetadata(openIdFederationConfig));
+            metadata.setOpenIdProviderMetadata(opMetadata);
         }
-        opMetadata.setClientRegistrationTypes(openIdFederationConfig.getClientRegistrationTypesSupported().stream().map(ClientRegistrationTypeEnum::getValue).collect(Collectors.toList()));
-        opMetadata.setContacts(openIdFederationConfig.getContacts());
-        opMetadata.setLogoUri(openIdFederationConfig.getLogoUri());
-        opMetadata.setPolicyUri(openIdFederationConfig.getPolicyUri());
-        opMetadata.setCommonMetadata(commonMetadata(openIdFederationConfig));
 
         OpenIdFederationEntity federationEntity = null;
         if (openIdFederationConfig.getFederationResolveEndpoint() != null || openIdFederationConfig.getFederationHistoricalKeysEndpoint() != null ||
@@ -79,8 +85,6 @@ public class OpenIdFederationWellKnownProvider extends OIDCWellKnownProvider {
             federationEntity.setCommonMetadata(commonMetadata(openIdFederationConfig));
         }
 
-        Metadata metadata = new Metadata();
-        metadata.setOpenIdProviderMetadata(opMetadata);
         metadata.setFederationEntity(federationEntity);
 
         EntityStatement entityStatement = new EntityStatement();
@@ -91,8 +95,8 @@ public class OpenIdFederationWellKnownProvider extends OIDCWellKnownProvider {
         entityStatement.subject(Urls.realmIssuer(frontendUriInfo.getBaseUri(), realm.getName()));
         entityStatement.issuedNow();
         entityStatement.exp((long) Time.currentTime() + Long.valueOf(openIdFederationConfig.getLifespan()));
+        entityStatement.type(TokenUtil.ENTITY_STATEMENT_JWT);
 
-        //sign and encode entity statement
         String encodedToken = session.tokens().encode(entityStatement);
 
         return encodedToken;

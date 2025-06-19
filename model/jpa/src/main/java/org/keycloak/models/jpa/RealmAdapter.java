@@ -30,6 +30,7 @@ import org.keycloak.component.ComponentFactory;
 import org.keycloak.component.ComponentModel;
 import org.keycloak.models.*;
 import org.keycloak.models.enums.ClientRegistrationTypeEnum;
+import org.keycloak.models.enums.EntityTypeEnum;
 import org.keycloak.models.jpa.entities.*;
 import org.keycloak.models.utils.ComponentUtil;
 import org.keycloak.models.utils.KeycloakModelUtils;
@@ -1076,6 +1077,9 @@ public class RealmAdapter implements LegacyRealmModel, JpaModel<RealmEntity> {
             String clientRegistrationTypesSupportedStr = getAttribute(RealmAttributes.OPENID_FEDERATION_CLIENT_REGISTRATION_TYPES_SUPPORTED);
             List<String> clientRegistrationTypesSupported = (clientRegistrationTypesSupportedStr == null || clientRegistrationTypesSupportedStr.isEmpty()) ? new ArrayList<>() : Arrays.asList(clientRegistrationTypesSupportedStr.split(","));
             config.setClientRegistrationTypesSupported(clientRegistrationTypesSupported.stream().map(x -> ClientRegistrationTypeEnum.valueOf(x)).collect(Collectors.toList()));
+            String entityTypesStr = getAttribute(RealmAttributes.OPENID_FEDERATION_ENTITY_TYPES);
+            List<String> entityTypes = (entityTypesStr == null || entityTypesStr.isEmpty()) ? new ArrayList<>() : Arrays.asList(entityTypesStr.split(","));
+            config.setEntityTypes(entityTypes.stream().map(x -> EntityTypeEnum.valueOf(x)).collect(Collectors.toList()));
             config.setLifespan(getAttribute(RealmAttributes.OPENID_FEDERATION_LIFESPAN, 86400));
             config.setFederationResolveEndpoint(getAttribute(RealmAttributes.OPENID_FEDERATION_RESOLVE_ENDPOINT));
             config.setFederationHistoricalKeysEndpoint(getAttribute(RealmAttributes.OPENID_FEDERATION_HISTORICAL_KEYS_ENDPOINT));
@@ -1098,6 +1102,7 @@ public class RealmAdapter implements LegacyRealmModel, JpaModel<RealmEntity> {
             removeAttribute(RealmAttributes.OPENID_FEDERATION_AUTHORITY_HINTS);
             removeAttribute(RealmAttributes.OPENID_FEDERATION_TRUST_ANCHORS);
             removeAttribute(RealmAttributes.OPENID_FEDERATION_CLIENT_REGISTRATION_TYPES_SUPPORTED);
+            removeAttribute(RealmAttributes.OPENID_FEDERATION_ENTITY_TYPES);
             removeAttribute(RealmAttributes.OPENID_FEDERATION_LIFESPAN);
             removeAttribute(RealmAttributes.OPENID_FEDERATION_RESOLVE_ENDPOINT);
             removeAttribute(RealmAttributes.OPENID_FEDERATION_HISTORICAL_KEYS_ENDPOINT);
@@ -1123,6 +1128,7 @@ public class RealmAdapter implements LegacyRealmModel, JpaModel<RealmEntity> {
                 setAttribute(RealmAttributes.OPENID_FEDERATION_TRUST_ANCHORS, String.join(",", config.getTrustAnchors()));
             }
             setAttribute(RealmAttributes.OPENID_FEDERATION_CLIENT_REGISTRATION_TYPES_SUPPORTED, String.join(",", config.getClientRegistrationTypesSupported().stream().map(x -> x.name()).collect(Collectors.toList())));
+            setAttribute(RealmAttributes.OPENID_FEDERATION_ENTITY_TYPES, String.join(",", config.getEntityTypes().stream().map(x -> x.name()).collect(Collectors.toList())));
             setAttribute(RealmAttributes.OPENID_FEDERATION_LIFESPAN, config.getLifespan() == null ? String.valueOf(86400) : String.valueOf(config.getLifespan()));
             setAttribute(RealmAttributes.OPENID_FEDERATION_RESOLVE_ENDPOINT, config.getFederationResolveEndpoint());
             setAttribute(RealmAttributes.OPENID_FEDERATION_HISTORICAL_KEYS_ENDPOINT, config.getFederationHistoricalKeysEndpoint());
