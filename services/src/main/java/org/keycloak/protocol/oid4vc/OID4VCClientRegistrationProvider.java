@@ -27,6 +27,7 @@ import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import org.jboss.logging.Logger;
+import org.keycloak.events.EventType;
 import org.keycloak.models.KeycloakSession;
 import static org.keycloak.protocol.oid4vc.issuance.OID4VCIssuerWellKnownProvider.VC_KEY;
 import org.keycloak.protocol.oid4vc.model.OID4VCClient;
@@ -68,7 +69,7 @@ public class OID4VCClientRegistrationProvider extends AbstractClientRegistration
         validate(clientRepresentation);
 
         ClientRepresentation cr = create(
-                new DefaultClientRegistrationContext(session, clientRepresentation, this));
+                new DefaultClientRegistrationContext(session, clientRepresentation, this), EventType.CLIENT_REGISTER);
         URI uri = session.getContext().getUri().getAbsolutePathBuilder().path(cr.getClientId()).build();
         return Response.created(uri).entity(cr).build();
     }
@@ -82,7 +83,7 @@ public class OID4VCClientRegistrationProvider extends AbstractClientRegistration
         ClientRepresentation clientRepresentation = toClientRepresentation(client);
         validate(clientRepresentation);
         clientRepresentation = update(clientDid,
-                new DefaultClientRegistrationContext(session, clientRepresentation, this));
+                new DefaultClientRegistrationContext(session, clientRepresentation, this), null);
         return Response.ok(clientRepresentation).build();
     }
 
