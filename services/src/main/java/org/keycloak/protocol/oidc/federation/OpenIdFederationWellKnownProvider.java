@@ -97,7 +97,7 @@ public class OpenIdFederationWellKnownProvider extends OIDCWellKnownProvider {
         entityStatement.exp((long) Time.currentTime() + Long.valueOf(openIdFederationConfig.getLifespan()));
         entityStatement.type(TokenUtil.ENTITY_STATEMENT_JWT);
 
-        String encodedToken = session.tokens().encode(entityStatement);
+        String encodedToken = session.tokens().encodeForOpenIdFederation(entityStatement);
 
         return encodedToken;
     }

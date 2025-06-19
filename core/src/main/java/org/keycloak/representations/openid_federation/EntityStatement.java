@@ -148,8 +148,8 @@ public class EntityStatement extends JsonWebToken {
     }
 
     @Override
-    public AccessToken type(String type) {
-        return (AccessToken) super.type(type);
+    public EntityStatement type(String type) {
+        return (EntityStatement) super.type(type);
     }
 
     @JsonAnyGetter

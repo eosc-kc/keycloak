@@ -49,6 +49,7 @@ import org.keycloak.protocol.oidc.OIDCAdvancedConfigWrapper;
 import org.keycloak.protocol.oidc.OIDCConfigAttributes;
 import org.keycloak.protocol.oidc.OIDCLoginProtocol;
 import org.keycloak.representations.LogoutToken;
+import org.keycloak.representations.openid_federation.EntityStatement;
 import org.keycloak.util.JsonSerialization;
 import org.keycloak.util.TokenUtil;
 
@@ -75,10 +76,19 @@ public class DefaultTokenManager implements TokenManager {
     public String encode(Token token) {
         String signatureAlgorithm = signatureAlgorithm(token.getCategory());
 
-        SignatureProvider signatureProvider = session.getProvider(SignatureProvider.class, signatureAlgorithm);
-        SignatureSignerContext signer = signatureProvider.signer();
+        SignatureSignerContext signer = session.getProvider(SignatureProvider.class, signatureAlgorithm).signer();
 
         String encodedToken = new JWSBuilder().type("JWT").jsonContent(token).sign(signer);
+        return encodedToken;
+    }
+
+    @Override
+    public String encodeForOpenIdFederation(EntityStatement token) {
+        String signatureAlgorithm = signatureAlgorithm(token.getCategory());
+
+        SignatureSignerContext signer = session.getProvider(SignatureProvider.class, signatureAlgorithm).signer();
+
+        String encodedToken = new JWSBuilder().type(token.getType()).jsonContent(token).sign(signer);
         return encodedToken;
     }
 

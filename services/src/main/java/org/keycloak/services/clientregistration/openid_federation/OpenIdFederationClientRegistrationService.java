@@ -90,7 +90,7 @@ public class OpenIdFederationClientRegistrationService extends AbstractClientReg
                     rPMetadataResponse.setCommonMetadata(rPMetadata.getCommonMetadata());
                     EntityStatementExplicitResponse responseStatement = new EntityStatementExplicitResponse(statement, Urls.realmIssuer(session.getContext().getUri(UrlType.FRONTEND).getBaseUri(), session.getContext().getRealm().getName()), rPMetadata, validChain.getTrustAnchorId(), validChain.getLeafId());
                     responseStatement.type(TokenUtil.EXPLICIT_REGISTRATION_RESPONSE_JWT);
-                    String token = session.tokens().encode(responseStatement);
+                    String token = session.tokens().encodeForOpenIdFederation(responseStatement);
                     return Response.ok(token).header("Content-Type", TokenUtil.APPLICATION_EXPLICIT_REGISTRATION_RESPONSE_JWT).build();
                 } else {
                     return Response.status(Response.Status.BAD_REQUEST).entity("Not accepted rp metadata").build();
