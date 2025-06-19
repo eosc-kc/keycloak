@@ -30,6 +30,8 @@ public interface TimerProvider extends Provider {
         schedule(runner, intervalMillis, runner.getTaskName());
     }
 
+    public void scheduleOnce(final Runnable runnable, final long delay, String taskName);
+
     public void scheduleTask(ScheduledTask scheduledTask, long intervalMillis, String taskName);
 
     public default void scheduleTask(ScheduledTask scheduledTask, long intervalMillis) {

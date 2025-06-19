@@ -39,6 +39,56 @@ public class OIDCWellKnownProviderTest extends AbstractWellKnownProviderTest {
         return OIDCWellKnownProviderFactory.PROVIDER_ID;
     }
 
+//    @Test
+//    public void testOpenIdFederationDiscovery() {
+//        Client client = AdminClientUtil.createResteasyClient();
+//        try {
+//            RealmResource testRealm = adminClient.realm("test");
+//            RealmRepresentation realmRep = testRealm.toRepresentation();
+//            realmRep.setOpenIdFederationEnabled(true);
+//            realmRep.setOpenIdFederationOrganizationName("Keycloak");
+//            realmRep.setOpenIdFederationResolveEndpoint("https://edugain.org/resolve");
+//            realmRep.setOpenIdFederationTrustAnchors(Stream.of("https://edugain.org/trust-anchor").collect(Collectors.toList()));
+//            realmRep.setOpenIdFederationAuthorityHints(Stream.of("https://edugain.org/federation").collect(Collectors.toList()));
+//            realmRep.setOpenIdFederationClientRegistrationTypesSupported(Stream.of("EXPLICIT").collect(Collectors.toList()));
+//            testRealm.update(realmRep);
+//
+//            //When Open Id Federation is configured
+//            EntityStatement statement = getOIDCFederationDiscoveryRepresentation(client, OAuthClient.AUTH_SERVER_ROOT);
+//            Assert.assertNotNull("Entity Statement can not desirialize", statement);
+//            String mainUrl = RealmsResource.realmBaseUrl(UriBuilder.fromUri(OAuthClient.AUTH_SERVER_ROOT)).build("test").toString();
+//            assertEquals(mainUrl, statement.getIssuer());
+//            assertEquals(mainUrl, statement.getSubject());
+//            assertEquals("https://edugain.org/federation", statement.getAuthorityHints().get(0));
+//            Assert.assertNotNull(statement.getMetadata().getFederationEntity());
+//            assertEquals("Keycloak", statement.getMetadata().getFederationEntity().getCommonMetadata().getOrganizationName());
+//            assertEquals("https://edugain.org/resolve", statement.getMetadata().getFederationEntity().getFederationResolveEndpoint());
+//            OPMetadata op = statement.getMetadata().getOpenIdProviderMetadata();
+//            assertEquals(1, op.getClientRegistrationTypes().size());
+//            assertEquals("explicit", op.getClientRegistrationTypes().get(0));
+//            assertEquals(UriBuilder.fromUri(OAuthClient.AUTH_SERVER_ROOT).path(RealmsResource.class).path(RealmsResource.class, "getOpenIdFederationClientsService").build("test").toString(), op.getFederationRegistrationEndpoint());
+//            testOidc(op);
+//            String x = RealmAttributes.CLAIMS_SUPPORTED;
+//
+//            realmRep.getAttributes().put(RealmAttributes.OPENID_FEDERATION_ENABLED, Boolean.FALSE.toString());
+//            testRealm.update(realmRep);
+//        } finally {
+//            client.close();
+//        }
+//    }
+//
+//    @Test
+//    public void testWithoutOpenIdFederationDiscovery() {
+//        Client client = AdminClientUtil.createResteasyClient();
+//        try {
+//            //When no Open Id Federation is configured
+//            int responseStatus = getOIDCFederationDiscoveryConfiguration(client, OAuthClient.AUTH_SERVER_ROOT).getStatus();
+//            assertEquals(responseStatus, 404);
+//        } finally {
+//            client.close();
+//        }
+//    }
+
     @Test
     public void testDefaultProviderCustomizations() throws IOException {
         Client client = AdminClientUtil.createResteasyClient();

@@ -28,6 +28,8 @@ import org.keycloak.component.ComponentFactory;
 import org.keycloak.component.ComponentModel;
 import org.keycloak.models.*;
 import org.keycloak.models.GroupModel.GroupUpdatedEvent;
+import org.keycloak.models.enums.ClientRegistrationTypeEnum;
+import org.keycloak.models.enums.EntityTypeEnum;
 import org.keycloak.models.jpa.entities.*;
 import org.keycloak.models.utils.ComponentUtil;
 import org.keycloak.models.utils.KeycloakModelUtils;
@@ -1072,6 +1074,85 @@ public class RealmAdapter implements StorageProviderRealmModel, JpaModel<RealmEn
             setAttribute(RealmAttributes.WEBAUTHN_POLICY_PASSKEYS_ENABLED + attributePrefix, passkeysEnabled.toString());
         } else {
             removeAttribute(RealmAttributes.WEBAUTHN_POLICY_PASSKEYS_ENABLED + attributePrefix);
+        }
+    }
+
+    @Override
+    public OpenIdFederationConfig getOpenIdFederationConfig() {
+        if (getAttribute(RealmAttributes.OPENID_FEDERATION_ENABLED, Boolean.FALSE)) {
+            OpenIdFederationConfig config = new OpenIdFederationConfig();
+
+            config.setOrganizationName(getAttribute(RealmAttributes.OPENID_FEDERATION_ORGANIZATION_NAME));
+            String contactsStr = getAttribute(RealmAttributes.OPENID_FEDERATION_CONTACTS);
+            List<String> contacts = (contactsStr == null || contactsStr.isEmpty()) ? null : Arrays.asList(contactsStr.split(","));
+            config.setContacts(contacts);
+            config.setLogoUri(getAttribute(RealmAttributes.OPENID_FEDERATION_LOGO_URI));
+            config.setPolicyUri(getAttribute(RealmAttributes.OPENID_FEDERATION_POLICY_URI));
+            config.setHomepageUri(getAttribute(RealmAttributes.OPENID_FEDERATION_HOMEPAGE_URI));
+            String authorityHintsStr = getAttribute(RealmAttributes.OPENID_FEDERATION_AUTHORITY_HINTS);
+            List<String> authorityHints = (authorityHintsStr == null || authorityHintsStr.isEmpty()) ? new ArrayList<>() : Arrays.asList(authorityHintsStr.split(","));
+            config.setAuthorityHints(authorityHints);
+            String trustAnchorsStr = getAttribute(RealmAttributes.OPENID_FEDERATION_TRUST_ANCHORS);
+            List<String> trustAnchors = (trustAnchorsStr == null || trustAnchorsStr.isEmpty()) ? new ArrayList<>() : Arrays.asList(trustAnchorsStr.split(","));
+            config.setTrustAnchors(trustAnchors);
+            String clientRegistrationTypesSupportedStr = getAttribute(RealmAttributes.OPENID_FEDERATION_CLIENT_REGISTRATION_TYPES_SUPPORTED);
+            List<String> clientRegistrationTypesSupported = (clientRegistrationTypesSupportedStr == null || clientRegistrationTypesSupportedStr.isEmpty()) ? new ArrayList<>() : Arrays.asList(clientRegistrationTypesSupportedStr.split(","));
+            config.setClientRegistrationTypesSupported(clientRegistrationTypesSupported.stream().map(x -> ClientRegistrationTypeEnum.valueOf(x)).collect(Collectors.toList()));
+            String entityTypesStr = getAttribute(RealmAttributes.OPENID_FEDERATION_ENTITY_TYPES);
+            List<String> entityTypes = (entityTypesStr == null || entityTypesStr.isEmpty()) ? new ArrayList<>() : Arrays.asList(entityTypesStr.split(","));
+            config.setEntityTypes(entityTypes.stream().map(x -> EntityTypeEnum.valueOf(x)).collect(Collectors.toList()));
+            config.setLifespan(getAttribute(RealmAttributes.OPENID_FEDERATION_LIFESPAN, 86400));
+            config.setFederationResolveEndpoint(getAttribute(RealmAttributes.OPENID_FEDERATION_RESOLVE_ENDPOINT));
+            config.setFederationHistoricalKeysEndpoint(getAttribute(RealmAttributes.OPENID_FEDERATION_HISTORICAL_KEYS_ENDPOINT));
+
+            return config;
+        } else {
+           return null;
+        }
+    }
+
+    @Override
+    public void setOpenIdFederationConfig(OpenIdFederationConfig config) {
+        if (config == null) {
+            setAttribute(RealmAttributes.OPENID_FEDERATION_ENABLED, Boolean.FALSE);
+            removeAttribute(RealmAttributes.OPENID_FEDERATION_ORGANIZATION_NAME);
+            removeAttribute(RealmAttributes.OPENID_FEDERATION_CONTACTS);
+            removeAttribute(RealmAttributes.OPENID_FEDERATION_LOGO_URI);
+            removeAttribute(RealmAttributes.OPENID_FEDERATION_POLICY_URI);
+            removeAttribute(RealmAttributes.OPENID_FEDERATION_HOMEPAGE_URI);
+            removeAttribute(RealmAttributes.OPENID_FEDERATION_AUTHORITY_HINTS);
+            removeAttribute(RealmAttributes.OPENID_FEDERATION_TRUST_ANCHORS);
+            removeAttribute(RealmAttributes.OPENID_FEDERATION_CLIENT_REGISTRATION_TYPES_SUPPORTED);
+            removeAttribute(RealmAttributes.OPENID_FEDERATION_ENTITY_TYPES);
+            removeAttribute(RealmAttributes.OPENID_FEDERATION_LIFESPAN);
+            removeAttribute(RealmAttributes.OPENID_FEDERATION_RESOLVE_ENDPOINT);
+            removeAttribute(RealmAttributes.OPENID_FEDERATION_HISTORICAL_KEYS_ENDPOINT);
+        } else {
+            setAttribute(RealmAttributes.OPENID_FEDERATION_ENABLED, Boolean.TRUE);
+            setAttribute(RealmAttributes.OPENID_FEDERATION_ORGANIZATION_NAME, config.getOrganizationName());
+            if (config.getContacts() == null || config.getContacts().isEmpty()) {
+                removeAttribute(RealmAttributes.OPENID_FEDERATION_CONTACTS);
+            } else {
+                setAttribute(RealmAttributes.OPENID_FEDERATION_CONTACTS, String.join(",", config.getContacts()));
+            }
+            setAttribute(RealmAttributes.OPENID_FEDERATION_LOGO_URI, config.getLogoUri());
+            setAttribute(RealmAttributes.OPENID_FEDERATION_POLICY_URI, config.getPolicyUri());
+            setAttribute(RealmAttributes.OPENID_FEDERATION_HOMEPAGE_URI, config.getHomepageUri());
+            if (config.getAuthorityHints() == null || config.getAuthorityHints().isEmpty()) {
+                removeAttribute(RealmAttributes.OPENID_FEDERATION_AUTHORITY_HINTS);
+            } else {
+                setAttribute(RealmAttributes.OPENID_FEDERATION_AUTHORITY_HINTS, String.join(",", config.getAuthorityHints()));
+            }
+            if (config.getTrustAnchors() == null || config.getTrustAnchors().isEmpty()) {
+                removeAttribute(RealmAttributes.OPENID_FEDERATION_TRUST_ANCHORS);
+            } else {
+                setAttribute(RealmAttributes.OPENID_FEDERATION_TRUST_ANCHORS, String.join(",", config.getTrustAnchors()));
+            }
+            setAttribute(RealmAttributes.OPENID_FEDERATION_CLIENT_REGISTRATION_TYPES_SUPPORTED, String.join(",", config.getClientRegistrationTypesSupported().stream().map(x -> x.name()).collect(Collectors.toList())));
+            setAttribute(RealmAttributes.OPENID_FEDERATION_ENTITY_TYPES, String.join(",", config.getEntityTypes().stream().map(x -> x.name()).collect(Collectors.toList())));
+            setAttribute(RealmAttributes.OPENID_FEDERATION_LIFESPAN, config.getLifespan() == null ? String.valueOf(86400) : String.valueOf(config.getLifespan()));
+            setAttribute(RealmAttributes.OPENID_FEDERATION_RESOLVE_ENDPOINT, config.getFederationResolveEndpoint());
+            setAttribute(RealmAttributes.OPENID_FEDERATION_HISTORICAL_KEYS_ENDPOINT, config.getFederationHistoricalKeysEndpoint());
         }
     }
 
