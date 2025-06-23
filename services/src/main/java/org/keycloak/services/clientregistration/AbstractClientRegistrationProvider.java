@@ -40,6 +40,7 @@ import org.keycloak.models.ClientInitialAccessModel;
 import org.keycloak.models.ClientModel;
 import org.keycloak.models.ClientRegistrationAccessTokenConstants;
 import org.keycloak.models.ClientSecretConstants;
+import org.keycloak.models.KeycloakContext;
 import org.keycloak.models.KeycloakSession;
 import org.keycloak.models.ModelDuplicateException;
 import org.keycloak.models.ProtocolMapperModel;
@@ -49,6 +50,7 @@ import org.keycloak.models.utils.ModelToRepresentation;
 import org.keycloak.models.utils.RepresentationToModel;
 import org.keycloak.protocol.oidc.OIDCAdvancedConfigWrapper;
 import org.keycloak.protocol.oidc.OIDCConfigAttributes;
+import org.keycloak.protocol.oidc.OIDCLoginProtocol;
 import org.keycloak.protocol.oidc.OIDCLoginProtocolFactory;
 import org.keycloak.protocol.oidc.mappers.AbstractPairwiseSubMapper;
 import org.keycloak.protocol.oidc.mappers.PairwiseSubMapperHelper;
@@ -58,6 +60,7 @@ import org.keycloak.representations.idm.ClientRepresentation;
 import org.keycloak.representations.idm.ProtocolMapperRepresentation;
 import org.keycloak.representations.oidc.OIDCClientRepresentation;
 import org.keycloak.services.ErrorResponseException;
+import org.keycloak.services.Urls;
 import org.keycloak.services.clientpolicy.ClientPolicyException;
 import org.keycloak.services.clientpolicy.context.DynamicClientRegisteredContext;
 import org.keycloak.services.clientpolicy.context.DynamicClientUpdatedContext;
@@ -70,6 +73,7 @@ import org.keycloak.services.managers.RealmManager;
 import org.keycloak.services.scheduled.ClusterAwareScheduledTaskRunner;
 import org.keycloak.services.scheduled.OpenIdFederationClientExpirationTask;
 import org.keycloak.timer.TimerProvider;
+import org.keycloak.urls.UrlType;
 import org.keycloak.validation.ValidationUtil;
 
 import jakarta.ws.rs.ForbiddenException;
@@ -92,18 +96,6 @@ public abstract class AbstractClientRegistrationProvider implements ClientRegist
 
     protected OIDCClientRepresentation createOidcClient(OIDCClientRepresentation clientOIDC, KeycloakSession session, Long exp){
         ClientRepresentation client = DescriptionConverter.toInternal(session, clientOIDC);
-        List<String> grantTypes = clientOIDC.getGrantTypes();
-
-        if (grantTypes != null && grantTypes.contains(OAuth2Constants.UMA_GRANT_TYPE)) {
-            client.setAuthorizationServicesEnabled(true);
-        }
-
-        if (!(grantTypes == null || grantTypes.contains(OAuth2Constants.REFRESH_TOKEN))) {
-            OIDCAdvancedConfigWrapper.fromClientRepresentation(client).setUseRefreshToken(false);
-        }
-
-        if (exp != null)
-            client.getAttributes().put(OIDCConfigAttributes.EXPIRATION_TIME, exp.toString() );
 
         OIDCClientRegistrationContext oidcContext = new OIDCClientRegistrationContext(session, client, this, clientOIDC);
         client = create(oidcContext, exp == null ? EventType.CLIENT_REGISTER : EventType.FEDERATION_CLIENT_REGISTER);
@@ -114,7 +106,7 @@ public abstract class AbstractClientRegistrationProvider implements ClientRegist
 
         validateClient(clientModel, clientOIDC, true);
 
-        URI uri = session.getContext().getUri().getAbsolutePathBuilder().path(client.getClientId()).build();
+        URI uri = getRegistrationClientUri(clientModel);
         clientOIDC = DescriptionConverter.toExternalResponse(session, client, uri);
         clientOIDC.setClientIdIssuedAt(Time.currentTime());
         return clientOIDC;
@@ -122,6 +114,13 @@ public abstract class AbstractClientRegistrationProvider implements ClientRegist
 
     protected OIDCClientRepresentation updateOidcClient(String clientId, OIDCClientRepresentation clientOIDC, KeycloakSession session, Long exp) {
         ClientRepresentation client = DescriptionConverter.toInternal(session, clientOIDC);
+
+        if (clientOIDC.getScope() != null) {
+            ClientModel oldClient = session.getContext().getRealm().getClientById(clientOIDC.getClientId());
+            Collection<String> defaultClientScopes = oldClient.getClientScopes(true).keySet();
+            client.setDefaultClientScopes(new ArrayList<>(defaultClientScopes));
+        }
+
         OIDCClientRegistrationContext oidcContext = new OIDCClientRegistrationContext(session, client, this, clientOIDC);
         client = update(clientId, oidcContext, exp);
 
@@ -130,14 +129,19 @@ public abstract class AbstractClientRegistrationProvider implements ClientRegist
         updateClientRepWithProtocolMappers(clientModel, client);
 
         client.setSecret(clientModel.getSecret());
-        client.getAttributes().put(ClientSecretConstants.CLIENT_SECRET_EXPIRATION, clientModel.getAttribute(ClientSecretConstants.CLIENT_SECRET_EXPIRATION));
-        client.getAttributes().put(ClientSecretConstants.CLIENT_SECRET_CREATION_TIME, clientModel.getAttribute(ClientSecretConstants.CLIENT_SECRET_CREATION_TIME));
+        client.getAttributes().put(ClientSecretConstants.CLIENT_SECRET_EXPIRATION,clientModel.getAttribute(ClientSecretConstants.CLIENT_SECRET_EXPIRATION));
+        client.getAttributes().put(ClientSecretConstants.CLIENT_SECRET_CREATION_TIME,clientModel.getAttribute(ClientSecretConstants.CLIENT_SECRET_CREATION_TIME));
 
         validateClient(clientModel, clientOIDC, false);
 
-        URI uri = session.getContext().getUri().getAbsolutePathBuilder().path(client.getClientId()).build();
-        return DescriptionConverter.toExternalResponse(session, client, uri);
+        return DescriptionConverter.toExternalResponse(session, client, getRegistrationClientUri(clientModel));
+    }
 
+    protected URI getRegistrationClientUri(ClientModel client) {
+        KeycloakContext context = session.getContext();
+        RealmModel realm = context.getRealm();
+        URI backendUri = context.getUri(UrlType.BACKEND).getBaseUri();
+        return Urls.clientRegistration(backendUri, realm.getName(), OIDCLoginProtocol.LOGIN_PROTOCOL, client.getClientId());
     }
 
     protected void updatePairwiseSubMappers(ClientModel clientModel, SubjectType subjectType, String sectorIdentifierUri) {
@@ -228,6 +232,13 @@ public abstract class AbstractClientRegistrationProvider implements ClientRegist
             Stream<String> defaultRolesNames = getDefaultRolesStream(clientModel);
             if (defaultRolesNames != null) {
                 client.setDefaultRoles(defaultRolesNames.toArray(String[]::new));
+            }
+
+            if (clientModel.getAttributes() != null && clientModel.getAttribute(OIDCConfigAttributes.EXPIRATION_TIME) != null){
+                OpenIdFederationClientExpirationTask federationTask = new OpenIdFederationClientExpirationTask(clientModel.getId(), realm.getId());
+                long expiration = (Long.valueOf(clientModel.getAttribute(OIDCConfigAttributes.EXPIRATION_TIME)) - LocalDateTime.now().toEpochSecond(ZoneOffset.UTC)) * 1000;
+                ClusterAwareScheduledTaskRunner taskRunner = new ClusterAwareScheduledTaskRunner(session.getKeycloakSessionFactory(), federationTask, expiration);
+                session.getProvider(TimerProvider.class).scheduleOnce(taskRunner, expiration , "OpenidFederationExplicitClient_" + clientModel.getId());
             }
 
             event.client(client.getClientId()).success();
@@ -329,7 +340,7 @@ public abstract class AbstractClientRegistrationProvider implements ClientRegist
             TimerProvider timer = session.getProvider(TimerProvider.class);
             timer.cancelTask("OpenidFederationExplicitClient_" + client.getId());
             OpenIdFederationClientExpirationTask federationTask = new OpenIdFederationClientExpirationTask(client.getId(), session.getContext().getRealm().getId());
-            long expiration = (LocalDateTime.now().toEpochSecond(ZoneOffset.UTC) - Long.valueOf(client.getAttribute(OIDCConfigAttributes.EXPIRATION_TIME))) * 1000;
+            long expiration = (Long.valueOf(client.getAttribute(OIDCConfigAttributes.EXPIRATION_TIME)) - LocalDateTime.now().toEpochSecond(ZoneOffset.UTC)) * 1000;
             ClusterAwareScheduledTaskRunner taskRunner = new ClusterAwareScheduledTaskRunner(session.getKeycloakSessionFactory(), federationTask, expiration > 60 * 1000 ? expiration : 60 * 1000);
             timer.scheduleOnce(taskRunner, expiration > 60 * 1000 ? expiration : 60 * 1000, "OpenidFederationExplicitClient_" + client.getId());
         } else  if (rep.getAttributes() != null && rep.getAttributes().get(OIDCConfigAttributes.EXPIRATION_TIME) == null && client.getAttributes().get(OIDCConfigAttributes.EXPIRATION_TIME) != null) {

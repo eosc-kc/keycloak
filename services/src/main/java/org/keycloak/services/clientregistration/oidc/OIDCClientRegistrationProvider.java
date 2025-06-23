@@ -92,10 +92,6 @@ public class OIDCClientRegistrationProvider extends AbstractClientRegistrationPr
     @Produces(MediaType.APPLICATION_JSON)
     public Response updateOIDC(@PathParam("clientId") String clientId, OIDCClientRepresentation clientOIDC) {
         try {
-            ClientRepresentation client = DescriptionConverter.toInternal(session, clientOIDC);
-            OIDCClientRegistrationContext oidcContext = new OIDCClientRegistrationContext(session, client, this, clientOIDC);
-            client = update(clientId, oidcContext);
-
             OIDCClientRepresentation updatedClient = updateOidcClient(clientId, clientOIDC, session, null);
             return Response.ok(updatedClient).build();
         } catch (ClientRegistrationException cre) {
@@ -110,10 +106,4 @@ public class OIDCClientRegistrationProvider extends AbstractClientRegistrationPr
         delete(clientId);
     }
 
-    private URI getRegistrationClientUri(ClientModel client) {
-        KeycloakContext context = session.getContext();
-        RealmModel realm = context.getRealm();
-        URI backendUri = context.getUri(UrlType.BACKEND).getBaseUri();
-        return Urls.clientRegistration(backendUri, realm.getName(), OIDCLoginProtocol.LOGIN_PROTOCOL, client.getClientId());
-    }
 }
