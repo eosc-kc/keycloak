@@ -28,7 +28,6 @@ import org.keycloak.TokenVerifier;
 import org.keycloak.broker.oidc.OIDCIdentityProvider;
 import org.keycloak.broker.oidc.OIDCIdentityProviderConfig;
 import org.keycloak.broker.provider.util.SimpleHttp;
-import org.keycloak.common.Profile;
 import org.keycloak.common.VerificationException;
 import org.keycloak.common.util.Time;
 import org.keycloak.connections.httpclient.HttpClientProvider;
@@ -56,7 +55,9 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
 import java.util.Base64;
+import java.util.List;
 
 /**
  * @author <a href="mailto:psilva@redhat.com">Pedro Igor</a>
@@ -69,6 +70,8 @@ public class AccessTokenIntrospectionProvider implements TokenIntrospectionProvi
     private static final Logger logger = Logger.getLogger(AccessTokenIntrospectionProvider.class);
     private static final String wellKnown = "/.well-known/openid-configuration";
     private static final String PARAM_TOKEN = "token";
+    private static final  String PROXIED_TOKEN_INTROSPECTION_FALLBACK_PROVIDERS = "proxiedTokenIntrospectionFallbackProviders";
+    private static final ObjectMapper mapper = new ObjectMapper();
 
     private static CustomCacheProvider tokenRelayCache;
 
@@ -109,7 +112,7 @@ public class AccessTokenIntrospectionProvider implements TokenIntrospectionProvi
                     eventBuilder.error(Errors.INVALID_TOKEN);
                     return Response.ok(JsonSerialization.writeValueAsBytes(tokenMetadata)).type(MediaType.APPLICATION_JSON_TYPE).build();
                 }  else {
-                    return introspectWithExternal(token, issuer, realm, eventBuilder);
+                    return introspectWithProxied(token, issuer, realm, eventBuilder);
                 }
             }
 
@@ -261,7 +264,7 @@ public class AccessTokenIntrospectionProvider implements TokenIntrospectionProvi
         return tokenManager.checkTokenValidForIntrospection(session, realm, accessToken, false, eventBuilder) ? accessToken : null;
     }
 
-  protected Response introspectWithExternal(String token, String issuer, RealmModel realm, EventBuilder eventBuilder) throws IOException {
+  protected Response introspectWithProxied(String token, String issuer, RealmModel realm, EventBuilder eventBuilder) throws IOException {
 
         try {
             String cachedToken = (String) tokenRelayCache.get(new Key(token, realm.getName()));
@@ -286,6 +289,28 @@ public class AccessTokenIntrospectionProvider implements TokenIntrospectionProvi
                     String responseJson = IOUtils.toString(response.getResponse().getEntity().getContent(), Charset.defaultCharset());
                     tokenRelayCache.put(new Key(token, realm.getName()), responseJson);
                     return Response.status(response.getResponse().getStatusLine().getStatusCode()).type(MediaType.APPLICATION_JSON_TYPE).entity(responseJson).build();
+                }
+            } else if (realm.getAttribute(PROXIED_TOKEN_INTROSPECTION_FALLBACK_PROVIDERS) != null){
+                //fallback IdP
+                List<String> fallbackIdPsAlias = Arrays.asList(realm.getAttribute(PROXIED_TOKEN_INTROSPECTION_FALLBACK_PROVIDERS).split(","));
+                HttpClientProvider httpClientProvider = session.getProvider(HttpClientProvider.class);
+                for (String alias : fallbackIdPsAlias ){
+                    IdentityProviderModel idp = realm.getIdentityProviderByAlias(alias);
+                    if (idp != null) {
+                        OIDCIdentityProviderConfig oidcIssuerIdp = new OIDCIdentityProviderConfig(issuerIdp);
+                        OIDCIdentityProvider oidcIssuerProvider = new OIDCIdentityProvider(session, oidcIssuerIdp);
+                        InputStream inputStream = httpClientProvider.get(new String(oidcIssuerIdp.getIssuer() + wellKnown));
+                        OIDCConfigurationRepresentation rep = JsonSerialization.readValue(inputStream, OIDCConfigurationRepresentation.class);
+                        if (rep.getIntrospectionEndpoint() != null) {
+                            SimpleHttp.Response response = oidcIssuerProvider.authenticateTokenRequest(SimpleHttp.doPost(rep.getIntrospectionEndpoint(), session).param(PARAM_TOKEN, token)).asResponse();
+                            String responseJson = IOUtils.toString(response.getResponse().getEntity().getContent(), Charset.defaultCharset());
+                            if (response.getResponse().getStatusLine().getStatusCode() < 300 && mapper.readTree(responseJson).path("active").asBoolean(false)) {
+                                return Response.status(response.getResponse().getStatusLine().getStatusCode()).type(MediaType.APPLICATION_JSON_TYPE).entity(responseJson).build();
+                            } else {
+                                logger.warnf("IdP with alias %s responde to token introspection with status %d and body : %s", alias, response.getResponse().getStatusLine().getStatusCode(), responseJson);
+                            }
+                        }
+                    }
                 }
             }
             //if failed to find issuer in IdPs or IntrospectionEndpoint does not exist for specific Idp return false

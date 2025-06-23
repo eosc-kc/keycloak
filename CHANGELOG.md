@@ -14,6 +14,7 @@ Our Keycloak version is working well with PostgreSQL database. For using other S
 
 ### Added
 - OpenID Federation OP with explicit registration
+- Extend Proxied Token Introspection to support fallback endpoints [RCIAM-63](https://tts.grnet.gr/jira/browse/RCIAM-63)
 
 ## [22.0.13-1.18] - 2025-06-16
 
