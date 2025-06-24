@@ -815,7 +815,8 @@ public class LegacyExportImportManager implements ExportImportManager {
         webAuthnPolicy = getWebAuthnPolicyPasswordless(rep);
         realm.setWebAuthnPolicyPasswordless(webAuthnPolicy);
 
-        realm.setOpenIdFederationConfig(getOpenIdFederationConfig(rep));
+        if (rep.getOpenIdFederationEnabled() != null)
+            realm.setOpenIdFederationConfig(getOpenIdFederationConfig(rep));
 
         updateCibaSettings(rep, realm);
         updateParSettings(rep, realm);
