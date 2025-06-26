@@ -54,6 +54,7 @@ public class OpenIdFederationClientRegistrationService extends AbstractClientReg
             try {
                 statement = trustChainProcessor.parseAndValidateSelfSigned(body);
             } catch (InvalidTrustChainException ex) {
+                ex.printStackTrace();
                 throw new ErrorResponseException(Errors.INVALID_REQUEST, "Entity statement is not valid", Response.Status.BAD_REQUEST);
             }
 
@@ -108,7 +109,7 @@ public class OpenIdFederationClientRegistrationService extends AbstractClientReg
     }
 
     private void validationRules(EntityStatement statement) {
-        if (TokenUtil.ENTITY_STATEMENT_JWT.equals(statement.getType())) {
+        if (!TokenUtil.ENTITY_STATEMENT_JWT.equals(statement.getType())) {
             throw new ErrorResponseException(Errors.INVALID_REQUEST, "No correct typ header.", Response.Status.NOT_FOUND);
         }
         if (statement.getIssuer() == null) {
@@ -132,7 +133,7 @@ public class OpenIdFederationClientRegistrationService extends AbstractClientReg
         if (!statement.getIssuer().trim().equals(statement.getSubject().trim())) {
             throw new ErrorResponseException(Errors.INVALID_ISSUER, "The registration request issuer differs from the subject.", Response.Status.NOT_FOUND);
         }
-        if (statement.getAudience() == null || statement.getAudience()[0].equals(Urls.realmIssuer(session.getContext().getUri(UrlType.FRONTEND).getBaseUri(), session.getContext().getRealm().getName()))) {
+        if (statement.getAudience() == null || !statement.getAudience()[0].equals(Urls.realmIssuer(session.getContext().getUri(UrlType.FRONTEND).getBaseUri(), session.getContext().getRealm().getName()))) {
             throw new ErrorResponseException(Errors.INVALID_REQUEST, "Aud must contain OP entity Identifier", Response.Status.BAD_REQUEST);
         }
     }

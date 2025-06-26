@@ -1,6 +1,7 @@
 package org.keycloak.protocol.oidc.federation;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.nimbusds.jose.Algorithm;
 import com.nimbusds.jose.JOSEException;
 import com.nimbusds.jose.JWSAlgorithm;
 import com.nimbusds.jose.jwk.JWKSet;
@@ -34,6 +35,11 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 import org.keycloak.events.Errors;
+import java.util.Collections;
+import java.util.stream.Stream;
+
+import com.nimbusds.jose.JOSEObjectType;
+import com.nimbusds.jose.proc.DefaultJOSEObjectTypeVerifier;
 
 public class TrustChainProcessor {
 
@@ -130,18 +136,24 @@ public class TrustChainProcessor {
                     String encodedSubNodeSelf = OpenIdFederationUtils.getSelfSignedToken(authHint, session);
                     EntityStatement subNodeSelfES = parseAndValidateSelfSigned(encodedSubNodeSelf);
                     logger.debug(String.format("EntityStatement of %s about %s. AuthHints: %s", subNodeSelfES.getIssuer(), subNodeSelfES.getSubject(), subNodeSelfES.getAuthorityHints()));
-                    String fedApiUrl = subNodeSelfES.getMetadata().getFederationEntity().getFederationApiEndpoint();
+
+                    String fedApiUrl = subNodeSelfES.getMetadata().getFederationEntity().getFederationFetchEndpoint();
                     String encodedSubNodeSubordinate = OpenIdFederationUtils.getSubordinateToken(fedApiUrl, subNodeSelfES.getIssuer(), leafEs.getIssuer(), session);
                     EntityStatement subNodeSubordinateES = parse(encodedSubNodeSubordinate);
                     validate(encodedSubNodeSubordinate, subNodeSelfES.getJwks());
                     logger.debug(String.format("EntityStatement of %s about %s. AuthHints: %s", subNodeSubordinateES.getIssuer(), subNodeSubordinateES.getSubject(), subNodeSubordinateES.getAuthorityHints()));
-                    //TODO: might want to make some more checks on subNodeSubordinateES integrity
                     visitedNodes.add(subNodeSelfES.getIssuer());
-                    List<TrustChainForExplicit> subList = subTrustChains(subNodeSelfES, trustAnchorIds, visitedNodes);
-                    for (TrustChainForExplicit tcr : subList) {
-                       // tcr.getChain().add(0, encodedSubNodeSubordinate);
-                        tcr.getParsedChain().add(0, subNodeSubordinateES);
-                        chainsList.add(tcr);
+                    if (trustAnchorIds.contains(subNodeSelfES.getIssuer())) {
+                        TrustChainForExplicit trustAnchor = new TrustChainForExplicit();
+                        trustAnchor.getParsedChain().add(0, subNodeSelfES);
+                        chainsList.add(trustAnchor);
+                    } else {
+                        List<TrustChainForExplicit> subList = subTrustChains(subNodeSelfES, trustAnchorIds, visitedNodes);
+                        for (TrustChainForExplicit tcr : subList) {
+                            // tcr.getChain().add(0, encodedSubNodeSubordinate);
+                            tcr.getParsedChain().add(0, subNodeSubordinateES);
+                            chainsList.add(tcr);
+                        }
                     }
                 } catch (Exception ex) {
                     ex.printStackTrace();
@@ -149,7 +161,7 @@ public class TrustChainProcessor {
 
             });
 
-        } else if(trustAnchorIds.contains(leafEs.getIssuer())) {
+        } else if (trustAnchorIds.contains(leafEs.getIssuer())) {
             TrustChainForExplicit trustAnchor = new TrustChainForExplicit();
             trustAnchor.getParsedChain().add(0, leafEs);
             chainsList.add(trustAnchor);
@@ -208,49 +220,63 @@ public class TrustChainProcessor {
 //
 
     public void validate(String token, JSONWebKeySet publicKey) throws IOException, ParseException, BadJOSEException, JOSEException {
-            String jsonPublicKey = om.writeValueAsString(publicKey);
-            om.writeValueAsString(jsonPublicKey);
-            JWKSet jwkSet = JWKSet.load(new ByteArrayInputStream(jsonPublicKey.getBytes()));
-            JWKSource<SecurityContext> keySource = new ImmutableJWKSet<>(jwkSet);
-
-            ConfigurableJWTProcessor<SecurityContext> jwtProcessor = new DefaultJWTProcessor<>();
-            //jwtProcessor.setJWSTypeVerifier(new DefaultJOSEObjectTypeVerifier<>(new JOSEObjectType("JWT")));
-            JWSKeySelector<SecurityContext> keySelector = new JWSVerificationKeySelector<SecurityContext>(
-                jwkSet.getKeys().stream()
-                    .map(key -> key.getAlgorithm())
-                    .filter(JWSAlgorithm.class::isInstance)
-                    .map(JWSAlgorithm.class::cast)
-                    .collect(Collectors.toSet()),
-                keySource);
-            jwtProcessor.setJWSKeySelector(keySelector);
+            ConfigurableJWTProcessor<SecurityContext> jwtProcessor = produceJwtProcessor(publicKey);
             jwtProcessor.process(token, null);
     }
 
     public EntityStatement parseAndValidateSelfSigned(String token) throws InvalidTrustChainException {
         EntityStatement statement = parse(token);
         try{
-            String jsonKey = om.writeValueAsString(statement.getJwks());
-
-            JWKSet jwkSet = JWKSet.load(new ByteArrayInputStream(jsonKey.getBytes()));
-            JWKSource<SecurityContext> keySource = new ImmutableJWKSet<>(jwkSet);
-
-            ConfigurableJWTProcessor<SecurityContext> jwtProcessor = new DefaultJWTProcessor<>();
-            //jwtProcessor.setJWSTypeVerifier(new DefaultJOSEObjectTypeVerifier<>(new JOSEObjectType("JWT")));
-            JWSKeySelector<SecurityContext> keySelector = new JWSVerificationKeySelector<SecurityContext>(
-                jwkSet.getKeys().stream()
-                    .map(key -> key.getAlgorithm())
-                    .filter(JWSAlgorithm.class::isInstance)
-                    .map(JWSAlgorithm.class::cast)
-                    .collect(Collectors.toSet()),
-                keySource);
-            jwtProcessor.setJWSKeySelector(keySelector);
+            ConfigurableJWTProcessor<SecurityContext> jwtProcessor = produceJwtProcessor(statement.getJwks());
             jwtProcessor.process(token, null);
 
         } catch(IOException | ParseException | BadJOSEException | JOSEException ex) {
+            ex.printStackTrace();
             throw new ErrorResponseException(Errors.INVALID_TRUST_CHAIN, "Trust chain is not valid", Response.Status.BAD_REQUEST);
         }
 
         return statement;
+    }
+
+    private ConfigurableJWTProcessor<SecurityContext> produceJwtProcessor(JSONWebKeySet jwks) throws IOException, ParseException {
+        String jsonKey = om.writeValueAsString(jwks);
+        JWKSet jwkSet = JWKSet.load(new ByteArrayInputStream(jsonKey.getBytes()));
+        JWKSource<SecurityContext> keySource = new ImmutableJWKSet<>(jwkSet);
+        ConfigurableJWTProcessor<SecurityContext> jwtProcessor = new DefaultJWTProcessor<>();
+
+        Set<JWSAlgorithm> algs = jwkSet.getKeys().stream()
+                .map(key -> {
+                    Object alg = key.getAlgorithm();
+                    if (alg instanceof JWSAlgorithm) {
+                        return (JWSAlgorithm) alg;
+                    } else if (alg instanceof Algorithm) {
+                        try {
+                            return JWSAlgorithm.parse(((Algorithm) alg).getName());
+                        } catch (IllegalArgumentException e) {
+                            // Not a valid JWSAlgorithm
+                            return null;
+                        }
+                    } else if (alg instanceof String) {
+                        try {
+                            return JWSAlgorithm.parse((String) alg);
+                        } catch (Exception e) {
+                            return null;
+                        }
+                    } else {
+                        return null;
+                    }
+                })
+                .filter(Objects::nonNull)
+                .collect(Collectors.toSet());
+
+        if (algs.isEmpty()) {
+            algs = Collections.singleton(JWSAlgorithm.RS256); // Default to RS256
+        }
+
+        JWSKeySelector<SecurityContext> keySelector = new JWSVerificationKeySelector<>(algs, keySource);
+        jwtProcessor.setJWSKeySelector(keySelector);
+        jwtProcessor.setJWSTypeVerifier(new DefaultJOSEObjectTypeVerifier<>(Stream.of(new JOSEObjectType("entity-statement+jwt")).collect(Collectors.toSet())));
+        return jwtProcessor;
     }
 
     public EntityStatement parse(String token) throws InvalidTrustChainException {
