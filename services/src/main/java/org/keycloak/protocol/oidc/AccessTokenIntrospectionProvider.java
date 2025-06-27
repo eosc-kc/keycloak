@@ -271,7 +271,7 @@ public class AccessTokenIntrospectionProvider implements TokenIntrospectionProvi
             if(cachedToken != null)
                 return Response.ok(cachedToken).type(MediaType.APPLICATION_JSON_TYPE).build();
 
-            IdentityProviderModel issuerIdp = realm.getIdentityProvidersStream().filter(idp -> issuer.equals(idp.getConfig().get("issuer"))).findAny().orElse(null);
+            IdentityProviderModel issuerIdp = realm.getIdentityProvidersStream().filter(idp -> issuer.equals(idp.getConfig().get("issuer")) && idp.isEnabled()).findAny().orElse(null);
             if (issuerIdp != null) {
                 OIDCIdentityProviderConfig oidcIssuerIdp = new OIDCIdentityProviderConfig(issuerIdp);
                 OIDCIdentityProvider oidcIssuerProvider = new OIDCIdentityProvider(session, oidcIssuerIdp);
@@ -296,8 +296,8 @@ public class AccessTokenIntrospectionProvider implements TokenIntrospectionProvi
                 HttpClientProvider httpClientProvider = session.getProvider(HttpClientProvider.class);
                 for (String alias : fallbackIdPsAlias ){
                     IdentityProviderModel idp = realm.getIdentityProviderByAlias(alias);
-                    if (idp != null) {
-                        OIDCIdentityProviderConfig oidcIssuerIdp = new OIDCIdentityProviderConfig(issuerIdp);
+                    if (idp != null && idp.isEnabled() ) {
+                        OIDCIdentityProviderConfig oidcIssuerIdp = new OIDCIdentityProviderConfig(idp);
                         OIDCIdentityProvider oidcIssuerProvider = new OIDCIdentityProvider(session, oidcIssuerIdp);
                         InputStream inputStream = httpClientProvider.get(new String(oidcIssuerIdp.getIssuer() + wellKnown));
                         OIDCConfigurationRepresentation rep = JsonSerialization.readValue(inputStream, OIDCConfigurationRepresentation.class);
