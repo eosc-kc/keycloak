@@ -297,7 +297,7 @@ public class AccessTokenIntrospectionProvider implements TokenIntrospectionProvi
                 for (String alias : fallbackIdPsAlias ){
                     IdentityProviderModel idp = realm.getIdentityProviderByAlias(alias);
                     if (idp != null) {
-                        OIDCIdentityProviderConfig oidcIssuerIdp = new OIDCIdentityProviderConfig(issuerIdp);
+                        OIDCIdentityProviderConfig oidcIssuerIdp = new OIDCIdentityProviderConfig(idp);
                         OIDCIdentityProvider oidcIssuerProvider = new OIDCIdentityProvider(session, oidcIssuerIdp);
                         InputStream inputStream = httpClientProvider.get(new String(oidcIssuerIdp.getIssuer() + wellKnown));
                         OIDCConfigurationRepresentation rep = JsonSerialization.readValue(inputStream, OIDCConfigurationRepresentation.class);
