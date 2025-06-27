@@ -34,6 +34,8 @@ import jakarta.persistence.NamedQueries;
 import jakarta.persistence.NamedQuery;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
+
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -148,6 +150,9 @@ public class RealmEntity {
 
     @OneToMany(cascade ={CascadeType.REMOVE}, orphanRemoval = true, mappedBy = "realm")
     Collection<UserFederationMapperEntity> userFederationMappers = new LinkedList<>();
+
+    @OneToMany(cascade ={CascadeType.ALL}, orphanRemoval = true, mappedBy = "realm")
+    List<OpenIdFederationEntity> openIdFederationList = new ArrayList<>();
 
     @ElementCollection
     @MapKeyColumn(name="NAME")
@@ -609,6 +614,14 @@ public class RealmEntity {
 
     public void setUserFederationMappers(Collection<UserFederationMapperEntity> userFederationMappers) {
         this.userFederationMappers = userFederationMappers;
+    }
+
+    public List<OpenIdFederationEntity> getOpenIdFederationList() {
+        return openIdFederationList;
+    }
+
+    public void setOpenIdFederationList(List<OpenIdFederationEntity> openIdFederationList) {
+        this.openIdFederationList = openIdFederationList;
     }
 
     public Collection<RealmAttributeEntity> getAttributes() {

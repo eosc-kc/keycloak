@@ -159,13 +159,10 @@ public class RealmRepresentation {
     private String openIdFederationPolicyUri;
     private String openIdFederationHomepageUri;
     private List<String> openIdFederationAuthorityHints;
-    private List<String> openIdFederationTrustAnchors;
-    private List<String> openIdFederationClientRegistrationTypesSupported;
-    private List<String> openIdFederationEntityTypes;
     private Integer openIdFederationLifespan;
     private String openIdFederationResolveEndpoint;
     private String openIdFederationHistoricalKeysEndpoint;
-
+    private List<OpenIdFederationRepresentation> openIdFederationList;
 
     // Client Policies/Profiles
 
@@ -1289,22 +1286,6 @@ public class RealmRepresentation {
         this.openIdFederationAuthorityHints = openIdFederationAuthorityHints;
     }
 
-    public List<String> getOpenIdFederationClientRegistrationTypesSupported() {
-        return openIdFederationClientRegistrationTypesSupported;
-    }
-
-    public void setOpenIdFederationClientRegistrationTypesSupported(List<String> openIdFederationClientRegistrationTypesSupported) {
-        this.openIdFederationClientRegistrationTypesSupported = openIdFederationClientRegistrationTypesSupported;
-    }
-
-    public List<String> getOpenIdFederationEntityTypes() {
-        return openIdFederationEntityTypes;
-    }
-
-    public void setOpenIdFederationEntityTypes(List<String> openIdFederationEntityTypes) {
-        this.openIdFederationEntityTypes = openIdFederationEntityTypes;
-    }
-
     public Integer getOpenIdFederationLifespan() {
         return openIdFederationLifespan;
     }
@@ -1329,12 +1310,12 @@ public class RealmRepresentation {
         this.openIdFederationHistoricalKeysEndpoint = openIdFederationHistoricalKeysEndpoint;
     }
 
-    public List<String> getOpenIdFederationTrustAnchors() {
-        return openIdFederationTrustAnchors;
+    public List<OpenIdFederationRepresentation> getOpenIdFederationList() {
+        return openIdFederationList;
     }
 
-    public void setOpenIdFederationTrustAnchors(List<String> openIdFederationTrustAnchors) {
-        this.openIdFederationTrustAnchors = openIdFederationTrustAnchors;
+    public void setOpenIdFederationList(List<OpenIdFederationRepresentation> openIdFederationList) {
+        this.openIdFederationList = openIdFederationList;
     }
 
     // Client Policies/Profiles

@@ -10,6 +10,7 @@ import org.keycloak.events.Errors;
 import org.keycloak.exceptions.InvalidTrustChainException;
 import org.keycloak.models.KeycloakSession;
 import org.keycloak.models.OpenIdFederationConfig;
+import org.keycloak.models.OpenIdFederationGeneralConfig;
 import org.keycloak.models.RealmModel;
 import org.keycloak.models.enums.ClientRegistrationTypeEnum;
 import org.keycloak.protocol.oidc.federation.TrustChainProcessor;
@@ -25,7 +26,10 @@ import org.keycloak.services.clientregistration.ClientRegistrationException;
 import org.keycloak.urls.UrlType;
 import org.keycloak.util.TokenUtil;
 
+import java.time.LocalDateTime;
+import java.time.ZoneOffset;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -43,8 +47,8 @@ public class OpenIdFederationClientRegistrationService extends AbstractClientReg
     @Consumes({"application/entity-statement+jwt", "application/trust-chain+json"})
     public Response explicitClientRegistration(String body, @Context HttpHeaders headers) {
         RealmModel realm = session.getContext().getRealm();
-        OpenIdFederationConfig config = realm.getOpenIdFederationConfig();
-        if (!realm.isOpenIdFederationConfig() || !config.getClientRegistrationTypesSupported().contains(ClientRegistrationTypeEnum.EXPLICIT) || config.getAuthorityHints().isEmpty()) {
+        OpenIdFederationGeneralConfig config = realm.getOpenIdFederationConfig();
+        if (!realm.isOpenIdFederationConfig() || !config.getOpenIdFederationList().stream().flatMap(x -> x.getClientRegistrationTypesSupported().stream()).collect(Collectors.toSet()).contains(ClientRegistrationTypeEnum.EXPLICIT) || config.getAuthorityHints().isEmpty()) {
             throw new ErrorResponseException(Errors.INVALID_REQUEST, "Explicit OpenID Federation Client Registration is not supported in this realm", Response.Status.BAD_REQUEST);
         }
         checkSsl();
@@ -60,7 +64,7 @@ public class OpenIdFederationClientRegistrationService extends AbstractClientReg
 
             validationRules(statement);
 
-            List<String> trustAnchorIds = config.getTrustAnchors();
+            Set<String> trustAnchorIds = config.getOpenIdFederationList().stream().map(OpenIdFederationConfig::getTrustAnchor).collect(Collectors.toSet());
 
             logger.info("starting validating trust chains");
 
@@ -118,11 +122,11 @@ public class OpenIdFederationClientRegistrationService extends AbstractClientReg
         if (statement.getSubject() == null) {
             throw new ErrorResponseException(Errors.INVALID_SUBJECT, "No issuer in the request.", Response.Status.NOT_FOUND);
         }
-        if (statement.getIat() == null) {
-            throw new ErrorResponseException(Errors.INVALID_REQUEST, "No iat in the request.", Response.Status.BAD_REQUEST);
+        if (statement.getIat() == null && LocalDateTime.now().toEpochSecond(ZoneOffset.UTC) > statement.getIat()) {
+            throw new ErrorResponseException(Errors.INVALID_REQUEST, "Iat must exist and be before now.", Response.Status.BAD_REQUEST);
         }
-        if (statement.getExp() == null) {
-            throw new ErrorResponseException(Errors.INVALID_REQUEST, "No exp in the request.", Response.Status.BAD_REQUEST);
+        if (statement.getExp() == null && LocalDateTime.now().toEpochSecond(ZoneOffset.UTC) < statement.getExp()){
+            throw new ErrorResponseException(Errors.INVALID_REQUEST, "Exp must exist and be before now.", Response.Status.BAD_REQUEST);
         }
         if (statement.getAuthorityHints() == null || statement.getAuthorityHints().isEmpty()) {
             throw new ErrorResponseException(Errors.INVALID_REQUEST, "No authorityHints in the request.", Response.Status.BAD_REQUEST);

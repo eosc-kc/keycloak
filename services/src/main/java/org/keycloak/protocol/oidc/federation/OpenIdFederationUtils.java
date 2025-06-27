@@ -18,8 +18,8 @@ public class OpenIdFederationUtils {
         return SimpleHttp.doGet((issuer + WELL_KNOWN_SUBPATH), session).asString();
     }
 
-    public static String getSubordinateToken(String fedApiUrl, String issuer, String subject, KeycloakSession session) throws IOException {
-        return SimpleHttp.doGet((fedApiUrl + "?iss=" + urlEncode(issuer) + "&sub=" + urlEncode(subject)),session).asString();
+    public static String getSubordinateToken(String fedApiUrl, String subject, KeycloakSession session) throws IOException {
+        return SimpleHttp.doGet((fedApiUrl + "?sub=" + urlEncode(subject)),session).asString();
     }
 
     private static String urlEncode(String url) throws UnsupportedEncodingException {

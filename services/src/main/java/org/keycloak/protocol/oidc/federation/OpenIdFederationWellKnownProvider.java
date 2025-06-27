@@ -11,7 +11,7 @@ import org.keycloak.jose.jwk.JSONWebKeySet;
 import org.keycloak.jose.jwk.JWK;
 import org.keycloak.jose.jwk.JWKBuilder;
 import org.keycloak.models.KeycloakSession;
-import org.keycloak.models.OpenIdFederationConfig;
+import org.keycloak.models.OpenIdFederationGeneralConfig;
 import org.keycloak.models.RealmModel;
 import org.keycloak.models.enums.ClientRegistrationTypeEnum;
 import org.keycloak.models.enums.EntityTypeEnum;
@@ -32,6 +32,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 public class OpenIdFederationWellKnownProvider extends OIDCWellKnownProvider {
@@ -50,10 +51,10 @@ public class OpenIdFederationWellKnownProvider extends OIDCWellKnownProvider {
 
         UriInfo frontendUriInfo = session.getContext().getUri(UrlType.FRONTEND);
         UriInfo backendUriInfo = session.getContext().getUri(UrlType.BACKEND);
-        OpenIdFederationConfig openIdFederationConfig = realm.getOpenIdFederationConfig();
+        OpenIdFederationGeneralConfig openIdFederationConfig = realm.getOpenIdFederationConfig();
         Metadata metadata = new Metadata();
 
-        if (openIdFederationConfig.getEntityTypes().contains(EntityTypeEnum.OPENID_PROVIDER)) {
+        if (openIdFederationConfig.getOpenIdFederationList().stream().flatMap(x -> x.getEntityTypes().stream()).collect(Collectors.toSet()).contains(EntityTypeEnum.OPENID_PROVIDER)) {
             OPMetadata opMetadata;
             try {
                 opMetadata = from(((OIDCConfigurationRepresentation) super.getConfig()));
@@ -61,10 +62,11 @@ public class OpenIdFederationWellKnownProvider extends OIDCWellKnownProvider {
                 throw new InternalServerErrorException("Could not form the configuration response");
             }
 
-            if (openIdFederationConfig.getClientRegistrationTypesSupported().contains(ClientRegistrationTypeEnum.EXPLICIT)) {
+            Set<ClientRegistrationTypeEnum> registrationTypes = openIdFederationConfig.getOpenIdFederationList().stream().flatMap(x -> x.getClientRegistrationTypesSupported().stream()).collect(Collectors.toSet());
+            if (registrationTypes.contains(ClientRegistrationTypeEnum.EXPLICIT)) {
                 opMetadata.setFederationRegistrationEndpoint(backendUriInfo.getBaseUriBuilder().clone().path(RealmsResource.class).path(RealmsResource.class, "getOpenIdFederationClientsService").build(realm.getName()).toString());
             }
-            opMetadata.setClientRegistrationTypes(openIdFederationConfig.getClientRegistrationTypesSupported().stream().map(ClientRegistrationTypeEnum::getValue).collect(Collectors.toList()));
+            opMetadata.setClientRegistrationTypes(registrationTypes.stream().map(ClientRegistrationTypeEnum::getValue).collect(Collectors.toList()));
             opMetadata.setContacts(openIdFederationConfig.getContacts());
             opMetadata.setLogoUri(openIdFederationConfig.getLogoUri());
             opMetadata.setPolicyUri(openIdFederationConfig.getPolicyUri());
@@ -106,7 +108,7 @@ public class OpenIdFederationWellKnownProvider extends OIDCWellKnownProvider {
         return JsonSerialization.readValue(JsonSerialization.writeValueAsString(representation), OPMetadata.class);
     }
 
-    private CommonMetadata commonMetadata(OpenIdFederationConfig realmConfig){
+    private CommonMetadata commonMetadata(OpenIdFederationGeneralConfig realmConfig){
         CommonMetadata common = new CommonMetadata();
         common.setHomepageUri(realmConfig.getHomepageUri());
         common.setOrganizationName(realmConfig.getOrganizationName());

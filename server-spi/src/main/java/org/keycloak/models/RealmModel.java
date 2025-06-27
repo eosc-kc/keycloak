@@ -318,7 +318,7 @@ public interface RealmModel extends RoleContainerModel {
      */
     void setWebAuthnPolicyPasswordless(WebAuthnPolicy policy);
 
-    default OpenIdFederationConfig getOpenIdFederationConfig() {
+    default OpenIdFederationGeneralConfig getOpenIdFederationConfig() {
         return null;
     };
 
@@ -326,7 +326,7 @@ public interface RealmModel extends RoleContainerModel {
         return getOpenIdFederationConfig() != null;
     };
 
-    default void setOpenIdFederationConfig(OpenIdFederationConfig openIdFederationConfig) {
+    default void setOpenIdFederationConfig(OpenIdFederationGeneralConfig openIdFederationConfig) {
     };
 
     RoleModel getRoleById(String id);

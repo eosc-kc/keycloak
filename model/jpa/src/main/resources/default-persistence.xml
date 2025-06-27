@@ -64,6 +64,7 @@
         <class>org.keycloak.models.jpa.entities.ClientInitialAccessEntity</class>
 		<class>org.keycloak.models.jpa.entities.FederationEntity</class>
 		<class>org.keycloak.models.jpa.entities.FederationMapperEntity</class>
+        <class>org.keycloak.models.jpa.entities.OpenIdFederationEntity</class>
 
         <!-- JpaAuditProviders -->
         <class>org.keycloak.events.jpa.EventEntity</class>

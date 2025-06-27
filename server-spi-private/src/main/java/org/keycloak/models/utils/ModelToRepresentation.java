@@ -41,6 +41,8 @@ import org.keycloak.events.admin.AdminEvent;
 import org.keycloak.events.admin.AuthDetails;
 import org.keycloak.models.*;
 import org.keycloak.models.credential.OTPCredentialModel;
+import org.keycloak.models.enums.ClientRegistrationTypeEnum;
+import org.keycloak.models.enums.EntityTypeEnum;
 import org.keycloak.provider.ProviderConfigProperty;
 import org.keycloak.representations.account.CredentialMetadataRepresentation;
 import org.keycloak.representations.idm.*;
@@ -506,7 +508,7 @@ public class ModelToRepresentation {
         if (!realm.isOpenIdFederationConfig()) {
             rep.setOpenIdFederationEnabled(false);
         } else {
-            OpenIdFederationConfig openIdFederationConfig =  realm.getOpenIdFederationConfig();
+            OpenIdFederationGeneralConfig openIdFederationConfig =  realm.getOpenIdFederationConfig();
             rep.setOpenIdFederationEnabled(true);
             rep.setOpenIdFederationOrganizationName(openIdFederationConfig.getOrganizationName());
             rep.setOpenIdFederationContacts(openIdFederationConfig.getContacts());
@@ -514,12 +516,17 @@ public class ModelToRepresentation {
             rep.setOpenIdFederationPolicyUri(openIdFederationConfig.getPolicyUri());
             rep.setOpenIdFederationHomepageUri(openIdFederationConfig.getHomepageUri());
             rep.setOpenIdFederationAuthorityHints(openIdFederationConfig.getAuthorityHints());
-            rep.setOpenIdFederationTrustAnchors(openIdFederationConfig.getTrustAnchors());
-            rep.setOpenIdFederationClientRegistrationTypesSupported(openIdFederationConfig.getClientRegistrationTypesSupported().stream().map(x -> x.name()).collect(Collectors.toList()));
-            rep.setOpenIdFederationEntityTypes(openIdFederationConfig.getEntityTypes().stream().map(x -> x.name()).collect(Collectors.toList()));
             rep.setOpenIdFederationLifespan(openIdFederationConfig.getLifespan());
             rep.setOpenIdFederationResolveEndpoint(openIdFederationConfig.getFederationResolveEndpoint());
             rep.setOpenIdFederationHistoricalKeysEndpoint(openIdFederationConfig.getFederationHistoricalKeysEndpoint());
+            rep.setOpenIdFederationList(openIdFederationConfig.getOpenIdFederationList().stream().map(fed -> {
+                OpenIdFederationRepresentation federationRep = new OpenIdFederationRepresentation();
+                federationRep.setInternalId(fed.getInternalId());
+                federationRep.setTrustAnchor(fed.getTrustAnchor());
+                federationRep.setEntityTypes(fed.getEntityTypes().stream().map(EntityTypeEnum::toString).collect(Collectors.toList()));
+                federationRep.setClientRegistrationTypesSupported(fed.getClientRegistrationTypesSupported().stream().map(ClientRegistrationTypeEnum::toString).collect(Collectors.toList()));
+                return federationRep;
+            }).collect(Collectors.toList()));
         }
 
         CibaConfig cibaPolicy = realm.getCibaPolicy();

@@ -38,7 +38,7 @@ import org.keycloak.models.RealmModel;
 import org.keycloak.models.RequiredActionProviderModel;
 import org.keycloak.models.RequiredCredentialModel;
 import org.keycloak.models.WebAuthnPolicy;
-import org.keycloak.models.OpenIdFederationConfig;
+import org.keycloak.models.OpenIdFederationGeneralConfig;
 import org.keycloak.models.cache.infinispan.DefaultLazyLoader;
 import org.keycloak.models.cache.infinispan.LazyLoader;
 
@@ -116,7 +116,7 @@ public class CachedRealm extends AbstractExtendableRevisioned {
     protected OTPPolicy otpPolicy;
     protected WebAuthnPolicy webAuthnPolicy;
     protected WebAuthnPolicy webAuthnPasswordlessPolicy;
-    protected OpenIdFederationConfig openIdFederationConfig;
+    protected OpenIdFederationGeneralConfig openIdFederationConfig;
 
     protected String loginTheme;
     protected String accountTheme;
@@ -705,7 +705,7 @@ public class CachedRealm extends AbstractExtendableRevisioned {
         return webAuthnPasswordlessPolicy;
     }
 
-    public OpenIdFederationConfig getOpenIdFederationConfig() {
+    public OpenIdFederationGeneralConfig getOpenIdFederationConfig() {
         return openIdFederationConfig;
     }
 
