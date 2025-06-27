@@ -621,7 +621,10 @@ public class RealmEntity {
     }
 
     public void setOpenIdFederationList(List<OpenIdFederationEntity> openIdFederationList) {
-        this.openIdFederationList = openIdFederationList;
+        this.openIdFederationList.clear();
+        if (openIdFederationList != null) {
+            this.openIdFederationList.addAll(openIdFederationList);
+        }
     }
 
     public Collection<RealmAttributeEntity> getAttributes() {
