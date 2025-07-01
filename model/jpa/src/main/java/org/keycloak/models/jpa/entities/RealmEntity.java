@@ -625,7 +625,7 @@ public class RealmEntity {
             this.openIdFederationList = new ArrayList<>();
         }
         this.openIdFederationList.clear();
-        if (openIdFederationList != null) {
+        if (openIdFederationList != null && !openIdFederationList.isEmpty()) {
             this.openIdFederationList.addAll(openIdFederationList);
         }
     }

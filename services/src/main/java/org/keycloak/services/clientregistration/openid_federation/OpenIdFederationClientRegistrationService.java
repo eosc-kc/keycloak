@@ -79,9 +79,7 @@ public class OpenIdFederationClientRegistrationService extends AbstractClientReg
                     if (rPMetadata.getJwks() == null && rPMetadata.getJwksUri() == null) {
                         rPMetadata.setJwks(statement.getJwks());
                     }
-                    if (rPMetadata.getClientId() == null) {
-                        rPMetadata.setClientId(statement.getIssuer());
-                    }
+                    rPMetadata.setClientId(statement.getSubject());
 
                     RPMetadata rPMetadataResponse = new RPMetadata();
                     try {

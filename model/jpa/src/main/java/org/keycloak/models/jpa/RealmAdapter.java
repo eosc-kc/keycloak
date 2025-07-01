@@ -1134,6 +1134,7 @@ public class RealmAdapter implements LegacyRealmModel, JpaModel<RealmEntity> {
                 fedEntity.setTrustAnchor(fedConfig.getTrustAnchor());
                 fedEntity.getConfig().put(RealmAttributes.OPENID_FEDERATION_ENTITY_TYPES, fedConfig.getEntityTypes().stream().map(x -> x.name()).collect(Collectors.joining("##")));
                 fedEntity.getConfig().put(RealmAttributes.OPENID_FEDERATION_CLIENT_REGISTRATION_TYPES_SUPPORTED, fedConfig.getClientRegistrationTypesSupported().stream().map(x -> x.name()).collect(Collectors.joining("##")));
+                fedEntity.setRealm(realm);
                 return fedEntity;
             }).collect(Collectors.toList()));
         }
