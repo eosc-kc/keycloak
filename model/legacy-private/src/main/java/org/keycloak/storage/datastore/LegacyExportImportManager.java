@@ -1269,7 +1269,7 @@ public class LegacyExportImportManager implements ExportImportManager {
     }
 
     private static OpenIdFederationGeneralConfig getOpenIdFederationConfig(RealmRepresentation rep) {
-        if (rep.getOpenIdFederationEnabled() != null && rep.getOpenIdFederationEnabled() && rep.getOpenIdFederationList() != null && !rep.getOpenIdFederationList().isEmpty()) {
+        if (rep.getOpenIdFederationEnabled() != null && rep.getOpenIdFederationEnabled()) {
             OpenIdFederationGeneralConfig config = new OpenIdFederationGeneralConfig();
             config.setOrganizationName(rep.getOpenIdFederationOrganizationName());
             config.setContacts(rep.getOpenIdFederationContacts());
@@ -1280,15 +1280,17 @@ public class LegacyExportImportManager implements ExportImportManager {
             config.setLifespan(rep.getOpenIdFederationLifespan());
             config.setFederationResolveEndpoint(rep.getOpenIdFederationResolveEndpoint());
             config.setFederationHistoricalKeysEndpoint(rep.getOpenIdFederationHistoricalKeysEndpoint());
-            config.setOpenIdFederationList(rep.getOpenIdFederationList().stream().map(fedRep -> {
-                OpenIdFederationConfig fedConfig = new OpenIdFederationConfig();
-                fedConfig.setInternalId(fedRep.getInternalId());
-                fedConfig.setTrustAnchor(fedRep.getTrustAnchor());
-                fedConfig.setEntityTypes(fedRep.getEntityTypes().stream().map(EntityTypeEnum::valueOf).collect(Collectors.toList()));
-                fedConfig.setClientRegistrationTypesSupported(fedRep.getClientRegistrationTypesSupported().stream().map(ClientRegistrationTypeEnum::valueOf).collect(Collectors.toList()));
-                fedConfig.setIdpConfiguration(fedRep.getIdpConfiguration());
-                return fedConfig;
-            }).collect(Collectors.toList()));
+            if (rep.getOpenIdFederationList() != null && !rep.getOpenIdFederationList().isEmpty()) {
+                config.setOpenIdFederationList(rep.getOpenIdFederationList().stream().map(fedRep -> {
+                    OpenIdFederationConfig fedConfig = new OpenIdFederationConfig();
+                    fedConfig.setInternalId(fedRep.getInternalId());
+                    fedConfig.setTrustAnchor(fedRep.getTrustAnchor());
+                    fedConfig.setEntityTypes(fedRep.getEntityTypes().stream().map(EntityTypeEnum::valueOf).collect(Collectors.toList()));
+                    fedConfig.setClientRegistrationTypesSupported(fedRep.getClientRegistrationTypesSupported().stream().map(ClientRegistrationTypeEnum::valueOf).collect(Collectors.toList()));
+                    fedConfig.setIdpConfiguration(fedRep.getIdpConfiguration());
+                    return fedConfig;
+                }).collect(Collectors.toList()));
+            }
             return config;
         } else {
             return null;

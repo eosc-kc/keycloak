@@ -617,13 +617,13 @@ public class RealmEntity {
     }
 
     public List<OpenIdFederationEntity> getOpenIdFederationList() {
+        if (this.openIdFederationList == null) {
+            this.openIdFederationList = new ArrayList<>();
+        }
         return openIdFederationList;
     }
 
     public void setOpenIdFederationList(List<OpenIdFederationEntity> openIdFederationList) {
-        if (this.openIdFederationList == null) {
-            this.openIdFederationList = new ArrayList<>();
-        }
         this.openIdFederationList.clear();
         if (openIdFederationList != null && !openIdFederationList.isEmpty()) {
             this.openIdFederationList.addAll(openIdFederationList);
