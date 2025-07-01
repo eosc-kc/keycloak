@@ -519,14 +519,16 @@ public class ModelToRepresentation {
             rep.setOpenIdFederationLifespan(openIdFederationConfig.getLifespan());
             rep.setOpenIdFederationResolveEndpoint(openIdFederationConfig.getFederationResolveEndpoint());
             rep.setOpenIdFederationHistoricalKeysEndpoint(openIdFederationConfig.getFederationHistoricalKeysEndpoint());
-            rep.setOpenIdFederationList(openIdFederationConfig.getOpenIdFederationList().stream().map(fed -> {
-                OpenIdFederationRepresentation federationRep = new OpenIdFederationRepresentation();
-                federationRep.setInternalId(fed.getInternalId());
-                federationRep.setTrustAnchor(fed.getTrustAnchor());
-                federationRep.setEntityTypes(fed.getEntityTypes().stream().map(EntityTypeEnum::toString).collect(Collectors.toList()));
-                federationRep.setClientRegistrationTypesSupported(fed.getClientRegistrationTypesSupported().stream().map(ClientRegistrationTypeEnum::toString).collect(Collectors.toList()));
-                return federationRep;
-            }).collect(Collectors.toList()));
+            if (openIdFederationConfig.getOpenIdFederationList() != null && !openIdFederationConfig.getOpenIdFederationList().isEmpty()) {
+                rep.setOpenIdFederationList(openIdFederationConfig.getOpenIdFederationList().stream().map(fed -> {
+                    OpenIdFederationRepresentation federationRep = new OpenIdFederationRepresentation();
+                    federationRep.setInternalId(fed.getInternalId());
+                    federationRep.setTrustAnchor(fed.getTrustAnchor());
+                    federationRep.setEntityTypes(fed.getEntityTypes().stream().map(EntityTypeEnum::toString).collect(Collectors.toList()));
+                    federationRep.setClientRegistrationTypesSupported(fed.getClientRegistrationTypesSupported().stream().map(ClientRegistrationTypeEnum::toString).collect(Collectors.toList()));
+                    return federationRep;
+                }).collect(Collectors.toList()));
+            }
         }
 
         CibaConfig cibaPolicy = realm.getCibaPolicy();

@@ -3,6 +3,7 @@ package org.keycloak.models;
 import org.keycloak.representations.idm.OpenIdFederationRepresentation;
 
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.List;
 
 public class OpenIdFederationGeneralConfig implements Serializable {
@@ -17,7 +18,7 @@ public class OpenIdFederationGeneralConfig implements Serializable {
     // default 1 day - duration
     private String federationResolveEndpoint;
     private String federationHistoricalKeysEndpoint;
-    private List<OpenIdFederationConfig> openIdFederationList;
+    private List<OpenIdFederationConfig> openIdFederationList = new ArrayList<>();
 
     public OpenIdFederationGeneralConfig(){}
 

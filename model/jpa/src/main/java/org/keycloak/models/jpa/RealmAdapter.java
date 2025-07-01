@@ -1059,7 +1059,7 @@ public class RealmAdapter implements LegacyRealmModel, JpaModel<RealmEntity> {
     @Override
     public OpenIdFederationGeneralConfig getOpenIdFederationConfig() {
         //for enabling OpenId Federation at least one Federation configuration needs to exist
-        if (getAttribute(RealmAttributes.OPENID_FEDERATION_ENABLED, Boolean.TRUE) && realm.getOpenIdFederationList() != null && !realm.getOpenIdFederationList().isEmpty()) {
+        if (getAttribute(RealmAttributes.OPENID_FEDERATION_ENABLED, Boolean.TRUE)) {
             OpenIdFederationGeneralConfig config = new OpenIdFederationGeneralConfig();
 
             config.setOrganizationName(getAttribute(RealmAttributes.OPENID_FEDERATION_ORGANIZATION_NAME));

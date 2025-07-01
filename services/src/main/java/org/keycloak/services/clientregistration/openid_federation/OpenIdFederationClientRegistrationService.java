@@ -48,7 +48,7 @@ public class OpenIdFederationClientRegistrationService extends AbstractClientReg
     public Response explicitClientRegistration(String body, @Context HttpHeaders headers) {
         RealmModel realm = session.getContext().getRealm();
         OpenIdFederationGeneralConfig config = realm.getOpenIdFederationConfig();
-        if (!realm.isOpenIdFederationConfig() || !config.getOpenIdFederationList().stream().flatMap(x -> x.getClientRegistrationTypesSupported().stream()).collect(Collectors.toSet()).contains(ClientRegistrationTypeEnum.EXPLICIT) || config.getAuthorityHints().isEmpty()) {
+        if (!realm.isOpenIdFederationConfig() || config.getOpenIdFederationList() == null || !config.getOpenIdFederationList().stream().flatMap(x -> x.getClientRegistrationTypesSupported().stream()).collect(Collectors.toSet()).contains(ClientRegistrationTypeEnum.EXPLICIT) || config.getAuthorityHints().isEmpty()) {
             throw new ErrorResponseException(Errors.INVALID_REQUEST, "Explicit OpenID Federation Client Registration is not supported in this realm", Response.Status.BAD_REQUEST);
         }
         checkSsl();

@@ -45,13 +45,13 @@ public class OpenIdFederationWellKnownProvider extends OIDCWellKnownProvider {
     public Object getConfig() {
 
         RealmModel realm = session.getContext().getRealm();
+        OpenIdFederationGeneralConfig openIdFederationConfig = realm.getOpenIdFederationConfig();
 
-        if (!realm.isOpenIdFederationConfig())
+        if (openIdFederationConfig ==  null || openIdFederationConfig.getOpenIdFederationList() == null || openIdFederationConfig.getOpenIdFederationList().isEmpty())
             throw new NotFoundException();
 
         UriInfo frontendUriInfo = session.getContext().getUri(UrlType.FRONTEND);
         UriInfo backendUriInfo = session.getContext().getUri(UrlType.BACKEND);
-        OpenIdFederationGeneralConfig openIdFederationConfig = realm.getOpenIdFederationConfig();
         Metadata metadata = new Metadata();
 
         if (openIdFederationConfig.getOpenIdFederationList().stream().flatMap(x -> x.getEntityTypes().stream()).collect(Collectors.toSet()).contains(EntityTypeEnum.OPENID_PROVIDER)) {
