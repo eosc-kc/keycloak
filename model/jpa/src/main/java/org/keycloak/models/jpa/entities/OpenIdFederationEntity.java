@@ -37,7 +37,7 @@ public class OpenIdFederationEntity {
     @CollectionTable(name="OPENID_FEDERATION_ATTRIBUTE", joinColumns={ @JoinColumn(name="OPENID_FEDERATION_ID") })
     private Map<String, String> config  = new HashMap<>();
 
-    @ElementCollection
+    @ElementCollection(fetch = FetchType.EAGER)
     @MapKeyColumn(name="NAME")
     @Column(name="VALUE", columnDefinition = "TEXT")
     @CollectionTable(name="OPENID_FEDERATION_IDP_CONFIGURATION", joinColumns={ @JoinColumn(name="OPENID_FEDERATION_ID") })
