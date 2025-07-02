@@ -525,6 +525,7 @@ public class ModelToRepresentation {
                 federationRep.setTrustAnchor(fed.getTrustAnchor());
                 federationRep.setEntityTypes(fed.getEntityTypes().stream().map(EntityTypeEnum::toString).collect(Collectors.toList()));
                 federationRep.setClientRegistrationTypesSupported(fed.getClientRegistrationTypesSupported().stream().map(ClientRegistrationTypeEnum::toString).collect(Collectors.toList()));
+                federationRep.setIdpConfiguration(fed.getIdpConfiguration());
                 return federationRep;
             }).collect(Collectors.toList()));
         }

@@ -1286,6 +1286,7 @@ public class LegacyExportImportManager implements ExportImportManager {
                 fedConfig.setTrustAnchor(fedRep.getTrustAnchor());
                 fedConfig.setEntityTypes(fedRep.getEntityTypes().stream().map(EntityTypeEnum::valueOf).collect(Collectors.toList()));
                 fedConfig.setClientRegistrationTypesSupported(fedRep.getClientRegistrationTypesSupported().stream().map(ClientRegistrationTypeEnum::valueOf).collect(Collectors.toList()));
+                fedConfig.setIdpConfiguration(fedRep.getIdpConfiguration());
                 return fedConfig;
             }).collect(Collectors.toList()));
             return config;
