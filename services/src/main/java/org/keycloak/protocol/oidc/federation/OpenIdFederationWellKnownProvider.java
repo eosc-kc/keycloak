@@ -45,7 +45,7 @@ public class OpenIdFederationWellKnownProvider extends OIDCWellKnownProvider {
     public Object getConfig() {
 
         RealmModel realm = session.getContext().getRealm();
-        OpenIdFederationGeneralConfig openIdFederationConfig = realm.getOpenIdFederationConfig();
+        OpenIdFederationGeneralConfig openIdFederationConfig = realm.getOpenIdFederationGeneralConfig();
 
         if (openIdFederationConfig ==  null || openIdFederationConfig.getOpenIdFederationList() == null || openIdFederationConfig.getOpenIdFederationList().isEmpty())
             throw new NotFoundException();

@@ -29,4 +29,8 @@
         <addForeignKeyConstraint baseColumnNames="OPENID_FEDERATION_ID" baseTableName="OPENID_FEDERATION_ATTRIBUTE" constraintName="OPENID_FEDERATION_ATTRIBUTE_FK" referencedColumnNames="INTERNAL_ID" referencedTableName="OPENID_FEDERATION"/>
     </changeSet>
 
+    <changeSet author="cgeorgilakis@grnet.gr" id="openid-federation-unique">
+        <addUniqueConstraint columnNames="REALM_ID,TRUST_ANCHOR" constraintName="OPENID_FEDERATION_UNIQUE" tableName="OPENID_FEDERATION"/>
+    </changeSet>
+
 </databaseChangeLog>

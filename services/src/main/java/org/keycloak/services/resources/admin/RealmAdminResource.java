@@ -58,9 +58,7 @@ import com.fasterxml.jackson.core.type.TypeReference;
 
 import org.eclipse.microprofile.openapi.annotations.tags.Tag;
 import org.jboss.logging.Logger;
-import org.jboss.resteasy.annotations.cache.Cache;
 import org.jboss.resteasy.annotations.cache.NoCache;
-import org.jboss.resteasy.spi.ResteasyProviderFactory;
 import org.keycloak.Config;
 import org.keycloak.KeyPairVerifier;
 import org.keycloak.authentication.CredentialRegistrator;
@@ -1010,6 +1008,14 @@ public class RealmAdminResource {
     @Path("saml-federations")
     public SAMLFederationResource getIdentityProviderFederationResource() {
         return new SAMLFederationResource(realm, session, this.auth, adminEvent);
+    }
+
+    @Path("openid-federations")
+    public OpenIdFederationsResource getOpenIdFederationsResource() {
+        if (!realm.isOpenIdFederationEnabled())
+            throw ErrorResponse.error("OpenId Federation is not enabled.", Status.NOT_FOUND);
+
+        return new OpenIdFederationsResource(realm, session, this.auth, adminEvent);
     }
     
     

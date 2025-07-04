@@ -115,6 +115,16 @@ public class ModelToRepresentation {
 
         REALM_EXCLUDED_ATTRIBUTES.add(Constants.CLIENT_POLICIES);
         REALM_EXCLUDED_ATTRIBUTES.add(Constants.CLIENT_PROFILES);
+        REALM_EXCLUDED_ATTRIBUTES.add(Constants.OPENID_FEDERATION_ENABLED);
+        REALM_EXCLUDED_ATTRIBUTES.add(Constants.OPENID_FEDERATION_CONTACTS);
+        REALM_EXCLUDED_ATTRIBUTES.add(Constants.OPENID_FEDERATION_ORGANIZATION_NAME);
+        REALM_EXCLUDED_ATTRIBUTES.add(Constants.OPENID_FEDERATION_AUTHORITY_HINTS);
+        REALM_EXCLUDED_ATTRIBUTES.add(Constants.OPENID_FEDERATION_LIFESPAN);
+        REALM_EXCLUDED_ATTRIBUTES.add(Constants.OPENID_FEDERATION_ORGANIZATION_NAME);
+        REALM_EXCLUDED_ATTRIBUTES.add(Constants.OPENID_FEDERATION_HISTORICAL_KEYS_ENDPOINT);
+        REALM_EXCLUDED_ATTRIBUTES.add(Constants.OPENID_FEDERATION_HOMEPAGE_URI);
+        REALM_EXCLUDED_ATTRIBUTES.add(Constants.OPENID_FEDERATION_LOGO_URI);
+        REALM_EXCLUDED_ATTRIBUTES.add(Constants.OPENID_FEDERATION_POLICY_URI);
     }
 
     private static final Logger LOG = Logger.getLogger(ModelToRepresentation.class);
@@ -505,10 +515,10 @@ public class ModelToRepresentation {
         rep.setWebAuthnPolicyPasswordlessAvoidSameAuthenticatorRegister(webAuthnPolicy.isAvoidSameAuthenticatorRegister());
         rep.setWebAuthnPolicyPasswordlessAcceptableAaguids(webAuthnPolicy.getAcceptableAaguids());
 
-        if (!realm.isOpenIdFederationConfig()) {
+        if (!realm.isOpenIdFederationEnabled()) {
             rep.setOpenIdFederationEnabled(false);
         } else {
-            OpenIdFederationGeneralConfig openIdFederationConfig =  realm.getOpenIdFederationConfig();
+            OpenIdFederationGeneralConfig openIdFederationConfig =  realm.getOpenIdFederationGeneralConfig();
             rep.setOpenIdFederationEnabled(true);
             rep.setOpenIdFederationOrganizationName(openIdFederationConfig.getOrganizationName());
             rep.setOpenIdFederationContacts(openIdFederationConfig.getContacts());
@@ -519,15 +529,8 @@ public class ModelToRepresentation {
             rep.setOpenIdFederationLifespan(openIdFederationConfig.getLifespan());
             rep.setOpenIdFederationResolveEndpoint(openIdFederationConfig.getFederationResolveEndpoint());
             rep.setOpenIdFederationHistoricalKeysEndpoint(openIdFederationConfig.getFederationHistoricalKeysEndpoint());
-            if (openIdFederationConfig.getOpenIdFederationList() != null && !openIdFederationConfig.getOpenIdFederationList().isEmpty()) {
-                rep.setOpenIdFederationList(openIdFederationConfig.getOpenIdFederationList().stream().map(fed -> {
-                    OpenIdFederationRepresentation federationRep = new OpenIdFederationRepresentation();
-                    federationRep.setInternalId(fed.getInternalId());
-                    federationRep.setTrustAnchor(fed.getTrustAnchor());
-                    federationRep.setEntityTypes(fed.getEntityTypes().stream().map(EntityTypeEnum::toString).collect(Collectors.toList()));
-                    federationRep.setClientRegistrationTypesSupported(fed.getClientRegistrationTypesSupported().stream().map(ClientRegistrationTypeEnum::toString).collect(Collectors.toList()));
-                    return federationRep;
-                }).collect(Collectors.toList()));
+            if (internal && openIdFederationConfig.getOpenIdFederationList() != null) {
+                rep.setOpenIdFederationList(openIdFederationConfig.getOpenIdFederationList().stream().map(x -> toRepresentation(x)).collect(Collectors.toList()));
             }
         }
 
@@ -906,6 +909,16 @@ public class ModelToRepresentation {
     	representation.setValidUntilTimestamp(model.getValidUntilTimestamp());
     	representation.setConfig(model.getConfig());
         return representation;
+    }
+
+    public static OpenIdFederationRepresentation toRepresentation(OpenIdFederationConfig model) {
+        OpenIdFederationRepresentation federationRep = new OpenIdFederationRepresentation();
+        federationRep.setInternalId(model.getInternalId());
+        federationRep.setTrustAnchor(model.getTrustAnchor());
+        federationRep.setEntityTypes(model.getEntityTypes().stream().map(EntityTypeEnum::toString).collect(Collectors.toList()));
+        federationRep.setClientRegistrationTypesSupported(model.getClientRegistrationTypesSupported().stream().map(ClientRegistrationTypeEnum::toString).collect(Collectors.toList()));
+        return federationRep;
+
     }
 
     public static FederationMapperRepresentation toRepresentation(FederationMapperModel model) {

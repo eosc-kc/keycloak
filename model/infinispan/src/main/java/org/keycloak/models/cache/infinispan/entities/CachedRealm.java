@@ -241,7 +241,7 @@ public class CachedRealm extends AbstractExtendableRevisioned {
         otpPolicy = model.getOTPPolicy();
         webAuthnPolicy = model.getWebAuthnPolicy();
         webAuthnPasswordlessPolicy = model.getWebAuthnPolicyPasswordless();
-        openIdFederationConfig = model.getOpenIdFederationConfig();
+        openIdFederationConfig = model.getOpenIdFederationGeneralConfig();
 
         loginTheme = model.getLoginTheme();
         accountTheme = model.getAccountTheme();

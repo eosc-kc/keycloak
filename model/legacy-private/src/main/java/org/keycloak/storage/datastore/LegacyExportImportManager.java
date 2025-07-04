@@ -253,7 +253,7 @@ public class LegacyExportImportManager implements ExportImportManager {
         webAuthnPolicy = getWebAuthnPolicyPasswordless(rep);
         newRealm.setWebAuthnPolicyPasswordless(webAuthnPolicy);
 
-        newRealm.setOpenIdFederationConfig(getOpenIdFederationConfig(rep));
+        newRealm.setOpenIdFederationGeneralConfig(getOpenIdFederationConfig(rep, true));
 
         updateCibaSettings(rep, newRealm);
 
@@ -816,7 +816,7 @@ public class LegacyExportImportManager implements ExportImportManager {
         realm.setWebAuthnPolicyPasswordless(webAuthnPolicy);
 
         if (rep.getOpenIdFederationEnabled() != null)
-            realm.setOpenIdFederationConfig(getOpenIdFederationConfig(rep));
+            realm.setOpenIdFederationGeneralConfig(getOpenIdFederationConfig(rep, false));
 
         updateCibaSettings(rep, realm);
         updateParSettings(rep, realm);
@@ -1268,7 +1268,7 @@ public class LegacyExportImportManager implements ExportImportManager {
         return webAuthnPolicy;
     }
 
-    private static OpenIdFederationGeneralConfig getOpenIdFederationConfig(RealmRepresentation rep) {
+    private static OpenIdFederationGeneralConfig getOpenIdFederationConfig(RealmRepresentation rep, boolean withFederationList) {
         if (rep.getOpenIdFederationEnabled() != null && rep.getOpenIdFederationEnabled()) {
             OpenIdFederationGeneralConfig config = new OpenIdFederationGeneralConfig();
             config.setOrganizationName(rep.getOpenIdFederationOrganizationName());
@@ -1280,20 +1280,22 @@ public class LegacyExportImportManager implements ExportImportManager {
             config.setLifespan(rep.getOpenIdFederationLifespan());
             config.setFederationResolveEndpoint(rep.getOpenIdFederationResolveEndpoint());
             config.setFederationHistoricalKeysEndpoint(rep.getOpenIdFederationHistoricalKeysEndpoint());
-            if (rep.getOpenIdFederationList() != null && !rep.getOpenIdFederationList().isEmpty()) {
-                config.setOpenIdFederationList(rep.getOpenIdFederationList().stream().map(fedRep -> {
-                    OpenIdFederationConfig fedConfig = new OpenIdFederationConfig();
-                    fedConfig.setInternalId(fedRep.getInternalId());
-                    fedConfig.setTrustAnchor(fedRep.getTrustAnchor());
-                    fedConfig.setEntityTypes(fedRep.getEntityTypes().stream().map(EntityTypeEnum::valueOf).collect(Collectors.toList()));
-                    fedConfig.setClientRegistrationTypesSupported(fedRep.getClientRegistrationTypesSupported().stream().map(ClientRegistrationTypeEnum::valueOf).collect(Collectors.toList()));
-                    return fedConfig;
-                }).collect(Collectors.toList()));
+            if (withFederationList && rep.getOpenIdFederationList() != null && !rep.getOpenIdFederationList().isEmpty()) {
+                config.setOpenIdFederationList(rep.getOpenIdFederationList().stream().map(fedRep -> toModel(fedRep)).collect(Collectors.toList()));
             }
             return config;
         } else {
             return null;
         }
+    }
+
+    public static OpenIdFederationConfig toModel(OpenIdFederationRepresentation representation ) {
+        OpenIdFederationConfig fedConfig = new OpenIdFederationConfig();
+        fedConfig.setInternalId(representation.getInternalId());
+        fedConfig.setTrustAnchor(representation.getTrustAnchor());
+        fedConfig.setEntityTypes(representation.getEntityTypes().stream().map(EntityTypeEnum::valueOf).collect(Collectors.toList()));
+        fedConfig.setClientRegistrationTypesSupported(representation.getClientRegistrationTypesSupported().stream().map(ClientRegistrationTypeEnum::valueOf).collect(Collectors.toList()));
+        return fedConfig;
     }
 
     public static Map<String, String> importAuthenticationFlows(KeycloakSession session, RealmModel newRealm, RealmRepresentation rep) {

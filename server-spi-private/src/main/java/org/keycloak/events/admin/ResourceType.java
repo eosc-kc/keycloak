@@ -195,5 +195,9 @@ public enum ResourceType {
     /**
      *
      */
-    , CUSTOM;
+    , CUSTOM
+    /**
+     *
+     */
+    , OPENID_FEDERATION;
 }

@@ -763,17 +763,40 @@ public class RealmAdapter implements CachedRealmModel {
     }
 
     @Override
-    public OpenIdFederationGeneralConfig getOpenIdFederationConfig() {
-        if (isUpdated()) return updated.getOpenIdFederationConfig();
+    public OpenIdFederationGeneralConfig getOpenIdFederationGeneralConfig() {
+        if (isUpdated()) return updated.getOpenIdFederationGeneralConfig();
         return cached.getOpenIdFederationConfig();
     }
 
     @Override
-    public void setOpenIdFederationConfig(OpenIdFederationGeneralConfig config) {
+    public void setOpenIdFederationGeneralConfig(OpenIdFederationGeneralConfig generalConfig) {
         getDelegateForUpdate();
-        updated.setOpenIdFederationConfig(config);
+        updated.setOpenIdFederationGeneralConfig(generalConfig);
     }
 
+    @Override
+    public List<OpenIdFederationConfig> getOpenIdFederations() {
+        if (isUpdated()) return updated.getOpenIdFederations();
+        return isOpenIdFederationEnabled() ?  cached.getOpenIdFederationConfig().getOpenIdFederationList() : new ArrayList<>();
+    }
+
+    @Override
+    public void addOpenIdFederation(OpenIdFederationConfig fedConfig) {
+        getDelegateForUpdate();
+        updated.addOpenIdFederation(fedConfig);
+    }
+
+    @Override
+    public void updateOpenIdFederation(OpenIdFederationConfig fedConfig) {
+        getDelegateForUpdate();
+        updated.updateOpenIdFederation(fedConfig);
+    }
+
+    @Override
+    public void removeOpenIdFederation(String internalId) {
+        getDelegateForUpdate();
+        updated.removeOpenIdFederation(internalId);
+    }
 
     @Override
     public RoleModel getRoleById(String id) {

@@ -17,6 +17,7 @@
 
 package org.keycloak.models;
 
+import java.util.ArrayList;
 import java.util.Comparator;
 import org.keycloak.common.enums.SslRequired;
 import org.keycloak.component.ComponentModel;
@@ -318,16 +319,29 @@ public interface RealmModel extends RoleContainerModel {
      */
     void setWebAuthnPolicyPasswordless(WebAuthnPolicy policy);
 
-    default OpenIdFederationGeneralConfig getOpenIdFederationConfig() {
+    default OpenIdFederationGeneralConfig getOpenIdFederationGeneralConfig() {
         return null;
     };
 
-    default boolean isOpenIdFederationConfig() {
-        return getOpenIdFederationConfig() != null;
+    default boolean isOpenIdFederationEnabled() {
+        return getOpenIdFederationGeneralConfig() != null;
     };
 
-    default void setOpenIdFederationConfig(OpenIdFederationGeneralConfig openIdFederationConfig) {
+    default void setOpenIdFederationGeneralConfig(OpenIdFederationGeneralConfig generalConfig) {
     };
+
+    default List<OpenIdFederationConfig> getOpenIdFederations() {
+        return new ArrayList<>();
+    }
+
+    default void addOpenIdFederation(OpenIdFederationConfig fedConfig) {
+    }
+
+    default void updateOpenIdFederation(OpenIdFederationConfig fedConfig) {
+    }
+
+    default void removeOpenIdFederation(String internalId) {
+    }
 
     RoleModel getRoleById(String id);
 
