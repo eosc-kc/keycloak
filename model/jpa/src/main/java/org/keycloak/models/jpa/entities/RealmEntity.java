@@ -599,6 +599,20 @@ public class RealmEntity {
         this.userFederationMappers = userFederationMappers;
     }
 
+    public List<OpenIdFederationEntity> getOpenIdFederationList() {
+        if (this.openIdFederationList == null) {
+            this.openIdFederationList = new ArrayList<>();
+        }
+        return openIdFederationList;
+    }
+
+    public void setOpenIdFederationList(List<OpenIdFederationEntity> openIdFederationList) {
+        this.openIdFederationList.clear();
+        if (openIdFederationList != null && !openIdFederationList.isEmpty()) {
+            this.openIdFederationList.addAll(openIdFederationList);
+        }
+    }
+
     public Collection<RealmAttributeEntity> getAttributes() {
         if (attributes == null) {
             attributes = new LinkedList<>();

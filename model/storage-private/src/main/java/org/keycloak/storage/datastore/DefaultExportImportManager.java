@@ -50,6 +50,7 @@ import org.keycloak.models.ModelException;
 import org.keycloak.models.OAuth2DeviceConfig;
 import org.keycloak.models.OTPPolicy;
 import org.keycloak.models.OpenIdFederationConfig;
+import org.keycloak.models.OpenIdFederationGeneralConfig;
 import org.keycloak.models.OrganizationModel;
 import org.keycloak.models.ParConfig;
 import org.keycloak.models.PasswordPolicy;
@@ -1380,21 +1381,28 @@ public class DefaultExportImportManager implements ExportImportManager {
         return webAuthnPolicy;
     }
 
-    private static OpenIdFederationConfig getOpenIdFederationConfig(RealmRepresentation rep) {
-        if (rep.getOpenIdFederationEnabled() != null && rep.getOpenIdFederationEnabled()) {
-            OpenIdFederationConfig config = new OpenIdFederationConfig();
+    private static OpenIdFederationGeneralConfig getOpenIdFederationConfig(RealmRepresentation rep) {
+        if (rep.getOpenIdFederationEnabled() != null && rep.getOpenIdFederationEnabled() && rep.getOpenIdFederationList() != null && !rep.getOpenIdFederationList().isEmpty()) {
+            OpenIdFederationGeneralConfig config = new OpenIdFederationGeneralConfig();
             config.setOrganizationName(rep.getOpenIdFederationOrganizationName());
             config.setContacts(rep.getOpenIdFederationContacts());
             config.setLogoUri(rep.getOpenIdFederationLogoUri());
             config.setPolicyUri(rep.getOpenIdFederationPolicyUri());
             config.setHomepageUri(rep.getOpenIdFederationHomepageUri());
             config.setAuthorityHints(rep.getOpenIdFederationAuthorityHints());
-            config.setTrustAnchors(rep.getOpenIdFederationTrustAnchors());
-            config.setClientRegistrationTypesSupported(rep.getOpenIdFederationClientRegistrationTypesSupported().stream().map(x -> ClientRegistrationTypeEnum.valueOf(x)).collect(Collectors.toList()));
-            config.setEntityTypes(rep.getOpenIdFederationEntityTypes().stream().map(x -> EntityTypeEnum.valueOf(x)).collect(Collectors.toList()));
             config.setLifespan(rep.getOpenIdFederationLifespan());
             config.setFederationResolveEndpoint(rep.getOpenIdFederationResolveEndpoint());
             config.setFederationHistoricalKeysEndpoint(rep.getOpenIdFederationHistoricalKeysEndpoint());
+            if (rep.getOpenIdFederationList() != null && !rep.getOpenIdFederationList().isEmpty()) {
+                config.setOpenIdFederationList(rep.getOpenIdFederationList().stream().map(fedRep -> {
+                    OpenIdFederationConfig fedConfig = new OpenIdFederationConfig();
+                    fedConfig.setInternalId(fedRep.getInternalId());
+                    fedConfig.setTrustAnchor(fedRep.getTrustAnchor());
+                    fedConfig.setEntityTypes(fedRep.getEntityTypes().stream().map(EntityTypeEnum::valueOf).collect(Collectors.toList()));
+                    fedConfig.setClientRegistrationTypesSupported(fedRep.getClientRegistrationTypesSupported().stream().map(ClientRegistrationTypeEnum::valueOf).collect(Collectors.toList()));
+                    return fedConfig;
+                }).collect(Collectors.toList()));
+            }
             return config;
         } else {
             return null;

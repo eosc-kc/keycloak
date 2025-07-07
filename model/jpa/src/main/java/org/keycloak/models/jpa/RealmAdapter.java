@@ -1078,9 +1078,10 @@ public class RealmAdapter implements StorageProviderRealmModel, JpaModel<RealmEn
     }
 
     @Override
-    public OpenIdFederationConfig getOpenIdFederationConfig() {
-        if (getAttribute(RealmAttributes.OPENID_FEDERATION_ENABLED, Boolean.TRUE)) {
-            OpenIdFederationConfig config = new OpenIdFederationConfig();
+    public OpenIdFederationGeneralConfig getOpenIdFederationConfig() {
+        //for enabling OpenId Federation at least one Federation configuration needs to exist
+        if (getAttribute(RealmAttributes.OPENID_FEDERATION_ENABLED, Boolean.TRUE) && realm.getOpenIdFederationList() != null && !realm.getOpenIdFederationList().isEmpty()) {
+            OpenIdFederationGeneralConfig config = new OpenIdFederationGeneralConfig();
 
             config.setOrganizationName(getAttribute(RealmAttributes.OPENID_FEDERATION_ORGANIZATION_NAME));
             String contactsStr = getAttribute(RealmAttributes.OPENID_FEDERATION_CONTACTS);
@@ -1092,18 +1093,22 @@ public class RealmAdapter implements StorageProviderRealmModel, JpaModel<RealmEn
             String authorityHintsStr = getAttribute(RealmAttributes.OPENID_FEDERATION_AUTHORITY_HINTS);
             List<String> authorityHints = (authorityHintsStr == null || authorityHintsStr.isEmpty()) ? new ArrayList<>() : Arrays.asList(authorityHintsStr.split(","));
             config.setAuthorityHints(authorityHints);
-            String trustAnchorsStr = getAttribute(RealmAttributes.OPENID_FEDERATION_TRUST_ANCHORS);
-            List<String> trustAnchors = (trustAnchorsStr == null || trustAnchorsStr.isEmpty()) ? new ArrayList<>() : Arrays.asList(trustAnchorsStr.split(","));
-            config.setTrustAnchors(trustAnchors);
-            String clientRegistrationTypesSupportedStr = getAttribute(RealmAttributes.OPENID_FEDERATION_CLIENT_REGISTRATION_TYPES_SUPPORTED);
-            List<String> clientRegistrationTypesSupported = (clientRegistrationTypesSupportedStr == null || clientRegistrationTypesSupportedStr.isEmpty()) ? new ArrayList<>() : Arrays.asList(clientRegistrationTypesSupportedStr.split(","));
-            config.setClientRegistrationTypesSupported(clientRegistrationTypesSupported.stream().map(x -> ClientRegistrationTypeEnum.valueOf(x)).collect(Collectors.toList()));
-            String entityTypesStr = getAttribute(RealmAttributes.OPENID_FEDERATION_ENTITY_TYPES);
-            List<String> entityTypes = (entityTypesStr == null || entityTypesStr.isEmpty()) ? new ArrayList<>() : Arrays.asList(entityTypesStr.split(","));
-            config.setEntityTypes(entityTypes.stream().map(x -> EntityTypeEnum.valueOf(x)).collect(Collectors.toList()));
             config.setLifespan(getAttribute(RealmAttributes.OPENID_FEDERATION_LIFESPAN, 86400));
             config.setFederationResolveEndpoint(getAttribute(RealmAttributes.OPENID_FEDERATION_RESOLVE_ENDPOINT));
             config.setFederationHistoricalKeysEndpoint(getAttribute(RealmAttributes.OPENID_FEDERATION_HISTORICAL_KEYS_ENDPOINT));
+
+            config.setOpenIdFederationList(realm.getOpenIdFederationList().stream().map(fedEntity -> {
+                OpenIdFederationConfig fedConfig = new OpenIdFederationConfig();
+                fedConfig.setInternalId(fedEntity.getInternalId());
+                fedConfig.setTrustAnchor(fedEntity.getTrustAnchor());
+                String clientRegistrationTypesSupportedStr = fedEntity.getConfig().get(RealmAttributes.OPENID_FEDERATION_CLIENT_REGISTRATION_TYPES_SUPPORTED);
+                List<String> clientRegistrationTypesSupported = (clientRegistrationTypesSupportedStr == null || clientRegistrationTypesSupportedStr.isEmpty()) ? new ArrayList<>() : Arrays.asList(clientRegistrationTypesSupportedStr.split("##"));
+                fedConfig.setClientRegistrationTypesSupported(clientRegistrationTypesSupported.stream().map(x -> ClientRegistrationTypeEnum.valueOf(x)).collect(Collectors.toList()));
+                String entityTypesStr = fedEntity.getConfig().get(RealmAttributes.OPENID_FEDERATION_ENTITY_TYPES);
+                List<String> entityTypes = (entityTypesStr == null || entityTypesStr.isEmpty()) ? new ArrayList<>() : Arrays.asList(entityTypesStr.split("##"));
+                fedConfig.setEntityTypes(entityTypes.stream().map(x -> EntityTypeEnum.valueOf(x)).collect(Collectors.toList()));
+                return fedConfig;
+            }).collect(Collectors.toList()));
 
             return config;
         } else {
@@ -1121,12 +1126,10 @@ public class RealmAdapter implements StorageProviderRealmModel, JpaModel<RealmEn
             removeAttribute(RealmAttributes.OPENID_FEDERATION_POLICY_URI);
             removeAttribute(RealmAttributes.OPENID_FEDERATION_HOMEPAGE_URI);
             removeAttribute(RealmAttributes.OPENID_FEDERATION_AUTHORITY_HINTS);
-            removeAttribute(RealmAttributes.OPENID_FEDERATION_TRUST_ANCHORS);
-            removeAttribute(RealmAttributes.OPENID_FEDERATION_CLIENT_REGISTRATION_TYPES_SUPPORTED);
-            removeAttribute(RealmAttributes.OPENID_FEDERATION_ENTITY_TYPES);
             removeAttribute(RealmAttributes.OPENID_FEDERATION_LIFESPAN);
             removeAttribute(RealmAttributes.OPENID_FEDERATION_RESOLVE_ENDPOINT);
             removeAttribute(RealmAttributes.OPENID_FEDERATION_HISTORICAL_KEYS_ENDPOINT);
+            realm.setOpenIdFederationList(new ArrayList<>());
         } else {
             setAttribute(RealmAttributes.OPENID_FEDERATION_ENABLED, Boolean.TRUE);
             setAttribute(RealmAttributes.OPENID_FEDERATION_ORGANIZATION_NAME, config.getOrganizationName());
@@ -1143,16 +1146,18 @@ public class RealmAdapter implements StorageProviderRealmModel, JpaModel<RealmEn
             } else {
                 setAttribute(RealmAttributes.OPENID_FEDERATION_AUTHORITY_HINTS, String.join(",", config.getAuthorityHints()));
             }
-            if (config.getTrustAnchors() == null || config.getTrustAnchors().isEmpty()) {
-                removeAttribute(RealmAttributes.OPENID_FEDERATION_TRUST_ANCHORS);
-            } else {
-                setAttribute(RealmAttributes.OPENID_FEDERATION_TRUST_ANCHORS, String.join(",", config.getTrustAnchors()));
-            }
-            setAttribute(RealmAttributes.OPENID_FEDERATION_CLIENT_REGISTRATION_TYPES_SUPPORTED, String.join(",", config.getClientRegistrationTypesSupported().stream().map(x -> x.name()).collect(Collectors.toList())));
-            setAttribute(RealmAttributes.OPENID_FEDERATION_ENTITY_TYPES, String.join(",", config.getEntityTypes().stream().map(x -> x.name()).collect(Collectors.toList())));
             setAttribute(RealmAttributes.OPENID_FEDERATION_LIFESPAN, config.getLifespan() == null ? String.valueOf(86400) : String.valueOf(config.getLifespan()));
             setAttribute(RealmAttributes.OPENID_FEDERATION_RESOLVE_ENDPOINT, config.getFederationResolveEndpoint());
             setAttribute(RealmAttributes.OPENID_FEDERATION_HISTORICAL_KEYS_ENDPOINT, config.getFederationHistoricalKeysEndpoint());
+            realm.setOpenIdFederationList(config.getOpenIdFederationList().stream().map(fedConfig -> {
+                OpenIdFederationEntity fedEntity = new OpenIdFederationEntity();
+                fedEntity.setInternalId(fedConfig.getInternalId() != null ? fedConfig.getInternalId() : KeycloakModelUtils.generateId());
+                fedEntity.setTrustAnchor(fedConfig.getTrustAnchor());
+                fedEntity.getConfig().put(RealmAttributes.OPENID_FEDERATION_ENTITY_TYPES, fedConfig.getEntityTypes().stream().map(x -> x.name()).collect(Collectors.joining("##")));
+                fedEntity.getConfig().put(RealmAttributes.OPENID_FEDERATION_CLIENT_REGISTRATION_TYPES_SUPPORTED, fedConfig.getClientRegistrationTypesSupported().stream().map(x -> x.name()).collect(Collectors.joining("##")));
+                fedEntity.setRealm(realm);
+                return fedEntity;
+            }).collect(Collectors.toList()));
         }
     }
 
