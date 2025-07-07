@@ -1,7 +1,5 @@
 package org.keycloak.models;
 
-import org.keycloak.representations.idm.OpenIdFederationRepresentation;
-
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;

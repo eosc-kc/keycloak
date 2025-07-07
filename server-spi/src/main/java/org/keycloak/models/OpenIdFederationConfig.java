@@ -1,6 +1,5 @@
 package org.keycloak.models;
 
-import org.jboss.logging.Logger;
 import org.keycloak.models.enums.ClientRegistrationTypeEnum;
 import org.keycloak.models.enums.EntityTypeEnum;
 
@@ -9,67 +8,28 @@ import java.util.List;
 
 public class OpenIdFederationConfig  implements Serializable {
 
-    protected static final Logger logger = Logger.getLogger(OpenIdFederationConfig.class);
-
-    private String organizationName;
-    private List<String> contacts;
-    private String logoUri;
-    private String policyUri;
-    private String homepageUri;
-    private List<String> authorityHints;
-    private List<String> trustAnchors;
-
+    private String internalId;
+    private String trustAnchor;
     private List<ClientRegistrationTypeEnum> clientRegistrationTypesSupported;
 
     private List<EntityTypeEnum> entityTypes;
 
-    private Integer lifespan;
-    // default 1 day - duration
-    //exp = now + duration
+    public OpenIdFederationConfig() {}
 
-    private String federationResolveEndpoint;
-    private String federationHistoricalKeysEndpoint;
-
-    public OpenIdFederationConfig (){}
-
-    public String getOrganizationName() {
-        return organizationName;
+    public String getInternalId() {
+        return internalId;
     }
 
-    public void setOrganizationName(String organizationName) {
-        this.organizationName = organizationName;
+    public void setInternalId(String internalId) {
+        this.internalId = internalId;
     }
 
-    public List<String> getContacts() {
-        return contacts;
+    public String getTrustAnchor() {
+        return trustAnchor;
     }
 
-    public void setContacts(List<String> contacts) {
-        this.contacts = contacts;
-    }
-
-    public String getLogoUri() {
-        return logoUri;
-    }
-
-    public void setLogoUri(String logoUri) {
-        this.logoUri = logoUri;
-    }
-
-    public String getPolicyUri() {
-        return policyUri;
-    }
-
-    public void setPolicyUri(String policyUri) {
-        this.policyUri = policyUri;
-    }
-
-    public String getHomepageUri() {
-        return homepageUri;
-    }
-
-    public void setHomepageUri(String homepageUri) {
-        this.homepageUri = homepageUri;
+    public void setTrustAnchor(String trustAnchor) {
+        this.trustAnchor = trustAnchor;
     }
 
     public List<ClientRegistrationTypeEnum> getClientRegistrationTypesSupported() {
@@ -86,45 +46,5 @@ public class OpenIdFederationConfig  implements Serializable {
 
     public void setEntityTypes(List<EntityTypeEnum> entityTypes) {
         this.entityTypes = entityTypes;
-    }
-
-    public List<String> getAuthorityHints() {
-        return authorityHints;
-    }
-
-    public void setAuthorityHints(List<String> authorityHints) {
-        this.authorityHints = authorityHints;
-    }
-
-    public List<String> getTrustAnchors() {
-        return trustAnchors;
-    }
-
-    public void setTrustAnchors(List<String> trustAnchors) {
-        this.trustAnchors = trustAnchors;
-    }
-
-    public Integer getLifespan() {
-        return lifespan;
-    }
-
-    public void setLifespan(Integer lifespan) {
-        this.lifespan = lifespan;
-    }
-
-    public String getFederationResolveEndpoint() {
-        return federationResolveEndpoint;
-    }
-
-    public void setFederationResolveEndpoint(String federationResolveEndpoint) {
-        this.federationResolveEndpoint = federationResolveEndpoint;
-    }
-
-    public String getFederationHistoricalKeysEndpoint() {
-        return federationHistoricalKeysEndpoint;
-    }
-
-    public void setFederationHistoricalKeysEndpoint(String federationHistoricalKeysEndpoint) {
-        this.federationHistoricalKeysEndpoint = federationHistoricalKeysEndpoint;
     }
 }

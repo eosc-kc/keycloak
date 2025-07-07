@@ -1174,6 +1174,15 @@ public class RealmAdminResource {
         return new IdentityProvidersResource(realm, session, this.auth, adminEvent);
     }
 
+    @Path("openid-federations")
+    public OpenIdFederationsResource getOpenIdFederationsResource() {
+        if (!realm.isOpenIdFederationEnabled())
+            throw ErrorResponse.error("OpenId Federation is not enabled.", Status.NOT_FOUND);
+
+        return new OpenIdFederationsResource(realm, session, this.auth, adminEvent);
+    }
+    
+    
     /**
      * Get group hierarchy.  Only name and ids are returned.
      *

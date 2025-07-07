@@ -312,12 +312,11 @@ public class RealmTest extends AbstractAdminTest {
 
         Set<String> attributesKeys = rep2.getAttributes().keySet();
 
-        int expectedAttributesCount = 4;
+        int expectedAttributesCount = 3;
         final Set<String> expectedAttributes = Sets.newHashSet(
                 OAuth2DeviceConfig.OAUTH2_DEVICE_CODE_LIFESPAN,
                 OAuth2DeviceConfig.OAUTH2_DEVICE_POLLING_INTERVAL,
-                ParConfig.PAR_REQUEST_URI_LIFESPAN,
-                RealmAttributes.OPENID_FEDERATION_ENABLED
+                ParConfig.PAR_REQUEST_URI_LIFESPAN
         );
 
         // This attribute is represented in Legacy store as attribute and for Map store as a field
