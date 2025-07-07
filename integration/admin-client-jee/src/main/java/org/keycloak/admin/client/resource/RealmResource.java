@@ -186,6 +186,9 @@ public interface RealmResource {
     @Path("saml-federations")
     SAMLFederationResource samlFederation();
 
+    @Path("openid-federations")
+    public OpenIdFederationsResource openIdFederationsResource();
+
     @DELETE
     void remove();
 

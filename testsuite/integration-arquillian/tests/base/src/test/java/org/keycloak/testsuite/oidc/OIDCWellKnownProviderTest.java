@@ -253,13 +253,13 @@ public class OIDCWellKnownProviderTest extends AbstractKeycloakTest {
             realmRep.setOpenIdFederationOrganizationName("Keycloak");
             realmRep.setOpenIdFederationResolveEndpoint("https://edugain.org/resolve");
             realmRep.setOpenIdFederationAuthorityHints(Stream.of("https://edugain.org/federation").collect(Collectors.toList()));
+            testRealm.update(realmRep);
+
             OpenIdFederationRepresentation openIdFederationRepresentation = new OpenIdFederationRepresentation();
             openIdFederationRepresentation.setTrustAnchor("https://edugain.org/trust-anchor");
             openIdFederationRepresentation.setClientRegistrationTypesSupported(Stream.of("EXPLICIT").collect(Collectors.toList()));
             openIdFederationRepresentation.setEntityTypes(Stream.of("OPENID_PROVIDER").collect(Collectors.toList()));
-            realmRep.setOpenIdFederationList(Stream.of(openIdFederationRepresentation).collect(Collectors.toList()));
-
-            testRealm.update(realmRep);
+            testRealm.openIdFederationsResource().create(openIdFederationRepresentation);
 
             //When Open Id Federation is configured
             EntityStatement statement = getOIDCFederationDiscoveryRepresentation(client, OAuthClient.AUTH_SERVER_ROOT);
