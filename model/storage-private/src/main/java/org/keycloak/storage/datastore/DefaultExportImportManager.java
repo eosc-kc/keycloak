@@ -884,7 +884,8 @@ public class DefaultExportImportManager implements ExportImportManager {
             realm.setWebAuthnPolicyPasswordless(webAuthnPolicy);
         }
 
-        realm.setOpenIdFederationConfig(getOpenIdFederationConfig(rep));
+        if (rep.getOpenIdFederationEnabled() != null)
+            realm.setOpenIdFederationConfig(getOpenIdFederationConfig(rep));
 
         updateCibaSettings(rep, realm);
         updateParSettings(rep, realm);

@@ -8,8 +8,8 @@ import java.util.List;
 
 public class OpenIdFederationEntity {
 
-    @JsonProperty("federation_api_endpoint")
-    private String federationApiEndpoint;
+    @JsonProperty("federation_fetch_endpoint")
+    private String federationFetchEndpoint;
 
     @JsonProperty("federation_list_endpoint")
     private String federationListEndpoint;
@@ -48,12 +48,12 @@ public class OpenIdFederationEntity {
     @JsonUnwrapped
     private CommonMetadata commonMetadata;
 
-    public String getFederationApiEndpoint() {
-        return federationApiEndpoint;
+    public String getFederationFetchEndpoint() {
+        return federationFetchEndpoint;
     }
 
-    public void setFederationApiEndpoint(String federationApiEndpoint) {
-        this.federationApiEndpoint = federationApiEndpoint;
+    public void setFederationFetchEndpoint(String federationFetchEndpoint) {
+        this.federationFetchEndpoint = federationFetchEndpoint;
     }
 
     public String getFederationListEndpoint() {
