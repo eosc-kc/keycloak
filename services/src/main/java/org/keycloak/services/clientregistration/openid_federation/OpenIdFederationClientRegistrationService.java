@@ -111,9 +111,6 @@ public class OpenIdFederationClientRegistrationService extends AbstractClientReg
     }
 
     private void validationRules(EntityStatement statement) {
-        if (!TokenUtil.ENTITY_STATEMENT_JWT.equals(statement.getType())) {
-            throw new ErrorResponseException(Errors.INVALID_REQUEST, "No correct typ header.", Response.Status.NOT_FOUND);
-        }
         if (statement.getIssuer() == null) {
             throw new ErrorResponseException(Errors.INVALID_ISSUER, "No issuer in the request.", Response.Status.NOT_FOUND);
         }
@@ -135,9 +132,9 @@ public class OpenIdFederationClientRegistrationService extends AbstractClientReg
         if (!statement.getIssuer().trim().equals(statement.getSubject().trim())) {
             throw new ErrorResponseException(Errors.INVALID_ISSUER, "The registration request issuer differs from the subject.", Response.Status.NOT_FOUND);
         }
-//        if (statement.getAudience() == null || !statement.getAudience()[0].equals(Urls.realmIssuer(session.getContext().getUri(UrlType.FRONTEND).getBaseUri(), session.getContext().getRealm().getName()))) {
-//            throw new ErrorResponseException(Errors.INVALID_REQUEST, "Aud must contain OP entity Identifier", Response.Status.BAD_REQUEST);
-//        }
+        if (statement.getAudience() == null || !statement.getAudience()[0].equals(Urls.realmIssuer(session.getContext().getUri(UrlType.FRONTEND).getBaseUri(), session.getContext().getRealm().getName()))) {
+            throw new ErrorResponseException(Errors.INVALID_REQUEST, "Aud must contain OP entity Identifier", Response.Status.BAD_REQUEST);
+        }
     }
 
     private void checkSsl() {
