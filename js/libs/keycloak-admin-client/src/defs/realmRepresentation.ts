@@ -124,6 +124,16 @@ export default interface RealmRepresentation {
   users?: UserRepresentation[];
   verifyEmail?: boolean;
   waitIncrementSeconds?: number;
+  openIdFederationEnabled?: boolean;
+  openIdFederationAuthorityHints?: string[];
+  openIdFederationOrganizationName?: string;
+  openIdFederationContacts?: string[];
+  openIdFederationLogoUri?: string;
+  openIdFederationPolicyUri?: string;
+  openIdFederationHomepageUri?: string;
+  openIdFederationResolveEndpoint?: string;
+  openIdFederationHistoricalKeysEndpoint?: string;
+  openIdFederationLifespan?: number;
 }
 
 export type PartialImportRealmRepresentation = RealmRepresentation & {

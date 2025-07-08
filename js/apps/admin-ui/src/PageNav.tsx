@@ -115,6 +115,7 @@ export const PageNav = () => {
               <LeftNav title="realmSettings" path="/realm-settings" />
               <LeftNav title="authentication" path="/authentication" />
               <LeftNav title="identityProviders" path="/identity-providers" />
+              <LeftNav title="openIdFederation" path="/openid-federation" />
               <LeftNav
                 title="identityFederations"
                 path="/identity-federations"

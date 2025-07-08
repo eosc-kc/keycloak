@@ -19,6 +19,7 @@ import sessionRoutes from "./sessions/routes";
 import userFederationRoutes from "./user-federation/routes";
 import userRoutes from "./user/routes";
 import identityFederationRoutes from "./identity-federations/routes";
+import openIdFederationRoutes from "./openid-federation/routes";
 
 export type AppRouteObjectHandle = {
   access: AccessType | AccessType[];
@@ -53,6 +54,7 @@ export const routes: AppRouteObject[] = [
   ...groupsRoutes,
   ...dashboardRoutes,
   ...identityFederationRoutes,
+  ...openIdFederationRoutes,
   NotFoundRoute,
 ];
 

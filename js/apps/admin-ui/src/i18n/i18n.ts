@@ -39,6 +39,8 @@ export const i18n = createInstance({
     "identity-providers",
     "identity-providers-help",
     "dynamic",
+    "openid-federation",
+    "openid-federation-help",
   ],
   interpolation: {
     escapeValue: false,

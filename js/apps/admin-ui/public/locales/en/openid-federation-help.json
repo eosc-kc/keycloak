@@ -1,0 +1,15 @@
+{
+  "openIdFederationEnabled": "Enable or disable OpenID Federation for this realm.",
+  "openIdFederationAuthorityHints": "A list of authority hints for this entity. These are used to help discover trust anchors.",
+  "openIdFederationContacts": "A list of contacts for this entity, typically email addresses. These contacts are intended for administrative or support purposes and may be used by relying parties or federation operators to reach out regarding issues or questions about this entity’s metadata or operations. According to the OpenID Federation specification, each contact should be a valid email address.",
+  "entityTypes": "Select the entity types that this realm supports as part of OpenID Federation.",
+  "clientRegistrationTypesSupported": "Select the client registration types supported by this realm for OpenID Federation.",
+  "trustAnchor": "Trust anchor is used to establish trust in the federation.",
+  "openIdFederationLogoUri": "A URI pointing to the logo for this entity.",
+  "openIdFederationPolicyUri": "A URI pointing to the policy document for this entity.",
+  "openIdFederationOrganizationName": "The name of the organization represented by this entity.",
+  "openIdFederationHomepageUri": "A URI pointing to the homepage for this entity.",
+  "openIdFederationResolveEndpoint": "The endpoint used to resolve OpenID Federation entities.",
+  "openIdFederationHistoricalKeysEndpoint": "The endpoint exposing historical keys for this entity.",
+  "openIdFederationLifespan": "The amount of time (in seconds) that federation metadata is considered valid before it must be refreshed."
+}
