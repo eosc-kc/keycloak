@@ -130,7 +130,9 @@ public class TrustChainProcessor {
 
                     String fedApiUrl = subNodeSelfES.getMetadata().getFederationEntity().getFederationFetchEndpoint();
                     String encodedSubNodeSubordinate = OpenIdFederationUtils.getSubordinateToken(fedApiUrl, leafEs.getIssuer(), session);
-                    EntityStatement subNodeSubordinateES = parseAndValidateSelfSigned(encodedSubNodeSubordinate);
+                    EntityStatement subNodeSubordinateES = parse(encodedSubNodeSubordinate);
+                    //fetch endpoint contains jwks of leafEs. So, validate based on subNodeSelfES.
+                    validateToken (encodedSubNodeSubordinate, subNodeSelfES.getJwks());
                     if (!validateEntityStatementFields(subNodeSubordinateES, authHint, leafEs.getIssuer())) {
                         throw new ErrorResponseException(Errors.INVALID_TRUST_CHAIN, "Trust chain is not valid", Response.Status.BAD_REQUEST);
                     }
@@ -165,20 +167,19 @@ public class TrustChainProcessor {
 
     public EntityStatement parseAndValidateSelfSigned(String token) throws InvalidTrustChainException {
         EntityStatement statement = parse(token);
+        validateToken(token, statement.getJwks());
+        return statement;
+    }
+
+    private void validateToken(String token, JSONWebKeySet jwks){
         try{
-            ConfigurableJWTProcessor<SecurityContext> jwtProcessor = produceJwtProcessor(statement.getJwks());
+            ConfigurableJWTProcessor<SecurityContext> jwtProcessor = produceJwtProcessor(jwks);
             jwtProcessor.process(token, null);
 
         } catch(IOException | ParseException | BadJOSEException | JOSEException ex) {
             ex.printStackTrace();
             throw new ErrorResponseException(Errors.INVALID_TRUST_CHAIN, "Trust chain is not valid", Response.Status.BAD_REQUEST);
         }
-
-        return statement;
-    }
-
-    private boolean validateEntityStatementFields(EntityStatement statement, String issuer, String subject) {
-        return statement.getIssuer() == null || statement.getIssuer().equals(issuer) || statement.getSubject() == null || statement.getSubject().equals(subject) || statement.getIat() == null || LocalDateTime.now().toEpochSecond(ZoneOffset.UTC) > statement.getIat() || statement.getExp() == null || LocalDateTime.now().toEpochSecond(ZoneOffset.UTC) < statement.getExp();
     }
 
     private ConfigurableJWTProcessor<SecurityContext> produceJwtProcessor(JSONWebKeySet jwks) throws IOException, ParseException {
@@ -220,6 +221,10 @@ public class TrustChainProcessor {
         jwtProcessor.setJWSKeySelector(keySelector);
         jwtProcessor.setJWSTypeVerifier(new DefaultJOSEObjectTypeVerifier<>(Stream.of(new JOSEObjectType("entity-statement+jwt")).collect(Collectors.toSet())));
         return jwtProcessor;
+    }
+
+    private boolean validateEntityStatementFields(EntityStatement statement, String issuer, String subject) {
+        return statement.getIssuer() == null || statement.getIssuer().equals(issuer) || statement.getSubject() == null || statement.getSubject().equals(subject) || statement.getIat() == null || LocalDateTime.now().toEpochSecond(ZoneOffset.UTC) > statement.getIat() || statement.getExp() == null || LocalDateTime.now().toEpochSecond(ZoneOffset.UTC) < statement.getExp();
     }
 
     public EntityStatement parse(String token) throws InvalidTrustChainException {
