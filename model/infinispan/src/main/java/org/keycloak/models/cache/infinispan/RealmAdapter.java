@@ -38,6 +38,8 @@ import org.keycloak.models.IdentityProviderModel;
 import org.keycloak.models.KeycloakSession;
 import org.keycloak.models.OAuth2DeviceConfig;
 import org.keycloak.models.OTPPolicy;
+import org.keycloak.models.OpenIdFederationConfig;
+import org.keycloak.models.OpenIdFederationGeneralConfig;
 import org.keycloak.models.ParConfig;
 import org.keycloak.models.PasswordPolicy;
 import org.keycloak.models.RealmModel;
@@ -54,6 +56,7 @@ import org.keycloak.storage.UserStorageProvider;
 import org.keycloak.storage.UserStorageUtil;
 import org.keycloak.storage.client.ClientStorageProvider;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -792,13 +795,13 @@ public class RealmAdapter implements CachedRealmModel {
     }
 
     @Override
-    public OpenIdFederationGeneralConfig getOpenIdFederationConfig() {
-        if (isUpdated()) return updated.getOpenIdFederationConfig();
+    public OpenIdFederationGeneralConfig getOpenIdFederationGeneralConfig() {
+        if (isUpdated()) return updated.getOpenIdFederationGeneralConfig();
         return cached.getOpenIdFederationConfig();
     }
 
     @Override
-    public void setOpenIdFederationConfig(OpenIdFederationGeneralConfig config) {
+    public void setOpenIdFederationGeneralConfig(OpenIdFederationGeneralConfig generalConfig) {
         getDelegateForUpdate();
         updated.setOpenIdFederationGeneralConfig(generalConfig);
     }
