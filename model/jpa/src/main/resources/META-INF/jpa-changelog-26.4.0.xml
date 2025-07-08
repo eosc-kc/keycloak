@@ -25,12 +25,9 @@
 
         <addPrimaryKey columnNames="INTERNAL_ID" constraintName="OPENID_FEDERATION_PK" tableName="OPENID_FEDERATION"/>
         <addForeignKeyConstraint baseColumnNames="REALM_ID" baseTableName="OPENID_FEDERATION" constraintName="REALM_OPENID_FEDERATION_KEY" referencedColumnNames="ID" referencedTableName="REALM" />
+        <addUniqueConstraint columnNames="REALM_ID,TRUST_ANCHOR" constraintName="OPENID_FEDERATION_UNIQUE" tableName="OPENID_FEDERATION"/>
         <addPrimaryKey columnNames="NAME, OPENID_FEDERATION_ID" constraintName="OPENID_FEDERATION_ATTRIBUTE_PK" tableName="OPENID_FEDERATION_ATTRIBUTE"/>
         <addForeignKeyConstraint baseColumnNames="OPENID_FEDERATION_ID" baseTableName="OPENID_FEDERATION_ATTRIBUTE" constraintName="OPENID_FEDERATION_ATTRIBUTE_FK" referencedColumnNames="INTERNAL_ID" referencedTableName="OPENID_FEDERATION"/>
-    </changeSet>
-
-    <changeSet author="cgeorgilakis@grnet.gr" id="openid-federation-unique">
-        <addUniqueConstraint columnNames="REALM_ID,TRUST_ANCHOR" constraintName="OPENID_FEDERATION_UNIQUE" tableName="OPENID_FEDERATION"/>
     </changeSet>
 
 </databaseChangeLog>

@@ -1102,7 +1102,7 @@ public class RealmAdapter implements StorageProviderRealmModel, JpaModel<RealmEn
             config.setOpenIdFederationList(getOpenIdFederationList(realm.getOpenIdFederationList()));
             return config;
         } else {
-           return null;
+            return null;
         }
     }
 

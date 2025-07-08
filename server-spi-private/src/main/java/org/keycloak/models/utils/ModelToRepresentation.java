@@ -532,19 +532,19 @@ public class ModelToRepresentation {
         if (!realm.isOpenIdFederationEnabled()) {
             rep.setOpenIdFederationEnabled(false);
         } else {
-            OpenIdFederationGeneralConfig openIdFederationConfig =  realm.getOpenIdFederationConfig();
+            OpenIdFederationGeneralConfig openIdFederationGeneralConfig = realm.getOpenIdFederationGeneralConfig();
             rep.setOpenIdFederationEnabled(true);
-            rep.setOpenIdFederationOrganizationName(openIdFederationConfig.getOrganizationName());
-            rep.setOpenIdFederationContacts(openIdFederationConfig.getContacts());
-            rep.setOpenIdFederationLogoUri(openIdFederationConfig.getLogoUri());
-            rep.setOpenIdFederationPolicyUri(openIdFederationConfig.getPolicyUri());
-            rep.setOpenIdFederationHomepageUri(openIdFederationConfig.getHomepageUri());
-            rep.setOpenIdFederationAuthorityHints(openIdFederationConfig.getAuthorityHints());
-            rep.setOpenIdFederationLifespan(openIdFederationConfig.getLifespan());
-            rep.setOpenIdFederationResolveEndpoint(openIdFederationConfig.getFederationResolveEndpoint());
-            rep.setOpenIdFederationHistoricalKeysEndpoint(openIdFederationConfig.getFederationHistoricalKeysEndpoint());
-            if (internal && openIdFederationConfig.getOpenIdFederationList() != null) {
-                rep.setOpenIdFederationList(openIdFederationConfig.getOpenIdFederationList().stream().map(x -> toRepresentation(x)).collect(Collectors.toList()));
+            rep.setOpenIdFederationOrganizationName(openIdFederationGeneralConfig.getOrganizationName());
+            rep.setOpenIdFederationContacts(openIdFederationGeneralConfig.getContacts());
+            rep.setOpenIdFederationLogoUri(openIdFederationGeneralConfig.getLogoUri());
+            rep.setOpenIdFederationPolicyUri(openIdFederationGeneralConfig.getPolicyUri());
+            rep.setOpenIdFederationHomepageUri(openIdFederationGeneralConfig.getHomepageUri());
+            rep.setOpenIdFederationAuthorityHints(openIdFederationGeneralConfig.getAuthorityHints());
+            rep.setOpenIdFederationLifespan(openIdFederationGeneralConfig.getLifespan());
+            rep.setOpenIdFederationResolveEndpoint(openIdFederationGeneralConfig.getFederationResolveEndpoint());
+            rep.setOpenIdFederationHistoricalKeysEndpoint(openIdFederationGeneralConfig.getFederationHistoricalKeysEndpoint());
+            if (internal && openIdFederationGeneralConfig.getOpenIdFederationList() != null) {
+                rep.setOpenIdFederationList(openIdFederationGeneralConfig.getOpenIdFederationList().stream().map(x -> toRepresentation(x)).collect(Collectors.toList()));
             }
         }
 

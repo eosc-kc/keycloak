@@ -1,13 +1,10 @@
 package org.keycloak.representations.openid_federation;
 
-import com.fasterxml.jackson.annotation.JsonAnyGetter;
-import com.fasterxml.jackson.annotation.JsonAnySetter;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonUnwrapped;
 import org.keycloak.protocol.oidc.representations.OIDCConfigurationRepresentation;
 
 import java.util.List;
-import java.util.Map;
 
 public class OPMetadata extends OIDCConfigurationRepresentation {
 
