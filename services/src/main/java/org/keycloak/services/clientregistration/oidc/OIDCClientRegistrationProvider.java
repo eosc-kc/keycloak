@@ -15,19 +15,13 @@
  * limitations under the License.
  */
 package org.keycloak.services.clientregistration.oidc;
-
-import org.jboss.logging.Logger;
+import org.keycloak.common.util.Time;
 import org.keycloak.models.ClientModel;
-import org.keycloak.models.KeycloakContext;
 import org.keycloak.models.KeycloakSession;
-import org.keycloak.models.RealmModel;
-import org.keycloak.protocol.oidc.OIDCLoginProtocol;
 import org.keycloak.representations.idm.ClientRepresentation;
 import org.keycloak.representations.oidc.OIDCClientRepresentation;
 import org.keycloak.services.ErrorResponseException;
-import org.keycloak.representations.idm.ProtocolMapperRepresentation;
 import org.keycloak.services.ServicesLogger;
-import org.keycloak.services.Urls;
 import org.keycloak.services.clientregistration.AbstractClientRegistrationProvider;
 import org.keycloak.services.clientregistration.ClientRegistrationException;
 import org.keycloak.services.clientregistration.ErrorCodes;
@@ -42,7 +36,6 @@ import jakarta.ws.rs.PathParam;
 import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
-import org.keycloak.urls.UrlType;
 
 import java.net.URI;
 
@@ -50,8 +43,6 @@ import java.net.URI;
  * @author <a href="mailto:sthorger@redhat.com">Stian Thorgersen</a>
  */
 public class OIDCClientRegistrationProvider extends AbstractClientRegistrationProvider {
-
-    private static final Logger logger = Logger.getLogger(OIDCClientRegistrationProvider.class);
 
     public OIDCClientRegistrationProvider(KeycloakSession session) {
         super(session);
@@ -66,7 +57,10 @@ public class OIDCClientRegistrationProvider extends AbstractClientRegistrationPr
         }
 
         try {
-            clientOIDC = createOidcClient(clientOIDC, session, null);
+            ClientRepresentation client = createOidcClient(clientOIDC, session, null);
+            URI uri = session.getContext().getUri().getAbsolutePathBuilder().path(client.getClientId()).build();
+            clientOIDC = DescriptionConverter.toExternalResponse(session, client, uri, OIDCClientRepresentation.class);
+            clientOIDC.setClientIdIssuedAt(Time.currentTime());
             return Response.created(session.getContext().getUri().getAbsolutePathBuilder().path(clientOIDC.getClientId()).build()).entity(clientOIDC).build();
         } catch (ClientRegistrationException cre) {
             ServicesLogger.LOGGER.clientRegistrationException(cre.getMessage());
@@ -82,7 +76,7 @@ public class OIDCClientRegistrationProvider extends AbstractClientRegistrationPr
 
         ClientRepresentation clientRepresentation = get(client);
 
-        OIDCClientRepresentation clientOIDC = DescriptionConverter.toExternalResponse(session, clientRepresentation, getRegistrationClientUri(client));
+        OIDCClientRepresentation clientOIDC = DescriptionConverter.toExternalResponse(session, clientRepresentation, getRegistrationClientUri(client.getClientId()), OIDCClientRepresentation.class);
         return Response.ok(clientOIDC).build();
     }
 
@@ -92,7 +86,11 @@ public class OIDCClientRegistrationProvider extends AbstractClientRegistrationPr
     @Produces(MediaType.APPLICATION_JSON)
     public Response updateOIDC(@PathParam("clientId") String clientId, OIDCClientRepresentation clientOIDC) {
         try {
-            OIDCClientRepresentation updatedClient = updateOidcClient(clientId, clientOIDC, session, null);
+
+            ClientRepresentation client = updateOidcClient(clientId, clientOIDC, session, null);
+            URI uri = getRegistrationClientUri(client.getClientId());
+            OIDCClientRepresentation updatedClient = DescriptionConverter.toExternalResponse(session, client, uri, OIDCClientRepresentation.class);
+            clientOIDC.setClientIdIssuedAt(Time.currentTime());
             return Response.ok(updatedClient).build();
         } catch (ClientRegistrationException cre) {
             ServicesLogger.LOGGER.clientRegistrationException(cre.getMessage());

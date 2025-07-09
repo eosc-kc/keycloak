@@ -1,10 +1,6 @@
 package org.keycloak.representations.openid_federation;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.annotation.JsonUnwrapped;
-import org.keycloak.jose.jwk.JSONWebKeySet;
-
-import java.util.List;
 
 public class CommonMetadata {
 
@@ -14,8 +10,8 @@ public class CommonMetadata {
     @JsonProperty("organization_name")
     private String organizationName;
 
-    @JsonProperty("homepage_uri")
-    private String homepageUri;
+    @JsonProperty("organization_uri")
+    private String organizationUri;
 
     public String getSignedJwksUri() {
         return signedJwksUri;
@@ -33,11 +29,11 @@ public class CommonMetadata {
         this.organizationName = organizationName;
     }
 
-    public String getHomepageUri() {
-        return homepageUri;
+    public String getOrganizationUri() {
+        return organizationUri;
     }
 
-    public void setHomepageUri(String homepageUri) {
-        this.homepageUri = homepageUri;
+    public void setOrganizationUri(String organizationUri) {
+        this.organizationUri = organizationUri;
     }
 }

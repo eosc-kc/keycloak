@@ -32,7 +32,6 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.keycloak.OAuth2Constants;
-import org.keycloak.common.util.Time;
 import org.keycloak.events.Details;
 import org.keycloak.events.EventBuilder;
 import org.keycloak.events.EventType;
@@ -94,8 +93,10 @@ public abstract class AbstractClientRegistrationProvider implements ClientRegist
         this.session = session;
     }
 
-    protected OIDCClientRepresentation createOidcClient(OIDCClientRepresentation clientOIDC, KeycloakSession session, Long exp){
+    protected ClientRepresentation createOidcClient(OIDCClientRepresentation clientOIDC, KeycloakSession session, Long exp){
         ClientRepresentation client = DescriptionConverter.toInternal(session, clientOIDC);
+        if (exp != null)
+            client.getAttributes().put(OIDCConfigAttributes.EXPIRATION_TIME, exp.toString() );
 
         OIDCClientRegistrationContext oidcContext = new OIDCClientRegistrationContext(session, client, this, clientOIDC);
         client = create(oidcContext, exp == null ? EventType.CLIENT_REGISTER : EventType.FEDERATION_CLIENT_REGISTER);
@@ -105,14 +106,10 @@ public abstract class AbstractClientRegistrationProvider implements ClientRegist
         updateClientRepWithProtocolMappers(clientModel, client);
 
         validateClient(clientModel, clientOIDC, true);
-
-        URI uri = getRegistrationClientUri(clientModel);
-        clientOIDC = DescriptionConverter.toExternalResponse(session, client, uri);
-        clientOIDC.setClientIdIssuedAt(Time.currentTime());
-        return clientOIDC;
+        return client;
     }
 
-    protected OIDCClientRepresentation updateOidcClient(String clientId, OIDCClientRepresentation clientOIDC, KeycloakSession session, Long exp) {
+    protected ClientRepresentation updateOidcClient(String clientId, OIDCClientRepresentation clientOIDC, KeycloakSession session, Long exp) {
         ClientRepresentation client = DescriptionConverter.toInternal(session, clientOIDC);
 
         if (clientOIDC.getScope() != null) {
@@ -133,15 +130,7 @@ public abstract class AbstractClientRegistrationProvider implements ClientRegist
         client.getAttributes().put(ClientSecretConstants.CLIENT_SECRET_CREATION_TIME,clientModel.getAttribute(ClientSecretConstants.CLIENT_SECRET_CREATION_TIME));
 
         validateClient(clientModel, clientOIDC, false);
-
-        return DescriptionConverter.toExternalResponse(session, client, getRegistrationClientUri(clientModel));
-    }
-
-    protected URI getRegistrationClientUri(ClientModel client) {
-        KeycloakContext context = session.getContext();
-        RealmModel realm = context.getRealm();
-        URI backendUri = context.getUri(UrlType.BACKEND).getBaseUri();
-        return Urls.clientRegistration(backendUri, realm.getName(), OIDCLoginProtocol.LOGIN_PROTOCOL, client.getClientId());
+        return client;
     }
 
     protected void updatePairwiseSubMappers(ClientModel clientModel, SubjectType subjectType, String sectorIdentifierUri) {
@@ -350,6 +339,13 @@ public abstract class AbstractClientRegistrationProvider implements ClientRegist
 
         event.client(client.getClientId()).success();
         return rep;
+    }
+
+    protected URI getRegistrationClientUri(String clientId) {
+        KeycloakContext context = session.getContext();
+        RealmModel realm = context.getRealm();
+        URI backendUri = context.getUri(UrlType.BACKEND).getBaseUri();
+        return Urls.clientRegistration(backendUri, realm.getName(), OIDCLoginProtocol.LOGIN_PROTOCOL, clientId);
     }
 
 
