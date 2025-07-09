@@ -22,6 +22,7 @@ import org.keycloak.representations.openid_federation.EntityStatement;
 import org.keycloak.representations.openid_federation.OpenIdFederationEntity;
 import org.keycloak.representations.openid_federation.Metadata;
 import org.keycloak.representations.openid_federation.OPMetadata;
+import org.keycloak.representations.openid_federation.RPMetadata;
 import org.keycloak.services.Urls;
 import org.keycloak.services.resources.RealmsResource;
 import org.keycloak.urls.UrlType;
@@ -53,6 +54,8 @@ public class OpenIdFederationWellKnownProvider extends OIDCWellKnownProvider {
         UriInfo frontendUriInfo = session.getContext().getUri(UrlType.FRONTEND);
         UriInfo backendUriInfo = session.getContext().getUri(UrlType.BACKEND);
         Metadata metadata = new Metadata();
+        CommonMetadata common = commonMetadata(openIdFederationConfig);
+        Set<ClientRegistrationTypeEnum> registrationTypes = openIdFederationConfig.getOpenIdFederationList().stream().flatMap(x -> x.getClientRegistrationTypesSupported().stream()).collect(Collectors.toSet());
 
         if (openIdFederationConfig.getOpenIdFederationList().stream().flatMap(x -> x.getEntityTypes().stream()).collect(Collectors.toSet()).contains(EntityTypeEnum.OPENID_PROVIDER)) {
             OPMetadata opMetadata;
@@ -62,7 +65,6 @@ public class OpenIdFederationWellKnownProvider extends OIDCWellKnownProvider {
                 throw new InternalServerErrorException("Could not form the configuration response");
             }
 
-            Set<ClientRegistrationTypeEnum> registrationTypes = openIdFederationConfig.getOpenIdFederationList().stream().flatMap(x -> x.getClientRegistrationTypesSupported().stream()).collect(Collectors.toSet());
             if (registrationTypes.contains(ClientRegistrationTypeEnum.EXPLICIT)) {
                 opMetadata.setFederationRegistrationEndpoint(backendUriInfo.getBaseUriBuilder().clone().path(RealmsResource.class).path(RealmsResource.class, "getOpenIdFederationClientsService").build(realm.getName()).toString());
             }
@@ -70,8 +72,18 @@ public class OpenIdFederationWellKnownProvider extends OIDCWellKnownProvider {
             opMetadata.setContacts(openIdFederationConfig.getContacts());
             opMetadata.setLogoUri(openIdFederationConfig.getLogoUri());
             opMetadata.setPolicyUri(openIdFederationConfig.getPolicyUri());
-            opMetadata.setCommonMetadata(commonMetadata(openIdFederationConfig));
+            opMetadata.setCommonMetadata(common);
             metadata.setOpenIdProviderMetadata(opMetadata);
+        }
+
+        if (openIdFederationConfig.getOpenIdFederationList().stream().flatMap(x -> x.getEntityTypes().stream()).collect(Collectors.toSet()).contains(EntityTypeEnum.OPENID_RELAYING_PARTY)) {
+            RPMetadata rPMetadata = new RPMetadata();
+            rPMetadata.setClientRegistrationTypes(registrationTypes.stream().map(ClientRegistrationTypeEnum::getValue).collect(Collectors.toList()));
+            rPMetadata.setContacts(openIdFederationConfig.getContacts());
+            rPMetadata.setLogoUri(openIdFederationConfig.getLogoUri());
+            rPMetadata.setPolicyUri(openIdFederationConfig.getPolicyUri());
+            rPMetadata.setCommonMetadata(common);
+            metadata.setRelyingPartyMetadata(rPMetadata);
         }
 
         OpenIdFederationEntity federationEntity = null;
@@ -84,7 +96,7 @@ public class OpenIdFederationWellKnownProvider extends OIDCWellKnownProvider {
             federationEntity.setContacts(openIdFederationConfig.getContacts());
             federationEntity.setLogoUri(openIdFederationConfig.getLogoUri());
             federationEntity.setPolicyUri(openIdFederationConfig.getPolicyUri());
-            federationEntity.setCommonMetadata(commonMetadata(openIdFederationConfig));
+            federationEntity.setCommonMetadata(common);
         }
 
         metadata.setFederationEntity(federationEntity);
