@@ -1275,7 +1275,7 @@ public class LegacyExportImportManager implements ExportImportManager {
             config.setContacts(rep.getOpenIdFederationContacts());
             config.setLogoUri(rep.getOpenIdFederationLogoUri());
             config.setPolicyUri(rep.getOpenIdFederationPolicyUri());
-            config.setHomepageUri(rep.getOpenIdFederationHomepageUri());
+            config.setOrganizationUri(rep.getOpenIdFederationOrganizationUri());
             config.setAuthorityHints(rep.getOpenIdFederationAuthorityHints());
             config.setLifespan(rep.getOpenIdFederationLifespan());
             config.setFederationResolveEndpoint(rep.getOpenIdFederationResolveEndpoint());

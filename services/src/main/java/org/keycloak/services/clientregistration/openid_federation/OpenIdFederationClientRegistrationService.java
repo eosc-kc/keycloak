@@ -6,6 +6,7 @@ import jakarta.ws.rs.core.Context;
 import jakarta.ws.rs.core.HttpHeaders;
 import jakarta.ws.rs.core.Response;
 import org.jboss.logging.Logger;
+import org.keycloak.common.util.Time;
 import org.keycloak.events.Errors;
 import org.keycloak.exceptions.InvalidTrustChainException;
 import org.keycloak.models.KeycloakSession;
@@ -14,18 +15,20 @@ import org.keycloak.models.OpenIdFederationGeneralConfig;
 import org.keycloak.models.RealmModel;
 import org.keycloak.models.enums.ClientRegistrationTypeEnum;
 import org.keycloak.protocol.oidc.federation.TrustChainProcessor;
+import org.keycloak.representations.idm.ClientRepresentation;
+import org.keycloak.representations.oidc.OIDCClientRepresentation;
 import org.keycloak.representations.openid_federation.EntityStatement;
 import org.keycloak.representations.openid_federation.EntityStatementExplicitResponse;
 import org.keycloak.representations.openid_federation.RPMetadata;
 import org.keycloak.representations.openid_federation.TrustChainForExplicit;
 import org.keycloak.services.ErrorResponseException;
-import org.keycloak.services.ServicesLogger;
 import org.keycloak.services.Urls;
 import org.keycloak.services.clientregistration.AbstractClientRegistrationProvider;
-import org.keycloak.services.clientregistration.ClientRegistrationException;
+import org.keycloak.services.clientregistration.oidc.DescriptionConverter;
 import org.keycloak.urls.UrlType;
 import org.keycloak.util.TokenUtil;
 
+import java.net.URI;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.util.List;
@@ -81,11 +84,20 @@ public class OpenIdFederationClientRegistrationService extends AbstractClientReg
                     }
                     rPMetadata.setClientId(statement.getSubject());
 
-                    RPMetadata rPMetadataResponse = new RPMetadata();
+                    RPMetadata rPMetadataResponse;
                     try {
-                        rPMetadataResponse = session.getContext().getRealm().getClientByClientId(rPMetadata.getClientId()) == null ? (RPMetadata) createOidcClient(rPMetadata, session, statement.getExp()) : (RPMetadata) updateOidcClient(rPMetadata.getClientId(), rPMetadata, session, statement.getExp());
-                    } catch (ClientRegistrationException cre) {
-                        ServicesLogger.LOGGER.clientRegistrationException(cre.getMessage());
+                        if (session.getContext().getRealm().getClientByClientId(rPMetadata.getClientId()) == null) {
+                            ClientRepresentation client = createOidcClient(rPMetadata, session, statement.getExp());
+                            URI uri = session.getContext().getUri().getAbsolutePathBuilder().path(client.getClientId()).build();
+                            rPMetadataResponse = DescriptionConverter.toExternalResponse(session, client, uri, RPMetadata.class);
+                            rPMetadataResponse.setClientIdIssuedAt(Time.currentTime());
+                        } else {
+                            ClientRepresentation client = updateOidcClient(rPMetadata.getClientId(), rPMetadata, session, statement.getExp());
+                            URI uri = session.getContext().getUri().getAbsolutePathBuilder().path(client.getClientId()).build();
+                            rPMetadataResponse = DescriptionConverter.toExternalResponse(session, client, uri, RPMetadata.class);
+                        }
+                    } catch (Exception e) {
+                        logger.error("The following error was thrown during OpenId Federation Client explicit registration" , e);
                         throw new ErrorResponseException(Errors.INVALID_METADATA, "Client metadata invalid", Response.Status.BAD_REQUEST);
                     }
 

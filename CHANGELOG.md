@@ -10,10 +10,10 @@ Full Keycloak upstream jira issue can be shown if filtered by Fix version.
 
 Our Keycloak version is working well with PostgreSQL database. For using other SQL databases, text field in database need to be evaluated.
 
-## [22.0.13-1.19]
+## [22.0.13-1.19] - 2025-07-10
 
 ### Added
-- OpenID Federation OP with explicit registration
+- OpenID Federation OP with explicit registration (experimental feature)
 - Extend Proxied Token Introspection to support fallback endpoints [RCIAM-63](https://tts.grnet.gr/jira/browse/RCIAM-63)
 
 ### Fixed

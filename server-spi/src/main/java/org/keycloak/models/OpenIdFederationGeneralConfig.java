@@ -1,7 +1,5 @@
 package org.keycloak.models;
 
-import org.keycloak.representations.idm.OpenIdFederationRepresentation;
-
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
@@ -12,7 +10,7 @@ public class OpenIdFederationGeneralConfig implements Serializable {
     private List<String> contacts;
     private String logoUri;
     private String policyUri;
-    private String homepageUri;
+    private String organizationUri;
     private List<String> authorityHints;
     private Integer lifespan;
     // default 1 day - duration
@@ -54,12 +52,12 @@ public class OpenIdFederationGeneralConfig implements Serializable {
         this.policyUri = policyUri;
     }
 
-    public String getHomepageUri() {
-        return homepageUri;
+    public String getOrganizationUri() {
+        return organizationUri;
     }
 
-    public void setHomepageUri(String homepageUri) {
-        this.homepageUri = homepageUri;
+    public void setOrganizationUri(String organizationUri) {
+        this.organizationUri = organizationUri;
     }
 
     public List<String> getAuthorityHints() {

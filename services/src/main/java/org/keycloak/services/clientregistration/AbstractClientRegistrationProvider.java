@@ -17,7 +17,6 @@
 
 package org.keycloak.services.clientregistration;
 
-import java.net.URI;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.util.ArrayList;
@@ -32,7 +31,6 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.keycloak.OAuth2Constants;
-import org.keycloak.common.util.Time;
 import org.keycloak.events.EventBuilder;
 import org.keycloak.events.EventType;
 import org.keycloak.models.*;
@@ -84,7 +82,7 @@ public abstract class AbstractClientRegistrationProvider implements ClientRegist
         this.session = session;
     }
 
-    protected OIDCClientRepresentation createOidcClient(OIDCClientRepresentation clientOIDC, KeycloakSession session, Long exp){
+    protected ClientRepresentation createOidcClient(OIDCClientRepresentation clientOIDC, KeycloakSession session, Long exp){
         ClientRepresentation client = DescriptionConverter.toInternal(session, clientOIDC);
         List<String> grantTypes = clientOIDC.getGrantTypes();
 
@@ -107,14 +105,10 @@ public abstract class AbstractClientRegistrationProvider implements ClientRegist
         updateClientRepWithProtocolMappers(clientModel, client);
 
         validateClient(clientModel, clientOIDC, true);
-
-        URI uri = session.getContext().getUri().getAbsolutePathBuilder().path(client.getClientId()).build();
-        clientOIDC = DescriptionConverter.toExternalResponse(session, client, uri);
-        clientOIDC.setClientIdIssuedAt(Time.currentTime());
-        return clientOIDC;
+        return client;
     }
 
-    protected OIDCClientRepresentation updateOidcClient(String clientId, OIDCClientRepresentation clientOIDC, KeycloakSession session, Long exp) {
+    protected ClientRepresentation updateOidcClient(String clientId, OIDCClientRepresentation clientOIDC, KeycloakSession session, Long exp) {
         ClientRepresentation client = DescriptionConverter.toInternal(session, clientOIDC);
         OIDCClientRegistrationContext oidcContext = new OIDCClientRegistrationContext(session, client, this, clientOIDC);
         client = update(clientId, oidcContext, exp);
@@ -128,10 +122,7 @@ public abstract class AbstractClientRegistrationProvider implements ClientRegist
         client.getAttributes().put(ClientSecretConstants.CLIENT_SECRET_CREATION_TIME, clientModel.getAttribute(ClientSecretConstants.CLIENT_SECRET_CREATION_TIME));
 
         validateClient(clientModel, clientOIDC, false);
-
-        URI uri = session.getContext().getUri().getAbsolutePathBuilder().path(client.getClientId()).build();
-        return DescriptionConverter.toExternalResponse(session, client, uri);
-
+        return client;
     }
 
     protected void updatePairwiseSubMappers(ClientModel clientModel, SubjectType subjectType, String sectorIdentifierUri) {

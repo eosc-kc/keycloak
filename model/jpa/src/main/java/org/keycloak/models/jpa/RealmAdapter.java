@@ -1070,7 +1070,7 @@ public class RealmAdapter implements LegacyRealmModel, JpaModel<RealmEntity> {
             config.setContacts(contacts);
             config.setLogoUri(getAttribute(Constants.OPENID_FEDERATION_LOGO_URI));
             config.setPolicyUri(getAttribute(Constants.OPENID_FEDERATION_POLICY_URI));
-            config.setHomepageUri(getAttribute(Constants.OPENID_FEDERATION_HOMEPAGE_URI));
+            config.setOrganizationUri(getAttribute(Constants.OPENID_FEDERATION_ORGANIZATION_URI));
             String authorityHintsStr = getAttribute(Constants.OPENID_FEDERATION_AUTHORITY_HINTS);
             List<String> authorityHints = (authorityHintsStr == null || authorityHintsStr.isEmpty()) ? new ArrayList<>() : Arrays.asList(authorityHintsStr.split(","));
             config.setAuthorityHints(authorityHints);
@@ -1089,16 +1089,6 @@ public class RealmAdapter implements LegacyRealmModel, JpaModel<RealmEntity> {
     public void setOpenIdFederationGeneralConfig(OpenIdFederationGeneralConfig generalConfig) {
         if (generalConfig == null) {
             setAttribute(Constants.OPENID_FEDERATION_ENABLED, Boolean.FALSE);
-            removeAttribute(Constants.OPENID_FEDERATION_ORGANIZATION_NAME);
-            removeAttribute(Constants.OPENID_FEDERATION_CONTACTS);
-            removeAttribute(Constants.OPENID_FEDERATION_LOGO_URI);
-            removeAttribute(Constants.OPENID_FEDERATION_POLICY_URI);
-            removeAttribute(Constants.OPENID_FEDERATION_HOMEPAGE_URI);
-            removeAttribute(Constants.OPENID_FEDERATION_AUTHORITY_HINTS);
-            removeAttribute(Constants.OPENID_FEDERATION_LIFESPAN);
-            removeAttribute(Constants.OPENID_FEDERATION_RESOLVE_ENDPOINT);
-            removeAttribute(Constants.OPENID_FEDERATION_HISTORICAL_KEYS_ENDPOINT);
-            realm.setOpenIdFederationList(new ArrayList<>());
         } else {
             setAttribute(Constants.OPENID_FEDERATION_ENABLED, Boolean.TRUE);
             setAttribute(Constants.OPENID_FEDERATION_ORGANIZATION_NAME, generalConfig.getOrganizationName());
@@ -1109,7 +1099,7 @@ public class RealmAdapter implements LegacyRealmModel, JpaModel<RealmEntity> {
             }
             setAttribute(Constants.OPENID_FEDERATION_LOGO_URI, generalConfig.getLogoUri());
             setAttribute(Constants.OPENID_FEDERATION_POLICY_URI, generalConfig.getPolicyUri());
-            setAttribute(Constants.OPENID_FEDERATION_HOMEPAGE_URI, generalConfig.getHomepageUri());
+            setAttribute(Constants.OPENID_FEDERATION_ORGANIZATION_URI, generalConfig.getOrganizationUri());
             if (generalConfig.getAuthorityHints() == null || generalConfig.getAuthorityHints().isEmpty()) {
                 removeAttribute(Constants.OPENID_FEDERATION_AUTHORITY_HINTS);
             } else {

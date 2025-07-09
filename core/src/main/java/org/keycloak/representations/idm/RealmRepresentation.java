@@ -157,7 +157,7 @@ public class RealmRepresentation {
     private List<String> openIdFederationContacts;
     private String openIdFederationLogoUri;
     private String openIdFederationPolicyUri;
-    private String openIdFederationHomepageUri;
+    private String openIdFederationOrganizationUri;
     private List<String> openIdFederationAuthorityHints;
     private Integer openIdFederationLifespan;
     private String openIdFederationResolveEndpoint;
@@ -1266,12 +1266,12 @@ public class RealmRepresentation {
         this.openIdFederationPolicyUri = openIdFederationPolicyUri;
     }
 
-    public String getOpenIdFederationHomepageUri() {
-        return openIdFederationHomepageUri;
+    public String getOpenIdFederationOrganizationUri() {
+        return openIdFederationOrganizationUri;
     }
 
-    public void setOpenIdFederationHomepageUri(String openIdFederationHomepageUri) {
-        this.openIdFederationHomepageUri = openIdFederationHomepageUri;
+    public void setOpenIdFederationOrganizationUri(String openIdFederationOrganizationUri) {
+        this.openIdFederationOrganizationUri = openIdFederationOrganizationUri;
     }
 
     public void setOpenIdFederationOrganizationName(String openIdFederationOrganizationName) {

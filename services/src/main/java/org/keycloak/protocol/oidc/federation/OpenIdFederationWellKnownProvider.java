@@ -77,7 +77,7 @@ public class OpenIdFederationWellKnownProvider extends OIDCWellKnownProvider {
         OpenIdFederationEntity federationEntity = null;
         if (openIdFederationConfig.getFederationResolveEndpoint() != null || openIdFederationConfig.getFederationHistoricalKeysEndpoint() != null ||
                 openIdFederationConfig.getOrganizationName() != null || ! openIdFederationConfig.getContacts().isEmpty() ||
-                openIdFederationConfig.getHomepageUri() != null || openIdFederationConfig.getPolicyUri() != null || openIdFederationConfig.getLogoUri() != null) {
+                openIdFederationConfig.getOrganizationUri() != null || openIdFederationConfig.getPolicyUri() != null || openIdFederationConfig.getLogoUri() != null) {
             federationEntity = new OpenIdFederationEntity();
             federationEntity.setFederationResolveEndpoint(openIdFederationConfig.getFederationResolveEndpoint());
             federationEntity.setFederationHistoricalKeysEndpoint(openIdFederationConfig.getFederationHistoricalKeysEndpoint());
@@ -110,7 +110,7 @@ public class OpenIdFederationWellKnownProvider extends OIDCWellKnownProvider {
 
     private CommonMetadata commonMetadata(OpenIdFederationGeneralConfig realmConfig){
         CommonMetadata common = new CommonMetadata();
-        common.setHomepageUri(realmConfig.getHomepageUri());
+        common.setOrganizationUri(realmConfig.getOrganizationUri());
         common.setOrganizationName(realmConfig.getOrganizationName());
         return common;
     }

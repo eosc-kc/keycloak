@@ -152,7 +152,7 @@ public final class Constants {
     public static final String OPENID_FEDERATION_CONTACTS = "openIdFederationContacts";
     public static final String OPENID_FEDERATION_LOGO_URI = "openIdFederationLogoUri";
     public static final String OPENID_FEDERATION_POLICY_URI = "openIdFederationPolicyUri";
-    public static final String OPENID_FEDERATION_HOMEPAGE_URI = "openIdFederationHomepageUri";
+    public static final String OPENID_FEDERATION_ORGANIZATION_URI = "openIdFederationOrganizationUri";
     public static final String OPENID_FEDERATION_AUTHORITY_HINTS = "openidFederationAuthorityHints";
     public static final String OPENID_FEDERATION_CLIENT_REGISTRATION_TYPES_SUPPORTED = "openidFederationClientRegistrationTypesSupported";
     public static final String OPENID_FEDERATION_ENTITY_TYPES = "openidFederationEntityTypes";
