@@ -62,7 +62,7 @@ const OpenIdFederationLink = (
   );
 };
 
-export const OpenIdFederationGeneralTab = ({
+export const OpenIdFederationGeneralSettings = ({
   realm,
   openIdFederations = [],
   setOpenIdFederations,
@@ -284,12 +284,12 @@ export const OpenIdFederationGeneralTab = ({
                         />
                       </FormGroup>
                       <FormGroup
-                        label={t("openIdFederationHomepageUri")}
+                        label={t("openIdFederationOrganizationUri")}
                         fieldId="kc-homepage-uri"
                       >
                         <KeycloakTextInput
                           id="kc-homepage-uri"
-                          {...register("openIdFederationHomepageUri")}
+                          {...register("openIdFederationOrganizationUri")}
                         />
                       </FormGroup>
                       <FormGroup

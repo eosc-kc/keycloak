@@ -1,26 +1,14 @@
 import type RealmRepresentation from "@keycloak/keycloak-admin-client/lib/defs/realmRepresentation";
-import {
-  AlertVariant,
-  PageSection,
-  Tab,
-  TabTitleText,
-} from "@patternfly/react-core";
+import { AlertVariant, PageSection } from "@patternfly/react-core";
 import { convertFormValuesToObject } from "../util";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
 import { useParams } from "../utils/useParams";
 import { ViewHeader } from "../components/view-header/ViewHeader";
-import { OpenIdFederationGeneralTab } from "./GeneralTab";
+import { OpenIdFederationGeneralSettings } from "./GeneralSettings";
 import type { KeyValueType } from "../components/key-value-form/key-value-convert";
-import {
-  RoutableTabs,
-  useRoutableTab,
-} from "../components/routable-tabs/RoutableTabs";
-import {
-  OpenIdFederationTab,
-  toOpenIdFederation,
-} from "./routes/OpenIdFederation";
+import { toOpenIdFederation } from "./routes/OpenIdFederation";
 import { useRealms } from "../context/RealmsContext";
 import { useAlerts } from "../components/alert/Alerts";
 import type { OpenIdFederationParams } from "./routes/OpenIdFederation";
@@ -43,13 +31,6 @@ export default function OpenIdFederationSection() {
     setKey(key + 1);
     setRealm(undefined);
   };
-  const useTab = (tab: OpenIdFederationTab) =>
-    useRoutableTab(toOpenIdFederation({ realm: realmName, tab }));
-
-  const generalTab = useTab("general");
-  useFetch(() => adminClient.realms.findOne({ realm: realmName }), setRealm, [
-    key,
-  ]);
   useFetch(
     async () => {
       try {
@@ -113,28 +94,12 @@ export default function OpenIdFederationSection() {
           subKey="openid-federation:openIdFederationExplanation"
         />
         <PageSection variant="light">
-          <RoutableTabs
-            isBox
-            mountOnEnter
-            aria-label="realm-settings-tabs"
-            defaultLocation={toOpenIdFederation({
-              realm: realmName,
-              tab: "general",
-            })}
-          >
-            <Tab
-              title={<TabTitleText>{t("general")}</TabTitleText>}
-              data-testid="rs-general-tab"
-              {...generalTab}
-            >
-              <OpenIdFederationGeneralTab
-                realm={realm}
-                openIdFederations={openIdFederations}
-                setOpenIdFederations={setOpenIdFederations}
-                save={save}
-              />
-            </Tab>
-          </RoutableTabs>
+          <OpenIdFederationGeneralSettings
+            realm={realm}
+            openIdFederations={openIdFederations}
+            setOpenIdFederations={setOpenIdFederations}
+            save={save}
+          />
         </PageSection>
       </>
     );

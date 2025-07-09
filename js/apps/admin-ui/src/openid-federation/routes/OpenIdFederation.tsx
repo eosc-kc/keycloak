@@ -23,19 +23,10 @@ export const OpenIdFederationRoute: AppRouteObject = {
   },
 };
 
-export const OpenIdFederationRouteWithTab: AppRouteObject = {
-  ...OpenIdFederationRoute,
-  path: "/:realm/openid-federation/:tab",
-};
-
 export const toOpenIdFederation = (
   params: OpenIdFederationParams,
 ): Partial<Path> => {
-  const path = params.tab
-    ? OpenIdFederationRouteWithTab.path
-    : OpenIdFederationRoute.path;
-
   return {
-    pathname: generateEncodedPath(path, params),
+    pathname: generateEncodedPath(OpenIdFederationRoute.path, params),
   };
 };

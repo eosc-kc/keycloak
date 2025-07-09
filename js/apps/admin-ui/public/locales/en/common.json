@@ -221,5 +221,5 @@
   "customAttribute": "Custom Attribute…",
   "url": "Url",
   "identityFederations": "Identity federations",
-  "openIdFederation": "OpenId Federation"
+  "openIdFederation": "OpenID Federation"
 }
