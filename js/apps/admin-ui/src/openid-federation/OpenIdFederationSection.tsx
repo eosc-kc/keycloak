@@ -31,6 +31,10 @@ export default function OpenIdFederationSection() {
     setKey(key + 1);
     setRealm(undefined);
   };
+
+  useFetch(() => adminClient.realms.findOne({ realm: realmName }), setRealm, [
+    key,
+  ]);
   useFetch(
     async () => {
       try {

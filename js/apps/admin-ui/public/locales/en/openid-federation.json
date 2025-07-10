@@ -20,7 +20,7 @@
   "openIdFederationLogoUri": "Logo URI",
   "openIdFederationPolicyUri": "Policy URI",
   "openIdFederationOrganizationName": "Organization Name",
-  "openIdFederationHomepageUri": "Homepage URI",
+  "openIdFederationOrganizationUri": "Organization URI",
   "openIdFederationResolveEndpoint": "Resolve Endpoint",
   "openIdFederationHistoricalKeysEndpoint": "Historical Keys Endpoint",
   "addAuthorityHint": "Add Authority Hint",
