@@ -16,7 +16,6 @@ import org.keycloak.models.RealmModel;
 import org.keycloak.models.enums.ClientRegistrationTypeEnum;
 import org.keycloak.protocol.oidc.federation.TrustChainProcessor;
 import org.keycloak.representations.idm.ClientRepresentation;
-import org.keycloak.representations.oidc.OIDCClientRepresentation;
 import org.keycloak.representations.openid_federation.EntityStatement;
 import org.keycloak.representations.openid_federation.EntityStatementExplicitResponse;
 import org.keycloak.representations.openid_federation.RPMetadata;
@@ -103,7 +102,7 @@ public class OpenIdFederationClientRegistrationService extends AbstractClientReg
 
                     rPMetadataResponse.setClientRegistrationTypes(Stream.of(ClientRegistrationTypeEnum.EXPLICIT.getValue()).collect(Collectors.toList()));
                     rPMetadataResponse.setCommonMetadata(rPMetadata.getCommonMetadata());
-                    EntityStatementExplicitResponse responseStatement = new EntityStatementExplicitResponse(statement, Urls.realmIssuer(session.getContext().getUri(UrlType.FRONTEND).getBaseUri(), session.getContext().getRealm().getName()), rPMetadata, validChain.getTrustAnchorId(), validChain.getLeafId());
+                    EntityStatementExplicitResponse responseStatement = new EntityStatementExplicitResponse(statement, Urls.realmIssuer(session.getContext().getUri(UrlType.FRONTEND).getBaseUri(), session.getContext().getRealm().getName()), rPMetadataResponse, validChain.getTrustAnchorId(), validChain.getLeafId());
                     responseStatement.type(TokenUtil.EXPLICIT_REGISTRATION_RESPONSE_JWT);
                     String token = session.tokens().encodeForOpenIdFederation(responseStatement);
                     return Response.ok(token).header("Content-Type", TokenUtil.APPLICATION_EXPLICIT_REGISTRATION_RESPONSE_JWT).build();
