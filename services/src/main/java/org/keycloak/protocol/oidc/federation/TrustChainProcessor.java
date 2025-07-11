@@ -85,7 +85,7 @@ public class TrustChainProcessor {
 
                     //combine policies if valid till now
                     List<EntityStatement> parsedChain = trustChainForExplicit.getParsedChain();
-                    if (trustChainForExplicit != null && parsedChain.size() > 1 && policyRequired) {
+                    if (trustChainForExplicit != null && policyRequired) {
                         RPMetadataPolicy combinedPolicy = parsedChain.get(parsedChain.size() - 1).getMetadataPolicy().getRelyingPartyMetadataPolicy();
                         for (int i = parsedChain.size() - 2; i > 0; i--) {
                             try {
