@@ -21,6 +21,7 @@ export const ClientRegistration = () => {
 
   const anonymousTab = useTab("anonymous");
   const authenticatedTab = useTab("authenticated");
+  const openidFederationTab = useTab("openid_federation");
 
   return (
     <RoutableTabs
@@ -60,6 +61,23 @@ export const ClientRegistration = () => {
         {...authenticatedTab}
       >
         <ClientRegistrationList subType="authenticated" />
+      </Tab>
+      <Tab
+        data-testid="openid_federation"
+        title={
+          <TabTitleText>
+            {t("openIdFederationAccessPolicies")}{" "}
+            <HelpItem
+              fieldLabelId=""
+              helpText={t("clients-help:openIdFederationAccessPolicies")}
+              noVerticalAlign={false}
+              unWrap
+            />
+          </TabTitleText>
+        }
+        {...openidFederationTab}
+      >
+        <ClientRegistrationList subType="openid_federation" />
       </Tab>
     </RoutableTabs>
   );

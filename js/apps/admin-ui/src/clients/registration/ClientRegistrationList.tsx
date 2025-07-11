@@ -17,9 +17,10 @@ import useToggle from "../../utils/useToggle";
 import { toRegistrationProvider } from "../routes/AddRegistrationProvider";
 import { ClientRegistrationParams } from "../routes/ClientRegistration";
 import { AddProviderDialog } from "./AddProviderDialog";
+import { ListEmptyState } from "../../components/list-empty-state/ListEmptyState";
 
 type ClientRegistrationListProps = {
-  subType: "anonymous" | "authenticated";
+  subType: "anonymous" | "authenticated" | "openid_federation";
 };
 
 const DetailLink = (comp: ComponentRepresentation) => {
@@ -133,6 +134,14 @@ export const ClientRegistrationList = ({
             displayKey: "clients:providerId",
           },
         ]}
+        emptyState={
+          <ListEmptyState
+            message={t("noAccessPolicies")}
+            instructions={t("noAccessPoliciesInstructions")}
+            primaryActionText={t("createPolicy")}
+            onPrimaryAction={toggleAddDialog}
+          />
+        }
       />
     </>
   );

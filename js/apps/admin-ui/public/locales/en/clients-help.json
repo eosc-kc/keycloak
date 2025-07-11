@@ -193,5 +193,6 @@
   "lastUpdated": "Last time SP was autoupdated",
   "contacts": "Comma-separated list of contacts. This list is shown in the client consent.",
   "country": "Country selection is shown in the client consent.",
-  "importFile": "File to import a key"
+  "importFile": "File to import a key",
+  "openIdFederationAccessPolicies": "These policies are applied when the Client Registration Service is invoked through OpenID Federation requests."
 }

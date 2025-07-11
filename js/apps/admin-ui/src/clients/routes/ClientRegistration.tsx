@@ -3,7 +3,10 @@ import type { Path } from "react-router-dom";
 import { generateEncodedPath } from "../../utils/generateEncodedPath";
 import type { AppRouteObject } from "../../routes";
 
-export type ClientRegistrationTab = "anonymous" | "authenticated";
+export type ClientRegistrationTab =
+  | "anonymous"
+  | "authenticated"
+  | "openid_federation";
 
 export type ClientRegistrationParams = {
   realm: string;
