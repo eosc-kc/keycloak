@@ -58,6 +58,7 @@ import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.core.Response.Status;
 import jakarta.ws.rs.core.UriBuilder;
 
+import org.keycloak.OAuth2Constants;
 import org.keycloak.OAuthErrorException;
 import org.keycloak.authentication.AuthenticationFlow;
 import org.keycloak.authentication.AuthenticationFlowException;
@@ -71,6 +72,10 @@ import org.keycloak.authentication.authenticators.browser.AbstractUsernameFormAu
 import org.keycloak.authentication.authenticators.util.AcrStore;
 import org.keycloak.broker.federation.FederationProvider;
 import org.keycloak.broker.federation.SAMLFederationProviderFactory;
+import org.keycloak.broker.oidc.AbstractOAuth2IdentityProvider;
+import org.keycloak.broker.oidc.OAuth2IdentityProviderConfig;
+import org.keycloak.broker.oidc.federation.OpenIdFederationIdentityProvider;
+import org.keycloak.broker.oidc.federation.OpenIdFederationIdentityProviderFactory;
 import org.keycloak.broker.provider.AuthenticationRequest;
 import org.keycloak.broker.provider.BrokeredIdentityContext;
 import org.keycloak.broker.provider.ExchangeTokenToIdentityProviderToken;
@@ -101,6 +106,8 @@ import org.keycloak.events.Errors;
 import org.keycloak.events.EventBuilder;
 import org.keycloak.events.EventType;
 import org.keycloak.http.HttpRequest;
+import org.keycloak.http.simple.SimpleHttpRequest;
+import org.keycloak.http.simple.SimpleHttpResponse;
 import org.keycloak.locale.LocaleSelectorProvider;
 import org.keycloak.models.AccountRoles;
 import org.keycloak.models.AuthenticatedClientSessionModel;
@@ -174,6 +181,7 @@ public class IdentityBrokerService implements UserAuthenticationIdentityProvider
 
     public static final String ENDPOINT_PATH = "/endpoint";
 
+    public static final String OPENID_FEDERATION_ENDPOINT_PATH = "/oidfed-endpoint";
 
     private final RealmModel realmModel;
 
@@ -201,6 +209,10 @@ public class IdentityBrokerService implements UserAuthenticationIdentityProvider
 
     public void init() {
         this.event = new EventBuilder(realmModel, session, clientConnection).event(EventType.IDENTITY_PROVIDER_LOGIN);
+    }
+
+    public static UriBuilder openidFederationRedirectUri(UriBuilder baseUriBuilder) {
+        return baseUriBuilder.path(RealmsResource.class).path(RealmsResource.class, "getBrokerService").path(IdentityBrokerService.OPENID_FEDERATION_ENDPOINT_PATH);
     }
 
     private void checkRealm() {
@@ -344,7 +356,6 @@ public class IdentityBrokerService implements UserAuthenticationIdentityProvider
 
         }
 
-
         // Create AuthenticationSessionModel with same ID like userSession and refresh cookie
         UserSessionModel userSession = cookieResult.session();
 
@@ -363,6 +374,9 @@ public class IdentityBrokerService implements UserAuthenticationIdentityProvider
         ClientSessionCode<AuthenticationSessionModel> clientSessionCode = new ClientSessionCode<>(session, realmModel, authSession);
         clientSessionCode.setAction(AuthenticationSessionModel.Action.AUTHENTICATE.name());
         clientSessionCode.getOrGenerateCode();
+        if (OpenIdFederationIdentityProviderFactory.PROVIDER_ID.equals(identityProviderModel.getProviderId())) {
+            clientSessionCode.getClientSession().setClientNote(Details.REQUEST_IDENTITY_PROVIDER, providerAlias);
+        }
         authSession.setProtocol(client.getProtocol());
         authSession.setRedirectUri(redirectUri);
         authSession.setClientNote(OIDCLoginProtocol.STATE_PARAM, UUID.randomUUID().toString());
@@ -391,9 +405,15 @@ public class IdentityBrokerService implements UserAuthenticationIdentityProvider
                 throw new IdentityBrokerException("Identity Provider [" + providerAlias + "] not found.");
             }
             UserAuthenticationIdentityProvider<?> identityProvider = getIdentityProvider(session, identityProviderModel, UserAuthenticationIdentityProvider.class);
-            if((identityProviderModel.getFederations() != null && identityProviderModel.getFederations().size() > 0))
-                providerAlias = null;
-            Response response = identityProvider.performLogin(createAuthenticationRequest(identityProvider, providerAlias, clientSessionCode));
+            String idpRedirectUri;
+            if (OpenIdFederationIdentityProviderFactory.PROVIDER_ID.equals(identityProviderModel.getProviderId())) {
+                idpRedirectUri = getRedirectUriForOpenIdFederation();
+            } else if (identityProviderModel.getFederations() != null && !identityProviderModel.getFederations().isEmpty()) {
+                idpRedirectUri = getRedirectUriForSamlFederation();
+            } else {
+                idpRedirectUri = getRedirectUri(providerAlias);
+            }
+            Response response = identityProvider.performLogin(createAuthenticationRequest(identityProvider, idpRedirectUri, clientSessionCode));
 
             if (response != null) {
                 if (isDebugEnabled()) {
@@ -453,11 +473,20 @@ public class IdentityBrokerService implements UserAuthenticationIdentityProvider
             if (clientSessionCode.getClientSession() != null && loginHint != null) {
                 clientSessionCode.getClientSession().setClientNote(OIDCLoginProtocol.LOGIN_HINT_PARAM, loginHint);
             }
+            if (OpenIdFederationIdentityProviderFactory.PROVIDER_ID.equals(identityProviderModel.getProviderId())) {
+                clientSessionCode.getClientSession().setClientNote(Details.REQUEST_IDENTITY_PROVIDER, providerAlias);
+            }
 
             UserAuthenticationIdentityProvider<?> identityProvider = getIdentityProvider(session, identityProviderModel.getAlias());
-            if((identityProviderModel.getFederations() != null && identityProviderModel.getFederations().size() > 0))
-            	providerAlias = null;
-            Response response = identityProvider.performLogin(createAuthenticationRequest(identityProvider, providerAlias, clientSessionCode));
+            String idpRedirectUri;
+            if (OpenIdFederationIdentityProviderFactory.PROVIDER_ID.equals(identityProviderModel.getProviderId())) {
+                idpRedirectUri = getRedirectUriForOpenIdFederation();
+            } else if (identityProviderModel.getFederations() != null && !identityProviderModel.getFederations().isEmpty()) {
+                idpRedirectUri = getRedirectUriForSamlFederation();
+            } else {
+                idpRedirectUri = getRedirectUri(providerAlias);
+            }
+            Response response = identityProvider.performLogin(createAuthenticationRequest(identityProvider, idpRedirectUri, clientSessionCode));
 
             if (response != null) {
                 if (isDebugEnabled()) {
@@ -474,6 +503,96 @@ public class IdentityBrokerService implements UserAuthenticationIdentityProvider
         }
 
         return redirectToErrorPage(Response.Status.INTERNAL_SERVER_ERROR, Messages.COULD_NOT_PROCEED_WITH_AUTHENTICATION_REQUEST);
+    }
+
+    @GET
+    @Path(OPENID_FEDERATION_ENDPOINT_PATH)
+    public Response getOpenIdFederationEndpointPOST(@QueryParam(AbstractOAuth2IdentityProvider.OAUTH2_PARAMETER_STATE) String state,
+                                                    @QueryParam(AbstractOAuth2IdentityProvider.OAUTH2_PARAMETER_CODE) String authorizationCode,
+                                                    @QueryParam(OAuth2Constants.ERROR) String error,
+                                                    @QueryParam(OAuth2Constants.ERROR_DESCRIPTION) String errorDescription) {
+        if (state == null) {
+            event.event(EventType.IDENTITY_PROVIDER_LOGIN);
+            event.error(Errors.IDENTITY_PROVIDER_LOGIN_FAILURE);
+            return ErrorPage.error(session, null, Response.Status.BAD_GATEWAY, Messages.IDENTITY_PROVIDER_MISSING_STATE_ERROR);
+        }
+
+        try {
+            AuthenticationSessionModel authSession = getAndVerifyAuthenticationSession(state);
+            session.getContext().setAuthenticationSession(authSession);
+
+            String requestedAlias = authSession.getClientNote(Details.REQUEST_IDENTITY_PROVIDER);
+            if (requestedAlias == null) {
+                return ErrorPage.error(session, authSession, Response.Status.BAD_GATEWAY, "No request_identity_provider client session note exists");
+            }
+            IdentityProvider<?> idp = getIdentityProvider(session, requestedAlias);
+            if (!(idp instanceof OpenIdFederationIdentityProvider)) {
+                return ErrorPage.error(session, authSession, Response.Status.BAD_GATEWAY, "Idp with alias " + requestedAlias + " is not OpenId Federation Provider");
+            }
+            OpenIdFederationIdentityProvider provider = (OpenIdFederationIdentityProvider) idp;
+            OAuth2IdentityProviderConfig providerConfig = provider.getConfig();
+
+            if (error != null) {
+                logErroneousRedirectUrlError("Redirection URL contains an error", providerConfig);
+                if (error.equals("access_denied")) {
+                    return cancelled(providerConfig);
+                } else if (error.equals(OAuthErrorException.LOGIN_REQUIRED) || error.equals(OAuthErrorException.INTERACTION_REQUIRED)) {
+                    return error(providerConfig, error);
+                } else if (error.equals(OAuthErrorException.TEMPORARILY_UNAVAILABLE) && Constants.AUTHENTICATION_EXPIRED_MESSAGE.equals(errorDescription)) {
+                    return retryLogin(provider, authSession);
+                } else {
+                    return error(providerConfig, Messages.IDENTITY_PROVIDER_UNEXPECTED_ERROR);
+                }
+            }
+
+            if (authorizationCode == null) {
+                logErroneousRedirectUrlError("Redirection URL neither contains a code nor error parameter",
+                        providerConfig);
+                return provider.errorIdentityProviderLogin(Messages.IDENTITY_PROVIDER_MISSING_CODE_OR_ERROR_ERROR, event);
+            }
+
+            try {
+                SimpleHttpRequest simpleHttp = provider.generateTokenRequest(authorizationCode, event);
+                String response;
+                try (SimpleHttpResponse simpleResponse = simpleHttp.asResponse()) {
+                    int status = simpleResponse.getStatus();
+                    boolean success = status >= 200 && status < 400;
+                    response = simpleResponse.asString();
+
+                    if (!success) {
+                        logger.errorf("Unexpected response from token endpoint %s. status=%s, response=%s",
+                                simpleHttp.getUrl(), status, response);
+                        return provider.errorIdentityProviderLogin(Messages.IDENTITY_PROVIDER_UNEXPECTED_ERROR, event);
+                    }
+                }
+
+                BrokeredIdentityContext federatedIdentity = provider.getFederatedIdentity(response);
+
+                if (providerConfig.isStoreToken()) {
+                    // make sure that token wasn't already set by getFederatedIdentity();
+                    // want to be able to allow provider to set the token itself.
+                    if (federatedIdentity.getToken() == null) federatedIdentity.setToken(response);
+                }
+
+                federatedIdentity.setIdp(provider);
+                federatedIdentity.setAuthenticationSession(authSession);
+                return authenticated(federatedIdentity);
+            } catch (WebApplicationException e) {
+                return e.getResponse();
+            } catch (IdentityBrokerException e) {
+                return redirectToErrorPage(Response.Status.BAD_GATEWAY, Messages.COULD_NOT_SEND_AUTHENTICATION_REQUEST, e, providerConfig.getAlias());
+            } catch (Exception e) {
+                return redirectToErrorPage(Response.Status.INTERNAL_SERVER_ERROR, Messages.UNEXPECTED_ERROR_HANDLING_REQUEST, e, providerConfig.getAlias());
+            }
+        } catch (WebApplicationException e) {
+            return e.getResponse();
+        }
+    }
+
+    private void logErroneousRedirectUrlError(String mainMessage, OAuth2IdentityProviderConfig providerConfig) {
+        String providerId = providerConfig.getProviderId();
+        String redirectionUrl = session.getContext().getUri().getRequestUri().toString();
+        logger.errorf("%s. providerId=%s, redirectionUrl=%s", mainMessage, providerId, redirectionUrl);
     }
 
     @POST
@@ -578,7 +697,15 @@ public class IdentityBrokerService implements UserAuthenticationIdentityProvider
     public Response retryLogin(UserAuthenticationIdentityProvider<?> identityProvider, AuthenticationSessionModel authSession) {
         ClientSessionCode<AuthenticationSessionModel> clientSessionCode = new ClientSessionCode<>(session, realmModel, authSession);
         clientSessionCode.setAction(AuthenticationSessionModel.Action.AUTHENTICATE.name());
-        Response response = identityProvider.performLogin(createAuthenticationRequest(identityProvider, identityProvider.getConfig().getAlias(), clientSessionCode));
+        String idpRedirectUri;
+        if (OpenIdFederationIdentityProviderFactory.PROVIDER_ID.equals(identityProvider.getConfig().getProviderId())) {
+            idpRedirectUri = getRedirectUriForOpenIdFederation();
+        } else if (identityProvider.getConfig().getFederations() != null && !identityProvider.getConfig().getFederations().isEmpty()) {
+            idpRedirectUri = getRedirectUriForSamlFederation();
+        } else {
+            idpRedirectUri = getRedirectUri(identityProvider.getConfig().getAlias());
+        }
+        Response response = identityProvider.performLogin(createAuthenticationRequest(identityProvider, idpRedirectUri, clientSessionCode));
 
         if (response != null) {
             event.detail(Details.IDENTITY_PROVIDER, identityProvider.getConfig().getAlias())
@@ -1492,7 +1619,7 @@ public class IdentityBrokerService implements UserAuthenticationIdentityProvider
         return null;
     }
 
-    private AuthenticationRequest createAuthenticationRequest(UserAuthenticationIdentityProvider<?> identityProvider, String providerAlias, ClientSessionCode<AuthenticationSessionModel> clientSessionCode) {
+    private AuthenticationRequest createAuthenticationRequest(UserAuthenticationIdentityProvider<?> identityProvider, String idpRedirectUri, ClientSessionCode<AuthenticationSessionModel> clientSessionCode) {
         AuthenticationSessionModel authSession = null;
         IdentityBrokerState encodedState = null;
 
@@ -1503,15 +1630,19 @@ public class IdentityBrokerService implements UserAuthenticationIdentityProvider
             encodedState = IdentityBrokerState.decoded(relayState, authSession.getClient().getId(), authSession.getClient().getClientId(), authSession.getTabId(), clientData);
         }
 
-        return new AuthenticationRequest(this.session, this.realmModel, authSession, this.request, this.session.getContext().getUri(), encodedState, providerAlias==null ? getRedirectUri() : getRedirectUri(providerAlias));
+        return new AuthenticationRequest(this.session, this.realmModel, authSession, this.request, this.session.getContext().getUri(), encodedState, idpRedirectUri);
     }
 
     private String getRedirectUri(String providerAlias) {
         return Urls.identityProviderAuthnResponse(this.session.getContext().getUri().getBaseUri(), providerAlias, this.realmModel.getName()).toString();
     }
 
-    private String getRedirectUri() {
+    private String getRedirectUriForSamlFederation() {
         return Urls.identityProviderAuthnResponse(this.session.getContext().getUri().getBaseUri(), this.realmModel.getName()).toString();
+    }
+
+    private String getRedirectUriForOpenIdFederation() {
+        return Urls.openIdFederationAuthnResponse(this.session.getContext().getUri().getBaseUri(), this.realmModel.getName()).toString();
     }
 
     private Response redirectToErrorPage(AuthenticationSessionModel authSession, Response.Status status, String message, Object ... parameters) {
