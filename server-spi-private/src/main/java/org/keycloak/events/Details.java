@@ -40,6 +40,7 @@ public interface Details {
     String AUTH_METHOD = "auth_method";
     String IDENTITY_PROVIDER = "identity_provider";
     String IDENTITY_PROVIDER_ISSUER = "identity_provider_issuer";
+    String REQUEST_IDENTITY_PROVIDER = "request_identity_provider";
     String IDENTITY_PROVIDER_USERNAME = "identity_provider_identity";
     String IDENTITY_PROVIDER_USER_ID = "identity_provider_user_id";
     String IDENTITY_PROVIDER_BROKER_SESSION_ID = "identity_provider_broker_session_id";
