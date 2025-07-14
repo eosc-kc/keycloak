@@ -1,0 +1,29 @@
+{
+  "@context": "https://doi.org/10.5063/schema/codemeta-2.0",
+  "type": "SoftwareSourceCode",
+  "name": "RCIAM Keycloak",
+  "description": "This is a Keycloak fork developed under RCIAM to support federated identity and access management using OpenID Connect and SAML2. It includes enhancements for federation support and compliance with the AARC Blueprint Architecture.",
+  "contactPoint": {
+    "type": "ContactPoint",
+    "email": "faai@grnet.gr"
+  },
+  "codeRepository": "https://github.com/eosc-kc/keycloak",
+  "dateCreated": "2024-02-27",
+  "datePublished": "2025-07-10",
+  "version": "22.0.3-1.19",
+  "programmingLanguage": [
+    "Java",
+    "HTML",
+    "JavaScript",
+    "Freemarker"
+  ],
+  "keywords": [
+    "federated identity management",
+    "AAI",
+    "OpenID Connect",
+    "SAML2",
+    "Keycloak",
+    "RCIAM",
+    "AARC"
+  ]
+}

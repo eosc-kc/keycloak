@@ -67,6 +67,12 @@ public class Urls {
                 .build(realmName, providerAlias, client_id);
     }
 
+    public static URI openIdFederationAuthnResponse(URI baseUri, String realmName) {
+        return realmBase(baseUri).path(RealmsResource.class, "getBrokerService")
+                .path(IdentityBrokerService.OPENID_FEDERATION_ENDPOINT_PATH)
+                .build(realmName);
+    }
+
     public static URI identityProviderAuthnRequest(URI baseUri, String providerAlias, String realmName, String accessCode, String clientId, String tabId, String clientData, String loginHint) {
         UriBuilder uriBuilder = realmBase(baseUri).path(RealmsResource.class, "getBrokerService")
                 .path(IdentityBrokerService.class, "performLogin");

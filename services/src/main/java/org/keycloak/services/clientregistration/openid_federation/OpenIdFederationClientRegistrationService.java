@@ -14,13 +14,13 @@ import org.keycloak.models.OpenIdFederationConfig;
 import org.keycloak.models.OpenIdFederationGeneralConfig;
 import org.keycloak.models.RealmModel;
 import org.keycloak.models.enums.ClientRegistrationTypeEnum;
-import org.keycloak.protocol.oidc.federation.OpenIdFederationTrustChainProcessorFactory;
-import org.keycloak.protocol.oidc.federation.TrustChainProcessor;
+import org.keycloak.utils.OpenIdFederationTrustChainProcessorFactory;
+import org.keycloak.utils.TrustChainProcessor;
 import org.keycloak.representations.idm.ClientRepresentation;
 import org.keycloak.representations.openid_federation.EntityStatement;
 import org.keycloak.representations.openid_federation.EntityStatementExplicitResponse;
 import org.keycloak.representations.openid_federation.RPMetadata;
-import org.keycloak.representations.openid_federation.TrustChainForExplicit;
+import org.keycloak.representations.openid_federation.TrustChainResolution;
 import org.keycloak.services.ErrorResponseException;
 import org.keycloak.services.Urls;
 import org.keycloak.services.clientregistration.AbstractClientRegistrationProvider;
@@ -71,12 +71,12 @@ public class OpenIdFederationClientRegistrationService extends AbstractClientReg
 
             logger.info("starting validating trust chains");
 
-            List<TrustChainForExplicit> trustChainForExplicits = trustChainProcessor.constructTrustChains(statement, trustAnchorIds, true);
+            List<TrustChainResolution> trustChainResolutions = trustChainProcessor.constructTrustChains(statement, trustAnchorIds, true, true);
 
             // 9.2.1.2.1. bullet 1 found and verified at least one trust chain
-            if (!trustChainForExplicits.isEmpty()) {
+            if (!trustChainResolutions.isEmpty()) {
                 //just pick one with valid metadata policies randomly
-                TrustChainForExplicit validChain = trustChainProcessor.findAcceptableMetadataPolicyChain(trustChainForExplicits, statement);
+                TrustChainResolution validChain = trustChainProcessor.findAcceptableMetadataPolicyChain(trustChainResolutions, statement);
                 if (validChain != null) {
                     RPMetadata rPMetadata = statement.getMetadata().getRelyingPartyMetadata();
                     if (rPMetadata.getJwks() == null && rPMetadata.getJwksUri() == null) {
@@ -95,6 +95,7 @@ public class OpenIdFederationClientRegistrationService extends AbstractClientReg
                             ClientRepresentation client = updateOidcClient(rPMetadata.getClientId(), rPMetadata, session, statement.getExp());
                             URI uri = session.getContext().getUri().getAbsolutePathBuilder().path(client.getClientId()).build();
                             rPMetadataResponse = DescriptionConverter.toExternalResponse(session, client, uri, RPMetadata.class);
+                            rPMetadataResponse.setClientIdIssuedAt(Time.currentTime());
                         }
                     } catch (Exception e) {
                         logger.error("The following error was thrown during OpenId Federation Client explicit registration" , e);

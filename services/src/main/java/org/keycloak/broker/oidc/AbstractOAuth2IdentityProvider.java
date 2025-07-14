@@ -701,6 +701,65 @@ public abstract class AbstractOAuth2IdentityProvider<C extends OAuth2IdentityPro
         return session.getProvider(SignatureProvider.class, alg).signer();
     }
 
+    public Response errorIdentityProviderLogin(String message, EventBuilder event) {
+        event.event(EventType.IDENTITY_PROVIDER_LOGIN);
+        event.error(Errors.IDENTITY_PROVIDER_LOGIN_FAILURE);
+        return ErrorPage.error(session, null, Response.Status.BAD_GATEWAY, message);
+    }
+
+    public SimpleHttpRequest generateTokenRequest(String authorizationCode, EventBuilder event) {
+        OAuth2IdentityProviderConfig providerConfig = getConfig();
+        return generateTokenRequest(authorizationCode, event, providerConfig, Urls.identityProviderAuthnResponse(session.getContext().getUri().getBaseUri(),
+                providerConfig.getAlias(), session.getContext().getRealm().getName()).toString());
+    }
+
+    protected SimpleHttpRequest generateTokenRequest(String authorizationCode, EventBuilder event, OAuth2IdentityProviderConfig providerConfig, String redirectUri) {
+        KeycloakContext context = session.getContext();
+        SimpleHttpRequest tokenRequest = SimpleHttp.create(session).doPost(providerConfig.getTokenUrl())
+                .param(OAUTH2_PARAMETER_CODE, authorizationCode)
+                .param(OAUTH2_PARAMETER_REDIRECT_URI, redirectUri)
+                .param(OAUTH2_PARAMETER_GRANT_TYPE, OAUTH2_GRANT_TYPE_AUTHORIZATION_CODE);
+
+        if (providerConfig.isPkceEnabled()) {
+
+            // reconstruct the original code verifier that was used to generate the code challenge from the HttpRequest.
+            String stateParam = session.getContext().getUri().getQueryParameters().getFirst(OAuth2Constants.STATE);
+            if (stateParam == null) {
+                logger.warn("Cannot lookup PKCE code_verifier: state param is missing.");
+                return tokenRequest;
+            }
+
+            RealmModel realm = context.getRealm();
+            IdentityBrokerState idpBrokerState = IdentityBrokerState.encoded(stateParam, realm);
+            ClientModel client = realm.getClientByClientId(idpBrokerState.getClientId());
+
+            AuthenticationSessionModel authSession = ClientSessionCode.getClientSession(
+                    idpBrokerState.getEncoded(),
+                    idpBrokerState.getTabId(),
+                    session,
+                    realm,
+                    client,
+                    event,
+                    AuthenticationSessionModel.class);
+
+            if (authSession == null) {
+                logger.warnf("Cannot lookup PKCE code_verifier: authSession not found. state=%s", stateParam);
+                return tokenRequest;
+            }
+
+            String brokerCodeChallenge = authSession.getClientNote(BROKER_CODE_CHALLENGE_PARAM);
+            if (brokerCodeChallenge == null) {
+                logger.warnf("Cannot lookup PKCE code_verifier: brokerCodeChallenge not found. state=%s", stateParam);
+                return tokenRequest;
+            }
+
+            tokenRequest.param(OAuth2Constants.CODE_VERIFIER, brokerCodeChallenge);
+        }
+
+        return authenticateTokenRequest(tokenRequest);
+    }
+
+
     protected static class Endpoint {
         protected final AuthenticationCallback callback;
         protected final RealmModel realm;
@@ -735,7 +794,7 @@ public abstract class AbstractOAuth2IdentityProvider<C extends OAuth2IdentityPro
             
             if (state == null) {
                 logErroneousRedirectUrlError("Redirection URL does not contain a state parameter", providerConfig);
-                return errorIdentityProviderLogin(Messages.IDENTITY_PROVIDER_MISSING_STATE_ERROR);
+                return provider.errorIdentityProviderLogin(Messages.IDENTITY_PROVIDER_MISSING_STATE_ERROR, event);
             }
 
             try {
@@ -791,20 +850,19 @@ public abstract class AbstractOAuth2IdentityProvider<C extends OAuth2IdentityPro
                 return e.getResponse();
             } catch (IdentityBrokerException e) {
                 if (e.getMessageCode() != null) {
-                    return errorIdentityProviderLogin(e.getMessageCode());
+                    return provider.errorIdentityProviderLogin(e.getMessageCode(), event);
                 }
                 logger.error("Failed to make identity provider oauth callback", e);
                 return errorIdentityProviderLogin(Messages.IDENTITY_PROVIDER_UNEXPECTED_ERROR);
             } catch (Exception e) {
                 logger.error("Failed to make identity provider oauth callback", e);
-                return errorIdentityProviderLogin(Messages.IDENTITY_PROVIDER_UNEXPECTED_ERROR);
             }
+            return errorIdentityProviderLogin(Messages.IDENTITY_PROVIDER_UNEXPECTED_ERROR);
         }
 
         private void logErroneousRedirectUrlError(String mainMessage, OAuth2IdentityProviderConfig providerConfig) {
             String providerId = providerConfig.getProviderId();
             String redirectionUrl = session.getContext().getUri().getRequestUri().toString();
-
             logger.errorf("%s. providerId=%s, redirectionUrl=%s", mainMessage, providerId, redirectionUrl);
         }
 
@@ -815,51 +873,7 @@ public abstract class AbstractOAuth2IdentityProvider<C extends OAuth2IdentityPro
         }
 
         public SimpleHttpRequest generateTokenRequest(String authorizationCode) {
-            KeycloakContext context = session.getContext();
-            OAuth2IdentityProviderConfig providerConfig = provider.getConfig();
-            SimpleHttpRequest tokenRequest = SimpleHttp.create(session).doPost(providerConfig.getTokenUrl())
-                    .param(OAUTH2_PARAMETER_CODE, authorizationCode)
-                    .param(OAUTH2_PARAMETER_REDIRECT_URI, Urls.identityProviderAuthnResponse(context.getUri().getBaseUri(),
-                            providerConfig.getAlias(), context.getRealm().getName()).toString())
-                    .param(OAUTH2_PARAMETER_GRANT_TYPE, OAUTH2_GRANT_TYPE_AUTHORIZATION_CODE);
-
-            if (providerConfig.isPkceEnabled()) {
-
-                // reconstruct the original code verifier that was used to generate the code challenge from the HttpRequest.
-                String stateParam = session.getContext().getUri().getQueryParameters().getFirst(OAuth2Constants.STATE);
-                if (stateParam == null) {
-                    logger.warn("Cannot lookup PKCE code_verifier: state param is missing.");
-                    return tokenRequest;
-                }
-
-                RealmModel realm = context.getRealm();
-                IdentityBrokerState idpBrokerState = IdentityBrokerState.encoded(stateParam, realm);
-                ClientModel client = realm.getClientByClientId(idpBrokerState.getClientId());
-
-                AuthenticationSessionModel authSession = ClientSessionCode.getClientSession(
-                        idpBrokerState.getEncoded(),
-                        idpBrokerState.getTabId(),
-                        session,
-                        realm,
-                        client,
-                        event,
-                        AuthenticationSessionModel.class);
-
-                if (authSession == null) {
-                    logger.warnf("Cannot lookup PKCE code_verifier: authSession not found. state=%s", stateParam);
-                    return tokenRequest;
-                }
-
-                String brokerCodeChallenge = authSession.getClientNote(BROKER_CODE_CHALLENGE_PARAM);
-                if (brokerCodeChallenge == null) {
-                    logger.warnf("Cannot lookup PKCE code_verifier: brokerCodeChallenge not found. state=%s", stateParam);
-                    return tokenRequest;
-                }
-
-                tokenRequest.param(OAuth2Constants.CODE_VERIFIER, brokerCodeChallenge);
-            }
-
-            return provider.authenticateTokenRequest(tokenRequest);
+            return provider.generateTokenRequest(authorizationCode, event);
         }
 
     }

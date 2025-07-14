@@ -44,6 +44,7 @@ Our Keycloak version is working well with PostgreSQL database. For using other S
 - Extend Proxied Token Introspection to support fallback endpoints
 - Default acr value for Identity Providers login
 - OpenID Federation OP with explicit registration
+- OpenID Federation RP with explicit registration
 
 ### Changed
 - Change emailVerified User field with UserAttributeMappers (conditional trust email). [EOSC-KC-70](https://github.com/eosc-kc/keycloak/issues/70)

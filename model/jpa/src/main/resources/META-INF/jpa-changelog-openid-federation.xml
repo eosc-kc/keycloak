@@ -33,4 +33,18 @@
         <addUniqueConstraint columnNames="REALM_ID,TRUST_ANCHOR" constraintName="OPENID_FEDERATION_UNIQUE" tableName="OPENID_FEDERATION"/>
     </changeSet>
 
+    <changeSet author="cgeorgilakis@grnet.gr" id="openid-federation-idp">
+        <createTable tableName="OPENID_FEDERATION_IDP_CONFIGURATION">
+            <column name="NAME" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="VALUE" type="longvarchar"/>
+            <column name="OPENID_FEDERATION_ID" type="VARCHAR(36)">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+        <addPrimaryKey columnNames="NAME, OPENID_FEDERATION_ID" constraintName="OPENID_FEDERATION_IDP_CONFIGURATION_PK" tableName="OPENID_FEDERATION_IDP_CONFIGURATION"/>
+        <addForeignKeyConstraint baseColumnNames="OPENID_FEDERATION_ID" baseTableName="OPENID_FEDERATION_IDP_CONFIGURATION" constraintName="OPENID_FEDERATION_IDP_CONFIGURATION_FK" referencedColumnNames="INTERNAL_ID" referencedTableName="OPENID_FEDERATION"/>
+    </changeSet>
+
 </databaseChangeLog>
