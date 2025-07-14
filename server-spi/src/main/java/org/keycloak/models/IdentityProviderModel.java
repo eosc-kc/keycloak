@@ -37,6 +37,7 @@ import static org.keycloak.common.util.UriUtils.checkUri;
 public class IdentityProviderModel implements Serializable {
 
     public static final String ALIAS = "alias";
+    public static final String PROVIDER_ID = "providerId";
     public static final String ALIAS_IN = "aliasIn";
     public static final String ALIAS_NOT_IN = "aliasNotIn";
     public static final String ISSUER = "issuer";

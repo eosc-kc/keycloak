@@ -7,6 +7,8 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 
 public class EntityStatementExplicitResponse extends EntityStatement{
 
+    public EntityStatementExplicitResponse(){}
+
     @JsonProperty("trust_anchor")
     protected String trustAnchor;
 

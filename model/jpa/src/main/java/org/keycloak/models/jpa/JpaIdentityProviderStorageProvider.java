@@ -75,6 +75,7 @@ import static org.keycloak.models.IdentityProviderModel.LINK_ONLY;
 import static org.keycloak.models.IdentityProviderModel.ORGANIZATION_ID;
 import static org.keycloak.models.IdentityProviderModel.ORGANIZATION_ID_NOT_NULL;
 import static org.keycloak.models.IdentityProviderModel.POST_BROKER_LOGIN_FLOW_ID;
+import static org.keycloak.models.IdentityProviderModel.PROVIDER_ID;
 import static org.keycloak.models.IdentityProviderModel.SEARCH;
 import static org.keycloak.models.IdentityProviderModel.SHOW_IN_ACCOUNT_CONSOLE;
 import static org.keycloak.models.jpa.PaginationUtils.paginateQuery;
@@ -285,6 +286,7 @@ public class JpaIdentityProviderStorageProvider implements IdentityProviderStora
                         break;
                     }
                     case ALIAS:
+                    case PROVIDER_ID:
                     case FIRST_BROKER_LOGIN_FLOW_ID:
                     case POST_BROKER_LOGIN_FLOW_ID:
                     case ORGANIZATION_ID: {

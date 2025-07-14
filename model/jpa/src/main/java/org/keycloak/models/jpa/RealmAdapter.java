@@ -1254,6 +1254,7 @@ public class RealmAdapter implements StorageProviderRealmModel, JpaModel<RealmEn
             String entityTypesStr = fedEntity.getConfig().get(Constants.OPENID_FEDERATION_ENTITY_TYPES);
             List<String> entityTypes = (entityTypesStr == null || entityTypesStr.isEmpty()) ? new ArrayList<>() : Arrays.asList(entityTypesStr.split("##"));
             fedConfig.setEntityTypes(entityTypes.stream().map(x -> EntityTypeEnum.valueOf(x)).collect(Collectors.toList()));
+            fedConfig.setIdpConfiguration(fedEntity.getIdpConfiguration());
             return fedConfig;
         }).collect(Collectors.toList());
     }
@@ -1280,6 +1281,7 @@ public class RealmAdapter implements StorageProviderRealmModel, JpaModel<RealmEn
         fedEntity.setTrustAnchor(fedConfig.getTrustAnchor());
         fedEntity.getConfig().put(Constants.OPENID_FEDERATION_ENTITY_TYPES, fedConfig.getEntityTypes().stream().map(x -> x.name()).collect(Collectors.joining("##")));
         fedEntity.getConfig().put(Constants.OPENID_FEDERATION_CLIENT_REGISTRATION_TYPES_SUPPORTED, fedConfig.getClientRegistrationTypesSupported().stream().map(x -> x.name()).collect(Collectors.joining("##")));
+        fedEntity.setIdpConfiguration(fedConfig.getIdpConfiguration());
         fedEntity.setRealm(realm);
     }
 

@@ -1,4 +1,4 @@
-package org.keycloak.protocol.oidc.federation;
+package org.keycloak.utils;
 
 import org.keycloak.exceptions.MetadataPolicyCombinationException;
 import org.keycloak.exceptions.MetadataPolicyException;

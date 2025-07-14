@@ -37,6 +37,12 @@ public class OpenIdFederationEntity {
     @CollectionTable(name="OPENID_FEDERATION_ATTRIBUTE", joinColumns={ @JoinColumn(name="OPENID_FEDERATION_ID") })
     private Map<String, String> config  = new HashMap<>();
 
+    @ElementCollection(fetch = FetchType.EAGER)
+    @MapKeyColumn(name="NAME")
+    @Column(name="VALUE", columnDefinition = "TEXT")
+    @CollectionTable(name="OPENID_FEDERATION_IDP_CONFIGURATION", joinColumns={ @JoinColumn(name="OPENID_FEDERATION_ID") })
+    private Map<String, String> idpConfiguration  = new HashMap<>();
+
     public String getInternalId() {
         return internalId;
     }
@@ -67,5 +73,13 @@ public class OpenIdFederationEntity {
 
     public void setConfig(Map<String, String> config) {
         this.config = config;
+    }
+
+    public Map<String, String> getIdpConfiguration() {
+        return idpConfiguration;
+    }
+
+    public void setIdpConfiguration(Map<String, String> idpConfiguration) {
+        this.idpConfiguration = idpConfiguration;
     }
 }

@@ -39,6 +39,8 @@ public class OIDCIdentityProviderConfig extends OAuth2IdentityProviderConfig imp
     public static final String ALLOW_CLIENT_ID_AS_AUDIENCE = "allowClientIdAsAudience";
     public static final String VALIDATE_REFRESH_TOKEN = "validateRefreshToken";
     public static final String CLAIMS_PARAMETER_SUPPORTED = "claimsParameterSupported";
+    public static final String ISSUER = "issuer";
+    public static final String LOGOUT_URL = "logoutUrl";
 
     public OIDCIdentityProviderConfig(IdentityProviderModel identityProviderModel) {
         super(identityProviderModel);
@@ -53,10 +55,10 @@ public class OIDCIdentityProviderConfig extends OAuth2IdentityProviderConfig imp
     }
 
     public String getLogoutUrl() {
-        return getConfig().get("logoutUrl");
+        return getConfig().get(LOGOUT_URL);
     }
     public void setLogoutUrl(String url) {
-        getConfig().put("logoutUrl", url);
+        getConfig().put(LOGOUT_URL, url);
     }
 
     public boolean isSendClientIdOnLogout() {
