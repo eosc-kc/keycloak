@@ -14,7 +14,7 @@ import org.keycloak.models.OpenIdFederationConfig;
 import org.keycloak.models.OpenIdFederationGeneralConfig;
 import org.keycloak.models.RealmModel;
 import org.keycloak.models.enums.ClientRegistrationTypeEnum;
-import org.keycloak.protocol.oidc.federation.TrustChainProcessor;
+import org.keycloak.utils.OpenIdFederationTrustChainProcessor;
 import org.keycloak.representations.idm.ClientRepresentation;
 import org.keycloak.representations.openid_federation.EntityStatement;
 import org.keycloak.representations.openid_federation.EntityStatementExplicitResponse;
@@ -38,11 +38,11 @@ import java.util.stream.Stream;
 public class OpenIdFederationClientRegistrationService extends AbstractClientRegistrationProvider {
 
     private static final Logger logger = Logger.getLogger(OpenIdFederationClientRegistrationService.class);
-    private final TrustChainProcessor trustChainProcessor;
+    private final OpenIdFederationTrustChainProcessor trustChainProcessor;
 
     public OpenIdFederationClientRegistrationService(KeycloakSession session) {
         super(session);
-        this.trustChainProcessor = new TrustChainProcessor(session);
+        this.trustChainProcessor = new OpenIdFederationTrustChainProcessor(session);
     }
 
     @POST
@@ -94,6 +94,7 @@ public class OpenIdFederationClientRegistrationService extends AbstractClientReg
                             ClientRepresentation client = updateOidcClient(rPMetadata.getClientId(), rPMetadata, session, statement.getExp());
                             URI uri = session.getContext().getUri().getAbsolutePathBuilder().path(client.getClientId()).build();
                             rPMetadataResponse = DescriptionConverter.toExternalResponse(session, client, uri, RPMetadata.class);
+                            rPMetadataResponse.setClientIdIssuedAt(Time.currentTime());
                         }
                     } catch (Exception e) {
                         logger.error("The following error was thrown during OpenId Federation Client explicit registration" , e);

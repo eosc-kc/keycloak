@@ -18,29 +18,57 @@
 package org.keycloak.services.resources.admin;
 
 import jakarta.ws.rs.*;
+import jakarta.ws.rs.core.UriInfo;
+import org.apache.http.entity.ContentType;
+import org.apache.http.entity.StringEntity;
 import org.eclipse.microprofile.openapi.annotations.Operation;
 import org.eclipse.microprofile.openapi.annotations.extensions.Extension;
 import org.eclipse.microprofile.openapi.annotations.parameters.Parameter;
 import org.eclipse.microprofile.openapi.annotations.tags.Tag;
 import org.jboss.resteasy.annotations.cache.NoCache;
+import org.keycloak.broker.oidc.OAuth2IdentityProviderConfig;
+import org.keycloak.broker.oidc.OIDCIdentityProviderConfig;
+import org.keycloak.broker.oidc.federation.OpenIdFederationIdentityProviderConfig;
+import org.keycloak.broker.oidc.federation.OpenIdFederationIdentityProviderFactory;
+import org.keycloak.broker.provider.IdentityProvider;
 import org.keycloak.broker.provider.IdentityProviderFactory;
-import org.keycloak.broker.saml.SAMLIdentityProviderFactory;
+import org.keycloak.broker.provider.util.SimpleHttp;
 import org.keycloak.connections.httpclient.HttpClientProvider;
 import org.keycloak.events.admin.OperationType;
 import org.keycloak.events.admin.ResourceType;
 import org.keycloak.http.FormPartValue;
+import org.keycloak.jose.jwk.JSONWebKeySet;
 import org.keycloak.models.IdentityProviderModel;
 import org.keycloak.models.KeycloakSession;
 import org.keycloak.models.ModelDuplicateException;
+import org.keycloak.models.OpenIdFederationConfig;
+import org.keycloak.models.OpenIdFederationGeneralConfig;
 import org.keycloak.models.RealmModel;
 import org.keycloak.models.utils.ModelToRepresentation;
 import org.keycloak.models.utils.RepresentationToModel;
 import org.keycloak.models.utils.StripSecretsUtils;
+import org.keycloak.protocol.oidc.OIDCConfigAttributes;
+import org.keycloak.protocol.oidc.OIDCLoginProtocol;
+import org.keycloak.protocol.oidc.OIDCLoginProtocolService;
+import org.keycloak.protocol.oidc.OIDCWellKnownProvider;
 import org.keycloak.representations.idm.IdentityProviderRepresentation;
+import org.keycloak.representations.openid_federation.EntityStatement;
+import org.keycloak.representations.openid_federation.EntityStatementExplicitResponse;
+import org.keycloak.representations.openid_federation.Metadata;
+import org.keycloak.representations.openid_federation.OPMetadata;
+import org.keycloak.representations.openid_federation.RPMetadata;
+import org.keycloak.representations.openid_federation.TrustChainForExplicit;
 import org.keycloak.services.ErrorResponse;
+import org.keycloak.services.Urls;
 import org.keycloak.services.resources.KeycloakOpenAPI;
+import org.keycloak.services.resources.RealmsResource;
 import org.keycloak.services.resources.admin.permissions.AdminPermissionEvaluator;
+import org.keycloak.services.scheduled.OpenIdFederationIdPExpirationTask;
 import org.keycloak.services.util.ResourcesUtil;
+import org.keycloak.urls.UrlType;
+import org.keycloak.util.TokenUtil;
+import org.keycloak.utils.OpenIdFederationTrustChainProcessor;
+import org.keycloak.utils.OpenIdFederationUtils;
 import org.keycloak.utils.ReservedCharValidator;
 
 import jakarta.ws.rs.core.MediaType;
@@ -48,6 +76,8 @@ import jakarta.ws.rs.core.MultivaluedMap;
 import jakarta.ws.rs.core.Response;
 import java.io.IOException;
 import java.io.InputStream;
+import java.time.LocalDateTime;
+import java.time.ZoneOffset;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -102,7 +132,6 @@ public class IdentityProvidersResource {
     /**
      * Import identity provider from uploaded JSON file
      *
-     * @param input
      * @return
      * @throws IOException
      */
@@ -236,18 +265,26 @@ public class IdentityProvidersResource {
         this.auth.realm().requireManageIdentityProviders();
 
         ReservedCharValidator.validate(representation.getAlias());
-        
+
         try {
-            IdentityProviderModel identityProvider = RepresentationToModel.toModel(realm, representation, session);
+            IdentityProviderModel identityProvider = OpenIdFederationIdentityProviderFactory.PROVIDER_ID.equals(representation.getProviderId()) ? createModelForOpenIdFederation(representation) : RepresentationToModel.toModel(realm, representation, session);
             this.realm.addIdentityProvider(identityProvider);
 
             representation.setInternalId(identityProvider.getInternalId());
             //for autoupdated IdPs create schedule task
             if ("true".equals(identityProvider.getConfig().get(IdentityProviderModel.AUTO_UPDATE)))
                 createScheduleTask(identityProvider.getAlias(), Long.parseLong(identityProvider.getConfig().get(IdentityProviderModel.REFRESH_PERIOD)) * 1000);
+            //create expiration task for OpenIdFederation IdP
+            if (identityProvider.getConfig().get(OIDCConfigAttributes.EXPIRATION_TIME) != null) {
+                TimerProvider timer = session.getProvider(TimerProvider.class);
+                OpenIdFederationIdPExpirationTask task = new OpenIdFederationIdPExpirationTask(identityProvider.getAlias(), realm.getId());
+                long expiration = (Long.valueOf(identityProvider.getConfig().get(OIDCConfigAttributes.EXPIRATION_TIME)) - LocalDateTime.now().toEpochSecond(ZoneOffset.UTC)) * 1000;
+                ClusterAwareScheduledTaskRunner taskRunner = new ClusterAwareScheduledTaskRunner(session.getKeycloakSessionFactory(), task, expiration);
+                timer.schedule(taskRunner, expiration, "OpenIdFederationIdPExpirationTask_" + identityProvider.getAlias());
+            }
             adminEvent.operation(OperationType.CREATE).resourcePath(session.getContext().getUri(), identityProvider.getAlias())
                     .representation(StripSecretsUtils.strip(representation)).success();
-            
+
             return Response.created(session.getContext().getUri().getAbsolutePathBuilder().path(representation.getAlias()).build()).build();
         } catch (IllegalArgumentException e) {
             String message = e.getMessage();
@@ -262,11 +299,83 @@ public class IdentityProvidersResource {
         }
     }
 
+    private IdentityProviderModel createModelForOpenIdFederation(IdentityProviderRepresentation representation){
+        if (realm.isOpenIdFederationEnabled() && representation.getConfig().get(OpenIdFederationIdentityProviderConfig.TRUST_ANCHOR_ID) != null && representation.getConfig().get(OIDCIdentityProviderConfig.ISSUER) != null) {
+            try {
+                OpenIdFederationGeneralConfig federationGeneralConfig = realm.getOpenIdFederationGeneralConfig();
+                OpenIdFederationConfig federationConfig = realm.getOpenIdFederations().stream().filter(x -> representation.getConfig().get(OpenIdFederationIdentityProviderConfig.TRUST_ANCHOR_ID).equals(x.getTrustAnchor())).findAny().orElseThrow(() -> new NotFoundException("Trust anchor does not exist"));
+                OpenIdFederationTrustChainProcessor trustChainProcessor = new OpenIdFederationTrustChainProcessor(session);
+                String opIssuer = representation.getConfig().get(OIDCIdentityProviderConfig.ISSUER);
+                EntityStatement opStatement = trustChainProcessor.parseAndValidateSelfSigned(OpenIdFederationUtils.getSelfSignedToken(opIssuer, session));
+                if (!trustChainProcessor.validateEntityStatementFields(opStatement, opIssuer, opIssuer) || opStatement.getMetadata().getOpenIdProviderMetadata() == null || !opStatement.getMetadata().getOpenIdProviderMetadata().getClientRegistrationTypes().contains("explicit") || opStatement.getMetadata().getOpenIdProviderMetadata().getFederationRegistrationEndpoint() == null) {
+                    throw new BadRequestException("No valid OP Entity Statement");
+                }
+                List<TrustChainForExplicit> trustChainForExplicits = trustChainProcessor.constructTrustChains(opStatement, Stream.of(federationConfig.getTrustAnchor()).collect(Collectors.toSet()), false);
+                if (trustChainForExplicits.isEmpty()) {
+                    throw new BadRequestException("No common trust chain found");
+                }
+                IdentityProviderFactory providerFactory = (IdentityProviderFactory) session.getKeycloakSessionFactory().getProviderFactory(
+                        IdentityProvider.class, OpenIdFederationIdentityProviderFactory.PROVIDER_ID);
+                if (providerFactory == null) {
+                    throw new IllegalArgumentException("Problem creating Identity Provider factory");
+                }
+                IdentityProviderModel model = providerFactory.parseConfig(session, session.getProvider(HttpClientProvider.class).get(opIssuer+OpenIdFederationUtils.OIDC_WELL_KNOWN_SUBPATH), new OpenIdFederationIdentityProviderConfig());
+
+                UriInfo frontendUriInfo = session.getContext().getUri(UrlType.FRONTEND);
+                UriInfo backendUriInfo = session.getContext().getUri(UrlType.BACKEND);
+                JSONWebKeySet jwks = trustChainProcessor.getKeySet();
+                EntityStatement entityStatement = new EntityStatement(Urls.realmIssuer(frontendUriInfo.getBaseUri(), realm.getName()), Long.valueOf(federationGeneralConfig.getLifespan()), new ArrayList<>(federationGeneralConfig.getAuthorityHints()), jwks);
+                entityStatement.addAudience(opIssuer);
+                Metadata metadata = new Metadata();
+                RPMetadata rPMetadata = OpenIdFederationUtils.createRPMetadata(federationGeneralConfig, federationConfig.getClientRegistrationTypesSupported().stream(), OpenIdFederationUtils.commonMetadata(federationGeneralConfig), RealmsResource.protocolUrl(backendUriInfo).clone().path(OIDCLoginProtocolService.class, "certs").build(realm.getName(),
+                        OIDCLoginProtocol.LOGIN_PROTOCOL).toString());
+                rPMetadata.setClientName(representation.getDisplayName());
+                rPMetadata.setRedirectUris(Stream.of(Urls.identityProviderAuthnResponse(frontendUriInfo.getBaseUri(), representation.getAlias(), realm.getName()).toString()).collect(Collectors.toList()));
+                metadataFromOP(rPMetadata, federationConfig.getIdpConfiguration(), opStatement.getMetadata().getOpenIdProviderMetadata());
+                metadataFromFederation(rPMetadata, federationConfig.getIdpConfiguration());
+                metadata.setRelyingPartyMetadata(rPMetadata);
+                entityStatement.setMetadata(metadata);
+                StringEntity entity = new StringEntity(session.tokens().encodeForOpenIdFederation(entityStatement), ContentType.create(TokenUtil.APPLICATION_ENTITY_STATEMENT_JWT));
+                SimpleHttp.Response response = SimpleHttp.doPost(opStatement.getMetadata().getOpenIdProviderMetadata().getFederationRegistrationEndpoint(), session).entity(entity).asResponse();
+                if (response.getStatus() < 200 || response.getStatus() >= 400) {
+                    throw new BadRequestException("Error during explicit client registration with body : "+ response.asString());
+                }
+                EntityStatementExplicitResponse statementResponse = trustChainProcessor.parseAndValidateSelfSigned(response.asString(), EntityStatementExplicitResponse.class, opStatement.getJwks());
+                if (!trustChainProcessor.validateEntityStatementFields(statementResponse, opIssuer, opIssuer) || statementResponse.getTrustAnchor() == null || LocalDateTime.now().toEpochSecond(ZoneOffset.UTC) > statementResponse.getExp() ) {
+                    throw new BadRequestException("No valid OP Entity Statement");
+                }
+                OpenIdFederationUtils.convertEntityStatementToIdp(model, realm, representation.getAlias(), statementResponse, federationConfig.getIdpConfiguration());
+                return model;
+            } catch (Exception e) {
+                throw ErrorResponse.error(e.getMessage(), BAD_REQUEST);
+            }
+        } else {
+            throw ErrorResponse.error(realm.isOpenIdFederationEnabled() ? "This realm does not support openid Federation" : "Trust anchor and issuer are required", BAD_REQUEST);
+        }
+    }
+
     private void createScheduleTask(String alias,long interval) {
         TimerProvider timer = session.getProvider(TimerProvider.class);
         AutoUpdateIdentityProviders autoUpdateProvider = new AutoUpdateIdentityProviders(alias, realm.getId());
         ClusterAwareScheduledTaskRunner taskRunner = new ClusterAwareScheduledTaskRunner(session.getKeycloakSessionFactory(), autoUpdateProvider, interval);
         timer.schedule(taskRunner, interval, realm.getId()+"_AutoUpdateIdP_" + alias);
+    }
+
+    private void metadataFromFederation(RPMetadata rPMetadata, Map<String, String> federationConfig){
+        rPMetadata.setScope(federationConfig.get(OAuth2IdentityProviderConfig.DEFAULT_SCOPE));
+        String clientAuthMethod = federationConfig.get(OAuth2IdentityProviderConfig.CLIENT_AUTH_METHOD);
+        rPMetadata.setGrantTypes(Stream.of(clientAuthMethod != null ? clientAuthMethod : OIDCLoginProtocol.CLIENT_SECRET_POST).collect(Collectors.toList()));
+    }
+
+    private void metadataFromOP(RPMetadata rPMetadata, Map<String, String> federationConfig, OPMetadata opMetadata) {
+        List<String> subjectTypesSupported = federationConfig.get(OpenIdFederationUtils.SUBJECT_TYPES_SUPPORTED) == null
+                ? OIDCWellKnownProvider.DEFAULT_SUBJECT_TYPES_SUPPORTED
+                : Arrays.asList(federationConfig.get(OpenIdFederationUtils.SUBJECT_TYPES_SUPPORTED).split("##"));
+
+        rPMetadata.setSubjectType(subjectTypesSupported.stream()
+                .filter(x -> opMetadata.getSubjectTypesSupported().contains(x))
+                .findFirst()
+                .orElseThrow(() -> new BadRequestException("No subject type common exists")));
     }
 
     @Path("instances/{alias}")

@@ -35,6 +35,8 @@ public class OIDCIdentityProviderConfig extends OAuth2IdentityProviderConfig {
     public static final String TOKEN_INTROSPECTION_URL = "tokenIntrospectionUrl";
     public static final String VALIDATE_REFRESH_TOKEN = "validateRefreshToken";
     public static final String CLAIMS_PARAMETER_SUPPORTED = "claimsParameterSupported";
+    public static final String ISSUER = "issuer";
+    public static final String LOGOUT_URL = "logoutUrl";
 
     public OIDCIdentityProviderConfig(IdentityProviderModel identityProviderModel) {
         super(identityProviderModel);
@@ -52,16 +54,16 @@ public class OIDCIdentityProviderConfig extends OAuth2IdentityProviderConfig {
     }
 
     public String getIssuer() {
-        return getConfig().get("issuer");
+        return getConfig().get(ISSUER);
     }
     public void setIssuer(String issuer) {
-        getConfig().put("issuer", issuer);
+        getConfig().put(ISSUER, issuer);
     }
     public String getLogoutUrl() {
-        return getConfig().get("logoutUrl");
+        return getConfig().get(LOGOUT_URL);
     }
     public void setLogoutUrl(String url) {
-        getConfig().put("logoutUrl", url);
+        getConfig().put(LOGOUT_URL, url);
     }
 
     public String getPublicKeySignatureVerifier() {

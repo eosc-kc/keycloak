@@ -17,4 +17,5 @@
 
 org.keycloak.broker.oidc.OIDCIdentityProviderFactory
 org.keycloak.broker.oidc.KeycloakOIDCIdentityProviderFactory
+org.keycloak.broker.oidc.federation.OpenIdFederationIdentityProviderFactory
 org.keycloak.broker.saml.SAMLIdentityProviderFactory

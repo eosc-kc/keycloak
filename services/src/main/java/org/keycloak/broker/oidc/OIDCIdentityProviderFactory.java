@@ -25,6 +25,7 @@ import org.keycloak.util.JsonSerialization;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Map;
+import java.util.function.Function;
 
 /**
  * @author Pedro Igor
@@ -55,33 +56,43 @@ public class OIDCIdentityProviderFactory extends AbstractIdentityProviderFactory
 
     @Override
     public IdentityProviderModel parseConfig(KeycloakSession session, InputStream inputStream, IdentityProviderModel model) {
-        return parseOIDCConfig(session, inputStream, model);
+        return parseOIDCConfig(session, inputStream, model, OIDCIdentityProviderConfig.class);
     }
 
-    protected static IdentityProviderModel parseOIDCConfig(KeycloakSession session, InputStream inputStream, IdentityProviderModel model) {
+    protected static <T extends OIDCIdentityProviderConfig> T parseOIDCConfig(
+            KeycloakSession session,
+            InputStream inputStream,
+            IdentityProviderModel model,
+            Class<T> configClass
+    ) {
         OIDCConfigurationRepresentation rep;
         try {
             rep = JsonSerialization.readValue(inputStream, OIDCConfigurationRepresentation.class);
         } catch (IOException e) {
             throw new RuntimeException("failed to load openid connect metadata", e);
         }
-        OIDCIdentityProviderConfig config = new OIDCIdentityProviderConfig(model);
-        config.setIssuer(rep.getIssuer());
-        config.setLogoutUrl(rep.getLogoutEndpoint());
-        config.setAuthorizationUrl(rep.getAuthorizationEndpoint());
-        config.setTokenUrl(rep.getTokenEndpoint());
-        config.setUserInfoUrl(rep.getUserinfoEndpoint());
-        if (rep.getJwksUri() != null) {
-            config.setValidateSignature(true);
-            config.setUseJwksUrl(true);
-            config.setJwksUrl(rep.getJwksUri());
-        } else  if (config.getJwksUrl() != null) {
-            config.setUseJwksUrl(false);
-            config.setJwksUrl(null);
+        try {
+            T config = configClass.getConstructor(IdentityProviderModel.class).newInstance(model);
+            config.setIssuer(rep.getIssuer());
+            config.setLogoutUrl(rep.getLogoutEndpoint());
+            config.setAuthorizationUrl(rep.getAuthorizationEndpoint());
+            config.setTokenUrl(rep.getTokenEndpoint());
+            config.setUserInfoUrl(rep.getUserinfoEndpoint());
+            if (rep.getJwksUri() != null) {
+                config.setValidateSignature(true);
+                config.setUseJwksUrl(true);
+                config.setJwksUrl(rep.getJwksUri());
+            } else if (config.getJwksUrl() != null) {
+                config.setUseJwksUrl(false);
+                config.setJwksUrl(null);
+            }
+            config.setTokenIntrospectionUrl(rep.getIntrospectionEndpoint());
+            config.setClaimsParameterSupported(rep.getClaimsParameterSupported() != null ? rep.getClaimsParameterSupported() : false);
+            return config;
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to instantiate config", e);
         }
-        config.setTokenIntrospectionUrl(rep.getIntrospectionEndpoint());
-        config.setClaimsParameterSupported(rep.getClaimsParameterSupported() != null ? rep.getClaimsParameterSupported() : false);
-        return config;
+
     }
 
 }

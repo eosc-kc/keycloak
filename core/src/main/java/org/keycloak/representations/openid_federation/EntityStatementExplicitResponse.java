@@ -7,6 +7,8 @@ import java.util.stream.Stream;
 
 public class EntityStatementExplicitResponse extends EntityStatement{
 
+    public EntityStatementExplicitResponse(){}
+
     @JsonProperty("trust_anchor")
     protected String trustAnchor;
 

@@ -917,8 +917,8 @@ public class ModelToRepresentation {
         federationRep.setTrustAnchor(model.getTrustAnchor());
         federationRep.setEntityTypes(model.getEntityTypes().stream().map(EntityTypeEnum::toString).collect(Collectors.toList()));
         federationRep.setClientRegistrationTypesSupported(model.getClientRegistrationTypesSupported().stream().map(ClientRegistrationTypeEnum::toString).collect(Collectors.toList()));
+        federationRep.setIdpConfiguration(model.getIdpConfiguration());
         return federationRep;
-
     }
 
     public static FederationMapperRepresentation toRepresentation(FederationMapperModel model) {

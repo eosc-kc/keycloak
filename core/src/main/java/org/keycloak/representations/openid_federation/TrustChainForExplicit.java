@@ -4,9 +4,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class TrustChainForExplicit {
-
-//    private List<String> chain;
-
     private List<EntityStatement> parsedChain;
 
     private RPMetadataPolicy combinedPolicy;
@@ -16,18 +13,9 @@ public class TrustChainForExplicit {
     private String leafId;
 
     public TrustChainForExplicit() {
-//        chain = new ArrayList<>();
         parsedChain = new ArrayList<>();
         combinedPolicy = new RPMetadataPolicy();
     }
-
-//    public List<String> getChain() {
-//        return chain;
-//    }
-//
-//    public void setChain(List<String> chain) {
-//        this.chain = chain;
-//    }
 
     public List<EntityStatement> getParsedChain() {
         return parsedChain;

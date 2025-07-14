@@ -36,6 +36,10 @@ public class OAuth2IdentityProviderConfig extends IdentityProviderModel {
     public static final String PKCE_METHOD = "pkceMethod";
     public static final String PASS_SCOPE = "passScope";
     public static final String OPTIONAL_SCOPE = "optionalScope";
+    public static final String DEFAULT_SCOPE = "defaultScope";
+    public static final String CLIENT_AUTH_METHOD = "clientAuthMethod";
+    public static final String CLIENT_ID = "clientId";
+    public static final String CLIENT_SECRET = "clientSecret";
 
     public OAuth2IdentityProviderConfig(IdentityProviderModel model) {
         super(model);
@@ -70,35 +74,35 @@ public class OAuth2IdentityProviderConfig extends IdentityProviderModel {
     }
 
     public String getClientId() {
-        return getConfig().get("clientId");
+        return getConfig().get(CLIENT_ID);
     }
 
     public void setClientId(String clientId) {
-        getConfig().put("clientId", clientId);
+        getConfig().put(CLIENT_ID, clientId);
     }
 
     public String getClientAuthMethod() {
-        return getConfig().getOrDefault("clientAuthMethod", OIDCLoginProtocol.CLIENT_SECRET_POST);
+        return getConfig().getOrDefault(CLIENT_AUTH_METHOD, OIDCLoginProtocol.CLIENT_SECRET_POST);
     }
 
     public void setClientAuthMethod(String clientAuth) {
-        getConfig().put("clientAuthMethod", clientAuth);
+        getConfig().put(CLIENT_AUTH_METHOD, clientAuth);
     }
 
     public String getClientSecret() {
-        return getConfig().get("clientSecret");
+        return getConfig().get(CLIENT_SECRET);
     }
 
     public void setClientSecret(String clientSecret) {
-        getConfig().put("clientSecret", clientSecret);
+        getConfig().put(CLIENT_SECRET, clientSecret);
     }
 
     public String getDefaultScope() {
-        return getConfig().get("defaultScope");
+        return getConfig().get(DEFAULT_SCOPE);
     }
 
     public void setDefaultScope(String defaultScope) {
-        getConfig().put("defaultScope", defaultScope);
+        getConfig().put(DEFAULT_SCOPE, defaultScope);
     }
     
     public boolean isJWTAuthentication() {
