@@ -6,6 +6,7 @@ import java.util.Map;
 import org.keycloak.TokenCategory;
 import org.keycloak.jose.jwk.JSONWebKeySet;
 import org.keycloak.representations.JsonWebToken;
+import org.keycloak.util.TokenUtil;
 
 import com.fasterxml.jackson.annotation.JsonAnyGetter;
 import com.fasterxml.jackson.annotation.JsonAnySetter;
@@ -53,6 +54,16 @@ public class EntityStatement extends JsonWebToken {
     protected String source_endpoint;
 
     public EntityStatement (){}
+
+    public EntityStatement (String issuer, Long expiration, List<String> authorityHints, JSONWebKeySet jwks){
+        this.issuer = issuer;
+        this.subject = issuer;
+        this.issuedNow();
+        this.exp(this.iat + expiration);
+        this.authorityHints = authorityHints;
+        this.setJwks(jwks);
+        this.type(TokenUtil.ENTITY_STATEMENT_JWT);
+    }
 
     public JSONWebKeySet getJwks() {
         return jwks;
