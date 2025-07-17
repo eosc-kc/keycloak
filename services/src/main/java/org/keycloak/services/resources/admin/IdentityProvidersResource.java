@@ -310,7 +310,7 @@ public class IdentityProvidersResource {
                 if (!trustChainProcessor.validateEntityStatementFields(opStatement, opIssuer, opIssuer) || opStatement.getMetadata().getOpenIdProviderMetadata() == null || !opStatement.getMetadata().getOpenIdProviderMetadata().getClientRegistrationTypes().contains("explicit") || opStatement.getMetadata().getOpenIdProviderMetadata().getFederationRegistrationEndpoint() == null) {
                     throw new BadRequestException("No valid OP Entity Statement");
                 }
-                List<TrustChainForExplicit> trustChainForExplicits = trustChainProcessor.constructTrustChains(opStatement, Stream.of(federationConfig.getTrustAnchor()).collect(Collectors.toSet()), false);
+                List<TrustChainForExplicit> trustChainForExplicits = trustChainProcessor.constructTrustChains(opStatement, Stream.of(federationConfig.getTrustAnchor()).collect(Collectors.toSet()), false, false);
                 if (trustChainForExplicits.isEmpty()) {
                     throw new BadRequestException("No common trust chain found");
                 }
@@ -319,7 +319,7 @@ public class IdentityProvidersResource {
                 if (providerFactory == null) {
                     throw new IllegalArgumentException("Problem creating Identity Provider factory");
                 }
-                IdentityProviderModel model = providerFactory.parseConfig(session, session.getProvider(HttpClientProvider.class).get(opIssuer+OpenIdFederationUtils.OIDC_WELL_KNOWN_SUBPATH), new OpenIdFederationIdentityProviderConfig());
+               IdentityProviderModel model = providerFactory.parseConfig(session, session.getProvider(HttpClientProvider.class).get(opIssuer+OpenIdFederationUtils.OIDC_WELL_KNOWN_SUBPATH), new OpenIdFederationIdentityProviderConfig());
 
                 UriInfo frontendUriInfo = session.getContext().getUri(UrlType.FRONTEND);
                 UriInfo backendUriInfo = session.getContext().getUri(UrlType.BACKEND);

@@ -12,6 +12,8 @@ public class TrustChainForExplicit {
 
     private String leafId;
 
+    private EntityStatement initialEntity;
+
     public TrustChainForExplicit() {
         parsedChain = new ArrayList<>();
         combinedPolicy = new RPMetadataPolicy();
@@ -47,5 +49,13 @@ public class TrustChainForExplicit {
 
     public void setLeafId(String leafId) {
         this.leafId = leafId;
+    }
+
+    public EntityStatement getInitialEntity() {
+        return initialEntity;
+    }
+
+    public void setInitialEntity(EntityStatement initialEntity) {
+        this.initialEntity = initialEntity;
     }
 }

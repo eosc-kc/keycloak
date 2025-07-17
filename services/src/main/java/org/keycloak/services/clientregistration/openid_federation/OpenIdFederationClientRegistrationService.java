@@ -70,7 +70,7 @@ public class OpenIdFederationClientRegistrationService extends AbstractClientReg
 
             logger.info("starting validating trust chains");
 
-            List<TrustChainForExplicit> trustChainForExplicits = trustChainProcessor.constructTrustChains(statement, trustAnchorIds, true);
+            List<TrustChainForExplicit> trustChainForExplicits = trustChainProcessor.constructTrustChains(statement, trustAnchorIds, true, true);
 
             // 9.2.1.2.1. bullet 1 found and verified at least one trust chain
             if (!trustChainForExplicits.isEmpty()) {
