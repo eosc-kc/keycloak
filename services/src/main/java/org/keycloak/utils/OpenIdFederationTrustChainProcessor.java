@@ -136,14 +136,14 @@ public class OpenIdFederationTrustChainProcessor {
                             //set initial entity if no intermediates entities between trust achor and initial entity
                             if ((forRp && subNodeSubordinateES.getMetadata().getRelyingPartyMetadata() == null) || (!forRp && subNodeSubordinateES.getMetadata().getOpenIdProviderMetadata() == null ))
                                 throw new ErrorResponseException(Errors.INVALID_TRUST_CHAIN, "Trust chain is not valid", Response.Status.BAD_REQUEST);
-                            trustAnchor.setInitialEntity(initialEntity);
+                            trustAnchor.setInitialEntity(subNodeSubordinateES);
                         } else {
                             String initialEntityFetch = OpenIdFederationUtils.getSubordinateToken(fedApiUrl, initialEntity.getIssuer(), session);
                             EntityStatement initialEntityFetchStatement = parseAndValidateSelfSigned(initialEntityFetch, EntityStatement.class, subNodeSelfES.getJwks());
                             if (!validateEntityStatementFields(subNodeSubordinateES, authHint, leafEs.getIssuer()) || (forRp && initialEntityFetchStatement.getMetadata().getRelyingPartyMetadata() == null) || (!forRp && initialEntityFetchStatement.getMetadata().getOpenIdProviderMetadata() == null )) {
                                 throw new ErrorResponseException(Errors.INVALID_TRUST_CHAIN, "Trust chain is not valid", Response.Status.BAD_REQUEST);
                             }
-                            trustAnchor.setInitialEntity(initialEntity);
+                            trustAnchor.setInitialEntity(initialEntityFetchStatement);
                         }
                         chainsList.add(trustAnchor);
                     } else {

@@ -32,7 +32,7 @@ public class OpenIdFederationIdentityProviderFactory extends OIDCIdentityProvide
 
     @Override
     public IdentityProviderModel parseConfig(KeycloakSession session, InputStream inputStream, IdentityProviderModel model) {
-        return parseOIDCConfig(session, inputStream, model, OpenIdFederationIdentityProviderConfig.class);
+        return parseOIDCConfig(inputStream, model, OpenIdFederationIdentityProviderConfig.class);
     }
 
 }

@@ -30,7 +30,7 @@ import org.keycloak.broker.oidc.OAuth2IdentityProviderConfig;
 import org.keycloak.broker.oidc.OIDCIdentityProviderConfig;
 import org.keycloak.broker.oidc.federation.OpenIdFederationIdentityProviderConfig;
 import org.keycloak.broker.oidc.federation.OpenIdFederationIdentityProviderFactory;
-import org.keycloak.broker.provider.IdentityProvider;
+import org.keycloak.broker.oidc.OIDCIdentityProviderFactory;
 import org.keycloak.broker.provider.IdentityProviderFactory;
 import org.keycloak.broker.provider.util.SimpleHttp;
 import org.keycloak.connections.httpclient.HttpClientProvider;
@@ -314,12 +314,8 @@ public class IdentityProvidersResource {
                 if (trustChainForExplicits.isEmpty()) {
                     throw new BadRequestException("No common trust chain found");
                 }
-                IdentityProviderFactory providerFactory = (IdentityProviderFactory) session.getKeycloakSessionFactory().getProviderFactory(
-                        IdentityProvider.class, OpenIdFederationIdentityProviderFactory.PROVIDER_ID);
-                if (providerFactory == null) {
-                    throw new IllegalArgumentException("Problem creating Identity Provider factory");
-                }
-               IdentityProviderModel model = providerFactory.parseConfig(session, session.getProvider(HttpClientProvider.class).get(opIssuer+OpenIdFederationUtils.OIDC_WELL_KNOWN_SUBPATH), new OpenIdFederationIdentityProviderConfig());
+                opStatement = trustChainForExplicits.get(0).getInitialEntity();
+                IdentityProviderModel model = OIDCIdentityProviderFactory.parseOIDCConfig(opStatement.getMetadata().getOpenIdProviderMetadata(),  OpenIdFederationIdentityProviderConfig.class, new OpenIdFederationIdentityProviderConfig());
 
                 UriInfo frontendUriInfo = session.getContext().getUri(UrlType.FRONTEND);
                 UriInfo backendUriInfo = session.getContext().getUri(UrlType.BACKEND);
@@ -329,9 +325,8 @@ public class IdentityProvidersResource {
                 Metadata metadata = new Metadata();
                 RPMetadata rPMetadata = OpenIdFederationUtils.createRPMetadata(federationGeneralConfig, federationConfig.getClientRegistrationTypesSupported().stream(), OpenIdFederationUtils.commonMetadata(federationGeneralConfig), RealmsResource.protocolUrl(backendUriInfo).clone().path(OIDCLoginProtocolService.class, "certs").build(realm.getName(),
                         OIDCLoginProtocol.LOGIN_PROTOCOL).toString());
-                rPMetadata.setClientName(representation.getDisplayName());
                 rPMetadata.setRedirectUris(Stream.of(Urls.identityProviderAuthnResponse(frontendUriInfo.getBaseUri(), representation.getAlias(), realm.getName()).toString()).collect(Collectors.toList()));
-                metadataFromOP(rPMetadata, federationConfig.getIdpConfiguration(), opStatement.getMetadata().getOpenIdProviderMetadata());
+                metadataFromOP(rPMetadata, federationConfig.getIdpConfiguration(), opStatement.getMetadata().getOpenIdProviderMetadata(), opStatement.getSubject());
                 metadataFromFederation(rPMetadata, federationConfig.getIdpConfiguration());
                 metadata.setRelyingPartyMetadata(rPMetadata);
                 entityStatement.setMetadata(metadata);
@@ -367,7 +362,7 @@ public class IdentityProvidersResource {
         rPMetadata.setGrantTypes(Stream.of(clientAuthMethod != null ? clientAuthMethod : OIDCLoginProtocol.CLIENT_SECRET_POST).collect(Collectors.toList()));
     }
 
-    private void metadataFromOP(RPMetadata rPMetadata, Map<String, String> federationConfig, OPMetadata opMetadata) {
+    private void metadataFromOP(RPMetadata rPMetadata, Map<String, String> federationConfig, OPMetadata opMetadata, String subject) {
         List<String> subjectTypesSupported = federationConfig.get(OpenIdFederationUtils.SUBJECT_TYPES_SUPPORTED) == null
                 ? OIDCWellKnownProvider.DEFAULT_SUBJECT_TYPES_SUPPORTED
                 : Arrays.asList(federationConfig.get(OpenIdFederationUtils.SUBJECT_TYPES_SUPPORTED).split("##"));
@@ -376,6 +371,7 @@ public class IdentityProvidersResource {
                 .filter(x -> opMetadata.getSubjectTypesSupported().contains(x))
                 .findFirst()
                 .orElseThrow(() -> new BadRequestException("No subject type common exists")));
+        rPMetadata.setClientName(opMetadata.getCommonMetadata().getOrganizationName() != null ? opMetadata.getCommonMetadata().getOrganizationName() : subject);
     }
 
     @Path("instances/{alias}")
