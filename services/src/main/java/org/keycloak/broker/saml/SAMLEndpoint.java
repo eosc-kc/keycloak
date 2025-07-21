@@ -29,13 +29,11 @@ import org.keycloak.common.VerificationException;
 import org.keycloak.dom.saml.v2.assertion.AssertionType;
 import org.keycloak.dom.saml.v2.assertion.AttributeStatementType;
 import org.keycloak.dom.saml.v2.assertion.AttributeType;
-import org.keycloak.dom.saml.v2.assertion.AuthnContextClassRefType;
 import org.keycloak.dom.saml.v2.assertion.AuthnStatementType;
 import org.keycloak.dom.saml.v2.assertion.NameIDType;
 import org.keycloak.dom.saml.v2.assertion.SubjectConfirmationDataType;
 import org.keycloak.dom.saml.v2.assertion.SubjectConfirmationType;
 import org.keycloak.dom.saml.v2.assertion.SubjectType;
-import org.keycloak.dom.saml.v2.assertion.URIType;
 import org.keycloak.dom.saml.v2.protocol.LogoutRequestType;
 import org.keycloak.dom.saml.v2.protocol.RequestAbstractType;
 import org.keycloak.dom.saml.v2.protocol.ResponseType;
@@ -785,7 +783,7 @@ public class SAMLEndpoint {
         }
 
         private String getExpectedDestination() {
-            return Urls.identityProviderAuthnResponse(session.getContext().getUri().getBaseUri(), realm.getName()).toString();
+            return Urls.samlFederationAuthnResponse(session.getContext().getUri().getBaseUri(), realm.getName()).toString();
         }
     }
 

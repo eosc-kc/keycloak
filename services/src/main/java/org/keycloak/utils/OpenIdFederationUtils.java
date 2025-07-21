@@ -1,5 +1,6 @@
 package org.keycloak.utils;
 
+import jakarta.ws.rs.core.UriInfo;
 import org.keycloak.OAuth2Constants;
 import org.keycloak.broker.oidc.OAuth2IdentityProviderConfig;
 import org.keycloak.broker.oidc.OIDCIdentityProviderConfig;
@@ -18,6 +19,7 @@ import org.keycloak.protocol.oidc.federation.OpenIdFederationWellKnownProviderFa
 import org.keycloak.representations.openid_federation.CommonMetadata;
 import org.keycloak.representations.openid_federation.EntityStatementExplicitResponse;
 import org.keycloak.representations.openid_federation.RPMetadata;
+import org.keycloak.services.Urls;
 
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
@@ -55,7 +57,7 @@ public class OpenIdFederationUtils {
         return common;
     }
 
-    public static RPMetadata createRPMetadata(OpenIdFederationGeneralConfig openIdFederationConfig, Stream<ClientRegistrationTypeEnum> registrationTypes, CommonMetadata common, String jwksUri){
+    public static RPMetadata createRPMetadata(OpenIdFederationGeneralConfig openIdFederationConfig, Stream<ClientRegistrationTypeEnum> registrationTypes, CommonMetadata common, String jwksUri, UriInfo frontendUriInfo, String realmName){
         RPMetadata rPMetadata = new RPMetadata();
         rPMetadata.setClientRegistrationTypes(registrationTypes.map(ClientRegistrationTypeEnum::getValue).collect(Collectors.toList()));
         rPMetadata.setContacts(openIdFederationConfig.getContacts());
@@ -66,6 +68,7 @@ public class OpenIdFederationUtils {
         rPMetadata.setGrantTypes(Collections.singletonList(OAuth2Constants.AUTHORIZATION_CODE));
         rPMetadata.setResponseTypes(Stream.of("code").collect(Collectors.toList()));
         rPMetadata.setApplicationType("web");
+        rPMetadata.setRedirectUris(Stream.of(Urls.openIdFederationAuthnResponse(frontendUriInfo.getBaseUri(), realmName).toString()).collect(Collectors.toList()));
         return rPMetadata;
     }
 

@@ -52,6 +52,7 @@ import org.keycloak.representations.openid_federation.RPMetadata;
 import org.keycloak.services.clientregistration.ClientRegistrationService;
 import org.keycloak.services.clientregistration.oidc.OIDCClientRegistrationProviderFactory;
 import org.keycloak.services.resources.Cors;
+import org.keycloak.services.resources.IdentityBrokerService;
 import org.keycloak.services.resources.RealmsResource;
 import org.keycloak.testsuite.AbstractKeycloakTest;
 import org.keycloak.testsuite.Assert;
@@ -286,9 +287,10 @@ public class OIDCWellKnownProviderTest extends AbstractKeycloakTest {
             assertEquals(1, rp.getClientRegistrationTypes().size());
             assertEquals("explicit", rp.getClientRegistrationTypes().get(0));
             assertEquals("web", rp.getApplicationType());
-            assertEquals("public", rp.getSubjectTypesSupported());
             assertEquals(1, rp.getGrantTypes().size());
             assertEquals(OAuth2Constants.AUTHORIZATION_CODE, rp.getGrantTypes().get(0));
+            assertEquals(1, rp.getRedirectUris().size());
+            assertEquals(IdentityBrokerService.openidFederationRedirectUri(UriBuilder.fromUri(OAuthClient.AUTH_SERVER_ROOT)).build("test").toString(), rp.getRedirectUris().get(0));
 
             realmRep.setOpenIdFederationEnabled(false);
             testRealm.update(realmRep);

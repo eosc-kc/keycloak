@@ -324,8 +324,7 @@ public class IdentityProvidersResource {
                 entityStatement.addAudience(opIssuer);
                 Metadata metadata = new Metadata();
                 RPMetadata rPMetadata = OpenIdFederationUtils.createRPMetadata(federationGeneralConfig, federationConfig.getClientRegistrationTypesSupported().stream(), OpenIdFederationUtils.commonMetadata(federationGeneralConfig), RealmsResource.protocolUrl(backendUriInfo).clone().path(OIDCLoginProtocolService.class, "certs").build(realm.getName(),
-                        OIDCLoginProtocol.LOGIN_PROTOCOL).toString());
-                rPMetadata.setRedirectUris(Stream.of(Urls.identityProviderAuthnResponse(frontendUriInfo.getBaseUri(), representation.getAlias(), realm.getName()).toString()).collect(Collectors.toList()));
+                        OIDCLoginProtocol.LOGIN_PROTOCOL).toString(), frontendUriInfo, realm.getName());
                 metadataFromOP(rPMetadata, federationConfig.getIdpConfiguration(), opStatement.getMetadata().getOpenIdProviderMetadata(), opStatement.getSubject());
                 metadataFromFederation(rPMetadata, federationConfig.getIdpConfiguration());
                 metadata.setRelyingPartyMetadata(rPMetadata);

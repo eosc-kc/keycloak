@@ -78,7 +78,7 @@ public class OpenIdFederationWellKnownProvider extends OIDCWellKnownProvider {
 
         if (openIdFederationConfig.getOpenIdFederationList().stream().flatMap(x -> x.getEntityTypes().stream()).collect(Collectors.toSet()).contains(EntityTypeEnum.OPENID_RELAYING_PARTY)) {
             RPMetadata rPMetadata = OpenIdFederationUtils.createRPMetadata(openIdFederationConfig, registrationTypes.stream(), common, RealmsResource.protocolUrl(backendUriInfo).clone().path(OIDCLoginProtocolService.class, "certs").build(realm.getName(),
-                    OIDCLoginProtocol.LOGIN_PROTOCOL).toString());
+                    OIDCLoginProtocol.LOGIN_PROTOCOL).toString(), frontendUriInfo, realm.getName());
             List<String> openIdFederationSubjectTypes = openIdFederationConfig.getOpenIdFederationList().stream().flatMap(x -> {
                 String subjectTypesStr = x.getIdpConfiguration().get(OpenIdFederationUtils.SUBJECT_TYPES_SUPPORTED);
                 return subjectTypesStr == null ? OIDCWellKnownProvider.DEFAULT_SUBJECT_TYPES_SUPPORTED.stream() : Arrays.asList(subjectTypesStr.split("##")).stream();

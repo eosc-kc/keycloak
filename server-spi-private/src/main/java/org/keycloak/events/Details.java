@@ -38,6 +38,7 @@ public interface Details {
     String AUTH_TYPE = "auth_type";
     String AUTH_METHOD = "auth_method";
     String IDENTITY_PROVIDER = "identity_provider";
+    String REQUEST_IDENTITY_PROVIDER = "request_identity_provider";
     String IDENTITY_PROVIDER_USERNAME = "identity_provider_identity";
     String IDENTITY_PROVIDER_ENTITYID = "identity_provider_entityId";
     String IDENTITY_PROVIDER_ID = "identity_provider_id";
