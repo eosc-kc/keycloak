@@ -3,7 +3,7 @@ package org.keycloak.representations.openid_federation;
 import java.util.ArrayList;
 import java.util.List;
 
-public class TrustChainForExplicit {
+public class TrustChainResolution {
     private List<EntityStatement> parsedChain;
 
     private RPMetadataPolicy combinedPolicy;
@@ -14,7 +14,7 @@ public class TrustChainForExplicit {
 
     private EntityStatement initialEntity;
 
-    public TrustChainForExplicit() {
+    public TrustChainResolution() {
         parsedChain = new ArrayList<>();
         combinedPolicy = new RPMetadataPolicy();
     }

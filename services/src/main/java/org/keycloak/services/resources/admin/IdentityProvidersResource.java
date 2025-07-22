@@ -57,7 +57,7 @@ import org.keycloak.representations.openid_federation.EntityStatementExplicitRes
 import org.keycloak.representations.openid_federation.Metadata;
 import org.keycloak.representations.openid_federation.OPMetadata;
 import org.keycloak.representations.openid_federation.RPMetadata;
-import org.keycloak.representations.openid_federation.TrustChainForExplicit;
+import org.keycloak.representations.openid_federation.TrustChainResolution;
 import org.keycloak.services.ErrorResponse;
 import org.keycloak.services.Urls;
 import org.keycloak.services.resources.KeycloakOpenAPI;
@@ -310,11 +310,11 @@ public class IdentityProvidersResource {
                 if (!trustChainProcessor.validateEntityStatementFields(opStatement, opIssuer, opIssuer) || opStatement.getMetadata().getOpenIdProviderMetadata() == null || !opStatement.getMetadata().getOpenIdProviderMetadata().getClientRegistrationTypes().contains("explicit") || opStatement.getMetadata().getOpenIdProviderMetadata().getFederationRegistrationEndpoint() == null) {
                     throw new BadRequestException("No valid OP Entity Statement");
                 }
-                List<TrustChainForExplicit> trustChainForExplicits = trustChainProcessor.constructTrustChains(opStatement, Stream.of(federationConfig.getTrustAnchor()).collect(Collectors.toSet()), false, false);
-                if (trustChainForExplicits.isEmpty()) {
+                List<TrustChainResolution> trustChainResolutions = trustChainProcessor.constructTrustChains(opStatement, Stream.of(federationConfig.getTrustAnchor()).collect(Collectors.toSet()), false, false);
+                if (trustChainResolutions.isEmpty()) {
                     throw new BadRequestException("No common trust chain found");
                 }
-                opStatement = trustChainForExplicits.get(0).getInitialEntity();
+                opStatement = trustChainResolutions.get(0).getInitialEntity();
                 IdentityProviderModel model = OIDCIdentityProviderFactory.parseOIDCConfig(opStatement.getMetadata().getOpenIdProviderMetadata(),  OpenIdFederationIdentityProviderConfig.class, new OpenIdFederationIdentityProviderConfig());
 
                 UriInfo frontendUriInfo = session.getContext().getUri(UrlType.FRONTEND);

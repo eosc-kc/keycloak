@@ -19,7 +19,7 @@ import org.keycloak.representations.idm.ClientRepresentation;
 import org.keycloak.representations.openid_federation.EntityStatement;
 import org.keycloak.representations.openid_federation.EntityStatementExplicitResponse;
 import org.keycloak.representations.openid_federation.RPMetadata;
-import org.keycloak.representations.openid_federation.TrustChainForExplicit;
+import org.keycloak.representations.openid_federation.TrustChainResolution;
 import org.keycloak.services.ErrorResponseException;
 import org.keycloak.services.Urls;
 import org.keycloak.services.clientregistration.AbstractClientRegistrationProvider;
@@ -70,12 +70,12 @@ public class OpenIdFederationClientRegistrationService extends AbstractClientReg
 
             logger.info("starting validating trust chains");
 
-            List<TrustChainForExplicit> trustChainForExplicits = trustChainProcessor.constructTrustChains(statement, trustAnchorIds, true, true);
+            List<TrustChainResolution> trustChainResolutions = trustChainProcessor.constructTrustChains(statement, trustAnchorIds, true, true);
 
             // 9.2.1.2.1. bullet 1 found and verified at least one trust chain
-            if (!trustChainForExplicits.isEmpty()) {
+            if (!trustChainResolutions.isEmpty()) {
                 //just pick one with valid metadata policies randomly
-                TrustChainForExplicit validChain = trustChainProcessor.findAcceptableMetadataPolicyChain(trustChainForExplicits, statement);
+                TrustChainResolution validChain = trustChainProcessor.findAcceptableMetadataPolicyChain(trustChainResolutions, statement);
                 if (validChain != null) {
                     RPMetadata rPMetadata = statement.getMetadata().getRelyingPartyMetadata();
                     if (rPMetadata.getJwks() == null && rPMetadata.getJwksUri() == null) {
