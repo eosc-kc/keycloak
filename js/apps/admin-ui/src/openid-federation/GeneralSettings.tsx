@@ -10,6 +10,8 @@ import {
   Switch,
   ValidatedOptions,
   ToolbarItem,
+  Stack,
+  StackItem,
 } from "@patternfly/react-core";
 import { adminClient } from "../admin-client";
 import { useConfirmDialog } from "../components/confirm-dialog/ConfirmDialog";
@@ -22,7 +24,7 @@ import { MultiLineInput } from "../components/multi-line-input/MultiLineInput";
 import { FormAccess } from "../components/form/FormAccess";
 import { KeycloakTextInput } from "../components/keycloak-text-input/KeycloakTextInput";
 import { TimeSelector } from "../components/time-selector/TimeSelector";
-import { convertToFormValues } from "../util";
+import { addTrailingSlash, convertToFormValues } from "../util";
 import { toOpenIdFederationCreate } from "./routes/OpenIdFederationCreate";
 import {
   KeycloakDataTable,
@@ -36,6 +38,7 @@ import OpenIdFederationRepresentation, {
   EntityTypesSupported,
 } from "libs/keycloak-admin-client/lib/defs/OpenIdFederationRepresentation";
 import { ScrollForm } from "../components/scroll-form/ScrollForm";
+import { FormattedLink } from "../components/external-link/FormattedLink";
 
 type OpenIdFederationGeneralTabProps = {
   realm: RealmRepresentation;
@@ -85,6 +88,7 @@ export const OpenIdFederationGeneralSettings = ({
   const [isOpenIdFederationEnabled, setIsOpenIdFederationEnabled] = useState(
     !!realm.openIdFederationEnabled,
   );
+  const { realm: realmName } = useRealm();
 
   const [toggleDeleteDialog, DeleteConfirm] = useConfirmDialog({
     titleKey: t("deleteOpenIdFederation"),
@@ -311,6 +315,27 @@ export const OpenIdFederationGeneralSettings = ({
                             "openIdFederationHistoricalKeysEndpoint",
                           )}
                         />
+                      </FormGroup>
+                      <FormGroup
+                        label={t("endpoint")}
+                        labelIcon={
+                          <HelpItem
+                            helpText={t("openid-federation-help:endpoint")}
+                            fieldLabelId="realm-settings:endpoints"
+                          />
+                        }
+                        fieldId="kc-endpoints"
+                      >
+                        <Stack>
+                          <StackItem>
+                            <FormattedLink
+                              href={`${addTrailingSlash(
+                                adminClient.baseUrl,
+                              )}realms/${realmName}/.well-known/openid-federation`}
+                              title={t("openIDFederationEndpointConfiguration")}
+                            />
+                          </StackItem>
+                        </Stack>
                       </FormGroup>
                     </>
                   )}

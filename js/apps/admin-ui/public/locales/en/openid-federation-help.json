@@ -11,5 +11,6 @@
   "openIdFederationHomepageUri": "A URI pointing to the homepage for this entity.",
   "openIdFederationResolveEndpoint": "The endpoint used to resolve OpenID Federation entities.",
   "openIdFederationHistoricalKeysEndpoint": "The endpoint exposing historical keys for this entity.",
-  "openIdFederationLifespan": "The amount of time (in seconds) that federation metadata is considered valid before it must be refreshed."
+  "openIdFederationLifespan": "The amount of time (in seconds) that federation metadata is considered valid before it must be refreshed.",
+  "endpoint": "The endpoint for OpenID Federation metadata."
 }

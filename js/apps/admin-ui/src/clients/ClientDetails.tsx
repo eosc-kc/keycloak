@@ -82,12 +82,14 @@ type ClientDetailHeaderProps = {
   client: ClientRepresentation;
   toggleDownloadDialog: () => void;
   toggleDeleteDialog: () => void;
+  hideEnableToggle?: boolean;
 };
 
 const ClientDetailHeader = ({
   onChange,
   value,
   save,
+  hideEnableToggle = false,
   client,
   toggleDownloadDialog,
   toggleDeleteDialog,
@@ -164,14 +166,18 @@ const ClientDetailHeader = ({
         helpTextKey="clients-help:enableDisable"
         dropdownItems={dropdownItems}
         isEnabled={value}
-        onToggle={(value) => {
-          if (!value) {
-            toggleDisableDialog();
-          } else {
-            onChange(value);
-            save();
-          }
-        }}
+        onToggle={
+          hideEnableToggle
+            ? undefined
+            : (value) => {
+                if (!value) {
+                  toggleDisableDialog();
+                } else {
+                  onChange(value);
+                  save();
+                }
+              }
+        }
       />
     </>
   );
@@ -207,6 +213,11 @@ export default function ClientDetails() {
   const [changeAuthenticatorOpen, toggleChangeAuthenticatorOpen] = useToggle();
 
   const form = useForm<FormFields>();
+
+  const expirationTime = useWatch({
+    control: form.control,
+    name: convertAttributeNameToForm("attributes.expiration.time"),
+  });
   const { clientId } = useParams<ClientParams>();
   const [key, setKey] = useState(0);
 
@@ -406,6 +417,7 @@ export default function ClientDetails() {
             onChange={field.onChange}
             client={client}
             save={save}
+            hideEnableToggle={!!expirationTime}
             toggleDeleteDialog={toggleDeleteDialog}
             toggleDownloadDialog={toggleDownloadDialogOpen}
           />

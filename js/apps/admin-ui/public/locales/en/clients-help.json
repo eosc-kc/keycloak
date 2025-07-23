@@ -188,11 +188,12 @@
   "permissionsEnabled": "Determines if fine grained permissions are enabled for managing this role.  Disabling will delete all current permissions that have been set up.",
   "autoUpdate": "If selected, SAML Client metadata will be autoUpdated",
   "metadataUrl": "Metadata URL from which SAML Client will be autoupdated",
-  "refreshPeriod":"Every how many time SAML Client will be autoupdated",
+  "refreshPeriod": "Every how many time SAML Client will be autoupdated",
   "skipRequestedAttrubues": "Skip requested attribues from parsing during autoupdate SAML SP metadata",
   "lastUpdated": "Last time SP was autoupdated",
   "contacts": "Comma-separated list of contacts. This list is shown in the client consent.",
   "country": "Country selection is shown in the client consent.",
   "importFile": "File to import a key",
-  "openIdFederationAccessPolicies": "These policies are applied when the Client Registration Service is invoked through OpenID Federation requests."
+  "openIdFederationAccessPolicies": "These policies are applied when the Client Registration Service is invoked through OpenID Federation requests.",
+  "expirationTime": "The expiration time of the client in seconds."
 }

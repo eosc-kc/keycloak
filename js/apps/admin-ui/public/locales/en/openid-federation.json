@@ -46,5 +46,7 @@
   "addOpenIdFederationExplanation": "Add a new trust anchor",
   "editOpenIdFederationExplanation": "Edit the details of this trust anchor.",
   "generalSettings": "General Settings",
-  "openIdFederationSettings": "Trust Anchor Settings"
+  "openIdFederationSettings": "Trust Anchor Settings",
+  "openIDFederationEndpointConfiguration": "OpenID Federation Endpoint Configuration",
+  "endpoint": "Endpoint"
 }

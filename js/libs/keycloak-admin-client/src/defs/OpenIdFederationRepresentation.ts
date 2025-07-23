@@ -5,5 +5,5 @@ export default interface OpenIdFederationRepresentation {
   internalId?: string;
 }
 
-export type EntityTypesSupported = "OPENID_PROVIDER";
+export type EntityTypesSupported = "OPENID_PROVIDER" | "OPENID_RELAYING_PARTY";
 export type ClientRegistrationTypesSupported = "EXPLICIT";

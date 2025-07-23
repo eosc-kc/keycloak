@@ -24,7 +24,10 @@ type OpenIdFederationGeneralTabProps = {
   save: (openIdFederation: OpenIdFederationRepresentation) => void;
   openIdFederation?: OpenIdFederationRepresentation;
 };
-const entityTypesSupportedValues: EntityTypesSupported[] = ["OPENID_PROVIDER"];
+const entityTypesSupportedValues: EntityTypesSupported[] = [
+  "OPENID_PROVIDER",
+  "OPENID_RELAYING_PARTY",
+];
 const clientRegistrationTypesSupportedValues: ClientRegistrationTypesSupported[] =
   ["EXPLICIT"];
 
