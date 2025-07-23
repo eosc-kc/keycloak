@@ -125,23 +125,28 @@ export default function IdentityProvidersSection() {
   const identityProviderOptions = () =>
     Object.keys(identityProviders).map((group) => (
       <DropdownGroup key={group} label={group}>
-        {sortBy(identityProviders[group], "name").map((provider) => (
-          <DropdownItem
-            key={provider.id}
-            value={provider.id}
-            component={
-              <Link
-                to={toIdentityProviderCreate({
-                  realm,
-                  providerId: provider.id,
-                })}
-                data-testid={provider.id}
-              >
-                {provider.name}
-              </Link>
-            }
-          />
-        ))}
+        {sortBy(identityProviders[group], "name").map((provider) => {
+          if (provider.id === "openid-federation") {
+            return null; // Skip OpenID Federation in the dropdown
+          }
+          return (
+            <DropdownItem
+              key={provider.id}
+              value={provider.id}
+              component={
+                <Link
+                  to={toIdentityProviderCreate({
+                    realm,
+                    providerId: provider.id,
+                  })}
+                  data-testid={provider.id}
+                >
+                  {provider.name}
+                </Link>
+              }
+            />
+          );
+        })}
       </DropdownGroup>
     ));
 

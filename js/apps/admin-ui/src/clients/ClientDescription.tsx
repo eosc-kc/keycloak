@@ -1,6 +1,6 @@
 import { useTranslation } from "react-i18next";
 import { TextControl, TextAreaControl, HelpItem } from "ui-shared";
-
+import useFormatDate from "../utils/useFormatDate";
 import { FormAccess } from "../components/form/FormAccess";
 import { DefaultSwitchControl } from "../components/SwitchControl";
 import { FormGroup } from "@patternfly/react-core";
@@ -21,6 +21,7 @@ export const ClientDescription = ({
   hasConfigureAccess: configure,
 }: ClientDescriptionProps) => {
   const { t } = useTranslation("clients");
+  const formatDate = useFormatDate();
   const {
     watch,
     control,
@@ -179,7 +180,7 @@ export const ClientDescription = ({
             />
           }
         >
-          {expirationTime}
+          {formatDate(new Date(expirationTime * 1000))}
         </FormGroup>
       )}
     </FormAccess>

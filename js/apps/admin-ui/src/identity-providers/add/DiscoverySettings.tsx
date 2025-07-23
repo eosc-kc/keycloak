@@ -36,6 +36,10 @@ const Fields = ({ readOnly }: DiscoverySettingsProps) => {
     formState: { errors },
   } = useFormContext<IdentityProviderRepresentation>();
 
+  const providerId = useWatch({
+    control,
+    name: "providerId",
+  });
   const validateSignature = useWatch({
     control,
     name: "config.validateSignature",
@@ -51,7 +55,9 @@ const Fields = ({ readOnly }: DiscoverySettingsProps) => {
 
   return (
     <div className="pf-c-form pf-m-horizontal">
-      {!readOnly && <AutoUpdateFields protocol={"oidc"} />}
+      {!readOnly && providerId !== "openid-federation" && (
+        <AutoUpdateFields protocol={"oidc"} />
+      )}
       <FormGroup
         label={t("authorizationUrl")}
         fieldId="kc-authorization-url"
@@ -112,9 +118,9 @@ const Fields = ({ readOnly }: DiscoverySettingsProps) => {
         isReadOnly={readOnly}
       />
       <TextField
-         field="config.tokenIntrospectionUrl"
-         label="tokenIntrospectionUrl"
-         isReadOnly={readOnly}
+        field="config.tokenIntrospectionUrl"
+        label="tokenIntrospectionUrl"
+        isReadOnly={readOnly}
       />
       <TextField field="config.issuer" label="issuer" isReadOnly={readOnly} />
       <SwitchField

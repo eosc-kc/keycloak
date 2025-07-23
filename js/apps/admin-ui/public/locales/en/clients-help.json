@@ -195,5 +195,5 @@
   "country": "Country selection is shown in the client consent.",
   "importFile": "File to import a key",
   "openIdFederationAccessPolicies": "These policies are applied when the Client Registration Service is invoked through OpenID Federation requests.",
-  "expirationTime": "The expiration time of the client in seconds."
+  "expirationTime": "The expiration date of the client."
 }

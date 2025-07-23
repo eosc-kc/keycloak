@@ -558,5 +558,5 @@
   "openIdFederationAccessPolicies": "OpenID Federation access policies",
   "noAccessPolicies": "No access policies",
   "noAccessPoliciesInstructions": "There haven't been configured any access policies yet. Click the button below to configure the first policy.",
-  "expirationTime": "Expiration time"
+  "expirationTime": "Expiration Date"
 }

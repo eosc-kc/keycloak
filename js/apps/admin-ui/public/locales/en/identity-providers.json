@@ -206,5 +206,9 @@
   "deleteErrorIdentityProvider": "Could not delete the identity provider {{error}}",
   "empty": "<EMPTY>",
   "passSetMfa": "Pass and set MFA",
-  "claimsParameterSupported": "Claims Parameter Supported"
+  "claimsParameterSupported": "Claims Parameter Supported",
+  "openIdFederationSettings": "OpenID Federation Settings",
+  "authorityHints": "Authority Hints",
+  "trustAnchorId": "Trust Anchor ID",
+  "expirationTime": "Expiration Date"
 }
