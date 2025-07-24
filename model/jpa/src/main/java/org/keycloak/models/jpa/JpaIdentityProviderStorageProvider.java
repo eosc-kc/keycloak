@@ -58,6 +58,7 @@ import org.keycloak.models.utils.KeycloakModelUtils;
 import org.keycloak.utils.StringUtil;
 
 import static org.keycloak.models.IdentityProviderModel.ALIAS;
+import static org.keycloak.models.IdentityProviderModel.PROVIDER_ID;
 import static org.keycloak.models.IdentityProviderModel.ALIAS_IN;
 import static org.keycloak.models.IdentityProviderModel.ALIAS_NOT_IN;
 import static org.keycloak.models.IdentityProviderModel.AUTHENTICATE_BY_DEFAULT;
@@ -268,6 +269,7 @@ public class JpaIdentityProviderStorageProvider implements IdentityProviderStora
                         break;
                     }
                     case ALIAS:
+                    case PROVIDER_ID:
                     case FIRST_BROKER_LOGIN_FLOW_ID:
                     case POST_BROKER_LOGIN_FLOW_ID:
                     case ORGANIZATION_ID: {

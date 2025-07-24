@@ -34,6 +34,7 @@ import org.keycloak.broker.oidc.federation.OpenIdFederationIdentityProviderConfi
 import org.keycloak.broker.oidc.federation.OpenIdFederationIdentityProviderFactory;
 import org.keycloak.broker.provider.IdentityProviderFactory;
 import org.keycloak.common.util.StreamUtil;
+import org.keycloak.common.util.Time;
 import org.keycloak.connections.httpclient.HttpClientProvider;
 import org.keycloak.events.admin.OperationType;
 import org.keycloak.events.admin.ResourceType;
@@ -47,6 +48,7 @@ import org.keycloak.models.ModelDuplicateException;
 import org.keycloak.models.OpenIdFederationConfig;
 import org.keycloak.models.OpenIdFederationGeneralConfig;
 import org.keycloak.models.RealmModel;
+import org.keycloak.models.enums.EntityTypeEnum;
 import org.keycloak.models.utils.ModelToRepresentation;
 import org.keycloak.models.utils.RepresentationToModel;
 import org.keycloak.models.utils.StripSecretsUtils;
@@ -280,7 +282,7 @@ public class IdentityProvidersResource {
             if (identityProvider.getConfig().get(OIDCConfigAttributes.EXPIRATION_TIME) != null) {
                 TimerProvider timer = session.getProvider(TimerProvider.class);
                 OpenIdFederationIdPExpirationTask task = new OpenIdFederationIdPExpirationTask(identityProvider.getAlias(), realm.getId());
-                long expiration = (Long.valueOf(identityProvider.getConfig().get(OIDCConfigAttributes.EXPIRATION_TIME)) - LocalDateTime.now().toEpochSecond(ZoneOffset.UTC)) * 1000;
+                long expiration = Long.valueOf(identityProvider.getConfig().get(OIDCConfigAttributes.EXPIRATION_TIME)) * 1000 - Time.currentTimeMillis();
                 ClusterAwareScheduledTaskRunner taskRunner = new ClusterAwareScheduledTaskRunner(session.getKeycloakSessionFactory(), task, expiration);
                 timer.schedule(taskRunner, expiration, "OpenIdFederationIdPExpirationTask_" + identityProvider.getAlias());
             }
@@ -302,7 +304,8 @@ public class IdentityProvidersResource {
     }
 
     private IdentityProviderModel createModelForOpenIdFederation(IdentityProviderRepresentation representation){
-        if (realm.isOpenIdFederationEnabled() && representation.getConfig().get(OpenIdFederationIdentityProviderConfig.TRUST_ANCHOR_ID) != null && representation.getConfig().get(OIDCIdentityProviderConfig.ISSUER) != null) {
+        boolean isRpFederated = realm.isOpenIdFederationEnabled() && representation.getConfig().get(OpenIdFederationIdentityProviderConfig.TRUST_ANCHOR_ID) != null && realm.getOpenIdFederations().stream().anyMatch(fed -> representation.getConfig().get(OpenIdFederationIdentityProviderConfig.TRUST_ANCHOR_ID).equals(fed.getTrustAnchor()) && fed.getEntityTypes().contains(EntityTypeEnum.OPENID_RELYING_PARTY));
+        if (isRpFederated && representation.getConfig().get(OIDCIdentityProviderConfig.ISSUER) != null) {
             try {
                 OpenIdFederationGeneralConfig federationGeneralConfig = realm.getOpenIdFederationGeneralConfig();
                 OpenIdFederationConfig federationConfig = realm.getOpenIdFederations().stream().filter(x -> representation.getConfig().get(OpenIdFederationIdentityProviderConfig.TRUST_ANCHOR_ID).equals(x.getTrustAnchor())).findAny().orElseThrow(() -> new NotFoundException("Trust anchor does not exist"));
@@ -316,8 +319,8 @@ public class IdentityProvidersResource {
                 if (trustChainResolutions.isEmpty()) {
                     throw new BadRequestException("No common trust chain found");
                 }
-                opStatement = trustChainResolutions.get(0).getInitialEntity();
                 IdentityProviderModel model = OIDCIdentityProviderFactory.parseOIDCConfig(opStatement.getMetadata().getOpenIdProviderMetadata(),  OpenIdFederationIdentityProviderConfig.class, new OpenIdFederationIdentityProviderConfig());
+                model.getConfig().put("guiOrder", representation.getConfig().get("guiOrder"));
 
                 UriInfo frontendUriInfo = session.getContext().getUri(UrlType.FRONTEND);
                 UriInfo backendUriInfo = session.getContext().getUri(UrlType.BACKEND);
@@ -331,7 +334,6 @@ public class IdentityProvidersResource {
                 metadataFromFederation(rPMetadata, federationConfig.getIdpConfiguration());
                 metadata.setRelyingPartyMetadata(rPMetadata);
                 entityStatement.setMetadata(metadata);
-                //TokenUtil.APPLICATION_ENTITY_STATEMENT_JWT
                 StringEntity entity = new StringEntity(session.tokens().encodeForOpenIdFederation(entityStatement), TokenUtil.APPLICATION_ENTITY_STATEMENT_JWT);
                 SimpleHttpResponse response = SimpleHttp.create(session).doPost(opStatement.getMetadata().getOpenIdProviderMetadata().getFederationRegistrationEndpoint())
                         .header("Content-Type", "application/entity-statement+jwt")
@@ -350,7 +352,7 @@ public class IdentityProvidersResource {
                 throw ErrorResponse.error(e.getMessage(), BAD_REQUEST);
             }
         } else {
-            throw ErrorResponse.error(realm.isOpenIdFederationEnabled() ? "This realm does not support openid Federation" : "Trust anchor and issuer are required", BAD_REQUEST);
+            throw ErrorResponse.error(isRpFederated ? "This realm does not support Openid Federation as RP with selected trust anchor" : "Trust anchor and issuer are required", BAD_REQUEST);
         }
     }
 
