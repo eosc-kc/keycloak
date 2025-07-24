@@ -45,6 +45,7 @@ import org.keycloak.models.ModelDuplicateException;
 import org.keycloak.models.OpenIdFederationConfig;
 import org.keycloak.models.OpenIdFederationGeneralConfig;
 import org.keycloak.models.RealmModel;
+import org.keycloak.models.enums.EntityTypeEnum;
 import org.keycloak.models.utils.ModelToRepresentation;
 import org.keycloak.models.utils.RepresentationToModel;
 import org.keycloak.models.utils.StripSecretsUtils;
@@ -301,7 +302,8 @@ public class IdentityProvidersResource {
     }
 
     private IdentityProviderModel createModelForOpenIdFederation(IdentityProviderRepresentation representation){
-        if (realm.isOpenIdFederationEnabled() && representation.getConfig().get(OpenIdFederationIdentityProviderConfig.TRUST_ANCHOR_ID) != null && representation.getConfig().get(OIDCIdentityProviderConfig.ISSUER) != null) {
+        boolean isRpFederated = realm.isOpenIdFederationEnabled() && representation.getConfig().get(OpenIdFederationIdentityProviderConfig.TRUST_ANCHOR_ID) != null && realm.getOpenIdFederations().stream().anyMatch(fed -> representation.getConfig().get(OpenIdFederationIdentityProviderConfig.TRUST_ANCHOR_ID).equals(fed.getTrustAnchor()) && fed.getEntityTypes().contains(EntityTypeEnum.OPENID_RELAYING_PARTY));
+        if (isRpFederated && representation.getConfig().get(OIDCIdentityProviderConfig.ISSUER) != null) {
             try {
                 OpenIdFederationGeneralConfig federationGeneralConfig = realm.getOpenIdFederationGeneralConfig();
                 OpenIdFederationConfig federationConfig = realm.getOpenIdFederations().stream().filter(x -> representation.getConfig().get(OpenIdFederationIdentityProviderConfig.TRUST_ANCHOR_ID).equals(x.getTrustAnchor())).findAny().orElseThrow(() -> new NotFoundException("Trust anchor does not exist"));
@@ -345,7 +347,7 @@ public class IdentityProvidersResource {
                 throw ErrorResponse.error(e.getMessage(), BAD_REQUEST);
             }
         } else {
-            throw ErrorResponse.error(realm.isOpenIdFederationEnabled() ? "This realm does not support openid Federation" : "Trust anchor and issuer are required", BAD_REQUEST);
+            throw ErrorResponse.error(isRpFederated ? "This realm does not support Openid Federation as RP with selected trust anchor" : "Trust anchor and issuer are required", BAD_REQUEST);
         }
     }
 

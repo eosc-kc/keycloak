@@ -14,6 +14,7 @@ import org.keycloak.models.OpenIdFederationConfig;
 import org.keycloak.models.OpenIdFederationGeneralConfig;
 import org.keycloak.models.RealmModel;
 import org.keycloak.models.enums.ClientRegistrationTypeEnum;
+import org.keycloak.models.enums.EntityTypeEnum;
 import org.keycloak.utils.OpenIdFederationTrustChainProcessor;
 import org.keycloak.representations.idm.ClientRepresentation;
 import org.keycloak.representations.openid_federation.EntityStatement;
@@ -50,7 +51,7 @@ public class OpenIdFederationClientRegistrationService extends AbstractClientReg
     public Response explicitClientRegistration(String body, @Context HttpHeaders headers) {
         RealmModel realm = session.getContext().getRealm();
         OpenIdFederationGeneralConfig config = realm.getOpenIdFederationGeneralConfig();
-        if (!realm.isOpenIdFederationEnabled() || config.getOpenIdFederationList() == null || !config.getOpenIdFederationList().stream().flatMap(x -> x.getClientRegistrationTypesSupported().stream()).collect(Collectors.toSet()).contains(ClientRegistrationTypeEnum.EXPLICIT) || config.getAuthorityHints().isEmpty()) {
+        if (!realm.isOpenIdFederationEnabled() || config.getOpenIdFederationList() == null || config.getOpenIdFederationList().stream().noneMatch(x -> x.getEntityTypes().contains(EntityTypeEnum.OPENID_PROVIDER) && x.getClientRegistrationTypesSupported().contains(ClientRegistrationTypeEnum.EXPLICIT)) || config.getAuthorityHints().isEmpty()) {
             throw new ErrorResponseException(Errors.INVALID_REQUEST, "Explicit OpenID Federation Client Registration is not supported in this realm", Response.Status.BAD_REQUEST);
         }
         checkSsl();
