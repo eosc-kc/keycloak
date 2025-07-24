@@ -500,6 +500,7 @@ public interface RealmModel extends RoleContainerModel {
      */
     Stream<IdentityProviderModel> getIdentityProvidersStream();
     Stream<IdentityProviderModel> getAutoUpdatedIdentityProvidersStream();
+    default Stream<IdentityProviderModel> getEnabledIdentityProvidersByProviderIdStream(String providerId){return Stream.empty();};
 
     IdentityProviderModel getIdentityProviderByAlias(String alias);
     void addIdentityProvider(IdentityProviderModel identityProvider);

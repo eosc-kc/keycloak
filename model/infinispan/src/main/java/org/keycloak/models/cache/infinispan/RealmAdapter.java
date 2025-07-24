@@ -953,6 +953,11 @@ public class RealmAdapter implements CachedRealmModel {
     }
 
     @Override
+    public Stream<IdentityProviderModel> getEnabledIdentityProvidersByProviderIdStream(String providerId) {
+        return cacheSession.getRealmDelegate().getRealm(cached.getId()).getEnabledIdentityProvidersByProviderIdStream(providerId);
+    }
+
+    @Override
     public IdentityProviderModel getIdentityProviderByAlias(String alias) {
         if (isUpdated()) return updated.getIdentityProviderByAlias(alias);
         return getIdentityProvidersStream()

@@ -31,6 +31,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.keycloak.OAuth2Constants;
+import org.keycloak.common.util.Time;
 import org.keycloak.events.EventBuilder;
 import org.keycloak.events.EventType;
 import org.keycloak.models.*;
@@ -220,7 +221,7 @@ public abstract class AbstractClientRegistrationProvider implements ClientRegist
                 session.getProvider(TimerProvider.class).schedule(taskRunner, interval, "AutoUpdateSAMLClient_" + clientModel.getId());
             } else if (clientModel.getAttributes() != null && clientModel.getAttribute(OIDCConfigAttributes.EXPIRATION_TIME) != null){
                 OpenIdFederationClientExpirationTask federationTask = new OpenIdFederationClientExpirationTask(clientModel.getId(), realm.getId());
-                long expiration = (Long.valueOf(clientModel.getAttribute(OIDCConfigAttributes.EXPIRATION_TIME)) - LocalDateTime.now().toEpochSecond(ZoneOffset.UTC)) * 1000;
+                long expiration = Long.valueOf(clientModel.getAttribute(OIDCConfigAttributes.EXPIRATION_TIME)) * 1000 - Time.currentTimeMillis();
                 ClusterAwareScheduledTaskRunner taskRunner = new ClusterAwareScheduledTaskRunner(session.getKeycloakSessionFactory(), federationTask, expiration);
                 session.getProvider(TimerProvider.class).scheduleOnce(taskRunner, expiration, "OpenidFederationExplicitClient_" + clientModel.getId());
             }
@@ -334,7 +335,7 @@ public abstract class AbstractClientRegistrationProvider implements ClientRegist
             TimerProvider timer = session.getProvider(TimerProvider.class);
             timer.cancelTask("OpenidFederationExplicitClient_" + client.getId());
             OpenIdFederationClientExpirationTask federationTask = new OpenIdFederationClientExpirationTask(client.getId(), session.getContext().getRealm().getId());
-            long expiration = (Long.valueOf(client.getAttribute(OIDCConfigAttributes.EXPIRATION_TIME)) - LocalDateTime.now().toEpochSecond(ZoneOffset.UTC)) * 1000;
+            long expiration = Long.valueOf(client.getAttribute(OIDCConfigAttributes.EXPIRATION_TIME)) * 1000 - Time.currentTimeMillis();
             ClusterAwareScheduledTaskRunner taskRunner = new ClusterAwareScheduledTaskRunner(session.getKeycloakSessionFactory(), federationTask, expiration > 60 * 1000 ? expiration : 60 * 1000);
             timer.scheduleOnce(taskRunner, expiration > 60 * 1000 ? expiration : 60 * 1000, "OpenidFederationExplicitClient_" + client.getId());
         } else  if (rep.getAttributes() != null && rep.getAttributes().get(OIDCConfigAttributes.EXPIRATION_TIME) == null && client.getAttributes().get(OIDCConfigAttributes.EXPIRATION_TIME) != null) {

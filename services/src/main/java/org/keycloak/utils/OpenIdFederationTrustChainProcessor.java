@@ -25,7 +25,7 @@ import org.keycloak.jose.jwk.JSONWebKeySet;
 import org.keycloak.jose.jwk.JWK;
 import org.keycloak.jose.jwk.JWKBuilder;
 import org.keycloak.models.KeycloakSession;
-import org.keycloak.protocol.oidc.federation.MetadataPolicyUtils;
+import org.keycloak.models.enums.EntityTypeEnum;
 import org.keycloak.representations.openid_federation.EntityStatement;
 import org.keycloak.representations.openid_federation.RPMetadataPolicy;
 import org.keycloak.representations.openid_federation.TrustChainResolution;
@@ -70,7 +70,7 @@ public class OpenIdFederationTrustChainProcessor {
      */
     public List<TrustChainResolution> constructTrustChains(EntityStatement leafEs, Set<String> trustAnchorIds, boolean policyRequired, boolean forRp) {
 
-        List<TrustChainResolution> trustChainResolutions = subTrustChains(leafEs, leafEs, trustAnchorIds, new HashSet<>(), forRp);
+        List<TrustChainResolution> trustChainResolutions = subTrustChains(leafEs.getIssuer(), leafEs, trustAnchorIds, new HashSet<>(), forRp);
 
         return trustChainResolutions.stream().map(trustChainResolution -> {
 
@@ -103,7 +103,7 @@ public class OpenIdFederationTrustChainProcessor {
 
     }
 
-    private List<TrustChainResolution> subTrustChains(EntityStatement initialEntity, EntityStatement leafEs, Set<String> trustAnchorIds, Set<String> visitedNodes, boolean forRp) {
+    private List<TrustChainResolution> subTrustChains(String initialEntity, EntityStatement leafEs, Set<String> trustAnchorIds, Set<String> visitedNodes, boolean forRp) {
 
         List<TrustChainResolution> chainsList = new ArrayList<>();
         visitedNodes.add(leafEs.getIssuer());
@@ -130,21 +130,12 @@ public class OpenIdFederationTrustChainProcessor {
 
                     visitedNodes.add(subNodeSelfES.getIssuer());
                     if (trustAnchorIds.contains(authHint)) {
+                        //check that RP is registered as RP in trust anchor
+                        if (!OpenIdFederationUtils.containedInListEndpoint(subNodeSelfES.getMetadata().getFederationEntity().getFederationListEndpoint(), forRp ? EntityTypeEnum.OPENID_RELAYING_PARTY.getValue() : EntityTypeEnum.OPENID_PROVIDER.getValue(), initialEntity, session)) {
+                            throw new ErrorResponseException(Errors.INVALID_TRUST_CHAIN, "Trust chain is not valid", Response.Status.BAD_REQUEST);
+                        }
                         TrustChainResolution trustAnchor = new TrustChainResolution();
                         trustAnchor.getParsedChain().add(0, subNodeSelfES);
-                        if (initialEntity.getSubject().equals(subNodeSubordinateES.getSubject())) {
-                            //set initial entity if no intermediates entities between trust achor and initial entity
-                            if ((forRp && subNodeSubordinateES.getMetadata().getRelyingPartyMetadata() == null) || (!forRp && subNodeSubordinateES.getMetadata().getOpenIdProviderMetadata() == null ))
-                                throw new ErrorResponseException(Errors.INVALID_TRUST_CHAIN, "Trust chain is not valid", Response.Status.BAD_REQUEST);
-                            trustAnchor.setInitialEntity(subNodeSubordinateES);
-                        } else {
-                            String initialEntityFetch = OpenIdFederationUtils.getSubordinateToken(fedApiUrl, initialEntity.getIssuer(), session);
-                            EntityStatement initialEntityFetchStatement = parseAndValidateSelfSigned(initialEntityFetch, EntityStatement.class, subNodeSelfES.getJwks());
-                            if (!validateEntityStatementFields(subNodeSubordinateES, authHint, leafEs.getIssuer()) || (forRp && initialEntityFetchStatement.getMetadata().getRelyingPartyMetadata() == null) || (!forRp && initialEntityFetchStatement.getMetadata().getOpenIdProviderMetadata() == null )) {
-                                throw new ErrorResponseException(Errors.INVALID_TRUST_CHAIN, "Trust chain is not valid", Response.Status.BAD_REQUEST);
-                            }
-                            trustAnchor.setInitialEntity(initialEntityFetchStatement);
-                        }
                         chainsList.add(trustAnchor);
                     } else {
                         List<TrustChainResolution> subList = subTrustChains(initialEntity, subNodeSelfES, trustAnchorIds, visitedNodes, forRp);

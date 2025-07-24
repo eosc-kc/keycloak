@@ -12,7 +12,7 @@ public class TrustChainResolution {
 
     private String leafId;
 
-    private EntityStatement initialEntity;
+//    private EntityStatement initialEntity;
 
     public TrustChainResolution() {
         parsedChain = new ArrayList<>();
@@ -51,11 +51,11 @@ public class TrustChainResolution {
         this.leafId = leafId;
     }
 
-    public EntityStatement getInitialEntity() {
-        return initialEntity;
-    }
-
-    public void setInitialEntity(EntityStatement initialEntity) {
-        this.initialEntity = initialEntity;
-    }
+//    public EntityStatement getInitialEntity() {
+//        return initialEntity;
+//    }
+//
+//    public void setInitialEntity(EntityStatement initialEntity) {
+//        this.initialEntity = initialEntity;
+//    }
 }
