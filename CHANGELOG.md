@@ -13,21 +13,16 @@ Our Keycloak version is working well with PostgreSQL database. For using other S
 ## [Unreleased] 
 
 ### Added
-- OpenId Federation client access policies (UI)
-- OpenID Federation RP with explicit registration (experimental feature) 
+- OpenID Federation client access policies (UI)
+- OpenID Federation RP with explicit registration
 - Show expiration time for OpenId Federation Clients
 - Hide Enable/Disable Toggle for OpenId Federation Clients
-- Show Oidc Details for OpenId Federation Identity Providers
-- Show OpenId Federation Settings for OpenId Federation Identity Providers
-
-### Updated
-- Entity type supported values for OpenId Federation
-- Updated Redirect Uri for OpenId Federation Identity Providers
+- Show OpenID Federation configuration endpoint
 
 ### Fixed
 - Return trust anchor and authority_hints in explicit client registration response
-- OpenId Federation Endpoint
-- Hide Create option for OpenId Federation Identity Providers
+- Fixes in Trust Chain Resolution
+- Validate IdP refresh token based on 'Validate refresh token' configuration
 
 ## [22.0.13-1.19] - 2025-07-10
 

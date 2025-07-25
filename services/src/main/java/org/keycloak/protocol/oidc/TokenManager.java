@@ -235,7 +235,7 @@ public class TokenManager {
         if (loginIdpAlias!= null && refreshTokenIdP != null) {
             IdentityProviderModel idp = realm.getIdentityProviderByAlias(loginIdpAlias);
             String tokenIntrospectionIdPUrl = idp.getConfig().get(OIDCIdentityProviderConfig.TOKEN_INTROSPECTION_URL);
-            if (OIDCIdentityProviderFactory.PROVIDER_ID.equals(idp.getProviderId()) && Boolean.valueOf(idp.getConfig().get(OIDCIdentityProviderConfig.VALIDATE_SIGNATURE)) && tokenIntrospectionIdPUrl != null) {
+            if (OIDCIdentityProviderFactory.PROVIDER_ID.equals(idp.getProviderId()) && Boolean.valueOf(idp.getConfig().get(OIDCIdentityProviderConfig.VALIDATE_REFRESH_TOKEN)) && tokenIntrospectionIdPUrl != null) {
                 OIDCIdentityProviderConfig oidcIssuerIdp = new OIDCIdentityProviderConfig(idp);
                 try {
                     OIDCIdentityProvider oidcIssuerProvider = new OIDCIdentityProvider(session, oidcIssuerIdp);
