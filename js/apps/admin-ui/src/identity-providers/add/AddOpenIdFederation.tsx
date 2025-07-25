@@ -5,45 +5,27 @@ import {
   Button,
   PageSection,
 } from "@patternfly/react-core";
-import { useMemo } from "react";
+import { useState } from "react";
 import { FormProvider, useForm } from "react-hook-form";
 import { useTranslation } from "react-i18next";
 import { Link, useNavigate } from "react-router-dom";
 import { adminClient } from "../../admin-client";
 import { useAlerts } from "../../components/alert/Alerts";
-import { DynamicComponents } from "../../components/dynamic/DynamicComponents";
 import { FormAccess } from "../../components/form/FormAccess";
 import { ViewHeader } from "../../components/view-header/ViewHeader";
 import { useRealm } from "../../context/realm-context/RealmContext";
-import { useServerInfo } from "../../context/server-info/ServerInfoProvider";
-import { toUpperCase } from "../../util";
-import { useParams } from "../../utils/useParams";
 import { toIdentityProvider } from "../routes/IdentityProvider";
-import type { IdentityProviderCreateParams } from "../routes/IdentityProviderCreate";
 import { toIdentityProviders } from "../routes/IdentityProviders";
-import { GeneralSettings } from "./GeneralSettings";
+import { RedirectUrl } from "../component/RedirectUrl";
+import { DisplayOrder } from "../component/DisplayOrder";
+import { OpenIdFederationSettings } from "./OpenIdFederationSettings";
+import { useFetch } from "../../utils/useFetch";
+import OpenIdFederationRepresentation from "libs/keycloak-admin-client/lib/defs/OpenIdFederationRepresentation";
 
 export default function AddIdentityProvider() {
   const { t } = useTranslation("identity-providers");
-  const { providerId } = useParams<IdentityProviderCreateParams>();
+  const providerId = "openid-federation";
   const form = useForm<IdentityProviderRepresentation>();
-  const serverInfo = useServerInfo();
-
-  const providerInfo = useMemo(() => {
-    const namespaces = [
-      "org.keycloak.broker.social.SocialIdentityProvider",
-      "org.keycloak.broker.provider.IdentityProvider",
-    ];
-    for (const namespace of namespaces) {
-      const social = serverInfo.componentTypes?.[namespace]?.find(
-        ({ id }) => id === providerId,
-      );
-
-      if (social) {
-        return social;
-      }
-    }
-  }, [serverInfo, providerId]);
 
   const {
     handleSubmit,
@@ -53,7 +35,25 @@ export default function AddIdentityProvider() {
   const { addAlert, addError } = useAlerts();
   const navigate = useNavigate();
   const { realm } = useRealm();
+  const [trustAnchors, setTrustAnchors] = useState<string[]>([]);
 
+  useFetch(
+    async () => {
+      try {
+        const openIdFederations = await adminClient.openIdFederations.find({
+          realm: realm,
+        });
+        return openIdFederations.map(
+          (openIdFederation: OpenIdFederationRepresentation) =>
+            openIdFederation.trustAnchor,
+        );
+      } catch (error) {
+        return [];
+      }
+    },
+    setTrustAnchors,
+    [],
+  );
   const onSubmit = async (provider: IdentityProviderRepresentation) => {
     try {
       await adminClient.identityProviders.create({
@@ -77,11 +77,7 @@ export default function AddIdentityProvider() {
 
   return (
     <>
-      <ViewHeader
-        titleKey={t("addIdentityProvider", {
-          provider: toUpperCase(providerId),
-        })}
-      />
+      <ViewHeader titleKey={t("addOpenIdFederationProvider")} />
       <PageSection variant="light">
         <FormAccess
           role="manage-identity-providers"
@@ -89,13 +85,13 @@ export default function AddIdentityProvider() {
           onSubmit={handleSubmit(onSubmit)}
         >
           <FormProvider {...form}>
-            <GeneralSettings id={providerId} />
-            {providerInfo && (
-              <DynamicComponents
-                stringify
-                properties={providerInfo.properties}
-              />
-            )}
+            <RedirectUrl id={providerId} create={true} />
+            <DisplayOrder />
+            <OpenIdFederationSettings
+              readOnly={false}
+              create={true}
+              trustAnchors={trustAnchors}
+            />
           </FormProvider>
           <ActionGroup>
             <Button

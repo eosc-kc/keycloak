@@ -12,7 +12,7 @@ export const GeneralSettings = ({
   id,
 }: GeneralSettingsProps) => (
   <>
-    <RedirectUrl id={id} />
+    <RedirectUrl id={id} create={create} />
     <ClientIdSecret create={create} />
     <DisplayOrder />
   </>

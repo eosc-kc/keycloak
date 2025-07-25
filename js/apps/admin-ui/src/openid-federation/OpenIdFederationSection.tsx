@@ -40,7 +40,6 @@ export default function OpenIdFederationSection() {
       try {
         return await adminClient.openIdFederations.find({ realm: realmName });
       } catch (error) {
-        console.log(error);
         setOpenIdFederations([]); // Optionally clear state immediately
         return [];
       }

@@ -210,5 +210,6 @@
   "openIdFederationSettings": "OpenID Federation Settings",
   "authorityHints": "Authority Hints",
   "trustAnchorId": "Trust Anchor ID",
-  "expirationTime": "Expiration Date"
+  "expirationTime": "Expiration Date",
+  "addOpenIdFederationProvider": "Add OpenID Federation Provider"
 }

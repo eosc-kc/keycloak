@@ -8,10 +8,15 @@ import { addTrailingSlash } from "../../util";
 import { useFormContext, useWatch } from "react-hook-form";
 import IdentityProviderRepresentation from "libs/keycloak-admin-client/lib/defs/identityProviderRepresentation";
 
-export const RedirectUrl = ({ id }: { id: string }) => {
+export const RedirectUrl = ({
+  id,
+  create,
+}: {
+  id: string;
+  create?: boolean;
+}) => {
   const { t } = useTranslation("identity-providers");
   const { control } = useFormContext<IdentityProviderRepresentation>();
-
   const providerId = useWatch({
     control,
     name: "providerId",
@@ -34,7 +39,8 @@ export const RedirectUrl = ({ id }: { id: string }) => {
     >
       <ClipboardCopy isReadOnly>
         {`${callbackUrl}/` +
-          (providerId === "openid-federation"
+          ((id === "openid-federation" && create) ||
+          providerId === "openid-federation"
             ? "federation-endpoint"
             : `${id}/endpoint`)}
       </ClipboardCopy>

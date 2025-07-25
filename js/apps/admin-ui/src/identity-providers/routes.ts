@@ -7,6 +7,7 @@ import { IdentityProvidersRoute } from "./routes/IdentityProviders";
 import { IdentityProviderAddMapperRoute } from "./routes/AddMapper";
 import { IdentityProviderEditMapperRoute } from "./routes/EditMapper";
 import { IdentityProviderCreateRoute } from "./routes/IdentityProviderCreate";
+import { IdentityProviderOpendIdFederationRoute } from "./routes/IdentityProviderOpenIdFederation";
 
 const routes: AppRouteObject[] = [
   IdentityProviderAddMapperRoute,
@@ -17,6 +18,7 @@ const routes: AppRouteObject[] = [
   IdentityProviderKeycloakOidcRoute,
   IdentityProviderCreateRoute,
   IdentityProviderRoute,
+  IdentityProviderOpendIdFederationRoute,
 ];
 
 export default routes;
