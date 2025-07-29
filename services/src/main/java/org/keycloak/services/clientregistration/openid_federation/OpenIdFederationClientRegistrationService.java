@@ -78,7 +78,7 @@ public class OpenIdFederationClientRegistrationService extends AbstractClientReg
                 //just pick one with valid metadata policies randomly
                 TrustChainResolution validChain = trustChainProcessor.findAcceptableMetadataPolicyChain(trustChainResolutions, statement);
                 if (validChain != null) {
-                    RPMetadata rPMetadata = statement.getMetadata().getRelyingPartyMetadata();
+                    RPMetadata rPMetadata = validChain.getRpAfterPolicies();
                     if (rPMetadata.getJwks() == null && rPMetadata.getJwksUri() == null) {
                         rPMetadata.setJwks(statement.getJwks());
                     }

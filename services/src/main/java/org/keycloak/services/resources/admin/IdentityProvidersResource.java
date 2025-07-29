@@ -317,6 +317,10 @@ public class IdentityProvidersResource {
                 if (trustChainResolutions.isEmpty()) {
                     throw new BadRequestException("No common trust chain found");
                 }
+                if (trustChainResolutions.get(0).getEntityFromTA() != null) {
+                    //fetch endpoint consist OP -> take it as OP version
+                    opStatement = trustChainResolutions.get(0).getEntityFromTA();
+                }
                 IdentityProviderModel model = OIDCIdentityProviderFactory.parseOIDCConfig(opStatement.getMetadata().getOpenIdProviderMetadata(),  OpenIdFederationIdentityProviderConfig.class, new OpenIdFederationIdentityProviderConfig());
                 model.getConfig().put("guiOrder", representation.getConfig().get("guiOrder"));
 

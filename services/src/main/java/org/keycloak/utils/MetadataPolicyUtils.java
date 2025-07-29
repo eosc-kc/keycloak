@@ -268,17 +268,11 @@ public class MetadataPolicyUtils {
         return superior;
     }
 
-    public static EntityStatement applyPoliciesToRPStatement(EntityStatement entity, RPMetadataPolicy policy) throws MetadataPolicyException, MetadataPolicyCombinationException {
-
-        if (entity.getMetadata().getRelyingPartyMetadata() == null) {
-            throw new MetadataPolicyException("Try to enforce metapolicy for RP to an entity statement without RP");
-        }
+    public static RPMetadata applyPoliciesToRPStatement(RPMetadata rp, RPMetadataPolicy policy) throws MetadataPolicyException, MetadataPolicyCombinationException {
 
         if (policy == null) {
-            return entity;
+            return rp;
         }
-
-        RPMetadata rp = entity.getMetadata().getRelyingPartyMetadata();
 
         if (policy.getApplicationType() != null) {
             rp.setApplicationType(policy.getApplicationType().enforcePolicy(rp.getApplicationType(), "ApplicationType"));
@@ -440,9 +434,6 @@ public class MetadataPolicyUtils {
             rp.setUserinfoSignedResponseAlg(policy.getUserinfoSignedResponseAlg().enforcePolicy(rp.getUserinfoSignedResponseAlg(), "UserinfoSignedResponseAlg"));
         }
 
-        MetadataPolicy metadataPolicy = new MetadataPolicy();
-        metadataPolicy.setRelyingPartyMetadataPolicy(policy);
-        entity.setMetadataPolicy(metadataPolicy);
-        return entity;
+        return rp;
     }
 }

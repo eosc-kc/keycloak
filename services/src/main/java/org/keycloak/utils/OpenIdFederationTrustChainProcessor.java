@@ -130,11 +130,13 @@ public class OpenIdFederationTrustChainProcessor {
 
                     visitedNodes.add(subNodeSelfES.getIssuer());
                     if (trustAnchorIds.contains(authHint)) {
-                        //check that RP is registered as RP in trust anchor
-                        if (!OpenIdFederationUtils.containedInListEndpoint(subNodeSelfES.getMetadata().getFederationEntity().getFederationListEndpoint(), forRp ? EntityTypeEnum.OPENID_RELAYING_PARTY.getValue() : EntityTypeEnum.OPENID_PROVIDER.getValue(), initialEntity, session)) {
+                        TrustChainResolution trustAnchor = new TrustChainResolution();
+                        if (leafEs.getIssuer().equals(initialEntity) && subNodeSubordinateES.getMetadata() != null && ((forRp && subNodeSubordinateES.getMetadata().getRelyingPartyMetadata() != null) || (!forRp && subNodeSubordinateES.getMetadata().getOpenIdProviderMetadata() != null))) {
+                            trustAnchor.setEntityFromTA(subNodeSubordinateES);
+                        } else if (!OpenIdFederationUtils.containedInListEndpoint(subNodeSelfES.getMetadata().getFederationEntity().getFederationListEndpoint(), forRp ? EntityTypeEnum.OPENID_RELAYING_PARTY.getValue() : EntityTypeEnum.OPENID_PROVIDER.getValue(), initialEntity, session)) {
+                            //check that RP is registered as RP in trust anchor
                             throw new ErrorResponseException(Errors.INVALID_TRUST_CHAIN, "Trust chain is not valid", Response.Status.BAD_REQUEST);
                         }
-                        TrustChainResolution trustAnchor = new TrustChainResolution();
                         trustAnchor.getParsedChain().add(0, subNodeSelfES);
                         chainsList.add(trustAnchor);
                     } else {
@@ -239,18 +241,15 @@ public class OpenIdFederationTrustChainProcessor {
     }
 
     public TrustChainResolution findAcceptableMetadataPolicyChain(List<TrustChainResolution> trustChainResolutions, EntityStatement statement) {
-        TrustChainResolution validChain = null;
-        EntityStatement current = statement;
         for (TrustChainResolution chain : trustChainResolutions) {
             try {
-                current = MetadataPolicyUtils.applyPoliciesToRPStatement(current, chain.getCombinedPolicy());
-                validChain = chain;
-                break;
+                chain.setRpAfterPolicies(MetadataPolicyUtils.applyPoliciesToRPStatement(chain.getEntityFromTA() != null ? chain.getEntityFromTA().getMetadata().getRelyingPartyMetadata() :  statement.getMetadata().getRelyingPartyMetadata(), chain.getCombinedPolicy()));
+                return chain;
             } catch (MetadataPolicyCombinationException | MetadataPolicyException e) {
                 e.printStackTrace();
             }
         }
-        return validChain;
+        return null;
     }
 
     public JSONWebKeySet getKeySet() {
