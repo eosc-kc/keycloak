@@ -17,7 +17,6 @@
 
 package org.keycloak.models;
 
-import java.util.ArrayList;
 import java.util.Comparator;
 import org.keycloak.common.enums.SslRequired;
 import org.keycloak.component.ComponentModel;
@@ -347,7 +346,7 @@ public interface RealmModel extends RoleContainerModel {
     };
 
     default List<OpenIdFederationConfig> getOpenIdFederations() {
-        return new ArrayList<>();
+        return List.of();
     }
 
     default void addOpenIdFederation(OpenIdFederationConfig fedConfig) {

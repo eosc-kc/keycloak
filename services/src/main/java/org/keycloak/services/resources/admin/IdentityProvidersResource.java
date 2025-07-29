@@ -315,12 +315,15 @@ public class IdentityProvidersResource {
                 if (!trustChainProcessor.validateEntityStatementFields(opStatement, opIssuer, opIssuer) || opStatement.getMetadata().getOpenIdProviderMetadata() == null || !opStatement.getMetadata().getOpenIdProviderMetadata().getClientRegistrationTypes().contains("explicit") || opStatement.getMetadata().getOpenIdProviderMetadata().getFederationRegistrationEndpoint() == null) {
                     throw new BadRequestException("No valid OP Entity Statement");
                 }
-                List<TrustChainResolution> trustChainResolutions = trustChainProcessor.constructTrustChains(opStatement, Stream.of(federationConfig.getTrustAnchor()).collect(Collectors.toSet()), false, false);
-                if (trustChainResolutions.isEmpty()) {
+                TrustChainResolution trustChainResolution = trustChainProcessor.constructTrustChains(opStatement, Stream.of(federationConfig.getTrustAnchor()).collect(Collectors.toSet()),  false);
+                if (trustChainResolution == null) {
                     throw new BadRequestException("No common trust chain found");
                 }
-                IdentityProviderModel model = OIDCIdentityProviderFactory.parseOIDCConfig(opStatement.getMetadata().getOpenIdProviderMetadata(),  OpenIdFederationIdentityProviderConfig.class, new OpenIdFederationIdentityProviderConfig());
-                model.getConfig().put("guiOrder", representation.getConfig().get("guiOrder"));
+                OPMetadata op = (OPMetadata) trustChainResolution.getMetadataAfterPolicies();
+                IdentityProviderModel model = OIDCIdentityProviderFactory.parseOIDCConfig(op,  OpenIdFederationIdentityProviderConfig.class, new OpenIdFederationIdentityProviderConfig());
+                if (representation.getConfig().get("guiOrder") != null && !representation.getConfig().get("guiOrder").isEmpty()) {
+                    model.getConfig().put("guiOrder", representation.getConfig().get("guiOrder"));
+                }
 
                 UriInfo frontendUriInfo = session.getContext().getUri(UrlType.FRONTEND);
                 UriInfo backendUriInfo = session.getContext().getUri(UrlType.BACKEND);
@@ -330,12 +333,12 @@ public class IdentityProvidersResource {
                 Metadata metadata = new Metadata();
                 RPMetadata rPMetadata = OpenIdFederationUtils.createRPMetadata(federationGeneralConfig, federationConfig.getClientRegistrationTypesSupported().stream(), OpenIdFederationUtils.commonMetadata(federationGeneralConfig), RealmsResource.protocolUrl(backendUriInfo).clone().path(OIDCLoginProtocolService.class, "certs").build(realm.getName(),
                         OIDCLoginProtocol.LOGIN_PROTOCOL).toString(), frontendUriInfo, realm.getName());
-                metadataFromOP(rPMetadata, federationConfig.getIdpConfiguration(), opStatement.getMetadata().getOpenIdProviderMetadata(), opStatement.getSubject());
+                metadataFromOP(rPMetadata, federationConfig.getIdpConfiguration(), op, opStatement.getSubject());
                 metadataFromFederation(rPMetadata, federationConfig.getIdpConfiguration());
                 metadata.setRelyingPartyMetadata(rPMetadata);
                 entityStatement.setMetadata(metadata);
                 StringEntity entity = new StringEntity(session.tokens().encodeForOpenIdFederation(entityStatement), TokenUtil.APPLICATION_ENTITY_STATEMENT_JWT);
-                SimpleHttpResponse response = SimpleHttp.create(session).doPost(opStatement.getMetadata().getOpenIdProviderMetadata().getFederationRegistrationEndpoint())
+                SimpleHttpResponse response = SimpleHttp.create(session).doPost(op.getFederationRegistrationEndpoint())
                         .header("Content-Type", "application/entity-statement+jwt")
                         .entity(entity)
                         .asResponse();
@@ -352,7 +355,7 @@ public class IdentityProvidersResource {
                 throw ErrorResponse.error(e.getMessage(), BAD_REQUEST);
             }
         } else {
-            throw ErrorResponse.error(isRpFederated ? "This realm does not support Openid Federation as RP with selected trust anchor" : "Trust anchor and issuer are required", BAD_REQUEST);
+            throw ErrorResponse.error(isRpFederated ? "Trust anchor and issuer are required" : "This realm does not support Openid Federation as RP with selected trust anchor", BAD_REQUEST);
         }
     }
 

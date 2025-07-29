@@ -2,8 +2,9 @@ package org.keycloak.representations.openid_federation;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonUnwrapped;
+import org.keycloak.jose.jwk.JSONWebKeySet;
 
-public class OpenIdFederationEntityPolicy {
+public class OpenIdFederationEntityPolicy extends AbstractMetadataPolicy {
 
     @JsonProperty("federation_api_endpoint")
     private Policy<String> federationApiEndpoint;
@@ -29,8 +30,18 @@ public class OpenIdFederationEntityPolicy {
     @JsonProperty("endpoint_auth_signing_alg_values_supported")
     private PolicyList<String> endpointAuthSigningAlgValuesSupported;
 
-    @JsonUnwrapped
-    private CommonMetadataPolicy commonMetadataPolicy;
+    private  PolicyList<String> contacts;
+
+    @JsonProperty("jwks_uri")
+    private  Policy<String> jwksUri;
+
+    protected  Policy<JSONWebKeySet> jwks;
+
+    @JsonProperty("logo_uri")
+    private  Policy<String> logoUri;
+
+    @JsonProperty("policy_uri")
+    private  Policy<String> policyUri;
 
     public Policy<String> getFederationApiEndpoint() {
         return federationApiEndpoint;
@@ -96,11 +107,43 @@ public class OpenIdFederationEntityPolicy {
         this.endpointAuthSigningAlgValuesSupported = endpointAuthSigningAlgValuesSupported;
     }
 
-    public CommonMetadataPolicy getCommonMetadataPolicy() {
-        return commonMetadataPolicy;
+    public PolicyList<String> getContacts() {
+        return contacts;
     }
 
-    public void setCommonMetadataPolicy(CommonMetadataPolicy commonMetadataPolicy) {
-        this.commonMetadataPolicy = commonMetadataPolicy;
+    public void setContacts(PolicyList<String> contacts) {
+        this.contacts = contacts;
+    }
+
+    public Policy<String> getJwksUri() {
+        return jwksUri;
+    }
+
+    public void setJwksUri(Policy<String> jwksUri) {
+        this.jwksUri = jwksUri;
+    }
+
+    public Policy<JSONWebKeySet> getJwks() {
+        return jwks;
+    }
+
+    public void setJwks(Policy<JSONWebKeySet> jwks) {
+        this.jwks = jwks;
+    }
+
+    public Policy<String> getLogoUri() {
+        return logoUri;
+    }
+
+    public void setLogoUri(Policy<String> logoUri) {
+        this.logoUri = logoUri;
+    }
+
+    public Policy<String> getPolicyUri() {
+        return policyUri;
+    }
+
+    public void setPolicyUri(Policy<String> policyUri) {
+        this.policyUri = policyUri;
     }
 }

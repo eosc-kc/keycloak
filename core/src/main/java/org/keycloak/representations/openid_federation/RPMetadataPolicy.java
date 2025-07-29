@@ -4,13 +4,10 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonUnwrapped;
 import org.keycloak.jose.jwk.JSONWebKeySet;
 
-public class RPMetadataPolicy {
+public class RPMetadataPolicy extends AbstractMetadataPolicy {
 
     @JsonProperty("client_registration_types")
     private PolicyList<String> clientRegistrationTypes;
-
-    @JsonUnwrapped
-    private CommonMetadataPolicy commonMetadataPolicy;
 
     @JsonProperty("redirect_uris")
     private PolicyList<String> redirectUris;
@@ -166,7 +163,7 @@ public class RPMetadataPolicy {
     private Policy<Boolean> requirePushedAuthorizationRequests;
 
     @JsonProperty("frontchannel_logout_uri")
-    private Policy<String> frontchannelLogoutUri;
+    private Policy<String> frontChannelLogoutUri;
 
     @JsonProperty("frontchannel_logout_session_required")
     private Policy<Boolean> frontchannelLogoutSessionRequired;
@@ -177,14 +174,6 @@ public class RPMetadataPolicy {
 
     public void setClientRegistrationTypes(PolicyList<String> clientRegistrationTypes) {
         this.clientRegistrationTypes = clientRegistrationTypes;
-    }
-
-    public CommonMetadataPolicy getCommonMetadataPolicy() {
-        return commonMetadataPolicy;
-    }
-
-    public void setCommonMetadataPolicy(CommonMetadataPolicy commonMetadataPolicy) {
-        this.commonMetadataPolicy = commonMetadataPolicy;
     }
 
     public PolicyList<String> getRedirectUris() {
@@ -579,12 +568,12 @@ public class RPMetadataPolicy {
         this.requirePushedAuthorizationRequests = requirePushedAuthorizationRequests;
     }
 
-    public Policy<String> getFrontchannelLogoutUri() {
-        return frontchannelLogoutUri;
+    public Policy<String> getFrontChannelLogoutUri() {
+        return frontChannelLogoutUri;
     }
 
-    public void setFrontchannelLogoutUri(Policy<String> frontchannelLogoutUri) {
-        this.frontchannelLogoutUri = frontchannelLogoutUri;
+    public void setFrontChannelLogoutUri(Policy<String> frontChannelLogoutUri) {
+        this.frontChannelLogoutUri = frontChannelLogoutUri;
     }
 
     public Policy<Boolean> getFrontchannelLogoutSessionRequired() {
