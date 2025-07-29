@@ -10,7 +10,7 @@ Full Keycloak upstream jira issue can be shown if filtered by Fix version.
 
 Our Keycloak version is working well with PostgreSQL database. For using other SQL databases, text field in database need to be evaluated.
 
-## [Unreleased]
+## [Unreleased] 
 
 ### Added
 - SAML Federation implementation
@@ -45,6 +45,7 @@ Our Keycloak version is working well with PostgreSQL database. For using other S
 - Default acr value for Identity Providers login
 - OpenID Federation OP with explicit registration
 - OpenID Federation RP with explicit registration
+- Metadata Policies (experimental feature)
 
 ### Changed
 - Change emailVerified User field with UserAttributeMappers (conditional trust email). [EOSC-KC-70](https://github.com/eosc-kc/keycloak/issues/70)

@@ -69,8 +69,8 @@ public class OpenIdFederationWellKnownProviderTest extends AbstractWellKnownProv
             Assert.assertNotNull(statement.getMetadata().getFederationEntity());
             assertEquals("Keycloak", statement.getMetadata().getFederationEntity().getCommonMetadata().getOrganizationName());
             OPMetadata op = statement.getMetadata().getOpenIdProviderMetadata();
-            assertEquals(1, op.getClientRegistrationTypes().size());
-            assertEquals("explicit", op.getClientRegistrationTypes().get(0));
+            assertEquals(1, op.getClientRegistrationTypesSupported().size());
+            assertEquals("explicit", op.getClientRegistrationTypesSupported().get(0));
             assertEquals(UriBuilder.fromUri(OAuthClient.AUTH_SERVER_ROOT).path(RealmsResource.class).path(RealmsResource.class, "getOpenIdFederationClientsService").build("test").toString(), op.getFederationRegistrationEndpoint());
             testOidc(op);
 

@@ -7,10 +7,10 @@ import org.keycloak.protocol.oidc.representations.OIDCConfigurationRepresentatio
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonUnwrapped;
 
-public class OPMetadata extends OIDCConfigurationRepresentation {
+public class OPMetadata extends OIDCConfigurationRepresentation implements MetadataInterface {
 
-    @JsonProperty("client_registration_types")
-    private List<String> clientRegistrationTypes;
+    @JsonProperty("client_registration_types_supported")
+    private List<String> clientRegistrationTypesSupported;
 
     @JsonProperty("federation_registration_endpoint")
     private String federationRegistrationEndpoint;
@@ -26,12 +26,12 @@ public class OPMetadata extends OIDCConfigurationRepresentation {
     @JsonUnwrapped
     private CommonMetadata commonMetadata;
 
-    public List<String> getClientRegistrationTypes() {
-        return clientRegistrationTypes;
+    public List<String> getClientRegistrationTypesSupported() {
+        return clientRegistrationTypesSupported;
     }
 
-    public void setClientRegistrationTypes(List<String> clientRegistrationTypes) {
-        this.clientRegistrationTypes = clientRegistrationTypes;
+    public void setClientRegistrationTypesSupported(List<String> clientRegistrationTypesSupported) {
+        this.clientRegistrationTypesSupported = clientRegistrationTypesSupported;
     }
 
     public String getFederationRegistrationEndpoint() {

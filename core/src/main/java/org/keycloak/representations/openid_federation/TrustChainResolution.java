@@ -6,13 +6,15 @@ import java.util.List;
 public class TrustChainResolution {
     private List<EntityStatement> parsedChain;
 
-    private RPMetadataPolicy combinedPolicy;
+    private AbstractMetadataPolicy combinedPolicy;
 
     private String trustAnchorId;
 
     private String leafId;
 
-//    private EntityStatement initialEntity;
+    private EntityStatement entityFromTA;
+
+    private MetadataInterface metadataAfterPolicies;
 
     public TrustChainResolution() {
         parsedChain = new ArrayList<>();
@@ -27,11 +29,11 @@ public class TrustChainResolution {
         this.parsedChain = parsedChain;
     }
 
-    public RPMetadataPolicy getCombinedPolicy() {
+    public AbstractMetadataPolicy getCombinedPolicy() {
         return combinedPolicy;
     }
 
-    public void setCombinedPolicy(RPMetadataPolicy combinedPolicy) {
+    public void setCombinedPolicy(AbstractMetadataPolicy combinedPolicy) {
         this.combinedPolicy = combinedPolicy;
     }
 
@@ -51,11 +53,19 @@ public class TrustChainResolution {
         this.leafId = leafId;
     }
 
-//    public EntityStatement getInitialEntity() {
-//        return initialEntity;
-//    }
-//
-//    public void setInitialEntity(EntityStatement initialEntity) {
-//        this.initialEntity = initialEntity;
-//    }
+    public EntityStatement getEntityFromTA() {
+        return entityFromTA;
+    }
+
+    public void setEntityFromTA(EntityStatement entityFromTA) {
+        this.entityFromTA = entityFromTA;
+    }
+
+    public MetadataInterface getMetadataAfterPolicies() {
+        return metadataAfterPolicies;
+    }
+
+    public void setMetadataAfterPolicies(MetadataInterface metadataAfterPolicies) {
+        this.metadataAfterPolicies = metadataAfterPolicies;
+    }
 }

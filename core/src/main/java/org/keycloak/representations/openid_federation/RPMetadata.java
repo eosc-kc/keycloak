@@ -7,7 +7,7 @@ import org.keycloak.representations.oidc.OIDCClientRepresentation;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonUnwrapped;
 
-public class RPMetadata extends OIDCClientRepresentation {
+public class RPMetadata extends OIDCClientRepresentation implements MetadataInterface {
 
     @JsonProperty("client_registration_types")
     private List<String> clientRegistrationTypes;
