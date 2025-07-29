@@ -608,7 +608,7 @@ public class RealmEntity {
     }
 
     public List<OpenIdFederationEntity> getOpenIdFederationList() {
-        return openIdFederationList == null ? new ArrayList<>() : openIdFederationList;
+        return openIdFederationList;
     }
 
     public void setOpenIdFederationList(List<OpenIdFederationEntity> openIdFederationList) {

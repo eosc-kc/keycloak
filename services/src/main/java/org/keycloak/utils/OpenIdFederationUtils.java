@@ -1,7 +1,6 @@
 package org.keycloak.utils;
 
 import java.io.IOException;
-import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.Collections;
@@ -53,8 +52,8 @@ public class OpenIdFederationUtils {
         return listApiUrl != null && SimpleHttp.doGet(listApiUrl + "?entity_type=" + entityType, session).asJson(new TypeReference<List<String>>(){}).contains(issuer);
     }
 
-    private static String urlEncode(String url) throws UnsupportedEncodingException {
-        return URLEncoder.encode(url, StandardCharsets.UTF_8.toString());
+    private static String urlEncode(String url) {
+        return URLEncoder.encode(url, StandardCharsets.UTF_8);
     }
 
     public static CommonMetadata commonMetadata(OpenIdFederationGeneralConfig realmConfig){

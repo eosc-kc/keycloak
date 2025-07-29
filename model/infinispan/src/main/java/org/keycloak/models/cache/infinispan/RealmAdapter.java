@@ -17,7 +17,6 @@
 
 package org.keycloak.models.cache.infinispan;
 
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -883,7 +882,7 @@ public class RealmAdapter implements CachedRealmModel {
     @Override
     public List<OpenIdFederationConfig> getOpenIdFederations() {
         if (isUpdated()) return updated.getOpenIdFederations();
-        return isOpenIdFederationEnabled() ?  cached.getOpenIdFederationConfig().getOpenIdFederationList() : new ArrayList<>();
+        return isOpenIdFederationEnabled() ?  cached.getOpenIdFederationConfig().getOpenIdFederationList() : List.of();
     }
 
     @Override
