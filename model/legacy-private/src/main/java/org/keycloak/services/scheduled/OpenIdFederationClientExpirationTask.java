@@ -42,13 +42,13 @@ public class OpenIdFederationClientExpirationTask implements ScheduledTask {
         RealmModel realm = session.realms().getRealm(realmId);
         if ( realm == null) {
             TimerProvider timer = session.getProvider(TimerProvider.class);
-            timer.cancelTask("OpenIdFederationClientExpirationTask_" + id);
+            timer.cancelTaskAndNotify("OpenIdFederationClientExpirationTask_" + id);
             return;
         }
         ClientModel client = session.clients().getClientById(realm, id);
         if (client == null || client.getAttribute(OIDCConfigAttributes.EXPIRATION_TIME) == null ) {
             TimerProvider timer = session.getProvider(TimerProvider.class);
-            timer.cancelTask("OpenIdFederationClientExpirationTask_" + id);
+            timer.cancelTaskAndNotify("OpenIdFederationClientExpirationTask_" + id);
         } else {
             client.setEnabled(false);
             client.updateClient();

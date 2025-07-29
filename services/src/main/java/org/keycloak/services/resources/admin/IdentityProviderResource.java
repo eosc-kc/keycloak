@@ -149,7 +149,7 @@ public class IdentityProviderResource {
         this.realm.removeIdentityProviderByAlias(alias);
 
         TimerProvider timer = session.getProvider(TimerProvider.class);
-        timer.cancelTask(realm.getId()+"_AutoUpdateIdP_" + alias);
+        timer.cancelTaskAndNotify(realm.getId()+"_AutoUpdateIdP_" + alias);
 
         realm.getIdentityProviderMappersByAliasStream(alias)
                 .collect(Collectors.toList()).forEach(realm::removeIdentityProviderMapper);
@@ -250,12 +250,12 @@ public class IdentityProviderResource {
         } else if ("false".equals(updated.getConfig().get(IdentityProviderModel.AUTO_UPDATE)) && "true".equals(identityProviderModel.getConfig().get(IdentityProviderModel.AUTO_UPDATE))) {
             //change from autoUpdated to simple IdP
             TimerProvider timer = session.getProvider(TimerProvider.class);
-            timer.cancelTask(realm.getId()+"_AutoUpdateIdP_" + identityProviderModel.getAlias());
+            timer.cancelTaskAndNotify(realm.getId()+"_AutoUpdateIdP_" + identityProviderModel.getAlias());
         } else if ("true".equals(updated.getConfig().get(IdentityProviderModel.AUTO_UPDATE)) && (!updated.getConfig().get(IdentityProviderModel.REFRESH_PERIOD).equals(identityProviderModel.getConfig().get(IdentityProviderModel.REFRESH_PERIOD)) || !identityProviderModel.getAlias().equals(providerRep.getAlias()))) {
             //change refreshPeriod or alias
             TimerProvider timer = session.getProvider(TimerProvider.class);
             long delay = updated.getConfig().get(IdentityProviderModel.LAST_REFRESH_TIME) == null ? Long.parseLong(updated.getConfig().get(IdentityProviderModel.REFRESH_PERIOD)) * 1000 : Long.parseLong(updated.getConfig().get(IdentityProviderModel.LAST_REFRESH_TIME) )+ Long.parseLong(updated.getConfig().get(IdentityProviderModel.REFRESH_PERIOD)) * 1000 - Instant.now().toEpochMilli();
-            timer.cancelTask(realm.getId()+"_AutoUpdateIdP_" + identityProviderModel.getAlias());
+            timer.cancelTaskAndNotify(realm.getId()+"_AutoUpdateIdP_" + identityProviderModel.getAlias());
             createScheduleTask(timer, updated.getAlias(), delay, Long.parseLong(updated.getConfig().get(IdentityProviderModel.REFRESH_PERIOD)) * 1000);
         }
 

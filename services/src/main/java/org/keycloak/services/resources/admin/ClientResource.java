@@ -167,7 +167,7 @@ public class ClientResource {
             if ("saml".equals(rep.getProtocol()) && rep.getAttributes() != null && Boolean.valueOf(rep.getAttributes().get(SamlConfigAttributes.SAML_AUTO_UPDATED)) && !rep.getAttributes().get(SamlConfigAttributes.SAML_REFRESH_PERIOD).equals(client.getAttributes().get(SamlConfigAttributes.SAML_REFRESH_PERIOD))) {
                 //saml autoupdated schedule task ( autoupdate with different refresh period)
                 TimerProvider timer = session.getProvider(TimerProvider.class);
-                timer.cancelTask("AutoUpdateSAMLClient_" + client.getId());
+                timer.cancelTaskAndNotify("AutoUpdateSAMLClient_" + client.getId());
                 AutoUpdateSAMLClient autoUpdateProvider = new AutoUpdateSAMLClient(client.getId(), realm.getId());
                 Long interval = Long.parseLong(rep.getAttributes().get(SamlConfigAttributes.SAML_REFRESH_PERIOD))* 1000;
                 Long delay = client.getAttributes().get(SamlConfigAttributes.SAML_LAST_REFRESH_TIME) == null ? 1 : Long.parseLong(client.getAttributes().get(SamlConfigAttributes.SAML_LAST_REFRESH_TIME) )+ Long.parseLong(rep.getAttributes().get(SamlConfigAttributes.SAML_REFRESH_PERIOD)) * 1000 - Instant.now().toEpochMilli();
@@ -176,7 +176,7 @@ public class ClientResource {
             } else  if ("saml".equals(rep.getProtocol()) && rep.getAttributes() != null && ! Boolean.valueOf(rep.getAttributes().get(SamlConfigAttributes.SAML_AUTO_UPDATED)) && Boolean.valueOf(client.getAttributes().get(SamlConfigAttributes.SAML_AUTO_UPDATED))) {
                 //saml remove autoupdate
                 TimerProvider timer = session.getProvider(TimerProvider.class);
-                timer.cancelTask("AutoUpdateSAMLClient_" + client.getId());
+                timer.cancelTaskAndNotify("AutoUpdateSAMLClient_" + client.getId());
             }
 
             session.clientPolicy().triggerOnEvent(new AdminClientUpdatedContext(rep, client, auth.adminAuth()));

@@ -156,7 +156,7 @@ public class SAMLFederationProvider extends AbstractIdPFederationProvider <SAMLF
         }
 		// remove previous task and add new with new RefreshEveryHours
 		TimerProvider timer = session.getProvider(TimerProvider.class);
-		timer.cancelTask("UpdateFederation" + model.getInternalId());
+		timer.cancelTaskAndNotify("UpdateFederation" + model.getInternalId());
 		UpdateFederation updateFederation = new UpdateFederation(model.getInternalId(),realmId);
 		ClusterAwareScheduledTaskRunner taskRunner = new ClusterAwareScheduledTaskRunner(session.getKeycloakSessionFactory(), updateFederation,model.getUpdateFrequencyInMins() * 60 * 1000);
 		long delay = (model.getUpdateFrequencyInMins() * 60 * 1000) - Instant.now().toEpochMilli() + model.getLastMetadataRefreshTimestamp();
@@ -735,7 +735,7 @@ public class SAMLFederationProvider extends AbstractIdPFederationProvider <SAMLF
 
 		//cancel federation update task
 		TimerProvider timer = session.getProvider(TimerProvider.class);
-		timer.cancelTask("UpdateFederation" + model.getInternalId());
+		timer.cancelTaskAndNotify("UpdateFederation" + model.getInternalId());
 
 		RealmModel realm = session.realms().getRealm(realmId);
 		List<ClientModel> existingClientModels = session.clients().getFederationClientsStream(realm, model.getInternalId());

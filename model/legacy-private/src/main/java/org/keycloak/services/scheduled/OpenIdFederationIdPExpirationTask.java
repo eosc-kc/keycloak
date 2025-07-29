@@ -25,13 +25,13 @@ public class OpenIdFederationIdPExpirationTask implements ScheduledTask {
         RealmModel realm = session.realms().getRealm(realmId);
         if ( realm == null) {
             TimerProvider timer = session.getProvider(TimerProvider.class);
-            timer.cancelTask("OpenIdFederationIdPExpirationTask_" + alias);
+            timer.cancelTaskAndNotify("OpenIdFederationIdPExpirationTask_" + alias);
             return;
         }
         IdentityProviderModel idp = realm.getIdentityProviderByAlias(alias);
         if (idp == null || !"openid-federation".equals(idp.getProviderId()) ) {
             TimerProvider timer = session.getProvider(TimerProvider.class);
-            timer.cancelTask("OpenIdFederationIdPExpirationTask_" + alias);
+            timer.cancelTaskAndNotify("OpenIdFederationIdPExpirationTask_" + alias);
         } else {
             //TODO retry for updating IdP
             idp.setEnabled(false);

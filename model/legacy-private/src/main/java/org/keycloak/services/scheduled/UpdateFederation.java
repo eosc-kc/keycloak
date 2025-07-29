@@ -41,7 +41,7 @@ public class UpdateFederation implements ScheduledTask {
 		} else {
 			//realm has been removed. remove this task
 			TimerProvider timer = session.getProvider(TimerProvider.class);
-			timer.cancelTask("UpdateFederation" + federationId);
+			timer.cancelTaskAndNotify("UpdateFederation" + federationId);
 		}
 	}
 	

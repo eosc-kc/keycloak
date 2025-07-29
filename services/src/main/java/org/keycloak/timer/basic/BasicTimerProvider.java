@@ -18,13 +18,16 @@
 package org.keycloak.timer.basic;
 
 import org.jboss.logging.Logger;
+import org.keycloak.cluster.ClusterProvider;
 import org.keycloak.models.KeycloakSession;
 import org.keycloak.services.scheduled.ScheduledTaskRunner;
 import org.keycloak.timer.ScheduledTask;
 import org.keycloak.timer.TimerProvider;
 
+import java.util.Set;
 import java.util.Timer;
 import java.util.TimerTask;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * @author <a href="mailto:sthorger@redhat.com">Stian Thorgersen</a>
@@ -37,12 +40,14 @@ public class BasicTimerProvider implements TimerProvider {
     private final Timer timer;
     private final int transactionTimeout;
     private final BasicTimerProviderFactory factory;
+    private final ClusterProvider clusterProvider;
 
     public BasicTimerProvider(KeycloakSession session, Timer timer, int transactionTimeout, BasicTimerProviderFactory factory) {
         this.session = session;
         this.timer = timer;
         this.transactionTimeout = transactionTimeout;
         this.factory = factory;
+        this.clusterProvider = session.getProvider(ClusterProvider.class);
     }
     
     @Override
@@ -97,6 +102,19 @@ public class BasicTimerProvider implements TimerProvider {
 
     @Override
     public TimerTaskContext cancelTask(String taskName) {
+        TimerTaskContextImpl existingTask = factory.removeTask(taskName);
+        if (existingTask != null) {
+            logger.debugf("Cancelling task '%s'", taskName);
+            existingTask.timerTask.cancel();
+        }
+
+        return existingTask;
+    }
+
+    @Override
+    public TimerTaskContext cancelTaskAndNotify(String taskName) {
+        // Notify all nodes to cancel the task
+        clusterProvider.notify(BasicTimerProviderFactory.CANCEL_TASK, new TaskCancellationEvent(taskName), true, ClusterProvider.DCNotify.ALL_DCS);
         TimerTaskContextImpl existingTask = factory.removeTask(taskName);
         if (existingTask != null) {
             logger.debugf("Cancelling task '%s'", taskName);

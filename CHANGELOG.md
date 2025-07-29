@@ -23,6 +23,7 @@ Our Keycloak version is working well with PostgreSQL database. For using other S
 - Return trust anchor and authority_hints in explicit client registration response
 - Fixes in Trust Chain Resolution
 - Validate IdP refresh token based on 'Validate refresh token' configuration
+- Notify other nodes for event cancellation
 
 ## [22.0.13-1.19] - 2025-07-10
 

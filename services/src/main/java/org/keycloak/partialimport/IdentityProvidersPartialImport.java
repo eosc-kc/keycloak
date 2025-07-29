@@ -72,7 +72,7 @@ public class IdentityProvidersPartialImport extends AbstractPartialImport<Identi
         realm.removeIdentityProviderByAlias(getName(idpRep));
         //case IdP is autoUpdated delete its schedule task
         TimerProvider timer = session.getProvider(TimerProvider.class);
-        timer.cancelTask(realm.getId()+"_AutoUpdateIdP_" + idpRep.getAlias());
+        timer.cancelTaskAndNotify(realm.getId()+"_AutoUpdateIdP_" + idpRep.getAlias());
     }
 
     @Override

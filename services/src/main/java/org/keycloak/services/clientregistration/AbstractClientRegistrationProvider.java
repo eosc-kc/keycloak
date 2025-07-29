@@ -321,7 +321,7 @@ public abstract class AbstractClientRegistrationProvider implements ClientRegist
         if ("saml".equals(rep.getProtocol()) && rep.getAttributes() != null && Boolean.valueOf(rep.getAttributes().get(SamlConfigAttributes.SAML_AUTO_UPDATED)) && !rep.getAttributes().get(SamlConfigAttributes.SAML_REFRESH_PERIOD).equals(client.getAttributes().get(SamlConfigAttributes.SAML_REFRESH_PERIOD))) {
             //saml autoupdated schedule task ( autoupdate with different refresh period)
             TimerProvider timer = session.getProvider(TimerProvider.class);
-            timer.cancelTask("AutoUpdateSAMLClient_" + client.getId());
+            timer.cancelTaskAndNotify("AutoUpdateSAMLClient_" + client.getId());
             AutoUpdateSAMLClient autoUpdateProvider = new AutoUpdateSAMLClient(client.getId(), session.getContext().getRealm().getId());
             Long interval = Long.parseLong(rep.getAttributes().get(SamlConfigAttributes.SAML_REFRESH_PERIOD))* 1000;
             Long delay = client.getAttributes().get(SamlConfigAttributes.SAML_LAST_REFRESH_TIME) == null ? 1 : Long.parseLong(client.getAttributes().get(SamlConfigAttributes.SAML_LAST_REFRESH_TIME) )+ Long.parseLong(rep.getAttributes().get(SamlConfigAttributes.SAML_REFRESH_PERIOD)) * 1000 - Instant.now().toEpochMilli();
@@ -330,17 +330,17 @@ public abstract class AbstractClientRegistrationProvider implements ClientRegist
         } else  if ("saml".equals(rep.getProtocol()) && rep.getAttributes() != null && ! Boolean.valueOf(rep.getAttributes().get(SamlConfigAttributes.SAML_AUTO_UPDATED)) && Boolean.valueOf(client.getAttributes().get(SamlConfigAttributes.SAML_AUTO_UPDATED))) {
             //saml remove autoupdate
             TimerProvider timer = session.getProvider(TimerProvider.class);
-            timer.cancelTask("AutoUpdateSAMLClient_" + client.getId());
+            timer.cancelTaskAndNotify("AutoUpdateSAMLClient_" + client.getId());
         } else if (rep.getAttributes() != null && rep.getAttributes().get(OIDCConfigAttributes.EXPIRATION_TIME) != null && !rep.getAttributes().get(OIDCConfigAttributes.EXPIRATION_TIME).equals(client.getAttributes().get(OIDCConfigAttributes.EXPIRATION_TIME))) {
             TimerProvider timer = session.getProvider(TimerProvider.class);
-            timer.cancelTask("OpenidFederationExplicitClient_" + client.getId());
+            timer.cancelTaskAndNotify("OpenidFederationExplicitClient_" + client.getId());
             OpenIdFederationClientExpirationTask federationTask = new OpenIdFederationClientExpirationTask(client.getId(), session.getContext().getRealm().getId());
             long expiration = Long.valueOf(client.getAttribute(OIDCConfigAttributes.EXPIRATION_TIME)) * 1000 - Time.currentTimeMillis();
             ClusterAwareScheduledTaskRunner taskRunner = new ClusterAwareScheduledTaskRunner(session.getKeycloakSessionFactory(), federationTask, expiration > 60 * 1000 ? expiration : 60 * 1000);
             timer.scheduleOnce(taskRunner, expiration > 60 * 1000 ? expiration : 60 * 1000, "OpenidFederationExplicitClient_" + client.getId());
         } else  if (rep.getAttributes() != null && rep.getAttributes().get(OIDCConfigAttributes.EXPIRATION_TIME) == null && client.getAttributes().get(OIDCConfigAttributes.EXPIRATION_TIME) != null) {
             TimerProvider timer = session.getProvider(TimerProvider.class);
-            timer.cancelTask("OpenidFederationExplicitClient_" + client.getId());
+            timer.cancelTaskAndNotify("OpenidFederationExplicitClient_" + client.getId());
         }
 
         event.client(client.getClientId()).success();

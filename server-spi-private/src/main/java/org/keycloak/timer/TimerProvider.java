@@ -41,6 +41,8 @@ public interface TimerProvider extends Provider {
      */
     public TimerTaskContext cancelTask(String taskName);
 
+    public TimerTaskContext cancelTaskAndNotify(String taskName);
+
 
     interface TimerTaskContext {
 

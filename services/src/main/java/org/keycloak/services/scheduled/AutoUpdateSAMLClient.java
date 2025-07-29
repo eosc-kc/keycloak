@@ -40,13 +40,13 @@ public class AutoUpdateSAMLClient implements ScheduledTask {
         RealmModel realm = session.realms().getRealm(realmId);
         if ( realm == null) {
             TimerProvider timer = session.getProvider(TimerProvider.class);
-            timer.cancelTask("AutoUpdateSAMLClient_" + id);
+            timer.cancelTaskAndNotify("AutoUpdateSAMLClient_" + id);
             return;
         }
         ClientModel client = session.clients().getClientById(realm, id);
-        if (client == null || !"saml".equals(client.getProtocol()) || client.getAttribute(SamlConfigAttributes.SAML_METADATA_URL) == null ) {
+        if (client == null || !"saml".equals(client.getProtocol()) || ! "true".equals(client.getAttribute(SamlConfigAttributes.SAML_AUTO_UPDATED)) ) {
             TimerProvider timer = session.getProvider(TimerProvider.class);
-            timer.cancelTask("AutoUpdateSAMLClient_" + id);
+            timer.cancelTaskAndNotify("AutoUpdateSAMLClient_" + id);
             return;
         }
         InputStream inputStream = null;
