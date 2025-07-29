@@ -8,9 +8,7 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Objects;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 import jakarta.ws.rs.core.Response;
 
@@ -33,10 +31,14 @@ import org.keycloak.jose.jws.JWSInput;
 import org.keycloak.jose.jws.JWSInputException;
 import org.keycloak.models.KeycloakSession;
 import org.keycloak.models.enums.EntityTypeEnum;
+import org.keycloak.representations.openid_federation.AbstractMetadataPolicy;
 import org.keycloak.representations.openid_federation.EntityStatement;
+import org.keycloak.representations.openid_federation.OPMetadataPolicy;
 import org.keycloak.representations.openid_federation.RPMetadataPolicy;
 import org.keycloak.representations.openid_federation.TrustChainResolution;
 import org.keycloak.services.ErrorResponseException;
+import org.keycloak.services.Urls;
+import org.keycloak.urls.UrlType;
 import org.keycloak.util.JWKSUtils;
 
 import org.jboss.logging.Logger;
@@ -57,44 +59,42 @@ public class OpenIdFederationTrustChainProcessor implements TrustChainProcessor 
      * @return any valid trust chains from the leaf node JWT to the trust anchor.
      */
     @Override
-    public List<TrustChainResolution> constructTrustChains(EntityStatement leafEs, Set<String> trustAnchorIds, boolean policyRequired, boolean forRp) {
+    public TrustChainResolution constructTrustChains(EntityStatement leafEs, Set<String> trustAnchorIds, boolean forRp) {
 
-        List<TrustChainResolution> trustChainResolutions = subTrustChains(leafEs.getIssuer(), leafEs, trustAnchorIds, new HashSet<>(), forRp);
+        List<TrustChainResolution> trustChainResolutions = subTrustChains(leafEs.getSubject(), leafEs, trustAnchorIds, new HashSet<>(), forRp);
 
-        return trustChainResolutions.stream().map(trustChainResolution -> {
-                    //combine policies if valid till now
-                    List<EntityStatement> parsedChain = trustChainResolution.getParsedChain();
-                    if (trustChainResolution != null && policyRequired) {
-                        try {
-                            RPMetadataPolicy combinedPolicy = parsedChain.get(parsedChain.size() - 1).getMetadataPolicy() == null ? null : parsedChain.get(parsedChain.size() - 1).getMetadataPolicy().getRelyingPartyMetadataPolicy();
-                            for (int i = parsedChain.size() - 2; i > 0; i--) {
-                                combinedPolicy = MetadataPolicyUtils.combineClientPolicies(combinedPolicy, parsedChain.get(i).getMetadataPolicy().getRelyingPartyMetadataPolicy());
-                            }
+        for (TrustChainResolution trustChainResolution : trustChainResolutions) {
 
-                            trustChainResolution.setCombinedPolicy(combinedPolicy);
-                            trustChainResolution.setTrustAnchorId(trustChainResolution.getParsedChain().get(trustChainResolution.getParsedChain().size() - 1).getIssuer());
-                            trustChainResolution.setLeafId(trustChainResolution.getParsedChain().get(0).getIssuer());
-                        } catch (MetadataPolicyCombinationException e) {
-                            logger.warn(String.format("Cannot combine metadata policy"));
-                            trustChainResolution = null;
-                        }
+            //combine policies if valid till now
+            List<EntityStatement> parsedChain = trustChainResolution.getParsedChain();
+            try {
+                AbstractMetadataPolicy combinedPolicy = parsedChain.get(parsedChain.size() - 1).getMetadataPolicy() == null ? null :
+                        (forRp ? parsedChain.get(parsedChain.size() - 1).getMetadataPolicy().getRelyingPartyMetadataPolicy() : parsedChain.get(parsedChain.size() - 1).getMetadataPolicy().getOpenIdProviderMetadataPolicy());
+                for (int i = parsedChain.size() - 2; i > 0; i--) {
+                    combinedPolicy = MetadataPolicyUtils.combinePolicies(combinedPolicy, parsedChain.get(i).getMetadataPolicy() == null ? null :
+                            (forRp ? parsedChain.get(i).getMetadataPolicy().getRelyingPartyMetadataPolicy() : parsedChain.get(i).getMetadataPolicy().getOpenIdProviderMetadataPolicy()));
+                }
 
-                    } else if (trustChainResolution != null) {
-                        trustChainResolution.setTrustAnchorId(trustChainResolution.getParsedChain().get(trustChainResolution.getParsedChain().size() - 1).getIssuer());
-                        trustChainResolution.setLeafId(trustChainResolution.getParsedChain().get(0).getIssuer());
-                    }
+                if (forRp) {
+                    trustChainResolution.setMetadataAfterPolicies(MetadataPolicyUtils.applyPoliciesToRPStatement(trustChainResolution.getEntityFromTA() != null ? trustChainResolution.getEntityFromTA().getMetadata().getRelyingPartyMetadata() : leafEs.getMetadata().getRelyingPartyMetadata(), (RPMetadataPolicy) combinedPolicy));
+                } else {
+                    trustChainResolution.setMetadataAfterPolicies(MetadataPolicyUtils.applyPoliciesToOPStatement(trustChainResolution.getEntityFromTA() != null ? trustChainResolution.getEntityFromTA().getMetadata().getOpenIdProviderMetadata() : leafEs.getMetadata().getOpenIdProviderMetadata(), (OPMetadataPolicy) combinedPolicy));
+                }
 
-                    return trustChainResolution;
-                })
-                .filter(Objects::nonNull)
-                .collect(Collectors.toList());
-
+                trustChainResolution.setCombinedPolicy(combinedPolicy);
+                trustChainResolution.setLeafId(trustChainResolution.getParsedChain().get(0).getSubject());
+                return trustChainResolution;
+            } catch (MetadataPolicyCombinationException | MetadataPolicyException e) {
+                logger.warn(String.format("Cannot combine metadata policy for trust anchor : "+ trustChainResolution));
+            }
+        }
+        return null;
     }
 
     private List<TrustChainResolution> subTrustChains(String initialEntity, EntityStatement leafEs, Set<String> trustAnchorIds, Set<String> visitedNodes, boolean forRp) {
 
         List<TrustChainResolution> chainsList = new ArrayList<>();
-        visitedNodes.add(leafEs.getIssuer());
+        visitedNodes.add(leafEs.getSubject());
 
         if (leafEs.getAuthorityHints() != null && !leafEs.getAuthorityHints().isEmpty()) {
             leafEs.getAuthorityHints().forEach(authHint -> {
@@ -109,21 +109,24 @@ public class OpenIdFederationTrustChainProcessor implements TrustChainProcessor 
                     logger.debug(String.format("EntityStatement of %s about %s. AuthHints: %s", subNodeSelfES.getIssuer(), subNodeSelfES.getSubject(), subNodeSelfES.getAuthorityHints()));
 
                     String fedApiUrl = subNodeSelfES.getMetadata().getFederationEntity().getFederationFetchEndpoint();
-                    String encodedSubNodeSubordinate = OpenIdFederationUtils.getSubordinateToken(fedApiUrl, leafEs.getIssuer(), session);
+                    String encodedSubNodeSubordinate = OpenIdFederationUtils.getSubordinateToken(fedApiUrl, leafEs.getSubject(), session);
                     EntityStatement subNodeSubordinateES = parseAndValidateSelfSigned(encodedSubNodeSubordinate, EntityStatement.class, subNodeSelfES.getJwks());
-                    //fetch endpoint contains jwks of leafEs. So, validate based on subNodeSelfES.
-                    if (!validateEntityStatementFields(subNodeSubordinateES, authHint, leafEs.getIssuer())) {
+                    if (!validateEntityStatementFields(subNodeSubordinateES, authHint, leafEs.getSubject())) {
                         throw new ErrorResponseException(Errors.INVALID_TRUST_CHAIN, "Trust chain is not valid", Response.Status.BAD_REQUEST);
                     }
                     logger.debug(String.format("EntityStatement of %s about %s. AuthHints: %s", subNodeSubordinateES.getIssuer(), subNodeSubordinateES.getSubject(), subNodeSubordinateES.getAuthorityHints()));
-                    visitedNodes.add(subNodeSelfES.getIssuer());
+
+                    visitedNodes.add(subNodeSelfES.getSubject());
                     if (trustAnchorIds.contains(authHint)) {
-                        //check that RP is registered as RP in trust anchor
-                        if (!OpenIdFederationUtils.containedInListEndpoint(subNodeSelfES.getMetadata().getFederationEntity().getFederationListEndpoint(), forRp ? EntityTypeEnum.OPENID_RELYING_PARTY.getValue() : EntityTypeEnum.OPENID_PROVIDER.getValue(), initialEntity, session)) {
+                        TrustChainResolution trustAnchor = new TrustChainResolution();
+                        if (leafEs.getSubject().equals(initialEntity) && subNodeSubordinateES.getMetadata() != null && ((forRp && subNodeSubordinateES.getMetadata().getRelyingPartyMetadata() != null) || (!forRp && subNodeSubordinateES.getMetadata().getOpenIdProviderMetadata() != null))) {
+                            trustAnchor.setEntityFromTA(subNodeSubordinateES);
+                        } else if (!OpenIdFederationUtils.containedInListEndpoint(subNodeSelfES.getMetadata().getFederationEntity().getFederationListEndpoint(), forRp ? EntityTypeEnum.OPENID_RELYING_PARTY.getValue() : EntityTypeEnum.OPENID_PROVIDER.getValue(), initialEntity, session)) {
+                            //check that RP is registered as RP in trust anchor
                             throw new ErrorResponseException(Errors.INVALID_TRUST_CHAIN, "Trust chain is not valid", Response.Status.BAD_REQUEST);
                         }
-                        TrustChainResolution trustAnchor = new TrustChainResolution();
                         trustAnchor.getParsedChain().add(0, subNodeSelfES);
+                        trustAnchor.setTrustAnchorId(authHint);
                         chainsList.add(trustAnchor);
                     } else {
                         List<TrustChainResolution> subList = subTrustChains(initialEntity, subNodeSelfES, trustAnchorIds, visitedNodes, forRp);
@@ -133,14 +136,15 @@ public class OpenIdFederationTrustChainProcessor implements TrustChainProcessor 
                         }
                     }
                 } catch (Exception ex) {
-                    ex.printStackTrace();
+                    logger.warn("Problem during trust chain resolution for "+initialEntity, ex);
                 }
 
             });
 
-        } else if (trustAnchorIds.contains(leafEs.getIssuer())) {
+        } else if (trustAnchorIds.contains(leafEs.getSubject())) {
             TrustChainResolution trustAnchor = new TrustChainResolution();
             trustAnchor.getParsedChain().add(0, leafEs);
+            trustAnchor.setTrustAnchorId(leafEs.getSubject());
             chainsList.add(trustAnchor);
         }
 
@@ -192,24 +196,37 @@ public class OpenIdFederationTrustChainProcessor implements TrustChainProcessor 
 
     }
 
+    @Override
     public boolean validateEntityStatementFields(EntityStatement statement, String issuer, String subject) {
         return statement.getIssuer() == null || statement.getIssuer().equals(issuer) || statement.getSubject() == null || statement.getSubject().equals(subject) || statement.getIat() == null || LocalDateTime.now().toEpochSecond(ZoneOffset.UTC) > statement.getIat() || statement.getExp() == null || LocalDateTime.now().toEpochSecond(ZoneOffset.UTC) < statement.getExp();
     }
 
     @Override
-    public TrustChainResolution findAcceptableMetadataPolicyChain(List<TrustChainResolution> trustChainResolutions, EntityStatement statement) {
-        TrustChainResolution validChain = null;
-        EntityStatement current = statement;
-        for (TrustChainResolution chain : trustChainResolutions) {
-            try {
-                current = MetadataPolicyUtils.applyPoliciesToRPStatement(current, chain.getCombinedPolicy());
-                validChain = chain;
-                break;
-            } catch (MetadataPolicyCombinationException | MetadataPolicyException e) {
-                e.printStackTrace();
-            }
+    public void validationRules(EntityStatement statement, boolean checkAudience) {
+        if (statement.getIssuer() == null) {
+            throw new ErrorResponseException(Errors.INVALID_ISSUER, "No issuer in the request.", Response.Status.NOT_FOUND);
         }
-        return validChain;
+        if (statement.getSubject() == null) {
+            throw new ErrorResponseException(Errors.INVALID_SUBJECT, "No issuer in the request.", Response.Status.NOT_FOUND);
+        }
+        if (statement.getIat() == null && LocalDateTime.now().toEpochSecond(ZoneOffset.UTC) > statement.getIat()) {
+            throw new ErrorResponseException(Errors.INVALID_REQUEST, "Iat must exist and be before now.", Response.Status.BAD_REQUEST);
+        }
+        if (statement.getExp() == null && LocalDateTime.now().toEpochSecond(ZoneOffset.UTC) < statement.getExp()){
+            throw new ErrorResponseException(Errors.INVALID_REQUEST, "Exp must exist and be before now.", Response.Status.BAD_REQUEST);
+        }
+        if (statement.getAuthorityHints() == null || statement.getAuthorityHints().isEmpty()) {
+            throw new ErrorResponseException(Errors.INVALID_REQUEST, "No authorityHints in the request.", Response.Status.BAD_REQUEST);
+        }
+        if (statement.getMetadata() == null || statement.getMetadata().getRelyingPartyMetadata() == null) {
+            throw new ErrorResponseException(Errors.INVALID_REQUEST, "No relaying party metadata in the request.", Response.Status.BAD_REQUEST);
+        }
+        if (!statement.getIssuer().trim().equals(statement.getSubject().trim())) {
+            throw new ErrorResponseException(Errors.INVALID_ISSUER, "The registration request issuer differs from the subject.", Response.Status.NOT_FOUND);
+        }
+        if (checkAudience && statement.getAudience() == null || !statement.getAudience()[0].equals(Urls.realmIssuer(session.getContext().getUri(UrlType.FRONTEND).getBaseUri(), session.getContext().getRealm().getName()))) {
+            throw new ErrorResponseException(Errors.INVALID_REQUEST, "Aud must contain OP entity Identifier", Response.Status.BAD_REQUEST);
+        }
     }
 
     @Override
@@ -264,7 +281,7 @@ public class OpenIdFederationTrustChainProcessor implements TrustChainProcessor 
 //    }
 //
 //    private ConfigurableJWTProcessor<SecurityContext> produceJwtProcessor(JSONWebKeySet jwks) throws IOException, ParseException {
-//        String jsonKey = om.writeValueAsString(jwks);
+//        String jsonKey = JsonSerialization.writeValueAsString(jwks);
 //        JWKSet jwkSet = JWKSet.load(new ByteArrayInputStream(jsonKey.getBytes()));
 //        JWKSource<SecurityContext> keySource = new ImmutableJWKSet<>(jwkSet);
 //        ConfigurableJWTProcessor<SecurityContext> jwtProcessor = new DefaultJWTProcessor<>();
@@ -279,12 +296,6 @@ public class OpenIdFederationTrustChainProcessor implements TrustChainProcessor 
 //                            return JWSAlgorithm.parse(((Algorithm) alg).getName());
 //                        } catch (IllegalArgumentException e) {
 //                            // Not a valid JWSAlgorithm
-//                            return null;
-//                        }
-//                    } else if (alg instanceof String) {
-//                        try {
-//                            return JWSAlgorithm.parse((String) alg);
-//                        } catch (Exception e) {
 //                            return null;
 //                        }
 //                    } else {
@@ -311,7 +322,7 @@ public class OpenIdFederationTrustChainProcessor implements TrustChainProcessor 
 //        if (splits.length != 3)
 //            throw new InvalidTrustChainException("Trust chain contains a chain-link which does not abide to the dot-delimited format of xxx.yyy.zzz");
 //        try {
-//            return om.readValue(Base64.getDecoder().decode(splits[1]), clazz);
+//            return  JsonSerialization.readValue(Base64.getDecoder().decode(splits[1]), clazz);
 //        } catch (IOException e) {
 //            throw new InvalidTrustChainException("Trust chain does not contain a valid Entity Statement");
 //        }

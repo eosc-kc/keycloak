@@ -1,7 +1,6 @@
 package org.keycloak.utils;
 
 import java.io.IOException;
-import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.Collections;
@@ -53,8 +52,8 @@ public class OpenIdFederationUtils {
         return listApiUrl != null && SimpleHttp.doGet(listApiUrl + "?entity_type=" + entityType, session).asJson(new TypeReference<List<String>>(){}).contains(issuer);
     }
 
-    private static String urlEncode(String url) throws UnsupportedEncodingException {
-        return URLEncoder.encode(url, StandardCharsets.UTF_8.toString());
+    private static String urlEncode(String url) {
+        return URLEncoder.encode(url, StandardCharsets.UTF_8);
     }
 
     public static CommonMetadata commonMetadata(OpenIdFederationGeneralConfig realmConfig){
@@ -107,7 +106,8 @@ public class OpenIdFederationUtils {
         model.getConfig().put(OAuth2IdentityProviderConfig.DEFAULT_SCOPE, rp.getScope());
         model.getConfig().put(OAuth2IdentityProviderConfig.CLIENT_ID, rp.getClientId());
         model.getConfig().put(OAuth2IdentityProviderConfig.CLIENT_SECRET, rp.getClientSecret());
-        model.getConfig().put(OAuth2IdentityProviderConfig.CLIENT_AUTH_METHOD, rp.getGrantTypes().get(0));
+        model.getConfig().put(OAuth2IdentityProviderConfig.CLIENT_AUTH_METHOD, rp.getTokenEndpointAuthMethod());
+        model.getConfig().put(OAuth2IdentityProviderConfig.CLIENT_ASSERTION_SIGNING_ALG, rp.getTokenEndpointAuthSigningAlg());
         model.getConfig().put(OpenIdFederationIdentityProviderConfig.TRUST_ANCHOR_ID, entityStatement.getTrustAnchor());
         model.getConfig().put(OpenIdFederationIdentityProviderConfig.AUTHORITY_HINTS, entityStatement.getAuthorityHints().stream().collect(Collectors.joining("##")));
         model.getConfig().put(OIDCConfigAttributes.EXPIRATION_TIME, String.valueOf(entityStatement.getExp()));

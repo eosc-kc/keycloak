@@ -17,7 +17,6 @@
 
 package org.keycloak.models.cache.infinispan;
 
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -65,6 +64,8 @@ import org.keycloak.models.WebAuthnPolicy;
 import org.keycloak.models.cache.CachedRealmModel;
 import org.keycloak.models.cache.UserCache;
 import org.keycloak.models.cache.infinispan.entities.CachedRealm;
+import org.keycloak.models.enums.ClientRegistrationTypeEnum;
+import org.keycloak.models.enums.EntityTypeEnum;
 import org.keycloak.models.utils.KeycloakModelUtils;
 import org.keycloak.representations.idm.RealmRepresentation;
 import org.keycloak.storage.UserStorageProvider;
@@ -882,6 +883,12 @@ public class RealmAdapter implements CachedRealmModel {
     }
 
     @Override
+    public Stream<OpenIdFederationConfig> getTrustAnchorsBasedOnTypes(EntityTypeEnum entityType, ClientRegistrationTypeEnum clientRegistrationType) {
+        if (isUpdated()) return updated.getTrustAnchorsBasedOnTypes(entityType, clientRegistrationType);
+        return isOpenIdFederationEnabled() ? cached.getOpenIdFederationConfig().getOpenIdFederationList().stream().filter(x -> x.getEntityTypes().contains(entityType) && x.getClientRegistrationTypesSupported().contains(clientRegistrationType)) : Stream.empty();
+    }
+
+    @Override
     public OpenIdFederationGeneralConfig getOpenIdFederationGeneralConfig() {
         if (isUpdated()) return updated.getOpenIdFederationGeneralConfig();
         return cached.getOpenIdFederationConfig();
@@ -896,7 +903,7 @@ public class RealmAdapter implements CachedRealmModel {
     @Override
     public List<OpenIdFederationConfig> getOpenIdFederations() {
         if (isUpdated()) return updated.getOpenIdFederations();
-        return isOpenIdFederationEnabled() ?  cached.getOpenIdFederationConfig().getOpenIdFederationList() : new ArrayList<>();
+        return isOpenIdFederationEnabled() ?  cached.getOpenIdFederationConfig().getOpenIdFederationList() : List.of();
     }
 
     @Override
