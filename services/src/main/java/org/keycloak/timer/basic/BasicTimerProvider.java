@@ -114,7 +114,7 @@ public class BasicTimerProvider implements TimerProvider {
     @Override
     public TimerTaskContext cancelTaskAndNotify(String taskName) {
         // Notify all nodes to cancel the task
-        clusterProvider.notify(BasicTimerProviderFactory.CANCEL_TASK, new TaskCancellationEvent(taskName), true, ClusterProvider.DCNotify.ALL_DCS);
+        clusterProvider.notify(BasicTimerProviderFactory.CANCEL_TASK, new TaskCancellationEvent(taskName), true, ClusterProvider.DCNotify.ALL_BUT_LOCAL_DC);
         TimerTaskContextImpl existingTask = factory.removeTask(taskName);
         if (existingTask != null) {
             logger.debugf("Cancelling task '%s'", taskName);

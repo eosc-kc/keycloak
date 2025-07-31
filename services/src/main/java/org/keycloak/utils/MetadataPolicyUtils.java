@@ -2,14 +2,20 @@ package org.keycloak.utils;
 
 import org.keycloak.exceptions.MetadataPolicyCombinationException;
 import org.keycloak.exceptions.MetadataPolicyException;
-import org.keycloak.representations.openid_federation.EntityStatement;
-import org.keycloak.representations.openid_federation.MetadataPolicy;
+import org.keycloak.representations.openid_federation.AbstractMetadataPolicy;
+import org.keycloak.representations.openid_federation.CommonMetadata;
+import org.keycloak.representations.openid_federation.CommonMetadataPolicy;
+import org.keycloak.representations.openid_federation.OPMetadata;
+import org.keycloak.representations.openid_federation.OPMetadataPolicy;
 import org.keycloak.representations.openid_federation.RPMetadata;
 import org.keycloak.representations.openid_federation.RPMetadataPolicy;
 
+import java.lang.reflect.Field;
+import java.lang.reflect.InvocationTargetException;
+
 public class MetadataPolicyUtils {
 
-    public static RPMetadataPolicy combineClientPolicies(RPMetadataPolicy superior, RPMetadataPolicy inferior) throws MetadataPolicyCombinationException {
+    public static <T extends AbstractMetadataPolicy> T combinePolicies(T superior, T inferior) throws MetadataPolicyCombinationException {
 
         if (inferior == null) {
             return superior;
@@ -19,253 +25,64 @@ public class MetadataPolicyUtils {
             return inferior;
         }
 
-        if (superior.getApplicationType() != null) {
-            superior.setApplicationType(superior.getApplicationType().combinePolicy(inferior.getApplicationType()));
-        } else {
-            superior.setApplicationType(inferior.getApplicationType());
-        }
+        // Process all fields of T extends AbstractMetadataPolicy
+        for (Field field : superior.getClass().getDeclaredFields()) {
+            try {
+                field.setAccessible(true);
+                Object superiorValue = field.get(superior);
+                Object inferiorValue = field.get(inferior);
 
-        if (superior.getClientIdIssuedAt() != null) {
-            superior.setClientIdIssuedAt(superior.getClientIdIssuedAt().combinePolicy(inferior.getClientIdIssuedAt()));
-        } else {
-            superior.setClientIdIssuedAt(inferior.getClientIdIssuedAt());
+                if (!field.getType().equals(CommonMetadataPolicy.class)) {
+                    // Handle Policy<T> or PolicyList<T> fields
+                    combineField(superior, field, superiorValue, inferiorValue);
+                }
+            } catch (IllegalAccessException | NoSuchMethodException e) {
+                e.printStackTrace();
+            } catch (InvocationTargetException e) {
+                Throwable cause = e.getCause();
+                throw new MetadataPolicyCombinationException("Error combinePolicy for field: " + field.getName() + " . Cause: " + cause.getMessage() != null ? cause.getMessage() : "");
+            }
         }
-
-        if (superior.getClientName() != null) {
-            superior.setClientName(superior.getClientName().combinePolicy(inferior.getClientName()));
-        } else {
-            superior.setClientName(inferior.getClientName());
-        }
-
-        if (superior.getClientRegistrationTypes() != null) {
-            superior.setClientRegistrationTypes(superior.getClientRegistrationTypes().combinePolicy(inferior.getClientRegistrationTypes()));
-        } else {
-            superior.setClientRegistrationTypes(inferior.getClientRegistrationTypes());
-        }
-
-        if (superior.getClientSecretExpiresAt() != null) {
-            superior.setClientSecretExpiresAt(superior.getClientSecretExpiresAt().combinePolicy(inferior.getClientSecretExpiresAt()));
-        } else {
-            superior.setClientSecretExpiresAt(inferior.getClientSecretExpiresAt());
-        }
-
-        if (superior.getClientUri() != null) {
-            superior.setClientUri(superior.getClientUri().combinePolicy(inferior.getClientUri()));
-        } else {
-            superior.setClientUri(inferior.getClientUri());
-        }
-
-        if (superior.getContacts() != null) {
-            superior.setContacts(superior.getContacts().combinePolicy(inferior.getContacts()));
-        } else {
-            superior.setContacts(inferior.getContacts());
-        }
-
-        if (superior.getDefaultAcrValues() != null) {
-            superior.setDefaultAcrValues(superior.getDefaultAcrValues().combinePolicy(inferior.getDefaultAcrValues()));
-        } else {
-            superior.setDefaultAcrValues(inferior.getDefaultAcrValues());
-        }
-
-        if (superior.getDefaultMaxAge() != null) {
-            superior.setDefaultMaxAge(superior.getDefaultMaxAge().combinePolicy(inferior.getDefaultMaxAge()));
-        } else {
-            superior.setDefaultMaxAge(inferior.getDefaultMaxAge());
-        }
-
-        if (superior.getGrantTypes() != null) {
-            superior.setGrantTypes(superior.getGrantTypes().combinePolicy(inferior.getGrantTypes()));
-        } else {
-            superior.setGrantTypes(inferior.getGrantTypes());
-        }
-
-        if (superior.getIdTokenEncryptedResponseAlg() != null) {
-            superior.setIdTokenEncryptedResponseAlg(superior.getIdTokenEncryptedResponseAlg().combinePolicy(inferior.getIdTokenEncryptedResponseAlg()));
-        } else {
-            superior.setIdTokenEncryptedResponseAlg(inferior.getIdTokenEncryptedResponseAlg());
-        }
-
-        if (superior.getIdTokenEncryptedResponseEnc() != null) {
-            superior.setIdTokenEncryptedResponseEnc(superior.getIdTokenEncryptedResponseEnc().combinePolicy(inferior.getIdTokenEncryptedResponseEnc()));
-        } else {
-            superior.setIdTokenEncryptedResponseEnc(inferior.getIdTokenEncryptedResponseEnc());
-        }
-
-        if (superior.getIdTokenSignedResponseAlg() != null) {
-            superior.setIdTokenSignedResponseAlg(superior.getIdTokenSignedResponseAlg().combinePolicy(inferior.getIdTokenSignedResponseAlg()));
-        } else {
-            superior.setIdTokenSignedResponseAlg(inferior.getIdTokenSignedResponseAlg());
-        }
-
-        if (superior.getInitiateLoginUri() != null) {
-            superior.setInitiateLoginUri(superior.getInitiateLoginUri().combinePolicy(inferior.getInitiateLoginUri()));
-        } else {
-            superior.setInitiateLoginUri(inferior.getInitiateLoginUri());
-        }
-
-        if (superior.getJwksUri() != null) {
-            superior.setJwksUri(superior.getJwksUri().combinePolicy(inferior.getJwksUri()));
-        } else {
-            superior.setJwksUri(inferior.getJwksUri());
-        }
-
-        if (superior.getLogoUri() != null) {
-            superior.setLogoUri(superior.getLogoUri().combinePolicy(inferior.getLogoUri()));
-        } else {
-            superior.setLogoUri(inferior.getLogoUri());
-        }
-
-        if (superior.getCommonMetadataPolicy().getOrganizationName() != null) {
-            superior.getCommonMetadataPolicy().setOrganizationName(superior.getCommonMetadataPolicy().getOrganizationName().combinePolicy(inferior.getCommonMetadataPolicy().getOrganizationName()));
-        } else {
-            superior.getCommonMetadataPolicy().setOrganizationName(inferior.getCommonMetadataPolicy().getOrganizationName());
-        }
-
-        if (superior.getPolicyUri() != null) {
-            superior.setPolicyUri(superior.getPolicyUri().combinePolicy(inferior.getPolicyUri()));
-        } else {
-            superior.setPolicyUri(inferior.getPolicyUri());
-        }
-
-        if (superior.getPostLogoutRedirectUris() != null) {
-            superior.setPostLogoutRedirectUris(superior.getPostLogoutRedirectUris().combinePolicy(inferior.getPostLogoutRedirectUris()));
-        } else {
-            superior.setPostLogoutRedirectUris(inferior.getPostLogoutRedirectUris());
-        }
-
-        if (superior.getRedirectUris() != null) {
-            superior.setRedirectUris(superior.getRedirectUris().combinePolicy(inferior.getRedirectUris()));
-        } else {
-            superior.setRedirectUris(inferior.getRedirectUris());
-        }
-
-        if (superior.getRegistrationAccessToken() != null) {
-            superior.setRegistrationAccessToken(superior.getRegistrationAccessToken().combinePolicy(inferior.getRegistrationAccessToken()));
-        } else {
-            superior.setRegistrationAccessToken(inferior.getRegistrationAccessToken());
-        }
-
-        if (superior.getRegistrationClientUri() != null) {
-            superior.setRegistrationClientUri(superior.getRegistrationClientUri().combinePolicy(inferior.getRegistrationClientUri()));
-        } else {
-            superior.setRegistrationClientUri(inferior.getRegistrationClientUri());
-        }
-
-        if (superior.getRequestObjectEncryptionAlg() != null) {
-            superior.setRequestObjectEncryptionAlg(superior.getRequestObjectEncryptionAlg().combinePolicy(inferior.getRequestObjectEncryptionAlg()));
-        } else {
-            superior.setRequestObjectEncryptionAlg(inferior.getRequestObjectEncryptionAlg());
-        }
-
-        if (superior.getRequestObjectEncryptionEnc() != null) {
-            superior.setRequestObjectEncryptionEnc(superior.getRequestObjectEncryptionEnc().combinePolicy(inferior.getRequestObjectEncryptionEnc()));
-        } else {
-            superior.setRequestObjectEncryptionEnc(inferior.getRequestObjectEncryptionEnc());
-        }
-
-        if (superior.getRequestObjectSigningAlg() != null) {
-            superior.setRequestObjectSigningAlg(superior.getRequestObjectSigningAlg().combinePolicy(inferior.getRequestObjectSigningAlg()));
-        } else {
-            superior.setRequestObjectSigningAlg(inferior.getRequestObjectSigningAlg());
-        }
-
-        if (superior.getRequestUris() != null) {
-            superior.setRequestUris(superior.getRequestUris().combinePolicy(inferior.getRequestUris()));
-        } else {
-            superior.setRequestUris(inferior.getRequestUris());
-        }
-
-        if (superior.getRequireAuthTime() != null) {
-            superior.setRequireAuthTime(superior.getRequireAuthTime().combinePolicy(inferior.getRequireAuthTime()));
-        } else {
-            superior.setRequireAuthTime(inferior.getRequireAuthTime());
-        }
-
-        if (superior.getResponseTypes() != null) {
-            superior.setResponseTypes(superior.getResponseTypes().combinePolicy(inferior.getResponseTypes()));
-        } else {
-            superior.setResponseTypes(inferior.getResponseTypes());
-        }
-
-        if (superior.getScope() != null) {
-            superior.setScope(superior.getScope().combinePolicy(inferior.getScope()));
-        } else {
-            superior.setScope(inferior.getScope());
-        }
-
-        if (superior.getSectorIdentifierUri() != null) {
-            superior.setSectorIdentifierUri(superior.getSectorIdentifierUri().combinePolicy(inferior.getSectorIdentifierUri()));
-        } else {
-            superior.setSectorIdentifierUri(inferior.getSectorIdentifierUri());
-        }
-
-        if (superior.getSoftwareId() != null) {
-            superior.setSoftwareId(superior.getSoftwareId().combinePolicy(inferior.getSoftwareId()));
-        } else {
-            superior.setSoftwareId(inferior.getSoftwareId());
-        }
-
-        if (superior.getSoftwareVersion() != null) {
-            superior.setSoftwareVersion(superior.getSoftwareVersion().combinePolicy(inferior.getSoftwareVersion()));
-        } else {
-            superior.setSoftwareVersion(inferior.getSoftwareVersion());
-        }
-
-        if (superior.getSubjectType() != null) {
-            superior.setSubjectType(superior.getSubjectType().combinePolicy(inferior.getSubjectType()));
-        } else {
-            superior.setSubjectType(inferior.getSubjectType());
-        }
-
-        if (superior.getTlsClientAuthSubjectDn() != null) {
-            superior.setTlsClientAuthSubjectDn(superior.getTlsClientAuthSubjectDn().combinePolicy(inferior.getTlsClientAuthSubjectDn()));
-        } else {
-            superior.setTlsClientAuthSubjectDn(inferior.getTlsClientAuthSubjectDn());
-        }
-
-        if (superior.getTlsClientCertificateBoundAccessTokens() != null) {
-            superior.setTlsClientCertificateBoundAccessTokens(superior.getTlsClientCertificateBoundAccessTokens().combinePolicy(inferior.getTlsClientCertificateBoundAccessTokens()));
-        } else {
-            superior.setTlsClientCertificateBoundAccessTokens(inferior.getTlsClientCertificateBoundAccessTokens());
-        }
-
-        if (superior.getTokenEndpointAuthMethod() != null) {
-            superior.setTokenEndpointAuthMethod(superior.getTokenEndpointAuthMethod().combinePolicy(inferior.getTokenEndpointAuthMethod()));
-        } else {
-            superior.setTokenEndpointAuthMethod(inferior.getTokenEndpointAuthMethod());
-        }
-
-        if (superior.getTokenEndpointAuthSigningAlg() != null) {
-            superior.setTokenEndpointAuthSigningAlg(superior.getTokenEndpointAuthSigningAlg().combinePolicy(inferior.getTokenEndpointAuthSigningAlg()));
-        } else {
-            superior.setTokenEndpointAuthSigningAlg(inferior.getTokenEndpointAuthSigningAlg());
-        }
-
-        if (superior.getTosUri() != null) {
-            superior.setTosUri(superior.getTosUri().combinePolicy(inferior.getTosUri()));
-        } else {
-            superior.setTosUri(inferior.getTosUri());
-        }
-
-        if (superior.getUserinfoEncryptedResponseAlg() != null) {
-            superior.setUserinfoEncryptedResponseAlg(superior.getUserinfoEncryptedResponseAlg().combinePolicy(inferior.getUserinfoEncryptedResponseAlg()));
-        } else {
-            superior.setUserinfoEncryptedResponseAlg(inferior.getUserinfoEncryptedResponseAlg());
-        }
-
-        if (superior.getUserinfoEncryptedResponseEnc() != null) {
-            superior.setUserinfoEncryptedResponseEnc(superior.getUserinfoEncryptedResponseEnc().combinePolicy(inferior.getUserinfoEncryptedResponseEnc()));
-        } else {
-            superior.setUserinfoEncryptedResponseEnc(inferior.getUserinfoEncryptedResponseEnc());
-        }
-
-        if (superior.getUserinfoSignedResponseAlg() != null) {
-            superior.setUserinfoSignedResponseAlg(superior.getUserinfoSignedResponseAlg().combinePolicy(inferior.getUserinfoSignedResponseAlg()));
-        } else {
-            superior.setUserinfoSignedResponseAlg(inferior.getUserinfoSignedResponseAlg());
-        }
+        combineCommonMetadataPolicy(superior.getCommonMetadataPolicy(), inferior.getCommonMetadataPolicy());
 
         return superior;
+    }
+
+    private static <T extends AbstractMetadataPolicy> void combineField(T superior, Field field, Object superiorValue, Object inferiorValue) throws NoSuchMethodException, IllegalAccessException, InvocationTargetException {
+        if (superiorValue != null) {
+            // Invoke combinePolicy dynamically
+            Object combined = superiorValue.getClass()
+                    .getMethod("combinePolicy", superiorValue.getClass())
+                    .invoke(superiorValue, inferiorValue);
+            field.set(superior, combined);
+        } else {
+            field.set(superior, inferiorValue);
+        }
+    }
+
+    private static void combineCommonMetadataPolicy(CommonMetadataPolicy superior, CommonMetadataPolicy inferior) throws MetadataPolicyCombinationException {
+
+        if (inferior == null)
+            return;
+
+        if (superior == null)
+            superior = inferior;
+
+        if (superior.getOrganizationName() != null) {
+            superior.setOrganizationName(superior.getOrganizationName().combinePolicy(inferior.getOrganizationName()));
+        } else {
+            superior.setOrganizationName(inferior.getOrganizationName());
+        }
+        if (superior.getOrganizationUri() != null) {
+            superior.setOrganizationUri(superior.getOrganizationUri().combinePolicy(inferior.getOrganizationUri()));
+        } else {
+            superior.setOrganizationUri(inferior.getOrganizationUri());
+        }
+        if (superior.getSignedJwksUri() != null) {
+            superior.setSignedJwksUri(superior.getSignedJwksUri().combinePolicy(inferior.getSignedJwksUri()));
+        } else {
+            superior.setSignedJwksUri(inferior.getSignedJwksUri());
+        }
     }
 
     public static RPMetadata applyPoliciesToRPStatement(RPMetadata rp, RPMetadataPolicy policy) throws MetadataPolicyException, MetadataPolicyCombinationException {
@@ -434,6 +251,76 @@ public class MetadataPolicyUtils {
             rp.setUserinfoSignedResponseAlg(policy.getUserinfoSignedResponseAlg().enforcePolicy(rp.getUserinfoSignedResponseAlg(), "UserinfoSignedResponseAlg"));
         }
 
+        if (policy.getBackchannelTokenDeliveryMode() != null) {
+            rp.setBackchannelTokenDeliveryMode(policy.getBackchannelTokenDeliveryMode().enforcePolicy(rp.getBackchannelTokenDeliveryMode(), "BackchannelTokenDeliveryMode"));
+        }
+        if (policy.getBackchannelClientNotificationEndpoint() != null) {
+            rp.setBackchannelClientNotificationEndpoint(policy.getBackchannelClientNotificationEndpoint().enforcePolicy(rp.getBackchannelClientNotificationEndpoint(), "BackchannelClientNotificationEndpoint"));
+        }
+        if (policy.getBackchannelAuthenticationRequestSigningAlg() != null) {
+            rp.setBackchannelAuthenticationRequestSigningAlg(policy.getBackchannelAuthenticationRequestSigningAlg().enforcePolicy(rp.getBackchannelAuthenticationRequestSigningAlg(), "BackchannelAuthenticationRequestSigningAlg"));
+        }
+        if (policy.getAuthorizationSignedResponseAlg() != null) {
+            rp.setAuthorizationSignedResponseAlg(policy.getAuthorizationSignedResponseAlg().enforcePolicy(rp.getAuthorizationSignedResponseAlg(), "AuthorizationSignedResponseAlg"));
+        }
+        if (policy.getAuthorizationEncryptedResponseAlg() != null) {
+            rp.setAuthorizationEncryptedResponseAlg(policy.getAuthorizationEncryptedResponseAlg().enforcePolicy(rp.getAuthorizationEncryptedResponseAlg(), "AuthorizationEncryptedResponseAlg"));
+        }
+        if (policy.getAuthorizationEncryptedResponseEnc() != null) {
+            rp.setAuthorizationEncryptedResponseEnc(policy.getAuthorizationEncryptedResponseEnc().enforcePolicy(rp.getAuthorizationEncryptedResponseEnc(), "AuthorizationEncryptedResponseEnc"));
+        }
+        if (policy.getRequirePushedAuthorizationRequests() != null) {
+            rp.setRequirePushedAuthorizationRequests(policy.getRequirePushedAuthorizationRequests().enforcePolicy(rp.getRequirePushedAuthorizationRequests(), "RequirePushedAuthorizationRequests"));
+        }
+        if (policy.getFrontChannelLogoutUri() != null) {
+            rp.setFrontChannelLogoutUri(policy.getFrontChannelLogoutUri().enforcePolicy(rp.getFrontChannelLogoutUri(), "FrontChannelLogoutUri"));
+        }
+        if (policy.getFrontchannelLogoutSessionRequired() != null) {
+            rp.setFrontchannelLogoutSessionRequired(policy.getFrontchannelLogoutSessionRequired().enforcePolicy(rp.getFrontchannelLogoutSessionRequired(), "FrontchannelLogoutSessionRequired"));
+        }
+
+        if (policy.getCommonMetadataPolicy() != null && rp.getCommonMetadata() != null) {
+            applyPoliciesToCommonMetadata(rp.getCommonMetadata(), policy.getCommonMetadataPolicy());
+        }
+
         return rp;
+    }
+
+    private static void applyPoliciesToCommonMetadata(CommonMetadata cm, CommonMetadataPolicy cmPolicy) throws MetadataPolicyException {
+        if (cmPolicy.getSignedJwksUri() != null) {
+            cm.setSignedJwksUri(cmPolicy.getSignedJwksUri().enforcePolicy(cm.getSignedJwksUri(), "SignedJwksUri"));
+        }
+        if (cmPolicy.getOrganizationName() != null) {
+            cm.setOrganizationName(cmPolicy.getOrganizationName().enforcePolicy(cm.getOrganizationName(), "OrganizationName"));
+        }
+        if (cmPolicy.getOrganizationUri() != null) {
+            cm.setOrganizationUri(cmPolicy.getOrganizationUri().enforcePolicy(cm.getOrganizationUri(), "OrganizationUri"));
+        }
+    }
+
+    public static OPMetadata applyPoliciesToOPStatement(OPMetadata op, OPMetadataPolicy policy) throws MetadataPolicyException, MetadataPolicyCombinationException {
+        if (policy == null) {
+            return op;
+        }
+        if (policy.getFederationRegistrationEndpoint() != null) {
+            op.setFederationRegistrationEndpoint(policy.getFederationRegistrationEndpoint().enforcePolicy(op.getFederationRegistrationEndpoint(), "FederationRegistrationEndpoint"));
+        }
+        if (policy.getClientRegistrationTypes() != null) {
+            op.setClientRegistrationTypes(policy.getClientRegistrationTypes().enforcePolicy(op.getClientRegistrationTypes(), "ClientRegistrationTypes"));
+        }
+        if (policy.getContacts() != null) {
+            op.setContacts(policy.getContacts().enforcePolicy(op.getContacts(), "Contacts"));
+        }
+        if (policy.getLogoUri() != null) {
+            op.setLogoUri(policy.getLogoUri().enforcePolicy(op.getLogoUri(), "LogoUri"));
+        }
+        if (policy.getPolicyUri() != null) {
+            op.setPolicyUri(policy.getPolicyUri().enforcePolicy(op.getPolicyUri(), "PolicyUri"));
+        }
+        if (policy.getCommonMetadataPolicy() != null && op.getCommonMetadata() != null) {
+            applyPoliciesToCommonMetadata(op.getCommonMetadata(), policy.getCommonMetadataPolicy());
+        }
+
+        return op;
     }
 }

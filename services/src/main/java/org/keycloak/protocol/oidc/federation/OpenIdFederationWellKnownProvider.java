@@ -48,7 +48,7 @@ public class OpenIdFederationWellKnownProvider extends OIDCWellKnownProvider {
         RealmModel realm = session.getContext().getRealm();
         OpenIdFederationGeneralConfig openIdFederationConfig = realm.getOpenIdFederationGeneralConfig();
 
-        if (openIdFederationConfig ==  null || openIdFederationConfig.getOpenIdFederationList() == null || openIdFederationConfig.getOpenIdFederationList().isEmpty())
+        if (openIdFederationConfig ==  null || openIdFederationConfig.getOpenIdFederationList().isEmpty())
             throw new NotFoundException();
 
         UriInfo frontendUriInfo = session.getContext().getUri(UrlType.FRONTEND);
@@ -57,7 +57,7 @@ public class OpenIdFederationWellKnownProvider extends OIDCWellKnownProvider {
         CommonMetadata common = OpenIdFederationUtils.commonMetadata(openIdFederationConfig);
         Set<ClientRegistrationTypeEnum> registrationTypes = openIdFederationConfig.getOpenIdFederationList().stream().flatMap(x -> x.getClientRegistrationTypesSupported().stream()).collect(Collectors.toSet());
 
-        if (openIdFederationConfig.getOpenIdFederationList().stream().flatMap(x -> x.getEntityTypes().stream()).collect(Collectors.toSet()).contains(EntityTypeEnum.OPENID_PROVIDER)) {
+        if (openIdFederationConfig.getOpenIdFederationList().stream().flatMap(x -> x.getEntityTypes().stream()).anyMatch(EntityTypeEnum.OPENID_PROVIDER::equals)) {
             OPMetadata opMetadata;
             try {
                 opMetadata = from(((OIDCConfigurationRepresentation) super.getConfig()));

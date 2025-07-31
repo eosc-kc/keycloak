@@ -6,7 +6,7 @@ import java.util.List;
 public class TrustChainResolution {
     private List<EntityStatement> parsedChain;
 
-    private RPMetadataPolicy combinedPolicy;
+    private AbstractMetadataPolicy combinedPolicy;
 
     private String trustAnchorId;
 
@@ -14,7 +14,7 @@ public class TrustChainResolution {
 
     private EntityStatement entityFromTA;
 
-    private RPMetadata rpAfterPolicies;
+    private MetadataInterface metadataAfterPolicies;
 
     public TrustChainResolution() {
         parsedChain = new ArrayList<>();
@@ -29,11 +29,11 @@ public class TrustChainResolution {
         this.parsedChain = parsedChain;
     }
 
-    public RPMetadataPolicy getCombinedPolicy() {
+    public AbstractMetadataPolicy getCombinedPolicy() {
         return combinedPolicy;
     }
 
-    public void setCombinedPolicy(RPMetadataPolicy combinedPolicy) {
+    public void setCombinedPolicy(AbstractMetadataPolicy combinedPolicy) {
         this.combinedPolicy = combinedPolicy;
     }
 
@@ -61,11 +61,11 @@ public class TrustChainResolution {
         this.entityFromTA = entityFromTA;
     }
 
-    public RPMetadata getRpAfterPolicies() {
-        return rpAfterPolicies;
+    public MetadataInterface getMetadataAfterPolicies() {
+        return metadataAfterPolicies;
     }
 
-    public void setRpAfterPolicies(RPMetadata rpAfterPolicies) {
-        this.rpAfterPolicies = rpAfterPolicies;
+    public void setMetadataAfterPolicies(MetadataInterface metadataAfterPolicies) {
+        this.metadataAfterPolicies = metadataAfterPolicies;
     }
 }

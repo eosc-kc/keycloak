@@ -2,9 +2,10 @@ package org.keycloak.representations.openid_federation;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonUnwrapped;
+import org.keycloak.jose.jwk.JSONWebKeySet;
 import org.keycloak.protocol.oidc.representations.MTLSEndpointAliases;
 
-public class OPMetadataPolicy {
+public class OPMetadataPolicy extends AbstractMetadataPolicy{
 
     @JsonProperty("federation_registration_endpoint")
     private Policy<String> federationRegistrationEndpoint;
@@ -12,8 +13,13 @@ public class OPMetadataPolicy {
     @JsonProperty("client_registration_types")
     private PolicyList<String> clientRegistrationTypes;
 
-    @JsonUnwrapped
-    private CommonMetadataPolicy commonMetadataPolicy;
+    private  PolicyList<String> contacts;
+
+    @JsonProperty("logo_uri")
+    private  Policy<String> logoUri;
+
+    @JsonProperty("policy_uri")
+    private  Policy<String> policyUri;
 
     @JsonProperty("issuer")
     private Policy<String> issuer;
@@ -129,6 +135,9 @@ public class OPMetadataPolicy {
     @JsonProperty("request_uri_parameter_supported")
     private Policy<Boolean> requestUriParameterSupported;
 
+    @JsonProperty("require_request_uri_registration")
+    private Policy<Boolean> requireRequestUriRegistration;
+
     @JsonProperty("code_challenge_methods_supported")
     private PolicyList<String> codeChallengeMethodsSupported;
 
@@ -188,12 +197,28 @@ public class OPMetadataPolicy {
         this.clientRegistrationTypes = clientRegistrationTypes;
     }
 
-    public CommonMetadataPolicy getCommonMetadataPolicy() {
-        return commonMetadataPolicy;
+    public PolicyList<String> getContacts() {
+        return contacts;
     }
 
-    public void setCommonMetadataPolicy(CommonMetadataPolicy commonMetadataPolicy) {
-        this.commonMetadataPolicy = commonMetadataPolicy;
+    public void setContacts(PolicyList<String> contacts) {
+        this.contacts = contacts;
+    }
+
+    public Policy<String> getLogoUri() {
+        return logoUri;
+    }
+
+    public void setLogoUri(Policy<String> logoUri) {
+        this.logoUri = logoUri;
+    }
+
+    public Policy<String> getPolicyUri() {
+        return policyUri;
+    }
+
+    public void setPolicyUri(Policy<String> policyUri) {
+        this.policyUri = policyUri;
     }
 
     public Policy<String> getIssuer() {
@@ -498,6 +523,14 @@ public class OPMetadataPolicy {
 
     public void setRequestUriParameterSupported(Policy<Boolean> requestUriParameterSupported) {
         this.requestUriParameterSupported = requestUriParameterSupported;
+    }
+
+    public Policy<Boolean> getRequireRequestUriRegistration() {
+        return requireRequestUriRegistration;
+    }
+
+    public void setRequireRequestUriRegistration(Policy<Boolean> requireRequestUriRegistration) {
+        this.requireRequestUriRegistration = requireRequestUriRegistration;
     }
 
     public PolicyList<String> getCodeChallengeMethodsSupported() {

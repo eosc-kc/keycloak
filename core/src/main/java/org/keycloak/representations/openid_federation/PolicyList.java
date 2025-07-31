@@ -20,71 +20,86 @@ public class PolicyList<T> extends AbstractPolicy<T> {
     @JsonProperty("default")
     private Set<T> defaultValue;
 
+    protected Set<T> add;
+
+    @JsonProperty("subset_of")
+    protected Set<T> subsetOf;
+
+    @JsonProperty("superset_of")
+    protected Set<T> supersetOf;
+
     public PolicyList() {
 
     }
 
     public PolicyList<T> combinePolicy(PolicyList<T> inferior) throws MetadataPolicyCombinationException {
-
         if (inferior == null) {
             return this;
         }
 
-        // first check combination value with one_of, subset_of , superset_of
-        if (notNullnotEqual(this.value, inferior.getValue())) {
+        if (notNullnotEqual(value, inferior.getValue())) {
             throw new MetadataPolicyCombinationException("Could not combine two different values");
         }
 
-        if (this.value != null) {
-            this.oneOf = null;
-            this.subsetOf = null;
-            this.supersetOf = null;
-            inferior.setOneOf(null);
-            inferior.setSubsetOf(null);
-            inferior.setSupersetOf(null);
-        }
-
-        this.combinePolicyCommon(inferior);
-
-        if (this.value == null) {
-            if (inferior.getValue() != null && ((this.oneOf != null && !this.oneOf.containsAll(inferior.getValue())) || (this.subsetOf != null && !this.subsetOf.containsAll(inferior.getValue())) || (this.supersetOf != null && !this.supersetOf.containsAll(inferior.getValue()))))
-                throw new MetadataPolicyCombinationException("Inferior value must be subset of one_of,subset_of and superset_of, if one of these exist ");
-            this.value = inferior.getValue();
-        }
-
-        if (notNullnotEqual(this.defaultValue, inferior.getDefaultValue())) {
+        if (notNullnotEqual(defaultValue, inferior.getDefaultValue())) {
             throw new MetadataPolicyCombinationException("Could not construct two different values");
-        } else if (this.defaultValue == null) {
-            this.defaultValue = inferior.getDefaultValue();
+        } else if (defaultValue == null) {
+            defaultValue = inferior.getDefaultValue();
         }
 
-        if (illegalDefaultValueCombination())
-            throw new MetadataPolicyCombinationException("Not null default value must be subset of one_of,subset_of and superset of superset_of, if one of these exist ");
+        // combine add
+        if (add == null) {
+            add = inferior.getAdd();
+        } else if (inferior.getAdd() != null) {
+            add.addAll(inferior.getAdd());
+        }
 
-        if (isNotAcceptedCombination(this.defaultValue, this.value))
-            throw new MetadataPolicyCombinationException("False Policy Type Combination exists");
+        // combine subset_of
+        if (inferior.getSubsetOf() != null && subsetOf != null) {
+            subsetOf = subsetOf.stream().filter(inferior.getSubsetOf()::contains).collect(Collectors.toSet());
+            if (subsetOf.isEmpty()) {
+                subsetOf = null;
+            }
+        } else if (inferior.getSubsetOf() != null) {
+            subsetOf = inferior.getSubsetOf();
+        }
 
-        return this;
+        // combine superset_of
+        if (inferior.getSupersetOf() != null && supersetOf != null) {
+            supersetOf.addAll(inferior.getSupersetOf());
+        } else if (inferior.getSupersetOf() != null) {
+            supersetOf = inferior.getSupersetOf();
+        }
+
+        combinePolicyCommon(inferior);
+
+        if (value == null) {
+            if (inferior.getValue() != null && ((subsetOf != null && !subsetOf.containsAll(inferior.getValue())) || (supersetOf != null && !supersetOf.containsAll(inferior.getValue()))))
+                throw new MetadataPolicyCombinationException("Inferior value must be subset of one_of,subset_of and superset_of, if one of these exist ");
+            value = inferior.getValue();
+        }
+
+        return policyTypeCombination();
     }
 
     public PolicyList<T> policyTypeCombination() throws MetadataPolicyCombinationException {
-        if (illegalDefaultValueCombination())
-            throw new MetadataPolicyCombinationException("Not null default value must be subset of one_of,subset_of and superset of superset_of, if one of these exist ");
+        if (illegalValueCombination())
+            throw new MetadataPolicyCombinationException("Not null value must be subset of one_of,subset_of and superset of superset_of, if one of these exist ");
 
-        if (isNotAcceptedCombination(this.defaultValue, this.value))
+        if (isNotAcceptedCombination())
             throw new MetadataPolicyCombinationException("False Policy Type Combination exists");
-
-        if (this.value != null) {
-            this.oneOf = null;
-            this.subsetOf = null;
-            this.supersetOf = null;
-        }
 
         return this;
     }
 
-    private boolean illegalDefaultValueCombination() {
-        return this.defaultValue != null && ((this.oneOf != null && !this.oneOf.containsAll(this.defaultValue)) || (this.subsetOf != null && !this.subsetOf.containsAll(this.defaultValue)) || (this.supersetOf != null && !this.defaultValue.containsAll(this.supersetOf)));
+    protected boolean isNotAcceptedCombination() {
+        return (add != null && !add.isEmpty() && ((value != null && !value.isEmpty() && !value.containsAll(add)) || (subsetOf != null && !subsetOf.isEmpty() && subsetOf.containsAll(add)))
+         || (value != null && !value.isEmpty() && supersetOf != null && supersetOf.isEmpty()) && !value.containsAll(supersetOf))
+                || (supersetOf != null && supersetOf.isEmpty() && subsetOf != null && !subsetOf.isEmpty() && supersetOf.containsAll(subsetOf));
+    }
+
+    private boolean illegalValueCombination() {
+        return value != null && ((subsetOf != null && !subsetOf.containsAll(value)) || (supersetOf != null && !defaultValue.containsAll(supersetOf)));
     }
 
     private boolean notNullnotEqual(Set<T> superiorValue, Set<T> inferiorValue) {
@@ -93,35 +108,32 @@ public class PolicyList<T> extends AbstractPolicy<T> {
 
     public List<T> enforcePolicy(List<T> t, String name) throws MetadataPolicyException {
 
-        if (t == null && this.essential != null && this.essential)
-            throw new MetadataPolicyException(name + " must exist in rp");
+        if (value != null) {
+            return new ArrayList<>(value);
+        }
 
         //add can only exist alone
-        if (this.add != null) {
+        if (add != null) {
             if (t == null) t = new ArrayList<>();
-            for (T val : this.add) {
+            for (T val : add) {
                 if (!t.contains(val)) t.add(val);
             }
             return t;
         }
 
-        if (this.value != null) {
-            return new ArrayList<>(this.value);
+        if (defaultValue != null && t == null) {
+            return new ArrayList<>(defaultValue);
         }
 
-        if (this.defaultValue != null && t == null) {
-            return new ArrayList<>(this.defaultValue);
+        if (supersetOf != null && (t == null || !t.containsAll(supersetOf)))
+            throw new MetadataPolicyException(name + " values must be superset of " + supersetOf.stream().map(String::valueOf).collect(Collectors.joining(COMMA)));
+
+        if (subsetOf != null && t != null) {
+            return t.stream().filter(e -> subsetOf.contains(e)).collect(Collectors.toList());
         }
 
-        if (this.oneOf != null && (t == null || !this.oneOf.containsAll(t)))
-            throw new MetadataPolicyException(name + " must have one values of " + this.oneOf.stream().map(String::valueOf).collect(Collectors.joining(COMMA)));
-        if (this.supersetOf != null && (t == null || !t.containsAll(this.supersetOf)))
-            throw new MetadataPolicyException(name + " values must be superset of " + this.supersetOf.stream().map(String::valueOf).collect(Collectors.joining(COMMA)));
-
-
-        if (this.subsetOf != null && t != null) {
-            return t.stream().filter(e -> this.subsetOf.contains(e)).collect(Collectors.toList());
-        }
+        if ((t == null || t.isEmpty()) && essential != null && essential)
+            throw new MetadataPolicyException(name + " must exist in rp");
 
         return t;
     }
@@ -142,4 +154,27 @@ public class PolicyList<T> extends AbstractPolicy<T> {
         this.defaultValue = defaultValue;
     }
 
+    public Set<T> getAdd() {
+        return add;
+    }
+
+    public void setAdd(Set<T> add) {
+        this.add = add;
+    }
+
+    public Set<T> getSubsetOf() {
+        return subsetOf;
+    }
+
+    public void setSubsetOf(Set<T> subsetOf) {
+        this.subsetOf = subsetOf;
+    }
+
+    public Set<T> getSupersetOf() {
+        return supersetOf;
+    }
+
+    public void setSupersetOf(Set<T> supersetOf) {
+        this.supersetOf = supersetOf;
+    }
 }

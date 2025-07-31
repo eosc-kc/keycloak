@@ -6,7 +6,7 @@ import org.keycloak.protocol.oidc.representations.OIDCConfigurationRepresentatio
 
 import java.util.List;
 
-public class OPMetadata extends OIDCConfigurationRepresentation {
+public class OPMetadata extends OIDCConfigurationRepresentation implements MetadataInterface {
 
     @JsonProperty("client_registration_types")
     private List<String> clientRegistrationTypes;
