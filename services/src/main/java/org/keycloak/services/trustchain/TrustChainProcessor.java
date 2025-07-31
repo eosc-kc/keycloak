@@ -10,10 +10,9 @@ import java.util.Set;
 
 public interface TrustChainProcessor extends Provider {
 
-    List<TrustChainResolution> constructTrustChains(EntityStatement leafEs, Set<String> trustAnchorIds, boolean policyRequired);
+    List<TrustChainResolution> constructTrustChains(EntityStatement leafEs, Set<String> trustAnchorIds);
     List<TrustChainResolution> subTrustChains(String initialEntity, EntityStatement leafEs, Set<String> trustAnchorIds, Set<String> visitedNodes);
     EntityStatement parseAndValidateSelfSigned(String token) throws InvalidTrustChainException ;
     void validateToken(String token, JSONWebKeySet jwks);
-    TrustChainResolution findAcceptableMetadataPolicyChain(List<TrustChainResolution> trustChainResolutions, EntityStatement statement);
     JSONWebKeySet getKeySet();
 }

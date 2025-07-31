@@ -321,14 +321,14 @@ public abstract class AbstractClientRegistrationProvider implements ClientRegist
 
         if (rep.getAttributes() != null && rep.getAttributes().get(OIDCConfigAttributes.EXPIRATION_TIME) != null && !rep.getAttributes().get(OIDCConfigAttributes.EXPIRATION_TIME).equals(client.getAttributes().get(OIDCConfigAttributes.EXPIRATION_TIME))) {
             TimerProvider timer = session.getProvider(TimerProvider.class);
-            timer.cancelTask("OpenidFederationExplicitClient_" + client.getId());
+            timer.cancelTaskAndNotify("OpenidFederationExplicitClient_" + client.getId());
             OpenIdFederationClientExpirationTask federationTask = new OpenIdFederationClientExpirationTask(client.getId(), session.getContext().getRealm().getId());
             long expiration = Long.valueOf(client.getAttribute(OIDCConfigAttributes.EXPIRATION_TIME)) * 1000 - Time.currentTimeMillis();
             ClusterAwareScheduledTaskRunner taskRunner = new ClusterAwareScheduledTaskRunner(session.getKeycloakSessionFactory(), federationTask, expiration > 60 * 1000 ? expiration : 60 * 1000);
             timer.scheduleOnce(taskRunner, expiration > 60 * 1000 ? expiration : 60 * 1000, "OpenidFederationExplicitClient_" + client.getId());
         } else  if (rep.getAttributes() != null && rep.getAttributes().get(OIDCConfigAttributes.EXPIRATION_TIME) == null && client.getAttributes().get(OIDCConfigAttributes.EXPIRATION_TIME) != null) {
             TimerProvider timer = session.getProvider(TimerProvider.class);
-            timer.cancelTask("OpenidFederationExplicitClient_" + client.getId());
+            timer.cancelTaskAndNotify("OpenidFederationExplicitClient_" + client.getId());
         }
 
         event.client(client.getClientId()).success();

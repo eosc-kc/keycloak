@@ -18,16 +18,12 @@ import org.jboss.logging.Logger;
 import org.keycloak.TokenCategory;
 import org.keycloak.crypto.KeyType;
 import org.keycloak.crypto.KeyUse;
-import org.keycloak.exceptions.MetadataPolicyCombinationException;
 import org.keycloak.exceptions.InvalidTrustChainException;
-import org.keycloak.exceptions.MetadataPolicyException;
 import org.keycloak.jose.jwk.JSONWebKeySet;
 import org.keycloak.jose.jwk.JWK;
 import org.keycloak.jose.jwk.JWKBuilder;
 import org.keycloak.models.KeycloakSession;
-import org.keycloak.utils.MetadataPolicyUtils;
 import org.keycloak.representations.openid_federation.EntityStatement;
-import org.keycloak.representations.openid_federation.RPMetadataPolicy;
 import org.keycloak.representations.openid_federation.TrustChainResolution;
 import org.keycloak.services.ErrorResponseException;
 import java.io.ByteArrayInputStream;
@@ -70,40 +66,15 @@ public class OpenIdFederationTrustChainProcessor implements TrustChainProcessor 
      * @return any valid trust chains from the leaf node JWT to the trust anchor.
      */
     @Override
-    public List<TrustChainResolution> constructTrustChains(EntityStatement leafEs, Set<String> trustAnchorIds, boolean policyRequired) {
+    public List<TrustChainResolution> constructTrustChains(EntityStatement leafEs, Set<String> trustAnchorIds) {
 
         List<TrustChainResolution> trustChainResolutions = subTrustChains(leafEs.getSubject(), leafEs, trustAnchorIds, new HashSet<>());
 
         return trustChainResolutions.stream().map(trustChainResolution -> {
-
-                    //combine policies if valid till now
-                    List<EntityStatement> parsedChain = trustChainResolution.getParsedChain();
-                    if (trustChainResolution != null && policyRequired) {
-                        try {
-                            RPMetadataPolicy combinedPolicy = parsedChain.get(parsedChain.size() - 1).getMetadataPolicy() == null ? null : parsedChain.get(parsedChain.size() - 1).getMetadataPolicy().getRelyingPartyMetadataPolicy();
-                            for (int i = parsedChain.size() - 2; i > 0; i--) {
-
-                                combinedPolicy = MetadataPolicyUtils.combineClientPolicies(combinedPolicy, parsedChain.get(i).getMetadataPolicy().getRelyingPartyMetadataPolicy());
-
-                            }
-
-                            trustChainResolution.setCombinedPolicy(combinedPolicy);
-                            trustChainResolution.setTrustAnchorId(trustChainResolution.getParsedChain().get(trustChainResolution.getParsedChain().size() - 1).getIssuer());
-                            trustChainResolution.setLeafId(trustChainResolution.getParsedChain().get(0).getIssuer());
-
-                        } catch (MetadataPolicyCombinationException e) {
-                            logger.warn(String.format("Cannot combine metadata policy"));
-                            trustChainResolution = null;
-                        }
-                    } else if (trustChainResolution != null) {
-                        trustChainResolution.setTrustAnchorId(trustChainResolution.getParsedChain().get(trustChainResolution.getParsedChain().size() - 1).getIssuer());
-                        trustChainResolution.setLeafId(trustChainResolution.getParsedChain().get(0).getIssuer());
-                    }
-
+                    //TODO enforce policies if valid till now
+                    trustChainResolution.setLeafId(trustChainResolution.getParsedChain().get(0).getIssuer());
                     return trustChainResolution;
-                })
-                .filter(Objects::nonNull)
-                .collect(Collectors.toList());
+                }).collect(Collectors.toList());
 
     }
 
@@ -140,6 +111,7 @@ public class OpenIdFederationTrustChainProcessor implements TrustChainProcessor 
                         }
                         TrustChainResolution trustAnchor = new TrustChainResolution();
                         trustAnchor.getParsedChain().add(0, subNodeSelfES);
+                        trustAnchor.setTrustAnchorId(authHint);
                         chainsList.add(trustAnchor);
                     } else {
                         List<TrustChainResolution> subList = subTrustChains(initialEntity, subNodeSelfES, trustAnchorIds, visitedNodes);
@@ -240,22 +212,6 @@ public class OpenIdFederationTrustChainProcessor implements TrustChainProcessor 
         } catch (IOException e) {
             throw new InvalidTrustChainException("Trust chain does not contain a valid Entity Statement");
         }
-    }
-
-    @Override
-    public TrustChainResolution findAcceptableMetadataPolicyChain(List<TrustChainResolution> trustChainResolutions, EntityStatement statement) {
-        TrustChainResolution validChain = null;
-        EntityStatement current = statement;
-        for (TrustChainResolution chain : trustChainResolutions) {
-            try {
-                current = MetadataPolicyUtils.applyPoliciesToRPStatement(current, chain.getCombinedPolicy());
-                validChain = chain;
-                break;
-            } catch (MetadataPolicyCombinationException | MetadataPolicyException e) {
-                e.printStackTrace();
-            }
-        }
-        return validChain;
     }
 
     @Override

@@ -50,6 +50,14 @@ public interface TimerProvider extends Provider {
      */
     public TimerTaskContext cancelTask(String taskName);
 
+    /**
+     * Cancel task and notify other nodes
+     *
+     * @param taskName
+     * @return existing task or null if task under this name doesn't exist
+     */
+    public TimerTaskContext cancelTaskAndNotify(String taskName);
+
 
     interface TimerTaskContext {
 

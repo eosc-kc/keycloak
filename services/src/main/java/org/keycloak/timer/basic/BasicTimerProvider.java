@@ -18,6 +18,7 @@
 package org.keycloak.timer.basic;
 
 import org.jboss.logging.Logger;
+import org.keycloak.cluster.ClusterProvider;
 import org.keycloak.models.KeycloakSession;
 import org.keycloak.services.scheduled.ScheduledTaskRunner;
 import org.keycloak.timer.ScheduledTask;
@@ -37,12 +38,14 @@ public class BasicTimerProvider implements TimerProvider {
     private final Timer timer;
     private final int transactionTimeout;
     private final BasicTimerProviderFactory factory;
+    private final ClusterProvider clusterProvider;
 
     public BasicTimerProvider(KeycloakSession session, Timer timer, int transactionTimeout, BasicTimerProviderFactory factory) {
         this.session = session;
         this.timer = timer;
         this.transactionTimeout = transactionTimeout;
         this.factory = factory;
+        this.clusterProvider = session.getProvider(ClusterProvider.class);
     }
 
     @Override
@@ -91,6 +94,18 @@ public class BasicTimerProvider implements TimerProvider {
             existingTask.timerTask.cancel();
         }
 
+        return existingTask;
+    }
+
+    @Override
+    public TimerTaskContext cancelTaskAndNotify(String taskName) {
+        TimerTaskContextImpl existingTask = factory.removeTask(taskName);
+        if (existingTask != null) {
+            // Notify all nodes to cancel the task
+            clusterProvider.notify(BasicTimerProviderFactory.CANCEL_TASK, new TaskCancellationEvent(taskName), true);
+            logger.debugf("Cancelling task '%s'", taskName);
+            existingTask.timerTask.cancel();
+        }
         return existingTask;
     }
 

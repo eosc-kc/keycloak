@@ -70,49 +70,42 @@ public class OpenIdFederationClientRegistrationService extends AbstractClientReg
             Set<String> trustAnchorIds = config.getOpenIdFederationList().stream().map(OpenIdFederationConfig::getTrustAnchor).collect(Collectors.toSet());
 
             logger.info("starting validating trust chains");
-            List<TrustChainResolution> trustChainResolutions = trustChainProcessor.constructTrustChains(statement, trustAnchorIds, true);
+            //TODO find accepted trust chain based on federation policies
+            List<TrustChainResolution> trustChainResolutions = trustChainProcessor.constructTrustChains(statement, trustAnchorIds);
 
-            // 9.2.1.2.1. bullet 1 found and verified at least one trust chain
-            if (!trustChainResolutions.isEmpty()) {
-                //just pick one with valid metadata policies randomly
-                TrustChainResolution validChain = trustChainProcessor.findAcceptableMetadataPolicyChain(trustChainResolutions, statement);
-                if (validChain != null) {
-                    RPMetadata rPMetadata = statement.getMetadata().getRelyingPartyMetadata();
-                    if (rPMetadata.getJwks() == null && rPMetadata.getJwksUri() == null) {
-                        rPMetadata.setJwks(statement.getJwks());
-                    }
-                    rPMetadata.setClientId(statement.getSubject());
-
-                    RPMetadata rPMetadataResponse;
-                    try {
-                        if (session.getContext().getRealm().getClientByClientId(rPMetadata.getClientId()) == null) {
-                            ClientRepresentation client = createOidcClient(rPMetadata, session, statement.getExp());
-                            URI uri = session.getContext().getUri().getAbsolutePathBuilder().path(client.getClientId()).build();
-                            rPMetadataResponse = DescriptionConverter.toExternalResponse(session, client, uri, RPMetadata.class);
-                        } else {
-                            ClientRepresentation client = updateOidcClient(rPMetadata.getClientId(), rPMetadata, session, statement.getExp());
-                            URI uri = session.getContext().getUri().getAbsolutePathBuilder().path(client.getClientId()).build();
-                            rPMetadataResponse = DescriptionConverter.toExternalResponse(session, client, uri, RPMetadata.class);
-                        }
-                    } catch (Exception e) {
-                        logger.error("The following error was thrown during OpenId Federation Client explicit registration" , e);
-                        throw new ErrorResponseException(Errors.INVALID_METADATA, "Client metadata invalid", Response.Status.BAD_REQUEST);
-                    }
-
-                    rPMetadataResponse.setClientRegistrationTypes(Stream.of(ClientRegistrationTypeEnum.EXPLICIT.getValue()).collect(Collectors.toList()));
-                    rPMetadataResponse.setClientIdIssuedAt(Time.currentTime());
-                    rPMetadataResponse.setCommonMetadata(rPMetadata.getCommonMetadata());
-                    EntityStatementExplicitResponse responseStatement = new EntityStatementExplicitResponse(statement, Urls.realmIssuer(session.getContext().getUri(UrlType.FRONTEND).getBaseUri(), session.getContext().getRealm().getName()), rPMetadataResponse, validChain.getTrustAnchorId(), validChain.getLeafId());
-                    responseStatement.type(TokenUtil.EXPLICIT_REGISTRATION_RESPONSE_JWT);
-                    String token = session.tokens().encodeForOpenIdFederation(responseStatement);
-                    return Response.ok(token).header("Content-Type", TokenUtil.APPLICATION_EXPLICIT_REGISTRATION_RESPONSE_JWT).build();
-                } else {
-                    return Response.status(Response.Status.BAD_REQUEST).entity("Not accepted rp metadata").build();
-                }
-
-            } else {
+            if (trustChainResolutions.isEmpty()) {
                 throw new ErrorResponseException(Errors.INVALID_TRUST_ANCHOR, "No trusted trust anchor could be found", Response.Status.NOT_FOUND);
             }
+            //TODO enforce policies to RPMetadata, check all valid trustChainResolutions
+            RPMetadata rPMetadata = statement.getMetadata().getRelyingPartyMetadata();
+            if (rPMetadata.getJwks() == null && rPMetadata.getJwksUri() == null) {
+                rPMetadata.setJwks(statement.getJwks());
+            }
+            rPMetadata.setClientId(statement.getSubject());
+
+            RPMetadata rPMetadataResponse;
+            try {
+                if (session.getContext().getRealm().getClientByClientId(rPMetadata.getClientId()) == null) {
+                    ClientRepresentation client = createOidcClient(rPMetadata, session, statement.getExp());
+                    URI uri = session.getContext().getUri().getAbsolutePathBuilder().path(client.getClientId()).build();
+                    rPMetadataResponse = DescriptionConverter.toExternalResponse(session, client, uri, RPMetadata.class);
+                } else {
+                    ClientRepresentation client = updateOidcClient(rPMetadata.getClientId(), rPMetadata, session, statement.getExp());
+                    URI uri = session.getContext().getUri().getAbsolutePathBuilder().path(client.getClientId()).build();
+                    rPMetadataResponse = DescriptionConverter.toExternalResponse(session, client, uri, RPMetadata.class);
+                }
+            } catch (Exception e) {
+                logger.error("The following error was thrown during OpenId Federation Client explicit registration", e);
+                throw new ErrorResponseException(Errors.INVALID_METADATA, "Client metadata invalid", Response.Status.BAD_REQUEST);
+            }
+
+            rPMetadataResponse.setClientRegistrationTypes(Stream.of(ClientRegistrationTypeEnum.EXPLICIT.getValue()).collect(Collectors.toList()));
+            rPMetadataResponse.setClientIdIssuedAt(Time.currentTime());
+            rPMetadataResponse.setCommonMetadata(rPMetadata.getCommonMetadata());
+            EntityStatementExplicitResponse responseStatement = new EntityStatementExplicitResponse(statement, Urls.realmIssuer(session.getContext().getUri(UrlType.FRONTEND).getBaseUri(), session.getContext().getRealm().getName()), rPMetadataResponse, trustChainResolutions.get(0).getTrustAnchorId(), trustChainResolutions.get(0).getLeafId());
+            responseStatement.type(TokenUtil.EXPLICIT_REGISTRATION_RESPONSE_JWT);
+            String token = session.tokens().encodeForOpenIdFederation(responseStatement);
+            return Response.ok(token).header("Content-Type", TokenUtil.APPLICATION_EXPLICIT_REGISTRATION_RESPONSE_JWT).build();
 
 
         } else {
