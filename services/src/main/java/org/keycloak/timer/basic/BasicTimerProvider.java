@@ -21,6 +21,7 @@ import org.jboss.logging.Logger;
 import org.keycloak.cluster.ClusterProvider;
 import org.keycloak.models.KeycloakSession;
 import org.keycloak.services.scheduled.ScheduledTaskRunner;
+import org.keycloak.services.scheduled.TaskCancellationEvent;
 import org.keycloak.timer.ScheduledTask;
 import org.keycloak.timer.TimerProvider;
 
@@ -102,7 +103,7 @@ public class BasicTimerProvider implements TimerProvider {
         TimerTaskContextImpl existingTask = factory.removeTask(taskName);
         if (existingTask != null) {
             // Notify all nodes to cancel the task
-            clusterProvider.notify(BasicTimerProviderFactory.CANCEL_TASK, new TaskCancellationEvent(taskName), true);
+            clusterProvider.notify(TaskCancellationEvent.CANCEL_TASK, new TaskCancellationEvent(taskName), true);
             logger.debugf("Cancelling task '%s'", taskName);
             existingTask.timerTask.cancel();
         }

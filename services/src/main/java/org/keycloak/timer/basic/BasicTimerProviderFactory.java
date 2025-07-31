@@ -18,7 +18,6 @@
 package org.keycloak.timer.basic;
 
 import org.keycloak.Config;
-import org.keycloak.cluster.ClusterProvider;
 import org.keycloak.models.KeycloakSession;
 import org.keycloak.models.KeycloakSessionFactory;
 import org.keycloak.timer.TimerProvider;
@@ -38,7 +37,6 @@ public class BasicTimerProviderFactory implements TimerProviderFactory {
     private int transactionTimeout;
 
     public static final String TRANSACTION_TIMEOUT = "transactionTimeout";
-    public static final String CANCEL_TASK = "cancelTask";
 
     private ConcurrentMap<String, TimerTaskContextImpl> scheduledTasks = new ConcurrentHashMap<>();
 
@@ -55,10 +53,6 @@ public class BasicTimerProviderFactory implements TimerProviderFactory {
 
     @Override
     public void postInit(KeycloakSessionFactory factory) {
-        try (KeycloakSession session = factory.create()) {
-            ClusterProvider clusterProvider = session.getProvider(ClusterProvider.class);
-            clusterProvider.registerListener(CANCEL_TASK, new TaskCancellationListener(factory));
-        }
     }
 
     @Override

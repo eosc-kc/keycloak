@@ -23,6 +23,7 @@ import java.util.List;
 import org.jboss.logging.Logger;
 import org.keycloak.Config;
 import org.keycloak.Config.Scope;
+import org.keycloak.cluster.ClusterProvider;
 import org.keycloak.migration.MigrationModelManager;
 import org.keycloak.models.KeycloakSession;
 import org.keycloak.models.KeycloakSessionFactory;
@@ -38,6 +39,8 @@ import org.keycloak.services.scheduled.ClearExpiredRevokedTokens;
 import org.keycloak.services.scheduled.ClearExpiredUserSessions;
 import org.keycloak.services.scheduled.ClusterAwareScheduledTaskRunner;
 import org.keycloak.services.scheduled.StartUpTasks;
+import org.keycloak.services.scheduled.TaskCancellationEvent;
+import org.keycloak.services.scheduled.TaskCancellationListener;
 import org.keycloak.storage.DatastoreProvider;
 import org.keycloak.storage.DatastoreProviderFactory;
 import org.keycloak.storage.StoreMigrateRepresentationEvent;
@@ -133,6 +136,10 @@ public class DefaultDatastoreProviderFactory implements DatastoreProviderFactory
             TimerProvider timer = session.getProvider(TimerProvider.class);
             if (timer != null) {
                 scheduleTasks(sessionFactory, timer, getScheduledInterval());
+            }
+            ClusterProvider clusterProvider = session.getProvider(ClusterProvider.class);
+            if ( clusterProvider !=  null ) {
+                clusterProvider.registerListener(TaskCancellationEvent.CANCEL_TASK, new TaskCancellationListener(sessionFactory));
             }
         }
     }

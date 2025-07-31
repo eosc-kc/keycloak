@@ -1,4 +1,4 @@
-package org.keycloak.timer.basic;
+package org.keycloak.services.scheduled;
 
 import org.keycloak.cluster.ClusterEvent;
 import org.keycloak.cluster.ClusterListener;
