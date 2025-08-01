@@ -53,6 +53,7 @@ public class BasicTimerProviderFactory implements TimerProviderFactory {
 
     @Override
     public void postInit(KeycloakSessionFactory factory) {
+
     }
 
     @Override
