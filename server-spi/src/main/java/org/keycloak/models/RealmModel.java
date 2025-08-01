@@ -339,7 +339,7 @@ public interface RealmModel extends RoleContainerModel {
     };
 
     default List<OpenIdFederationConfig> getOpenIdFederations() {
-        return new ArrayList<>();
+        return List.of();
     }
 
     default void addOpenIdFederation(OpenIdFederationConfig fedConfig) {

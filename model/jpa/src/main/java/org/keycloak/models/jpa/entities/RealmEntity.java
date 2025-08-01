@@ -152,7 +152,7 @@ public class RealmEntity {
     Collection<UserFederationMapperEntity> userFederationMappers = new LinkedList<>();
 
     @OneToMany(cascade ={CascadeType.PERSIST, CascadeType.REMOVE}, mappedBy = "realm")
-    List<OpenIdFederationEntity> openIdFederationList = new ArrayList<>();
+    List<OpenIdFederationEntity> openIdFederationList = List.of();
 
     @ElementCollection
     @MapKeyColumn(name="NAME")
@@ -605,7 +605,7 @@ public class RealmEntity {
     }
 
     public List<OpenIdFederationEntity> getOpenIdFederationList() {
-        return openIdFederationList == null ? new ArrayList<>() : openIdFederationList;
+        return openIdFederationList;
     }
 
     public void setOpenIdFederationList(List<OpenIdFederationEntity> openIdFederationList) {

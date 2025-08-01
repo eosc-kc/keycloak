@@ -1143,7 +1143,7 @@ public class RealmAdapter implements StorageProviderRealmModel, JpaModel<RealmEn
             setAttribute(Constants.OPENID_FEDERATION_LIFESPAN, generalConfig.getLifespan() == null ? String.valueOf(86400) : String.valueOf(generalConfig.getLifespan()));
             setAttribute(Constants.OPENID_FEDERATION_RESOLVE_ENDPOINT, generalConfig.getFederationResolveEndpoint());
             setAttribute(Constants.OPENID_FEDERATION_HISTORICAL_KEYS_ENDPOINT, generalConfig.getFederationHistoricalKeysEndpoint());
-            if (generalConfig.getOpenIdFederationList() != null && !generalConfig.getOpenIdFederationList().isEmpty()) {
+            if (!generalConfig.getOpenIdFederationList().isEmpty()) {
                 realm.setOpenIdFederationList(generalConfig.getOpenIdFederationList().stream().map(fedConfig -> {
                     OpenIdFederationEntity fedEntity = new OpenIdFederationEntity();
                     fedEntity.setInternalId(fedConfig.getInternalId() != null ? fedConfig.getInternalId() : KeycloakModelUtils.generateId());

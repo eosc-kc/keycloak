@@ -809,7 +809,7 @@ public class RealmAdapter implements CachedRealmModel {
     @Override
     public List<OpenIdFederationConfig> getOpenIdFederations() {
         if (isUpdated()) return updated.getOpenIdFederations();
-        return isOpenIdFederationEnabled() ?  cached.getOpenIdFederationConfig().getOpenIdFederationList() : new ArrayList<>();
+        return isOpenIdFederationEnabled() ?  cached.getOpenIdFederationConfig().getOpenIdFederationList() : List.of();
     }
 
     @Override
