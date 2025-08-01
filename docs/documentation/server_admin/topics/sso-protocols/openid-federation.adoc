@@ -4,7 +4,7 @@
 [role="_abstract"]
 link:https://openid.net/specs/openid-federation-1_0.html[OpenID Federation] offers a robust framework for establishing dynamic trust between OpenID Providers (OPs, Identity Providers in Keycloak) and Relying Parties (RPs, Clients in Keycloak) via Trust Anchors(TA), significantly simplifying the management of large-scale identity federations.
 This eliminates the need for cumbersome manual or bilateral trust agreements.
-OpenID Federation uses link:https://openid.net/developers/how-connect-works[OpenID Connect] and link:https://datatracker.ietf.org/doc/html/rfc6749[OAuth 2.0] flows and contexts.
+OpenID Federation uses link:https://openid.net/developers/how-connect-works/[OpenID Connect] and link:https://datatracker.ietf.org/doc/html/rfc6749[OAuth 2.0] flows and contexts.
 Basic goal is to support Keycloak being member in an OpenID Federation as OP and RP.
 link:https://openid.net/specs/openid-federation-1_0.html#name-openid-connect-client-regis[Client Registration] can be done via automatic, without client registration, and via explicit, automatic client registration.
 https://openid.net/specs/openid-federation-1_0.html[OpenID Federation] defines also other entity types such as Trust Anchor, Intermediate Entity, Trust Marks, OAuth entities.

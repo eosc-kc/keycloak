@@ -79,7 +79,7 @@ public class OpenIdFederationTrustChainProcessor implements TrustChainProcessor 
     public List<TrustChainResolution> subTrustChains(String initialEntity, EntityStatement leafEs, Set<String> trustAnchorIds, Set<String> visitedNodes) {
 
         List<TrustChainResolution> chainsList = new ArrayList<>();
-        visitedNodes.add(leafEs.getIssuer());
+        visitedNodes.add(leafEs.getSubject());
 
         if (leafEs.getAuthorityHints() != null && !leafEs.getAuthorityHints().isEmpty()) {
             leafEs.getAuthorityHints().forEach(authHint -> {
@@ -94,18 +94,18 @@ public class OpenIdFederationTrustChainProcessor implements TrustChainProcessor 
                     logger.debug(String.format("EntityStatement of %s about %s. AuthHints: %s", subNodeSelfES.getIssuer(), subNodeSelfES.getSubject(), subNodeSelfES.getAuthorityHints()));
 
                     String fedApiUrl = subNodeSelfES.getMetadata().getFederationEntity().getFederationFetchEndpoint();
-                    String encodedSubNodeSubordinate = OpenIdFederationUtils.getSubordinateToken(fedApiUrl, leafEs.getIssuer(), session);
+                    String encodedSubNodeSubordinate = OpenIdFederationUtils.getSubordinateToken(fedApiUrl, leafEs.getSubject(), session);
                     EntityStatement subNodeSubordinateES = parseAndValidateSelfSigned(encodedSubNodeSubordinate, EntityStatement.class, subNodeSelfES.getJwks());
-                    if (!validateEntityStatementFields(subNodeSubordinateES, authHint, leafEs.getIssuer())) {
+                    if (!validateEntityStatementFields(subNodeSubordinateES, authHint, leafEs.getSubject())) {
                         throw new ErrorResponseException(Errors.INVALID_TRUST_CHAIN, "Trust chain is not valid", Response.Status.BAD_REQUEST);
                     }
                     logger.debug(String.format("EntityStatement of %s about %s. AuthHints: %s", subNodeSubordinateES.getIssuer(), subNodeSubordinateES.getSubject(), subNodeSubordinateES.getAuthorityHints()));
-                    visitedNodes.add(subNodeSelfES.getIssuer());
+                    visitedNodes.add(subNodeSelfES.getSubject());
                     if (trustAnchorIds.contains(authHint)) {
                         TrustChainResolution trustAnchor = new TrustChainResolution();
                         //fetch statement may include RPMetadata when trust anchor == Authority hint
                         //otherwise check that RP is registered as RP in trust anchor
-                        if (leafEs.getIssuer().equals(initialEntity) && subNodeSubordinateES.getMetadata() != null && subNodeSubordinateES.getMetadata().getRelyingPartyMetadata() != null) {
+                        if (subNodeSubordinateES.getSubject().equals(initialEntity) && subNodeSubordinateES.getMetadata() != null && subNodeSubordinateES.getMetadata().getRelyingPartyMetadata() != null) {
                             trustAnchor.setEntityFromTA(subNodeSubordinateES);
                         } else if (!OpenIdFederationUtils.containedInListEndpoint(subNodeSelfES.getMetadata().getFederationEntity().getFederationListEndpoint(), OpenIdFederationUtils.OPENID_RELAYING_PARTY, initialEntity, session)) {
                             throw new ErrorResponseException(Errors.INVALID_TRUST_CHAIN, "Trust chain is not valid", Response.Status.BAD_REQUEST);
@@ -125,9 +125,9 @@ public class OpenIdFederationTrustChainProcessor implements TrustChainProcessor 
                 }
 
             });
-        } else if (trustAnchorIds.contains(leafEs.getIssuer())) {
+        } else if (trustAnchorIds.contains(leafEs.getSubject())) {
             TrustChainResolution trustAnchor = new TrustChainResolution();
-            trustAnchor.setTrustAnchorId(leafEs.getIssuer());
+            trustAnchor.setTrustAnchorId(leafEs.getSubject());
             trustAnchor.getParsedChain().add(0, leafEs);
             chainsList.add(trustAnchor);
         }
