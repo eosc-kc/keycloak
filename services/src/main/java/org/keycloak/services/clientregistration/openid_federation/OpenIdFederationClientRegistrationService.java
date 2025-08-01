@@ -70,14 +70,13 @@ public class OpenIdFederationClientRegistrationService extends AbstractClientReg
             Set<String> trustAnchorIds = config.getOpenIdFederationList().stream().map(OpenIdFederationConfig::getTrustAnchor).collect(Collectors.toSet());
 
             logger.info("starting validating trust chains");
-            //TODO find accepted trust chain based on federation policies
-            List<TrustChainResolution> trustChainResolutions = trustChainProcessor.constructTrustChains(statement, trustAnchorIds);
+            TrustChainResolution validTrustChain = trustChainProcessor.constructTrustChains(statement, trustAnchorIds);
 
-            if (trustChainResolutions.isEmpty()) {
+            if (validTrustChain == null) {
                 throw new ErrorResponseException(Errors.INVALID_TRUST_ANCHOR, "No trusted trust anchor could be found", Response.Status.NOT_FOUND);
             }
-            //TODO enforce policies to RPMetadata, check all valid trustChainResolutions
-            RPMetadata rPMetadata = statement.getMetadata().getRelyingPartyMetadata();
+            //TODO EntityFromTA will contains always actual RPMetadata after enforicng policies
+            RPMetadata rPMetadata = validTrustChain.getEntityFromTA() != null ?  validTrustChain.getEntityFromTA().getMetadata().getRelyingPartyMetadata() : statement.getMetadata().getRelyingPartyMetadata();
             if (rPMetadata.getJwks() == null && rPMetadata.getJwksUri() == null) {
                 rPMetadata.setJwks(statement.getJwks());
             }
@@ -102,7 +101,7 @@ public class OpenIdFederationClientRegistrationService extends AbstractClientReg
             rPMetadataResponse.setClientRegistrationTypes(Stream.of(ClientRegistrationTypeEnum.EXPLICIT.getValue()).collect(Collectors.toList()));
             rPMetadataResponse.setClientIdIssuedAt(Time.currentTime());
             rPMetadataResponse.setCommonMetadata(rPMetadata.getCommonMetadata());
-            EntityStatementExplicitResponse responseStatement = new EntityStatementExplicitResponse(statement, Urls.realmIssuer(session.getContext().getUri(UrlType.FRONTEND).getBaseUri(), session.getContext().getRealm().getName()), rPMetadataResponse, trustChainResolutions.get(0).getTrustAnchorId(), trustChainResolutions.get(0).getLeafId());
+            EntityStatementExplicitResponse responseStatement = new EntityStatementExplicitResponse(statement, Urls.realmIssuer(session.getContext().getUri(UrlType.FRONTEND).getBaseUri(), session.getContext().getRealm().getName()), rPMetadataResponse, validTrustChain.getTrustAnchorId(), validTrustChain.getParsedChain().get(0).getIssuer());
             responseStatement.type(TokenUtil.EXPLICIT_REGISTRATION_RESPONSE_JWT);
             String token = session.tokens().encodeForOpenIdFederation(responseStatement);
             return Response.ok(token).header("Content-Type", TokenUtil.APPLICATION_EXPLICIT_REGISTRATION_RESPONSE_JWT).build();

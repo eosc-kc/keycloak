@@ -66,16 +66,13 @@ public class OpenIdFederationTrustChainProcessor implements TrustChainProcessor 
      * @return any valid trust chains from the leaf node JWT to the trust anchor.
      */
     @Override
-    public List<TrustChainResolution> constructTrustChains(EntityStatement leafEs, Set<String> trustAnchorIds) {
+    public TrustChainResolution constructTrustChains(EntityStatement leafEs, Set<String> trustAnchorIds) {
 
         List<TrustChainResolution> trustChainResolutions = subTrustChains(leafEs.getSubject(), leafEs, trustAnchorIds, new HashSet<>());
-
-        return trustChainResolutions.stream().map(trustChainResolution -> {
-                    //TODO enforce policies if valid till now
-                    trustChainResolution.setLeafId(trustChainResolution.getParsedChain().get(0).getIssuer());
-                    return trustChainResolution;
-                }).collect(Collectors.toList());
-
+        
+        //TODO enforce policies for valid Trust Chains and set new RPMetadata
+        // Need to return only one valid Trust Chain
+        return trustChainResolutions.isEmpty() ? null : trustChainResolutions.get(0);
     }
 
     @Override
@@ -105,11 +102,14 @@ public class OpenIdFederationTrustChainProcessor implements TrustChainProcessor 
                     logger.debug(String.format("EntityStatement of %s about %s. AuthHints: %s", subNodeSubordinateES.getIssuer(), subNodeSubordinateES.getSubject(), subNodeSubordinateES.getAuthorityHints()));
                     visitedNodes.add(subNodeSelfES.getIssuer());
                     if (trustAnchorIds.contains(authHint)) {
-                        //check that RP is registered as RP in trust anchor
-                        if (!OpenIdFederationUtils.containedInListEndpoint(subNodeSelfES.getMetadata().getFederationEntity().getFederationListEndpoint(), OpenIdFederationUtils.OPENID_RELAYING_PARTY, initialEntity, session)) {
+                        TrustChainResolution trustAnchor = new TrustChainResolution();
+                        //fetch statement may include RPMetadata when trust anchor == Authority hint
+                        //otherwise check that RP is registered as RP in trust anchor
+                        if (leafEs.getIssuer().equals(initialEntity) && subNodeSubordinateES.getMetadata() != null && subNodeSubordinateES.getMetadata().getRelyingPartyMetadata() != null) {
+                            trustAnchor.setEntityFromTA(subNodeSubordinateES);
+                        } else if (!OpenIdFederationUtils.containedInListEndpoint(subNodeSelfES.getMetadata().getFederationEntity().getFederationListEndpoint(), OpenIdFederationUtils.OPENID_RELAYING_PARTY, initialEntity, session)) {
                             throw new ErrorResponseException(Errors.INVALID_TRUST_CHAIN, "Trust chain is not valid", Response.Status.BAD_REQUEST);
                         }
-                        TrustChainResolution trustAnchor = new TrustChainResolution();
                         trustAnchor.getParsedChain().add(0, subNodeSelfES);
                         trustAnchor.setTrustAnchorId(authHint);
                         chainsList.add(trustAnchor);
@@ -127,6 +127,7 @@ public class OpenIdFederationTrustChainProcessor implements TrustChainProcessor 
             });
         } else if (trustAnchorIds.contains(leafEs.getIssuer())) {
             TrustChainResolution trustAnchor = new TrustChainResolution();
+            trustAnchor.setTrustAnchorId(leafEs.getIssuer());
             trustAnchor.getParsedChain().add(0, leafEs);
             chainsList.add(trustAnchor);
         }
@@ -142,12 +143,13 @@ public class OpenIdFederationTrustChainProcessor implements TrustChainProcessor 
         return statement;
     }
 
-    public <T extends EntityStatement> T parseAndValidateSelfSigned(String token, Class<T> clazz, JSONWebKeySet jwks) throws InvalidTrustChainException {
+    private <T extends EntityStatement> T parseAndValidateSelfSigned(String token, Class<T> clazz, JSONWebKeySet jwks) throws InvalidTrustChainException {
         T statement = parse(token, clazz);
         validateToken(token, jwks);
         return statement;
     }
 
+    @Override
     public void validateToken(String token, JSONWebKeySet jwks){
         try{
             ConfigurableJWTProcessor<SecurityContext> jwtProcessor = produceJwtProcessor(jwks);

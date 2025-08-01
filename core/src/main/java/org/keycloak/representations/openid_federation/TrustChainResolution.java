@@ -13,6 +13,8 @@ public class TrustChainResolution {
 
     private String leafId;
 
+    private EntityStatement entityFromTA;
+
     public TrustChainResolution() {
         parsedChain = new ArrayList<>();
         combinedPolicy = new RPMetadataPolicy();
@@ -48,5 +50,13 @@ public class TrustChainResolution {
 
     public void setLeafId(String leafId) {
         this.leafId = leafId;
+    }
+
+    public EntityStatement getEntityFromTA() {
+        return entityFromTA;
+    }
+
+    public void setEntityFromTA(EntityStatement entityFromTA) {
+        this.entityFromTA = entityFromTA;
     }
 }
