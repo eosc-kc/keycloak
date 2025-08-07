@@ -55,8 +55,6 @@ import org.keycloak.representations.idm.RealmRepresentation;
 import org.keycloak.storage.UserStorageProvider;
 import org.keycloak.storage.UserStorageUtil;
 import org.keycloak.storage.client.ClientStorageProvider;
-
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;

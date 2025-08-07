@@ -31,7 +31,6 @@ import org.keycloak.util.TokenUtil;
 import java.net.URI;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
-import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -63,7 +62,7 @@ public class OpenIdFederationClientRegistrationService extends AbstractClientReg
             try {
                 statement = trustChainProcessor.parseAndValidateSelfSigned(body);
             } catch (InvalidTrustChainException ex) {
-                ex.printStackTrace();
+                logger.error("Entity statement is not valid", ex);
                 throw new ErrorResponseException(Errors.INVALID_REQUEST, "Entity statement is not valid", Response.Status.BAD_REQUEST);
             }
 

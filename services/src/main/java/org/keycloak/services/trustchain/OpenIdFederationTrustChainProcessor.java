@@ -45,6 +45,7 @@ import java.util.stream.Stream;
 
 import com.nimbusds.jose.JOSEObjectType;
 import com.nimbusds.jose.proc.DefaultJOSEObjectTypeVerifier;
+import org.keycloak.util.JsonSerialization;
 import org.keycloak.util.TokenUtil;
 import org.keycloak.utils.OpenIdFederationUtils;
 
@@ -52,8 +53,6 @@ public class OpenIdFederationTrustChainProcessor implements TrustChainProcessor 
 
     private static final Logger logger = Logger.getLogger(OpenIdFederationTrustChainProcessor.class);
     private  final KeycloakSession session;
-
-    private static ObjectMapper om = new ObjectMapper();
 
     public OpenIdFederationTrustChainProcessor(KeycloakSession session) {
         this.session = session;
@@ -121,7 +120,7 @@ public class OpenIdFederationTrustChainProcessor implements TrustChainProcessor 
                         }
                     }
                 } catch (Exception ex) {
-                    ex.printStackTrace();
+                    logger.warn("Problem during trust chain resolution for "+initialEntity, ex);
                 }
 
             });
@@ -156,13 +155,13 @@ public class OpenIdFederationTrustChainProcessor implements TrustChainProcessor 
             jwtProcessor.process(token, null);
 
         } catch(IOException | ParseException | BadJOSEException | JOSEException ex) {
-            ex.printStackTrace();
+            logger.error("Could not validate token", ex);
             throw new ErrorResponseException(Errors.INVALID_TRUST_CHAIN, "Trust chain is not valid", Response.Status.BAD_REQUEST);
         }
     }
 
     private ConfigurableJWTProcessor<SecurityContext> produceJwtProcessor(JSONWebKeySet jwks) throws IOException, ParseException {
-        String jsonKey = om.writeValueAsString(jwks);
+        String jsonKey = JsonSerialization.writeValueAsString(jwks);
         JWKSet jwkSet = JWKSet.load(new ByteArrayInputStream(jsonKey.getBytes()));
         JWKSource<SecurityContext> keySource = new ImmutableJWKSet<>(jwkSet);
         ConfigurableJWTProcessor<SecurityContext> jwtProcessor = new DefaultJWTProcessor<>();
@@ -176,12 +175,6 @@ public class OpenIdFederationTrustChainProcessor implements TrustChainProcessor 
                         try {
                             return JWSAlgorithm.parse((algorithm).getName());
                         } catch (IllegalArgumentException e) {
-                            return null;
-                        }
-                    } else if (alg instanceof String string) {
-                        try {
-                            return JWSAlgorithm.parse(string);
-                        } catch (Exception e) {
                             return null;
                         }
                     } else {
@@ -210,7 +203,7 @@ public class OpenIdFederationTrustChainProcessor implements TrustChainProcessor 
         if(splits.length != 3)
             throw new InvalidTrustChainException("Trust chain contains a chain-link which does not abide to the dot-delimited format of xxx.yyy.zzz");
         try {
-            return om.readValue(Base64.getDecoder().decode(splits[1]), clazz);
+            return JsonSerialization.readValue(Base64.getDecoder().decode(splits[1]), clazz);
         } catch (IOException e) {
             throw new InvalidTrustChainException("Trust chain does not contain a valid Entity Statement");
         }
