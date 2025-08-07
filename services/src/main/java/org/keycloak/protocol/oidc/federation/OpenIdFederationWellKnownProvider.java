@@ -31,7 +31,6 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 public class OpenIdFederationWellKnownProvider extends OIDCWellKnownProvider {
 
@@ -76,7 +75,7 @@ public class OpenIdFederationWellKnownProvider extends OIDCWellKnownProvider {
             metadata.setOpenIdProviderMetadata(opMetadata);
         }
 
-        if (openIdFederationConfig.getOpenIdFederationList().stream().flatMap(x -> x.getEntityTypes().stream()).collect(Collectors.toSet()).contains(EntityTypeEnum.OPENID_RELAYING_PARTY)) {
+        if (openIdFederationConfig.getOpenIdFederationList().stream().flatMap(x -> x.getEntityTypes().stream()).collect(Collectors.toSet()).contains(EntityTypeEnum.OPENID_RELYING_PARTY)) {
             RPMetadata rPMetadata = OpenIdFederationUtils.createRPMetadata(openIdFederationConfig, registrationTypes.stream(), common, RealmsResource.protocolUrl(backendUriInfo).clone().path(OIDCLoginProtocolService.class, "certs").build(realm.getName(),
                     OIDCLoginProtocol.LOGIN_PROTOCOL).toString(), frontendUriInfo, realm.getName());
             List<String> openIdFederationSubjectTypes = openIdFederationConfig.getOpenIdFederationList().stream().flatMap(x -> {

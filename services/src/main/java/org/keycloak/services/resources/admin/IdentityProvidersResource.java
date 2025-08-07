@@ -302,7 +302,7 @@ public class IdentityProvidersResource {
     }
 
     private IdentityProviderModel createModelForOpenIdFederation(IdentityProviderRepresentation representation){
-        boolean isRpFederated = realm.isOpenIdFederationEnabled() && representation.getConfig().get(OpenIdFederationIdentityProviderConfig.TRUST_ANCHOR_ID) != null && realm.getOpenIdFederations().stream().anyMatch(fed -> representation.getConfig().get(OpenIdFederationIdentityProviderConfig.TRUST_ANCHOR_ID).equals(fed.getTrustAnchor()) && fed.getEntityTypes().contains(EntityTypeEnum.OPENID_RELAYING_PARTY));
+        boolean isRpFederated = realm.isOpenIdFederationEnabled() && representation.getConfig().get(OpenIdFederationIdentityProviderConfig.TRUST_ANCHOR_ID) != null && realm.getOpenIdFederations().stream().anyMatch(fed -> representation.getConfig().get(OpenIdFederationIdentityProviderConfig.TRUST_ANCHOR_ID).equals(fed.getTrustAnchor()) && fed.getEntityTypes().contains(EntityTypeEnum.OPENID_RELYING_PARTY));
         if (isRpFederated && representation.getConfig().get(OIDCIdentityProviderConfig.ISSUER) != null) {
             try {
                 OpenIdFederationGeneralConfig federationGeneralConfig = realm.getOpenIdFederationGeneralConfig();
@@ -350,7 +350,7 @@ public class IdentityProvidersResource {
                 throw ErrorResponse.error(e.getMessage(), BAD_REQUEST);
             }
         } else {
-            throw ErrorResponse.error(isRpFederated ? "This realm does not support Openid Federation as RP with selected trust anchor" : "Trust anchor and issuer are required", BAD_REQUEST);
+            throw ErrorResponse.error(isRpFederated ? "Trust anchor and issuer are required" : "This realm does not support Openid Federation as RP with selected trust anchor", BAD_REQUEST);
         }
     }
 
