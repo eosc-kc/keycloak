@@ -1,7 +1,6 @@
 package org.keycloak.models;
 
 import java.io.Serializable;
-import java.util.ArrayList;
 import java.util.List;
 
 public class OpenIdFederationGeneralConfig implements Serializable {

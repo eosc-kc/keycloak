@@ -35,8 +35,8 @@ public class OpenIdFederationsResource {
 
     private final RealmModel realm;
     private final KeycloakSession session;
-    private AdminPermissionEvaluator auth;
-    private AdminEventBuilder adminEvent;
+    private final AdminPermissionEvaluator auth;
+    private final AdminEventBuilder adminEvent;
 
     protected static final Logger logger = Logger.getLogger(OpenIdFederationsResource.class);
 

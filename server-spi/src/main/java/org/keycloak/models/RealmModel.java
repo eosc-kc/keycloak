@@ -17,7 +17,6 @@
 
 package org.keycloak.models;
 
-import java.util.ArrayList;
 import java.util.Comparator;
 import org.keycloak.common.enums.SslRequired;
 import org.keycloak.component.ComponentModel;
