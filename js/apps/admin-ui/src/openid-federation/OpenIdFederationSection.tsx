@@ -15,7 +15,7 @@ import type { OpenIdFederationParams } from "./routes/OpenIdFederation";
 import { adminClient } from "../admin-client";
 import { KeycloakSpinner } from "../components/keycloak-spinner/KeycloakSpinner";
 import { useFetch } from "../utils/useFetch";
-import OpenIdFederationRepresentation from "libs/keycloak-admin-client/lib/defs/OpenIdFederationRepresentation";
+import OpenIdFederationRepresentation from "libs/keycloak-admin-client/lib/defs/openIdFederationRepresentation";
 
 export default function OpenIdFederationSection() {
   const { t } = useTranslation("openid-federation");

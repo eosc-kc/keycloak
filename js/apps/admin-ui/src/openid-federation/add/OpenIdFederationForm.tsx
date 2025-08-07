@@ -1,7 +1,7 @@
 import OpenIdFederationRepresentation, {
   EntityTypesSupported,
   ClientRegistrationTypesSupported,
-} from "@keycloak/keycloak-admin-client/lib/defs/OpenIdFederationRepresentation";
+} from "@keycloak/keycloak-admin-client/lib/defs/openIdFederationRepresentation";
 import {
   ActionGroup,
   Button,
@@ -26,7 +26,7 @@ type OpenIdFederationGeneralTabProps = {
 };
 const entityTypesSupportedValues: EntityTypesSupported[] = [
   "OPENID_PROVIDER",
-  "OPENID_RELAYING_PARTY",
+  "OPENID_RELYING_PARTY",
 ];
 const clientRegistrationTypesSupportedValues: ClientRegistrationTypesSupported[] =
   ["EXPLICIT"];

@@ -13,7 +13,7 @@ import { useFetch } from "../../utils/useFetch";
 import { FormProvider, useForm } from "react-hook-form";
 import { OpenIdFederationForm } from "./OpenIdFederationForm";
 import { OpenIdFederationEditParams } from "../routes/OpenIdFederationEdit";
-import OpenIdFederationRepresentation from "libs/keycloak-admin-client/lib/defs/OpenIdFederationRepresentation";
+import OpenIdFederationRepresentation from "libs/keycloak-admin-client/lib/defs/openIdFederationRepresentation";
 
 export default function EditIdentityFederation() {
   const { t } = useTranslation("openid-federation");

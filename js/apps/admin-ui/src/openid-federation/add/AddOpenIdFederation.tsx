@@ -10,7 +10,7 @@ import type { OpenIdFederationParams } from "../routes/OpenIdFederation";
 import { adminClient } from "../../admin-client";
 import { FormProvider, useForm } from "react-hook-form";
 import { OpenIdFederationForm } from "./OpenIdFederationForm";
-import OpenIdFederationRepresentation from "libs/keycloak-admin-client/lib/defs/OpenIdFederationRepresentation";
+import OpenIdFederationRepresentation from "libs/keycloak-admin-client/lib/defs/openIdFederationRepresentation";
 
 export default function AddOpenIdFederation() {
   const { t } = useTranslation("openid-federation");

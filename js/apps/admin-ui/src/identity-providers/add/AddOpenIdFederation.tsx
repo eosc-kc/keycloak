@@ -20,7 +20,7 @@ import { RedirectUrl } from "../component/RedirectUrl";
 import { DisplayOrder } from "../component/DisplayOrder";
 import { OpenIdFederationSettings } from "./OpenIdFederationSettings";
 import { useFetch } from "../../utils/useFetch";
-import OpenIdFederationRepresentation from "libs/keycloak-admin-client/lib/defs/OpenIdFederationRepresentation";
+import OpenIdFederationRepresentation from "libs/keycloak-admin-client/lib/defs/openIdFederationRepresentation";
 
 export default function AddIdentityProvider() {
   const { t } = useTranslation("identity-providers");

@@ -36,7 +36,7 @@ import { ListEmptyState } from "../components/list-empty-state/ListEmptyState";
 import OpenIdFederationRepresentation, {
   ClientRegistrationTypesSupported,
   EntityTypesSupported,
-} from "libs/keycloak-admin-client/lib/defs/OpenIdFederationRepresentation";
+} from "libs/keycloak-admin-client/lib/defs/openIdFederationRepresentation";
 import { ScrollForm } from "../components/scroll-form/ScrollForm";
 import { FormattedLink } from "../components/external-link/FormattedLink";
 

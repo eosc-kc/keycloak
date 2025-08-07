@@ -1,6 +1,6 @@
 import type { KeycloakAdminClient } from "../client.js";
 import Resource from "./resource.js";
-import OpenIdFederationRepresentation from "../defs/OpenIdFederationRepresentation.js";
+import OpenIdFederationRepresentation from "../defs/openIdFederationRepresentation.js";
 
 export class OpenIdFederations extends Resource<{ realm?: string }> {
   /**
