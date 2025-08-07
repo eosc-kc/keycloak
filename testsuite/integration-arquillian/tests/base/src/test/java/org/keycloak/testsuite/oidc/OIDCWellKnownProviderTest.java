@@ -261,7 +261,7 @@ public class OIDCWellKnownProviderTest extends AbstractKeycloakTest {
             OpenIdFederationRepresentation openIdFederationRepresentation = new OpenIdFederationRepresentation();
             openIdFederationRepresentation.setTrustAnchor("https://edugain.org/trust-anchor");
             openIdFederationRepresentation.setClientRegistrationTypesSupported(Stream.of("EXPLICIT").collect(Collectors.toList()));
-            openIdFederationRepresentation.setEntityTypes(Stream.of("OPENID_PROVIDER", "OPENID_RELAYING_PARTY").collect(Collectors.toList()));
+            openIdFederationRepresentation.setEntityTypes(Stream.of("OPENID_PROVIDER", "OPENID_RELYING_PARTY").collect(Collectors.toList()));
             Map<String, String> idpConfiguration = Map.of(OpenIdFederationUtils.SUBJECT_TYPES_SUPPORTED, "public");
             testRealm.openIdFederationsResource().create(openIdFederationRepresentation);
 
