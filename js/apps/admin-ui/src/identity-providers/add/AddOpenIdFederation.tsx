@@ -16,11 +16,10 @@ import { ViewHeader } from "../../components/view-header/ViewHeader";
 import { useRealm } from "../../context/realm-context/RealmContext";
 import { toIdentityProvider } from "../routes/IdentityProvider";
 import { toIdentityProviders } from "../routes/IdentityProviders";
-import { RedirectUrl } from "../component/RedirectUrl";
-import { DisplayOrder } from "../component/DisplayOrder";
 import { OpenIdFederationSettings } from "./OpenIdFederationSettings";
 import { useFetch } from "../../utils/useFetch";
 import OpenIdFederationRepresentation from "libs/keycloak-admin-client/lib/defs/openIdFederationRepresentation";
+import { OIDCGeneralSettings } from "./OIDCGeneralSettings";
 
 export default function AddIdentityProvider() {
   const { t } = useTranslation("identity-providers");
@@ -85,8 +84,7 @@ export default function AddIdentityProvider() {
           onSubmit={handleSubmit(onSubmit)}
         >
           <FormProvider {...form}>
-            <RedirectUrl id={providerId} create={true} />
-            <DisplayOrder />
+            <OIDCGeneralSettings id={providerId} />
             <OpenIdFederationSettings
               readOnly={false}
               create={true}
