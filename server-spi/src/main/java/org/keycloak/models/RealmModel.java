@@ -21,10 +21,13 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.keycloak.common.enums.SslRequired;
 import org.keycloak.component.ComponentModel;
+import org.keycloak.models.enums.ClientRegistrationTypeEnum;
+import org.keycloak.models.enums.EntityTypeEnum;
 import org.keycloak.provider.Provider;
 import org.keycloak.provider.ProviderEvent;
 import org.keycloak.representations.idm.RealmRepresentation;
@@ -340,6 +343,14 @@ public interface RealmModel extends RoleContainerModel {
 
     default boolean isOpenIdFederationEnabled() {
         return getOpenIdFederationGeneralConfig() != null;
+    };
+
+    default Stream<OpenIdFederationConfig> getTrustAnchorsBasedOnTypes(EntityTypeEnum entityType, ClientRegistrationTypeEnum clientRegistrationType) {
+        return Stream.empty();
+    };
+
+    default Set<String> getTrustAnchorsIdsBasedOnTypes(EntityTypeEnum entityType, ClientRegistrationTypeEnum clientRegistrationType) {
+        return getTrustAnchorsBasedOnTypes(entityType, clientRegistrationType).map(OpenIdFederationConfig::getTrustAnchor).collect(Collectors.toSet());
     };
 
     default void setOpenIdFederationGeneralConfig(OpenIdFederationGeneralConfig generalConfig) {

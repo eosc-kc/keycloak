@@ -305,8 +305,8 @@ public class MetadataPolicyUtils {
         if (policy.getFederationRegistrationEndpoint() != null) {
             op.setFederationRegistrationEndpoint(policy.getFederationRegistrationEndpoint().enforcePolicy(op.getFederationRegistrationEndpoint(), "FederationRegistrationEndpoint"));
         }
-        if (policy.getClientRegistrationTypes() != null) {
-            op.setClientRegistrationTypes(policy.getClientRegistrationTypes().enforcePolicy(op.getClientRegistrationTypes(), "ClientRegistrationTypes"));
+        if (policy.getClientRegistrationTypesSupported() != null) {
+            op.setClientRegistrationTypesSupported(policy.getClientRegistrationTypesSupported().enforcePolicy(op.getClientRegistrationTypesSupported(), "ClientRegistrationTypesSupported"));
         }
         if (policy.getContacts() != null) {
             op.setContacts(policy.getContacts().enforcePolicy(op.getContacts(), "Contacts"));
