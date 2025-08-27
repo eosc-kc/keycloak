@@ -37,6 +37,8 @@ import org.keycloak.representations.openid_federation.OPMetadataPolicy;
 import org.keycloak.representations.openid_federation.RPMetadataPolicy;
 import org.keycloak.representations.openid_federation.TrustChainResolution;
 import org.keycloak.services.ErrorResponseException;
+import org.keycloak.services.Urls;
+import org.keycloak.urls.UrlType;
 import org.keycloak.util.JWKSUtils;
 
 import org.jboss.logging.Logger;
@@ -194,8 +196,37 @@ public class OpenIdFederationTrustChainProcessor implements TrustChainProcessor 
 
     }
 
+    @Override
     public boolean validateEntityStatementFields(EntityStatement statement, String issuer, String subject) {
         return statement.getIssuer() == null || statement.getIssuer().equals(issuer) || statement.getSubject() == null || statement.getSubject().equals(subject) || statement.getIat() == null || LocalDateTime.now().toEpochSecond(ZoneOffset.UTC) > statement.getIat() || statement.getExp() == null || LocalDateTime.now().toEpochSecond(ZoneOffset.UTC) < statement.getExp();
+    }
+
+    @Override
+    public void validationRules(EntityStatement statement, boolean checkAudience) {
+        if (statement.getIssuer() == null) {
+            throw new ErrorResponseException(Errors.INVALID_ISSUER, "No issuer in the request.", Response.Status.NOT_FOUND);
+        }
+        if (statement.getSubject() == null) {
+            throw new ErrorResponseException(Errors.INVALID_SUBJECT, "No issuer in the request.", Response.Status.NOT_FOUND);
+        }
+        if (statement.getIat() == null && LocalDateTime.now().toEpochSecond(ZoneOffset.UTC) > statement.getIat()) {
+            throw new ErrorResponseException(Errors.INVALID_REQUEST, "Iat must exist and be before now.", Response.Status.BAD_REQUEST);
+        }
+        if (statement.getExp() == null && LocalDateTime.now().toEpochSecond(ZoneOffset.UTC) < statement.getExp()){
+            throw new ErrorResponseException(Errors.INVALID_REQUEST, "Exp must exist and be before now.", Response.Status.BAD_REQUEST);
+        }
+        if (statement.getAuthorityHints() == null || statement.getAuthorityHints().isEmpty()) {
+            throw new ErrorResponseException(Errors.INVALID_REQUEST, "No authorityHints in the request.", Response.Status.BAD_REQUEST);
+        }
+        if (statement.getMetadata() == null || statement.getMetadata().getRelyingPartyMetadata() == null) {
+            throw new ErrorResponseException(Errors.INVALID_REQUEST, "No relaying party metadata in the request.", Response.Status.BAD_REQUEST);
+        }
+        if (!statement.getIssuer().trim().equals(statement.getSubject().trim())) {
+            throw new ErrorResponseException(Errors.INVALID_ISSUER, "The registration request issuer differs from the subject.", Response.Status.NOT_FOUND);
+        }
+        if (checkAudience && statement.getAudience() == null || !statement.getAudience()[0].equals(Urls.realmIssuer(session.getContext().getUri(UrlType.FRONTEND).getBaseUri(), session.getContext().getRealm().getName()))) {
+            throw new ErrorResponseException(Errors.INVALID_REQUEST, "Aud must contain OP entity Identifier", Response.Status.BAD_REQUEST);
+        }
     }
 
     @Override

@@ -9,8 +9,8 @@ public class OPMetadataPolicy extends AbstractMetadataPolicy{
     @JsonProperty("federation_registration_endpoint")
     private Policy<String> federationRegistrationEndpoint;
 
-    @JsonProperty("client_registration_types")
-    private PolicyList<String> clientRegistrationTypes;
+    @JsonProperty("client_registration_types_supported")
+    private PolicyList<String> clientRegistrationTypesSupported;
 
     private  PolicyList<String> contacts;
 
@@ -188,12 +188,12 @@ public class OPMetadataPolicy extends AbstractMetadataPolicy{
         this.federationRegistrationEndpoint = federationRegistrationEndpoint;
     }
 
-    public PolicyList<String> getClientRegistrationTypes() {
-        return clientRegistrationTypes;
+    public PolicyList<String> getClientRegistrationTypesSupported() {
+        return clientRegistrationTypesSupported;
     }
 
-    public void setClientRegistrationTypes(PolicyList<String> clientRegistrationTypes) {
-        this.clientRegistrationTypes = clientRegistrationTypes;
+    public void setClientRegistrationTypesSupported(PolicyList<String> clientRegistrationTypesSupported) {
+        this.clientRegistrationTypesSupported = clientRegistrationTypesSupported;
     }
 
     public PolicyList<String> getContacts() {
