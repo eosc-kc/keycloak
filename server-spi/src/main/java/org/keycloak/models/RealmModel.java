@@ -326,6 +326,10 @@ public interface RealmModel extends RoleContainerModel {
         return getOpenIdFederationGeneralConfig() != null;
     };
 
+    default boolean isAutomaticOPSupported() {
+        return false;
+    };
+
     default void setOpenIdFederationGeneralConfig(OpenIdFederationGeneralConfig generalConfig) {
     };
 

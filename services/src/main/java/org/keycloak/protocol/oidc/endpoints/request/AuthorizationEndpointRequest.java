@@ -54,6 +54,8 @@ public class AuthorizationEndpointRequest {
 
     AuthorizationRequestContext authorizationRequestContext;
 
+    String iss;
+
     public String getAcr() {
         return acr;
     }
@@ -126,6 +128,10 @@ public class AuthorizationEndpointRequest {
 
     public String getDisplay() {
         return display;
+    }
+
+    public String getIss() {
+        return iss;
     }
 
     public String getInvalidRequestMessage() {

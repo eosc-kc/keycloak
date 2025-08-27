@@ -25,6 +25,8 @@ import org.keycloak.models.*;
 import org.keycloak.models.cache.CachedRealmModel;
 import org.keycloak.models.cache.UserCache;
 import org.keycloak.models.cache.infinispan.entities.CachedRealm;
+import org.keycloak.models.enums.ClientRegistrationTypeEnum;
+import org.keycloak.models.enums.EntityTypeEnum;
 import org.keycloak.storage.UserStorageProvider;
 import org.keycloak.storage.UserStorageUtil;
 import org.keycloak.storage.client.ClientStorageProvider;
@@ -760,6 +762,12 @@ public class RealmAdapter implements CachedRealmModel {
     public void setWebAuthnPolicyPasswordless(WebAuthnPolicy policy) {
         getDelegateForUpdate();
         updated.setWebAuthnPolicyPasswordless(policy);
+    }
+
+    @Override
+    public boolean isAutomaticOPSupported() {
+        if (isUpdated()) return updated.isAutomaticOPSupported();
+        return isOpenIdFederationEnabled() && cached.getOpenIdFederationConfig().getOpenIdFederationList().stream().anyMatch(x -> x.getEntityTypes().contains(EntityTypeEnum.OPENID_PROVIDER) && x.getClientRegistrationTypesSupported().contains(ClientRegistrationTypeEnum.AUTOMATIC));
     }
 
     @Override

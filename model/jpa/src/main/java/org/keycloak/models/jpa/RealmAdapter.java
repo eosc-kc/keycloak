@@ -1059,6 +1059,11 @@ public class RealmAdapter implements LegacyRealmModel, JpaModel<RealmEntity> {
     }
 
     @Override
+    public boolean isAutomaticOPSupported() {
+        return isOpenIdFederationEnabled() && getOpenIdFederations().stream().anyMatch(x -> x.getEntityTypes().contains(EntityTypeEnum.OPENID_PROVIDER) && x.getClientRegistrationTypesSupported().contains(ClientRegistrationTypeEnum.AUTOMATIC));
+    }
+
+    @Override
     public OpenIdFederationGeneralConfig getOpenIdFederationGeneralConfig() {
         //for enabling OpenId Federation at least one Federation configuration needs to exist
         if (getAttribute(Constants.OPENID_FEDERATION_ENABLED, Boolean.TRUE)) {
