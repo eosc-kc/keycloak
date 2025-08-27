@@ -10,8 +10,6 @@ import org.keycloak.common.util.Time;
 import org.keycloak.events.Errors;
 import org.keycloak.exceptions.InvalidTrustChainException;
 import org.keycloak.models.KeycloakSession;
-import org.keycloak.models.OpenIdFederationConfig;
-import org.keycloak.models.OpenIdFederationGeneralConfig;
 import org.keycloak.models.RealmModel;
 import org.keycloak.models.enums.ClientRegistrationTypeEnum;
 import org.keycloak.utils.OpenIdFederationTrustChainProcessorFactory;
@@ -30,8 +28,6 @@ import org.keycloak.urls.UrlType;
 import org.keycloak.util.TokenUtil;
 
 import java.net.URI;
-import java.time.LocalDateTime;
-import java.time.ZoneOffset;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -50,8 +46,8 @@ public class OpenIdFederationClientRegistrationService extends AbstractClientReg
     @Consumes({"application/entity-statement+jwt", "application/trust-chain+json"})
     public Response explicitClientRegistration(String body, @Context HttpHeaders headers) {
         RealmModel realm = session.getContext().getRealm();
-        OpenIdFederationGeneralConfig config = realm.getOpenIdFederationGeneralConfig();
-        if (!realm.isOpenIdFederationEnabled() || config.getOpenIdFederationList().stream().noneMatch(x -> x.getEntityTypes().contains(EntityTypeEnum.OPENID_PROVIDER) && x.getClientRegistrationTypesSupported().contains(ClientRegistrationTypeEnum.EXPLICIT)) || config.getAuthorityHints().isEmpty()) {
+        Set<String> trustAnchorIds = realm.getTrustAnchorsIdsBasedOnTypes(EntityTypeEnum.OPENID_PROVIDER, ClientRegistrationTypeEnum.EXPLICIT);
+        if (trustAnchorIds.isEmpty()) {
             throw new ErrorResponseException(Errors.INVALID_REQUEST, "Explicit OpenID Federation Client Registration is not supported in this realm", Response.Status.BAD_REQUEST);
         }
         checkSsl();
@@ -65,9 +61,7 @@ public class OpenIdFederationClientRegistrationService extends AbstractClientReg
                 throw new ErrorResponseException(Errors.INVALID_REQUEST, "Entity statement is not valid", Response.Status.BAD_REQUEST);
             }
 
-            validationRules(statement);
-
-            Set<String> trustAnchorIds = config.getOpenIdFederationList().stream().map(OpenIdFederationConfig::getTrustAnchor).collect(Collectors.toSet());
+            trustChainProcessor.validationRules(statement, true);
 
             logger.info("starting validating trust chains");
 
@@ -111,33 +105,6 @@ public class OpenIdFederationClientRegistrationService extends AbstractClientReg
         } else {
             // TODO Handle Trust Chain
             throw new ErrorResponseException("not_implemented", "Trust chain handling is not yet implemented", Response.Status.NOT_IMPLEMENTED);
-        }
-    }
-
-    private void validationRules(EntityStatement statement) {
-        if (statement.getIssuer() == null) {
-            throw new ErrorResponseException(Errors.INVALID_ISSUER, "No issuer in the request.", Response.Status.NOT_FOUND);
-        }
-        if (statement.getSubject() == null) {
-            throw new ErrorResponseException(Errors.INVALID_SUBJECT, "No issuer in the request.", Response.Status.NOT_FOUND);
-        }
-        if (statement.getIat() == null && LocalDateTime.now().toEpochSecond(ZoneOffset.UTC) > statement.getIat()) {
-            throw new ErrorResponseException(Errors.INVALID_REQUEST, "Iat must exist and be before now.", Response.Status.BAD_REQUEST);
-        }
-        if (statement.getExp() == null && LocalDateTime.now().toEpochSecond(ZoneOffset.UTC) < statement.getExp()){
-            throw new ErrorResponseException(Errors.INVALID_REQUEST, "Exp must exist and be before now.", Response.Status.BAD_REQUEST);
-        }
-        if (statement.getAuthorityHints() == null || statement.getAuthorityHints().isEmpty()) {
-            throw new ErrorResponseException(Errors.INVALID_REQUEST, "No authorityHints in the request.", Response.Status.BAD_REQUEST);
-        }
-        if (statement.getMetadata() == null || statement.getMetadata().getRelyingPartyMetadata() == null) {
-            throw new ErrorResponseException(Errors.INVALID_REQUEST, "No relaying party metadata in the request.", Response.Status.BAD_REQUEST);
-        }
-        if (!statement.getIssuer().trim().equals(statement.getSubject().trim())) {
-            throw new ErrorResponseException(Errors.INVALID_ISSUER, "The registration request issuer differs from the subject.", Response.Status.NOT_FOUND);
-        }
-        if (statement.getAudience() == null || !statement.getAudience()[0].equals(Urls.realmIssuer(session.getContext().getUri(UrlType.FRONTEND).getBaseUri(), session.getContext().getRealm().getName()))) {
-            throw new ErrorResponseException(Errors.INVALID_REQUEST, "Aud must contain OP entity Identifier", Response.Status.BAD_REQUEST);
         }
     }
 

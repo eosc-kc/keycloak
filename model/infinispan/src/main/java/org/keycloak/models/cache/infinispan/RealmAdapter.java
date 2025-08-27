@@ -53,6 +53,8 @@ import org.keycloak.models.WebAuthnPolicy;
 import org.keycloak.models.cache.CachedRealmModel;
 import org.keycloak.models.cache.UserCache;
 import org.keycloak.models.cache.infinispan.entities.CachedRealm;
+import org.keycloak.models.enums.ClientRegistrationTypeEnum;
+import org.keycloak.models.enums.EntityTypeEnum;
 import org.keycloak.representations.idm.RealmRepresentation;
 import org.keycloak.storage.UserStorageProvider;
 import org.keycloak.storage.UserStorageUtil;
@@ -818,6 +820,12 @@ public class RealmAdapter implements CachedRealmModel {
     public void setWebAuthnPolicyPasswordless(WebAuthnPolicy policy) {
         getDelegateForUpdate();
         updated.setWebAuthnPolicyPasswordless(policy);
+    }
+
+    @Override
+    public Stream<OpenIdFederationConfig> getTrustAnchorsBasedOnTypes(EntityTypeEnum entityType, ClientRegistrationTypeEnum clientRegistrationType) {
+        if (isUpdated()) return updated.getTrustAnchorsBasedOnTypes(entityType, clientRegistrationType);
+        return isOpenIdFederationEnabled() ? cached.getOpenIdFederationConfig().getOpenIdFederationList().stream().filter(x -> x.getEntityTypes().contains(entityType) && x.getClientRegistrationTypesSupported().contains(clientRegistrationType)) : Stream.empty();
     }
 
     @Override

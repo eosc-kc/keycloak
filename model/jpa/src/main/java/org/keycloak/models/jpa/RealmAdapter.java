@@ -1119,6 +1119,11 @@ public class RealmAdapter implements StorageProviderRealmModel, JpaModel<RealmEn
     }
 
     @Override
+    public Stream<OpenIdFederationConfig> getTrustAnchorsBasedOnTypes(EntityTypeEnum entityType, ClientRegistrationTypeEnum clientRegistrationType) {
+        return isOpenIdFederationEnabled() ? getOpenIdFederations().stream().filter(x -> x.getEntityTypes().contains(entityType) && x.getClientRegistrationTypesSupported().contains(clientRegistrationType)) : Stream.empty();
+    }
+
+    @Override
     public OpenIdFederationGeneralConfig getOpenIdFederationGeneralConfig() {
         //for enabling OpenId Federation at least one Federation configuration needs to exist
         if (getAttribute(Constants.OPENID_FEDERATION_ENABLED, Boolean.TRUE)) {
