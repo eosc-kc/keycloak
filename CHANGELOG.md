@@ -16,6 +16,7 @@ Our Keycloak version is working well with PostgreSQL database. For using other S
 ## Fixed
 - Labels for OpenId Federations
 - Added alias to create Page
+- correct client_registration_types_supported for openid_provider
 
 ## [22.0.13-1.20] - 2025-08-07
 

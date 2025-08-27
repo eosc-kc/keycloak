@@ -310,7 +310,7 @@ public class IdentityProvidersResource {
                 OpenIdFederationTrustChainProcessor trustChainProcessor = new OpenIdFederationTrustChainProcessor(session);
                 String opIssuer = representation.getConfig().get(OIDCIdentityProviderConfig.ISSUER);
                 EntityStatement opStatement = trustChainProcessor.parseAndValidateSelfSigned(OpenIdFederationUtils.getSelfSignedToken(opIssuer, session));
-                if (!trustChainProcessor.validateEntityStatementFields(opStatement, opIssuer, opIssuer) || opStatement.getMetadata().getOpenIdProviderMetadata() == null || !opStatement.getMetadata().getOpenIdProviderMetadata().getClientRegistrationTypes().contains("explicit") || opStatement.getMetadata().getOpenIdProviderMetadata().getFederationRegistrationEndpoint() == null) {
+                if (!trustChainProcessor.validateEntityStatementFields(opStatement, opIssuer, opIssuer) || opStatement.getMetadata().getOpenIdProviderMetadata() == null || !opStatement.getMetadata().getOpenIdProviderMetadata().getClientRegistrationTypesSupported().contains("explicit") || opStatement.getMetadata().getOpenIdProviderMetadata().getFederationRegistrationEndpoint() == null) {
                     throw new BadRequestException("No valid OP Entity Statement");
                 }
                 TrustChainResolution trustChainResolution = trustChainProcessor.constructTrustChains(opStatement, Stream.of(federationConfig.getTrustAnchor()).collect(Collectors.toSet()),  false);
