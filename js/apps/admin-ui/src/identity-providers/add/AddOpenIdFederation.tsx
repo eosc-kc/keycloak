@@ -58,7 +58,6 @@ export default function AddIdentityProvider() {
       await adminClient.identityProviders.create({
         ...provider,
         providerId,
-        alias: providerId,
       });
       addAlert(t("createSuccess"), AlertVariant.success);
       navigate(
