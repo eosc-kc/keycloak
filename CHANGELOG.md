@@ -11,12 +11,12 @@ Full Keycloak upstream jira issue can be shown if filtered by Fix version.
 Our Keycloak version is working well with PostgreSQL database. For using other SQL databases, text field in database need to be evaluated.
 
 
-## [22.0.13-1.21] 
+## [22.0.13-1.21] - 2025-08-29
 
-## Fixed
-- Labels for OpenId Federations
-- Added alias to create Page
-- correct client_registration_types_supported for openid_provider
+### Fixed
+- Corrected `client_registration_types_supported` field in OpenID Federation `openid_provider` metadata  
+- Added missing `alias` field on the **Create OpenID Federation Identity Provider** page  
+- Corrected labels for OpenID Federation entries in the Keycloak Admin UI
 
 ## [22.0.13-1.20] - 2025-08-07
 
