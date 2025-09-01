@@ -11,6 +11,11 @@ Full Keycloak upstream jira issue can be shown if filtered by Fix version.
 Our Keycloak version is working well with PostgreSQL database. For using other SQL databases, text field in database need to be evaluated.
 
 
+## [UNRELEASED] 
+
+### Added
+- Search in User Identity Provider Linkin
+
 ## [22.0.13-1.21] - 2025-08-29
 
 ### Fixed

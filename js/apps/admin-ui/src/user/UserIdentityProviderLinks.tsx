@@ -252,6 +252,7 @@ export const UserIdentityProviderLinks = ({
             loader={loader}
             key={key}
             isPaginated
+            searchPlaceholderKey="common:search"
             ariaLabelKey="users:LinkedIdPs"
             className="kc-linked-IdPs-table"
             columns={[
