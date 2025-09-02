@@ -326,7 +326,7 @@ public class IdentityProvidersResource {
                 UriInfo frontendUriInfo = session.getContext().getUri(UrlType.FRONTEND);
                 UriInfo backendUriInfo = session.getContext().getUri(UrlType.BACKEND);
                 JSONWebKeySet jwks = trustChainProcessor.getKeySet();
-                EntityStatement entityStatement = new EntityStatement(Urls.realmIssuer(frontendUriInfo.getBaseUri(), realm.getName()), Long.valueOf(federationGeneralConfig.getLifespan()), new ArrayList<>(federationGeneralConfig.getAuthorityHints()), jwks);
+                EntityStatement entityStatement = new EntityStatement(Urls.realmIssuer(frontendUriInfo.getBaseUri(), realm.getName()), Long.valueOf(federationGeneralConfig.getLifespan()), Stream.of(trustChainResolution.getLeafId()).collect(Collectors.toList()), jwks);
                 entityStatement.addAudience(opIssuer);
                 Metadata metadata = new Metadata();
                 RPMetadata rPMetadata = OpenIdFederationUtils.createRPMetadata(federationGeneralConfig, federationConfig.getClientRegistrationTypesSupported().stream(), OpenIdFederationUtils.commonMetadata(federationGeneralConfig), RealmsResource.protocolUrl(backendUriInfo).clone().path(OIDCLoginProtocolService.class, "certs").build(realm.getName(),
