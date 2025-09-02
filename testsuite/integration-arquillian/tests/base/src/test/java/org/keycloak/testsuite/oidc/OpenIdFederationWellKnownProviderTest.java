@@ -4,33 +4,22 @@ import jakarta.ws.rs.client.Client;
 import jakarta.ws.rs.client.WebTarget;
 import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.core.UriBuilder;
-import org.apache.http.impl.client.CloseableHttpClient;
-import org.apache.http.impl.client.HttpClientBuilder;
-import org.junit.After;
-import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
 import org.keycloak.admin.client.resource.RealmResource;
-import org.keycloak.common.Profile;
-import org.keycloak.protocol.oidc.OIDCWellKnownProviderFactory;
 import org.keycloak.protocol.oidc.federation.OpenIdFederationWellKnownProviderFactory;
 import org.keycloak.representations.idm.OpenIdFederationRepresentation;
 import org.keycloak.representations.idm.RealmRepresentation;
 import org.keycloak.representations.openid_federation.EntityStatement;
 import org.keycloak.representations.openid_federation.OPMetadata;
 import org.keycloak.services.resources.RealmsResource;
-import org.keycloak.testsuite.AbstractKeycloakTest;
 import org.keycloak.testsuite.Assert;
-import org.keycloak.testsuite.admin.AbstractAdminTest;
-import org.keycloak.testsuite.arquillian.annotation.EnableFeature;
 import org.keycloak.testsuite.util.AdminClientUtil;
-import org.keycloak.testsuite.util.ClientManager;
 import org.keycloak.testsuite.util.oauth.OAuthClient;
 import org.keycloak.util.TokenUtil;
 
 import java.io.IOException;
 import java.net.URI;
-import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -71,8 +60,8 @@ public class OpenIdFederationWellKnownProviderTest extends AbstractWellKnownProv
             Assert.assertNotNull(statement.getMetadata().getFederationEntity());
             assertEquals("Keycloak", statement.getMetadata().getFederationEntity().getCommonMetadata().getOrganizationName());
             OPMetadata op = statement.getMetadata().getOpenIdProviderMetadata();
-            assertEquals(1, op.getClientRegistrationTypes().size());
-            assertEquals("explicit", op.getClientRegistrationTypes().get(0));
+            assertEquals(1, op.getClientRegistrationTypesSupported().size());
+            assertEquals("explicit", op.getClientRegistrationTypesSupported().get(0));
             assertEquals(UriBuilder.fromUri(OAuthClient.AUTH_SERVER_ROOT).path(RealmsResource.class).path(RealmsResource.class, "getOpenIdFederationClientsService").build("test").toString(), op.getFederationRegistrationEndpoint());
             testOidc(op);
 

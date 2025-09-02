@@ -8,8 +8,8 @@ import java.util.List;
 
 public class OPMetadata extends OIDCConfigurationRepresentation {
 
-    @JsonProperty("client_registration_types")
-    private List<String> clientRegistrationTypes;
+    @JsonProperty("client_registration_types_supported")
+    private List<String> clientRegistrationTypesSupported;
 
     @JsonProperty("federation_registration_endpoint")
     private String federationRegistrationEndpoint;
@@ -25,12 +25,12 @@ public class OPMetadata extends OIDCConfigurationRepresentation {
     @JsonUnwrapped
     private CommonMetadata commonMetadata;
 
-    public List<String> getClientRegistrationTypes() {
-        return clientRegistrationTypes;
+    public List<String> getClientRegistrationTypesSupported() {
+        return clientRegistrationTypesSupported;
     }
 
-    public void setClientRegistrationTypes(List<String> clientRegistrationTypes) {
-        this.clientRegistrationTypes = clientRegistrationTypes;
+    public void setClientRegistrationTypesSupported(List<String> clientRegistrationTypesSupported) {
+        this.clientRegistrationTypesSupported = clientRegistrationTypesSupported;
     }
 
     public String getFederationRegistrationEndpoint() {

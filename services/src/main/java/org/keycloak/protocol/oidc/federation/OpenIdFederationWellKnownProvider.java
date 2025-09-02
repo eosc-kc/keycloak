@@ -63,7 +63,7 @@ public class OpenIdFederationWellKnownProvider extends OIDCWellKnownProvider {
             if (registrationTypes.contains(ClientRegistrationTypeEnum.EXPLICIT)) {
                 opMetadata.setFederationRegistrationEndpoint(backendUriInfo.getBaseUriBuilder().clone().path(RealmsResource.class).path(RealmsResource.class, "getOpenIdFederationClientsService").build(realm.getName()).toString());
             }
-            opMetadata.setClientRegistrationTypes(registrationTypes.stream().map(ClientRegistrationTypeEnum::getValue).collect(Collectors.toList()));
+            opMetadata.setClientRegistrationTypesSupported(registrationTypes.stream().map(ClientRegistrationTypeEnum::getValue).collect(Collectors.toList()));
             opMetadata.setContacts(openIdFederationConfig.getContacts());
             opMetadata.setLogoUri(openIdFederationConfig.getLogoUri());
             opMetadata.setPolicyUri(openIdFederationConfig.getPolicyUri());
