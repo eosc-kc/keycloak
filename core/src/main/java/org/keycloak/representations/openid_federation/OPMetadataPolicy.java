@@ -1,8 +1,6 @@
 package org.keycloak.representations.openid_federation;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.annotation.JsonUnwrapped;
-import org.keycloak.jose.jwk.JSONWebKeySet;
 import org.keycloak.protocol.oidc.representations.MTLSEndpointAliases;
 
 public class OPMetadataPolicy extends AbstractMetadataPolicy{
@@ -10,8 +8,8 @@ public class OPMetadataPolicy extends AbstractMetadataPolicy{
     @JsonProperty("federation_registration_endpoint")
     private Policy<String> federationRegistrationEndpoint;
 
-    @JsonProperty("client_registration_types")
-    private PolicyList<String> clientRegistrationTypes;
+    @JsonProperty("client_registration_types_supported")
+    private PolicyList<String> clientRegistrationTypesSupported;
 
     private  PolicyList<String> contacts;
 
@@ -189,12 +187,12 @@ public class OPMetadataPolicy extends AbstractMetadataPolicy{
         this.federationRegistrationEndpoint = federationRegistrationEndpoint;
     }
 
-    public PolicyList<String> getClientRegistrationTypes() {
-        return clientRegistrationTypes;
+    public PolicyList<String> getClientRegistrationTypesSupported() {
+        return clientRegistrationTypesSupported;
     }
 
-    public void setClientRegistrationTypes(PolicyList<String> clientRegistrationTypes) {
-        this.clientRegistrationTypes = clientRegistrationTypes;
+    public void setClientRegistrationTypesSupported(PolicyList<String> clientRegistrationTypesSupported) {
+        this.clientRegistrationTypesSupported = clientRegistrationTypesSupported;
     }
 
     public PolicyList<String> getContacts() {
