@@ -64,7 +64,7 @@ export default function AddIdentityProvider() {
         toIdentityProvider({
           realm,
           providerId,
-          alias: providerId,
+          alias: provider.alias!,
           tab: "settings",
         }),
       );
