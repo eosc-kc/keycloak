@@ -344,7 +344,7 @@ public class IdentityProvidersResource {
                 if (!trustChainProcessor.validateEntityStatementFields(statementResponse, opIssuer, opIssuer) || statementResponse.getTrustAnchor() == null || LocalDateTime.now().toEpochSecond(ZoneOffset.UTC) > statementResponse.getExp() ) {
                     throw new BadRequestException("No valid OP Entity Statement");
                 }
-                OpenIdFederationUtils.convertEntityStatementToIdp(model, realm, representation.getAlias(), statementResponse, federationConfig.getIdpConfiguration());
+                OpenIdFederationUtils.convertEntityStatementToIdp(model, realm, representation.getAlias(), statementResponse, new HashMap<>(federationConfig.getIdpConfiguration()));
                 return model;
             } catch (Exception e) {
                 throw ErrorResponse.error(e.getMessage(), BAD_REQUEST);
@@ -363,8 +363,6 @@ public class IdentityProvidersResource {
 
     private void metadataFromFederation(RPMetadata rPMetadata, Map<String, String> federationConfig){
         rPMetadata.setScope(federationConfig.get(OAuth2IdentityProviderConfig.DEFAULT_SCOPE));
-        String clientAuthMethod = federationConfig.get(OAuth2IdentityProviderConfig.CLIENT_AUTH_METHOD);
-        rPMetadata.setGrantTypes(Stream.of(clientAuthMethod != null ? clientAuthMethod : OIDCLoginProtocol.CLIENT_SECRET_POST).collect(Collectors.toList()));
     }
 
     private void metadataFromOP(RPMetadata rPMetadata, Map<String, String> federationConfig, OPMetadata opMetadata, String subject) {

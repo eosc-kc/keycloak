@@ -18,6 +18,7 @@ Our Keycloak version is working well with PostgreSQL database. For using other S
 
 ### Fixed
 - Explicit Registration as RP, send authority hint from Trust chain resolution
+- Explicit Registration as RP, correct grant types sent
 - Explicit Registration as RP, correct Client authentication and Client assertion signature algorithm Identity Provider values 
 
 ## [22.0.13-1.21] - 2025-08-29
