@@ -24,6 +24,7 @@ Our Keycloak version is working well with PostgreSQL database. For using other S
 - Redirect after OpenId Federation Idp Create
 - Add openid scope in Allowed Client Scopes options of client registration access policies
 - Fix CVE-2025-7962
+- Sanitize OpenId Federation Fields
 
 ## [22.0.13-1.21] - 2025-08-29
 

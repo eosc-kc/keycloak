@@ -1,6 +1,6 @@
 import type RealmRepresentation from "@keycloak/keycloak-admin-client/lib/defs/realmRepresentation";
 import { AlertVariant, PageSection } from "@patternfly/react-core";
-import { convertFormValuesToObject } from "../util";
+import { isEmptyValue, convertFormValuesToObject } from "../util";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
@@ -62,6 +62,20 @@ export default function OpenIdFederationSection() {
         ),
       );
     }
+
+    isEmptyValue(r.openIdFederationContacts) &&
+      delete r.openIdFederationContacts;
+    isEmptyValue(r.openIdFederationHistoricalKeysEndpoint) &&
+      delete r.openIdFederationHistoricalKeysEndpoint;
+    isEmptyValue(r.openIdFederationLogoUri) && delete r.openIdFederationLogoUri;
+    isEmptyValue(r.openIdFederationOrganizationName) &&
+      delete r.openIdFederationOrganizationName;
+    isEmptyValue(r.openIdFederationOrganizationUri) &&
+      delete r.openIdFederationOrganizationUri;
+    isEmptyValue(r.openIdFederationPolicyUri) &&
+      delete r.openIdFederationPolicyUri;
+    isEmptyValue(r.openIdFederationResolveEndpoint) &&
+      delete r.openIdFederationResolveEndpoint;
 
     try {
       const savedRealm: RealmRepresentation = {

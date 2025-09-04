@@ -81,6 +81,9 @@ const isAttributeArray = (value: any) => {
   );
 };
 
+export const isEmptyValue = (value: any) =>
+  value === undefined || value === null || value === "";
+
 const isEmpty = (obj: any) => Object.keys(obj).length === 0;
 
 export function convertAttributeNameToForm<T>(
