@@ -851,6 +851,22 @@
     "GROUP_MEMBERSHIP_SUSPEND": {
       "name": "Group membership suspend",
       "description": "Group membership suspend"
+    },
+    "FEDERATION_CLIENT_REGISTER": {
+      "name": "OpenID Federation client register",
+      "description": "OpenID Federation client register"
+    },
+    "FEDERATION_CLIENT_REGISTER_ERROR": {
+      "name": "OpenID Federation client register error",
+      "description": "OpenID Federation client register error"
+    },
+    "FEDERATION_CLIENT_UPDATE": {
+      "name": "OpenID Federation client update",
+      "description": "OpenID Federation client update"
+    },
+    "FEDERATION_CLIENT_UPDATE_ERROR": {
+      "name": "OpenID Federation client update error",
+      "description": "OpenID Federation client update error"
     }
   },
   "emptyEvents": "Nothing to add",
