@@ -45,6 +45,7 @@ import org.keycloak.models.ModelDuplicateException;
 import org.keycloak.models.OpenIdFederationConfig;
 import org.keycloak.models.OpenIdFederationGeneralConfig;
 import org.keycloak.models.RealmModel;
+import org.keycloak.models.enums.ClientRegistrationTypeEnum;
 import org.keycloak.models.enums.EntityTypeEnum;
 import org.keycloak.models.utils.ModelToRepresentation;
 import org.keycloak.models.utils.RepresentationToModel;
@@ -302,11 +303,11 @@ public class IdentityProvidersResource {
     }
 
     private IdentityProviderModel createModelForOpenIdFederation(IdentityProviderRepresentation representation){
-        boolean isRpFederated = realm.isOpenIdFederationEnabled() && representation.getConfig().get(OpenIdFederationIdentityProviderConfig.TRUST_ANCHOR_ID) != null && realm.getOpenIdFederations().stream().anyMatch(fed -> representation.getConfig().get(OpenIdFederationIdentityProviderConfig.TRUST_ANCHOR_ID).equals(fed.getTrustAnchor()) && fed.getEntityTypes().contains(EntityTypeEnum.OPENID_RELYING_PARTY));
-        if (isRpFederated && representation.getConfig().get(OIDCIdentityProviderConfig.ISSUER) != null) {
+        List<OpenIdFederationConfig> trustAnchors = realm.getTrustAnchorsBasedOnTypes(EntityTypeEnum.OPENID_RELYING_PARTY, ClientRegistrationTypeEnum.EXPLICIT).collect(Collectors.toList());
+        if (!trustAnchors.isEmpty() && representation.getConfig().get(OIDCIdentityProviderConfig.ISSUER) != null) {
             try {
                 OpenIdFederationGeneralConfig federationGeneralConfig = realm.getOpenIdFederationGeneralConfig();
-                OpenIdFederationConfig federationConfig = realm.getOpenIdFederations().stream().filter(x -> representation.getConfig().get(OpenIdFederationIdentityProviderConfig.TRUST_ANCHOR_ID).equals(x.getTrustAnchor())).findAny().orElseThrow(() -> new NotFoundException("Trust anchor does not exist"));
+                OpenIdFederationConfig federationConfig = trustAnchors.stream().filter(x -> representation.getConfig().get(OpenIdFederationIdentityProviderConfig.TRUST_ANCHOR_ID).equals(x.getTrustAnchor())).findAny().orElseThrow(() -> new NotFoundException("Trust anchor does not exist"));
                 OpenIdFederationTrustChainProcessor trustChainProcessor = new OpenIdFederationTrustChainProcessor(session);
                 String opIssuer = representation.getConfig().get(OIDCIdentityProviderConfig.ISSUER);
                 EntityStatement opStatement = trustChainProcessor.parseAndValidateSelfSigned(OpenIdFederationUtils.getSelfSignedToken(opIssuer, session));
@@ -350,7 +351,7 @@ public class IdentityProvidersResource {
                 throw ErrorResponse.error(e.getMessage(), BAD_REQUEST);
             }
         } else {
-            throw ErrorResponse.error(isRpFederated ? "Trust anchor and issuer are required" : "This realm does not support Openid Federation as RP with selected trust anchor", BAD_REQUEST);
+            throw ErrorResponse.error(trustAnchors.isEmpty() ? "This realm does not support Openid Federation as RP with selected trust anchor" : "Trust anchor and issuer are required", BAD_REQUEST);
         }
     }
 
