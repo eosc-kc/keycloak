@@ -64,18 +64,26 @@ export default function OpenIdFederationSection() {
     }
 
     isEmptyValue(r.openIdFederationContacts) &&
-      delete r.openIdFederationContacts;
+      delete r.openIdFederationContacts &&
+      delete realm?.openIdFederationContacts;
     isEmptyValue(r.openIdFederationHistoricalKeysEndpoint) &&
-      delete r.openIdFederationHistoricalKeysEndpoint;
-    isEmptyValue(r.openIdFederationLogoUri) && delete r.openIdFederationLogoUri;
+      delete r.openIdFederationHistoricalKeysEndpoint &&
+      delete realm?.openIdFederationHistoricalKeysEndpoint;
+    isEmptyValue(r.openIdFederationLogoUri) &&
+      delete r.openIdFederationLogoUri &&
+      delete realm?.openIdFederationLogoUri;
     isEmptyValue(r.openIdFederationOrganizationName) &&
-      delete r.openIdFederationOrganizationName;
+      delete r.openIdFederationOrganizationName &&
+      delete realm?.openIdFederationOrganizationName;
     isEmptyValue(r.openIdFederationOrganizationUri) &&
-      delete r.openIdFederationOrganizationUri;
+      delete r.openIdFederationOrganizationUri &&
+      delete realm?.openIdFederationOrganizationUri;
     isEmptyValue(r.openIdFederationPolicyUri) &&
-      delete r.openIdFederationPolicyUri;
+      delete r.openIdFederationPolicyUri &&
+      delete realm?.openIdFederationPolicyUri;
     isEmptyValue(r.openIdFederationResolveEndpoint) &&
-      delete r.openIdFederationResolveEndpoint;
+      delete r.openIdFederationResolveEndpoint &&
+      delete realm?.openIdFederationResolveEndpoint;
 
     try {
       const savedRealm: RealmRepresentation = {
