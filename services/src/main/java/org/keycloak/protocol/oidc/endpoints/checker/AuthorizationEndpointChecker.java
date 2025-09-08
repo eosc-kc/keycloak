@@ -16,12 +16,11 @@
  *
  */
 
-package org.keycloak.protocol.oidc.endpoints;
+package org.keycloak.protocol.oidc.endpoints.checker;
 
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import jakarta.ws.rs.core.MultivaluedMap;
 import jakarta.ws.rs.core.Response;
 
 import org.keycloak.OAuth2Constants;
@@ -29,28 +28,20 @@ import org.keycloak.OAuthErrorException;
 import org.keycloak.common.Profile;
 import org.keycloak.events.Details;
 import org.keycloak.events.Errors;
-import org.keycloak.events.EventBuilder;
 import org.keycloak.models.ClientModel;
-import org.keycloak.models.KeycloakSession;
-import org.keycloak.models.RealmModel;
 import org.keycloak.protocol.oidc.OIDCAdvancedConfigWrapper;
 import org.keycloak.protocol.oidc.OIDCConfigAttributes;
 import org.keycloak.protocol.oidc.OIDCLoginProtocol;
 import org.keycloak.protocol.oidc.TokenManager;
-import org.keycloak.protocol.oidc.endpoints.request.AuthorizationEndpointRequest;
 import org.keycloak.protocol.oidc.endpoints.request.AuthorizationEndpointRequestParserProcessor;
 import org.keycloak.protocol.oidc.endpoints.request.RequestUriType;
 import org.keycloak.protocol.oidc.utils.OIDCResponseMode;
 import org.keycloak.protocol.oidc.utils.OIDCResponseType;
 import org.keycloak.protocol.oidc.utils.RedirectUtils;
 import org.keycloak.representations.dpop.DPoP;
-import org.keycloak.services.CorsErrorResponseException;
-import org.keycloak.services.ErrorPageException;
 import org.keycloak.services.ServicesLogger;
-import org.keycloak.services.cors.Cors;
 import org.keycloak.services.messages.Messages;
 import org.keycloak.services.util.DPoPUtil;
-import org.keycloak.sessions.AuthenticationSessionModel;
 import org.keycloak.util.TokenUtil;
 import org.keycloak.utils.StringUtil;
 
@@ -62,64 +53,17 @@ import org.jboss.logging.Logger;
  *
  * @author <a href="mailto:mposolda@redhat.com">Marek Posolda</a>
  */
-public class AuthorizationEndpointChecker {
-
-    private EventBuilder event;
-    private AuthorizationEndpointRequest request;
-    private KeycloakSession session;
+public class AuthorizationEndpointChecker extends AbstractAuthorizationEndpointChecker<AuthorizationEndpointChecker>{
     private ClientModel client;
-    private RealmModel realm;
-
-    private String redirectUri;
-    private OIDCResponseType parsedResponseType;
-    private OIDCResponseMode parsedResponseMode;
-    private MultivaluedMap<String, String> params;
 
     private static final Logger logger = Logger.getLogger(AuthorizationEndpointChecker.class);
 
     // https://tools.ietf.org/html/rfc7636#section-4.2
     private static final Pattern VALID_CODE_CHALLENGE_PATTERN = Pattern.compile("^[0-9a-zA-Z\\-\\.~_]+$");
 
-    public AuthorizationEndpointChecker event(EventBuilder event) {
-        this.event = event;
-        return this;
-    }
-
-    public AuthorizationEndpointChecker request(AuthorizationEndpointRequest request) {
-        this.request = request;
-        return this;
-    }
-
-    public AuthorizationEndpointChecker session(KeycloakSession session) {
-        this.session = session;
-        return this;
-    }
-
     public AuthorizationEndpointChecker client(ClientModel client) {
         this.client = client;
         return this;
-    }
-
-    public AuthorizationEndpointChecker realm(RealmModel realm) {
-        this.realm = realm;
-        return this;
-    }
-
-    public AuthorizationEndpointChecker params(MultivaluedMap<String, String> params) {
-        this.params = params;
-        return this;
-    }
-
-    public String getRedirectUri() {
-        return redirectUri;
-    }
-
-    public OIDCResponseType getParsedResponseType() {
-        return parsedResponseType;
-    }
-
-    public OIDCResponseMode getParsedResponseMode() {
-        return parsedResponseMode;
     }
 
     public void checkRedirectUri() throws AuthorizationCheckException {
@@ -209,23 +153,6 @@ public class AuthorizationEndpointChecker {
         }
     }
 
-    public boolean isInvalidResponseType(AuthorizationEndpointChecker.AuthorizationCheckException ex) {
-        return "Missing parameter: response_type".equals(ex.getErrorDescription()) || OAuthErrorException.UNSUPPORTED_RESPONSE_TYPE.equals(ex.getError());
-    }
-
-    public void checkInvalidRequestMessage() throws AuthorizationCheckException {
-        if (request.getInvalidRequestMessage() != null) {
-            event.error(Errors.INVALID_REQUEST);
-            throw new AuthorizationCheckException(Response.Status.BAD_REQUEST, Errors.INVALID_REQUEST, request.getInvalidRequestMessage());
-        }
-    }
-
-    public void checkOIDCRequest() {
-        if (!TokenUtil.isOIDCRequest(request.getScope())) {
-            ServicesLogger.LOGGER.oidcScopeMissing();
-        }
-    }
-
     public void checkValidScope() throws AuthorizationCheckException {
         boolean validScopes;
         if (Profile.isFeatureEnabled(Profile.Feature.DYNAMIC_SCOPES)) {
@@ -251,10 +178,8 @@ public class AuthorizationEndpointChecker {
 
         if (parsedResponseType.hasResponseType(OIDCResponseType.ID_TOKEN) && request.getNonce() == null) {
             ServicesLogger.LOGGER.missingParameter(OIDCLoginProtocol.NONCE_PARAM);
-            String errorMessage = "Missing parameter: " + OIDCLoginProtocol.NONCE_PARAM;
-            event.detail(Details.REASON, errorMessage);
             event.error(Errors.INVALID_REQUEST);
-            throw new AuthorizationCheckException(Response.Status.BAD_REQUEST, OAuthErrorException.INVALID_REQUEST, errorMessage);
+            throw new AuthorizationCheckException(Response.Status.BAD_REQUEST, OAuthErrorException.INVALID_REQUEST, "Missing parameter: nonce");
         }
 
         return;
@@ -403,35 +328,4 @@ public class AuthorizationEndpointChecker {
         }
     }
 
-
-    // Exception propagated to the caller, which will allow caller to send proper error response based on the context (Browser OIDC Authorization Endpoint, PAR etc)
-    public class AuthorizationCheckException extends Exception {
-
-        private final Response.Status status;
-        private final String error;
-        private final String errorDescription;
-
-        public AuthorizationCheckException(Response.Status status, String error, String errorDescription) {
-            this.status = status;
-            this.error = error;
-            this.errorDescription = errorDescription;
-        }
-
-        public void throwAsErrorPageException(AuthenticationSessionModel authenticationSession) {
-            throw new ErrorPageException(session, authenticationSession, status, error, errorDescription);
-        }
-
-        public void throwAsCorsErrorResponseException(Cors cors) {
-            AuthorizationEndpointChecker.this.event.detail("detail", errorDescription).error(error);
-            throw new CorsErrorResponseException(cors, error, errorDescription, status);
-        }
-
-        public String getError() {
-            return error;
-        }
-
-        public String getErrorDescription() {
-            return errorDescription;
-        }
-    }
 }

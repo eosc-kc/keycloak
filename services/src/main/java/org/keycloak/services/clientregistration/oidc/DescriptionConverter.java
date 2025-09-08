@@ -349,7 +349,7 @@ public class DescriptionConverter {
 
     }
 
-    public static <T extends OIDCClientRepresentation> T toExternalResponse(KeycloakSession session, ClientRepresentation client, URI uri, Class<T> clazz) {
+    public static <T extends OIDCClientRepresentation> T toExternalResponse(KeycloakSession session, ClientRepresentation client, URI uri, Class<T> clazz, boolean addOidc) {
         try {
             T response = clazz.getDeclaredConstructor().newInstance();
             response.setClientId(client.getClientId());
@@ -379,7 +379,14 @@ public class DescriptionConverter {
             response.setGrantTypes(getOIDCGrantTypes(client));
 
             List<String> scopes = client.getOptionalClientScopes();
-            if (scopes != null) response.setScope(scopes.stream().collect(Collectors.joining(" ")));
+            if (scopes != null) {
+                if (addOidc && !scopes.contains(OAuth2Constants.SCOPE_OPENID)) {
+                    scopes.add(OAuth2Constants.SCOPE_OPENID);
+                }
+                response.setScope(scopes.stream().collect(Collectors.joining(" ")));
+            } else if (addOidc) {
+                response.setScope(OAuth2Constants.SCOPE_OPENID);
+            }
 
             OIDCAdvancedConfigWrapper config = OIDCAdvancedConfigWrapper.fromClientRepresentation(client);
             if (config.isUserInfoSignatureRequired()) {
