@@ -6,6 +6,7 @@ import jakarta.ws.rs.core.Context;
 import jakarta.ws.rs.core.HttpHeaders;
 import jakarta.ws.rs.core.Response;
 import org.jboss.logging.Logger;
+import org.keycloak.OAuth2Constants;
 import org.keycloak.common.util.Time;
 import org.keycloak.events.Errors;
 import org.keycloak.exceptions.InvalidTrustChainException;
@@ -88,11 +89,13 @@ public class OpenIdFederationClientRegistrationService extends AbstractClientReg
                 if (session.getContext().getRealm().getClientByClientId(rPMetadata.getClientId()) == null) {
                     ClientRepresentation client = createOidcClient(rPMetadata, session, statement.getExp());
                     URI uri = session.getContext().getUri().getAbsolutePathBuilder().path(client.getClientId()).build();
-                    rPMetadataResponse = DescriptionConverter.toExternalResponse(session, client, uri, RPMetadata.class);
+                    rPMetadataResponse = DescriptionConverter.toExternalResponse(session, client, uri, RPMetadata.class, rPMetadata.getScope()!=null && rPMetadata.getScope().contains(OAuth2Constants.SCOPE_OPENID));
+                    rPMetadataResponse.setClientIdIssuedAt(Time.currentTime());
                 } else {
                     ClientRepresentation client = updateOidcClient(rPMetadata.getClientId(), rPMetadata, session, statement.getExp());
                     URI uri = session.getContext().getUri().getAbsolutePathBuilder().path(client.getClientId()).build();
-                    rPMetadataResponse = DescriptionConverter.toExternalResponse(session, client, uri, RPMetadata.class);
+                    rPMetadataResponse = DescriptionConverter.toExternalResponse(session, client, uri, RPMetadata.class, rPMetadata.getScope()!=null && rPMetadata.getScope().contains(OAuth2Constants.SCOPE_OPENID));
+                    rPMetadataResponse.setClientIdIssuedAt(Time.currentTime());
                 }
             } catch (Exception e) {
                 logger.error("The following error was thrown during OpenId Federation Client explicit registration", e);
@@ -102,7 +105,7 @@ public class OpenIdFederationClientRegistrationService extends AbstractClientReg
             rPMetadataResponse.setClientRegistrationTypes(Stream.of(ClientRegistrationTypeEnum.EXPLICIT.getValue()).collect(Collectors.toList()));
             rPMetadataResponse.setClientIdIssuedAt(Time.currentTime());
             rPMetadataResponse.setCommonMetadata(rPMetadata.getCommonMetadata());
-            EntityStatementExplicitResponse responseStatement = new EntityStatementExplicitResponse(statement, Urls.realmIssuer(session.getContext().getUri(UrlType.FRONTEND).getBaseUri(), session.getContext().getRealm().getName()), rPMetadataResponse, validTrustChain.getTrustAnchorId(), validTrustChain.getParsedChain().get(0).getIssuer());
+            EntityStatementExplicitResponse responseStatement = new EntityStatementExplicitResponse(statement, Urls.realmIssuer(session.getContext().getUri(UrlType.FRONTEND).getBaseUri(), session.getContext().getRealm().getName()), rPMetadataResponse, validTrustChain.getTrustAnchorId(), validTrustChain.getLeafId());
             responseStatement.type(TokenUtil.EXPLICIT_REGISTRATION_RESPONSE_JWT);
             String token = session.tokens().encodeForOpenIdFederation(responseStatement);
             return Response.ok(token).header("Content-Type", TokenUtil.APPLICATION_EXPLICIT_REGISTRATION_RESPONSE_JWT).build();
