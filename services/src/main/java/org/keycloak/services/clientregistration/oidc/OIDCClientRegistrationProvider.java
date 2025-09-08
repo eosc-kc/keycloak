@@ -17,7 +17,9 @@
 package org.keycloak.services.clientregistration.oidc;
 
 import org.jboss.logging.Logger;
+import org.keycloak.OAuth2Constants;
 import org.keycloak.common.util.Time;
+import org.keycloak.events.Details;
 import org.keycloak.models.ClientModel;
 import org.keycloak.models.KeycloakSession;
 import org.keycloak.representations.idm.ClientRepresentation;
@@ -63,7 +65,8 @@ public class OIDCClientRegistrationProvider extends AbstractClientRegistrationPr
         try {
             ClientRepresentation client = createOidcClient(clientOIDC, session, null);
             URI uri = getRegistrationClientUri(client.getClientId());
-            clientOIDC = DescriptionConverter.toExternalResponse(session, client, uri, OIDCClientRepresentation.class);
+            clientOIDC = DescriptionConverter.toExternalResponse(session, client, uri, OIDCClientRepresentation.class, clientOIDC.getScope()!=null && clientOIDC.getScope().contains(OAuth2Constants.SCOPE_OPENID));
+            event.detail(Details.GRANTED_CLIENT, clientOIDC.getScope());
             clientOIDC.setClientIdIssuedAt(Time.currentTime());
             return Response.created(uri).entity(clientOIDC).build();
         } catch (ClientRegistrationException cre) {
@@ -77,7 +80,7 @@ public class OIDCClientRegistrationProvider extends AbstractClientRegistrationPr
     @Produces(MediaType.APPLICATION_JSON)
     public Response getOIDC(@PathParam("clientId") String clientId) {
         ClientModel client = session.getContext().getRealm().getClientByClientId(clientId);
-        OIDCClientRepresentation clientOIDC = DescriptionConverter.toExternalResponse(session, get(client), getRegistrationClientUri(clientId), OIDCClientRepresentation.class);
+        OIDCClientRepresentation clientOIDC = DescriptionConverter.toExternalResponse(session, get(client), getRegistrationClientUri(clientId), OIDCClientRepresentation.class, false);
         return Response.ok(clientOIDC).build();
     }
 
@@ -89,7 +92,8 @@ public class OIDCClientRegistrationProvider extends AbstractClientRegistrationPr
         try {
 
             ClientRepresentation client = updateOidcClient(clientId, clientOIDC, session, null);
-            OIDCClientRepresentation updatedClient = DescriptionConverter.toExternalResponse(session, client, getRegistrationClientUri(clientId), OIDCClientRepresentation.class);
+            OIDCClientRepresentation updatedClient = DescriptionConverter.toExternalResponse(session, client, getRegistrationClientUri(clientId), OIDCClientRepresentation.class, clientOIDC.getScope()!=null && clientOIDC.getScope().contains(OAuth2Constants.SCOPE_OPENID));
+            event.detail(Details.GRANTED_CLIENT, updatedClient.getScope());
             return Response.ok(updatedClient).build();
         } catch (ClientRegistrationException cre) {
             ServicesLogger.LOGGER.clientRegistrationException(cre.getMessage());

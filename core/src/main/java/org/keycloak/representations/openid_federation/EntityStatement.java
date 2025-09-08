@@ -11,6 +11,7 @@ import org.keycloak.representations.JsonWebToken;
 import org.keycloak.util.TokenUtil;
 
 import java.time.Instant;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -41,11 +42,11 @@ public class EntityStatement extends JsonWebToken {
 
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
     @JsonProperty("trust_marks")
-    protected List<TrustMark> trustMarks;
+    protected List<TrustMarks> trustMarks;
 
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
     @JsonProperty("trust_mark_issuers")
-    protected List<TrustMark> trustMarksIssuers;
+    protected Map<String, List<String>> trustMarksIssuers;
 
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
     @JsonProperty("trust_mark_owners")
@@ -123,19 +124,19 @@ public class EntityStatement extends JsonWebToken {
         this.metadataPolicyCrit = metadataPolicyCrit;
     }
 
-    public List<TrustMark> getTrustMarks() {
+    public List<TrustMarks> getTrustMarks() {
         return trustMarks;
     }
 
-    public void setTrustMarks(List<TrustMark> trustMarks) {
+    public void setTrustMarks(List<TrustMarks> trustMarks) {
         this.trustMarks = trustMarks;
     }
 
-    public List<TrustMark> getTrustMarksIssuers() {
+    public Map<String, List<String>> getTrustMarksIssuers() {
         return trustMarksIssuers;
     }
 
-    public void setTrustMarksIssuers(List<TrustMark> trustMarksIssuers) {
+    public void setTrustMarksIssuers(Map<String, List<String>> trustMarksIssuers) {
         this.trustMarksIssuers = trustMarksIssuers;
     }
 
@@ -178,6 +179,7 @@ public class EntityStatement extends JsonWebToken {
     class TrustMarkOwners {
         private String sub;
         private JSONWebKeySet jwks;
+        private Map<String, Object> otherClaims = new HashMap<String, Object>();
 
         public TrustMarkOwners() {}
 
@@ -195,6 +197,14 @@ public class EntityStatement extends JsonWebToken {
 
         public void setJwks(JSONWebKeySet jwks) {
             this.jwks = jwks;
+        }
+
+        public Map<String, Object> getOtherClaims() {
+            return otherClaims;
+        }
+
+        public void setOtherClaims(Map<String, Object> otherClaims) {
+            this.otherClaims = otherClaims;
         }
     }
 

@@ -89,8 +89,16 @@ public class OpenIdFederationUtils {
         model.setStoreToken(Boolean.valueOf(federationIdPConfig.get("storeToken")));
         model.setTrustEmail(Boolean.valueOf(federationIdPConfig.get("trustEmail")));
         model.setSyncMode(federationIdPConfig.get("syncMode") != null ? IdentityProviderSyncMode.valueOf(federationIdPConfig.get("syncMode")) : IdentityProviderSyncMode.IMPORT);
-        AuthenticationFlowModel flowModel = realm.getFlowByAlias(DefaultAuthenticationFlows.FIRST_BROKER_LOGIN_FLOW);
-        model.setFirstBrokerLoginFlowId(flowModel.getId());
+        if (federationIdPConfig.get("firstBrokerLoginFlowAlias") == null) {
+            AuthenticationFlowModel flowModel = realm.getFlowByAlias(DefaultAuthenticationFlows.FIRST_BROKER_LOGIN_FLOW);
+            model.setFirstBrokerLoginFlowId(flowModel.getId());
+        } else {
+            model.setFirstBrokerLoginFlowId(federationIdPConfig.get("firstBrokerLoginFlowAlias"));
+        }
+
+        if (federationIdPConfig.get("postBrokerLoginFlowAlias") != null) {
+            model.setFirstBrokerLoginFlowId(federationIdPConfig.get("postBrokerLoginFlowAlias"));
+        }
 
         federationIdPConfig.remove(OAuth2IdentityProviderConfig.DEFAULT_SCOPE);
         federationIdPConfig.remove(OAuth2IdentityProviderConfig.CLIENT_AUTH_METHOD);
@@ -99,6 +107,8 @@ public class OpenIdFederationUtils {
         federationIdPConfig.remove("storeToken");
         federationIdPConfig.remove("trustEmail");
         federationIdPConfig.remove("syncMode");
+        federationIdPConfig.remove("firstBrokerLoginFlowAlias");
+        federationIdPConfig.remove("postBrokerLoginFlowAlias");
         if (rp.getPostLogoutRedirectUris() != null && !rp.getPostLogoutRedirectUris().isEmpty()) {
             model.getConfig().put(OIDCIdentityProviderConfig.LOGOUT_URL, rp.getPostLogoutRedirectUris().get(0));
         }

@@ -9,10 +9,8 @@ import java.util.Map;
 
 public class TrustMark {
 
-    @JsonProperty("trust_mark_id")
-    private String trustMarkId;
-    @JsonProperty("trust_mark")
-    private String trustMark;
+    @JsonProperty("trust_mark_type")
+    private String trustMarkType;
     private String iss;
     private String sub;
     private Long iat;
@@ -21,22 +19,14 @@ public class TrustMark {
     private Long exp;
     private String ref;
     private String delegation;
-    protected Map<String, Object> otherClaims = new HashMap<String, Object>();
+    private Map<String, Object> otherClaims = new HashMap<String, Object>();
 
-    public String getTrustMarkId() {
-        return trustMarkId;
+    public String getTrustMarkType() {
+        return trustMarkType;
     }
 
-    public void setTrustMarkId(String trustMarkId) {
-        this.trustMarkId = trustMarkId;
-    }
-
-    public String getTrustMark() {
-        return trustMark;
-    }
-
-    public void setTrustMark(String trustMark) {
-        this.trustMark = trustMark;
+    public void setTrustMarkType(String trustMarkType) {
+        this.trustMarkType = trustMarkType;
     }
 
     public String getIss() {
