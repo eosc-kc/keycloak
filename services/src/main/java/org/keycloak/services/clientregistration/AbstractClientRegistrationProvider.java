@@ -32,6 +32,7 @@ import java.util.stream.Stream;
 
 import org.keycloak.OAuth2Constants;
 import org.keycloak.common.util.Time;
+import org.keycloak.events.Details;
 import org.keycloak.events.EventBuilder;
 import org.keycloak.events.EventType;
 import org.keycloak.models.*;
@@ -98,6 +99,8 @@ public abstract class AbstractClientRegistrationProvider implements ClientRegist
         if (exp != null)
             client.getAttributes().put(OIDCConfigAttributes.EXPIRATION_TIME, exp.toString() );
 
+        event.detail(Details.REQUESTED_SCOPES, clientOIDC.getScope());
+
         OIDCClientRegistrationContext oidcContext = new OIDCClientRegistrationContext(session, client, this, clientOIDC);
         client = create(oidcContext, exp == null ? EventType.CLIENT_REGISTER : EventType.FEDERATION_CLIENT_REGISTER);
 
@@ -111,6 +114,7 @@ public abstract class AbstractClientRegistrationProvider implements ClientRegist
 
     protected ClientRepresentation updateOidcClient(String clientId, OIDCClientRepresentation clientOIDC, KeycloakSession session, Long exp) {
         ClientRepresentation client = DescriptionConverter.toInternal(session, clientOIDC);
+        event.detail(Details.REQUESTED_SCOPES, clientOIDC.getScope());
         OIDCClientRegistrationContext oidcContext = new OIDCClientRegistrationContext(session, client, this, clientOIDC);
         client = update(clientId, oidcContext, exp);
 

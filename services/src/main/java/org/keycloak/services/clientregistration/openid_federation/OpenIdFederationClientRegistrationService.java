@@ -6,7 +6,9 @@ import jakarta.ws.rs.core.Context;
 import jakarta.ws.rs.core.HttpHeaders;
 import jakarta.ws.rs.core.Response;
 import org.jboss.logging.Logger;
+import org.keycloak.OAuth2Constants;
 import org.keycloak.common.util.Time;
+import org.keycloak.events.Details;
 import org.keycloak.events.Errors;
 import org.keycloak.exceptions.InvalidTrustChainException;
 import org.keycloak.models.KeycloakSession;
@@ -81,12 +83,14 @@ public class OpenIdFederationClientRegistrationService extends AbstractClientReg
                 if (session.getContext().getRealm().getClientByClientId(rPMetadata.getClientId()) == null) {
                     ClientRepresentation client = createOidcClient(rPMetadata, session, statement.getExp());
                     URI uri = session.getContext().getUri().getAbsolutePathBuilder().path(client.getClientId()).build();
-                    rPMetadataResponse = DescriptionConverter.toExternalResponse(session, client, uri, RPMetadata.class);
+                    rPMetadataResponse = DescriptionConverter.toExternalResponse(session, client, uri, RPMetadata.class, rPMetadata.getScope()!=null && rPMetadata.getScope().contains(OAuth2Constants.SCOPE_OPENID));
+                    event.detail(Details.GRANTED_CLIENT, rPMetadataResponse.getScope());
                     rPMetadataResponse.setClientIdIssuedAt(Time.currentTime());
                 } else {
                     ClientRepresentation client = updateOidcClient(rPMetadata.getClientId(), rPMetadata, session, statement.getExp());
                     URI uri = session.getContext().getUri().getAbsolutePathBuilder().path(client.getClientId()).build();
-                    rPMetadataResponse = DescriptionConverter.toExternalResponse(session, client, uri, RPMetadata.class);
+                    rPMetadataResponse = DescriptionConverter.toExternalResponse(session, client, uri, RPMetadata.class, rPMetadata.getScope()!=null && rPMetadata.getScope().contains(OAuth2Constants.SCOPE_OPENID));
+                    event.detail(Details.GRANTED_CLIENT, rPMetadataResponse.getScope());
                     rPMetadataResponse.setClientIdIssuedAt(Time.currentTime());
                 }
             } catch (Exception e) {

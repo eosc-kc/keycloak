@@ -16,6 +16,7 @@ Our Keycloak version is working well with PostgreSQL database. For using other S
 ### Added
 - Search in User Identity Provider Linkin
 - Add messages for OpenID Federation client register event types
+- Include scope requested and scope granted (Dynamic Client Registration)
 
 ### Fixed
 - Explicit Registration as RP, send authority hint from Trust chain resolution
@@ -25,6 +26,8 @@ Our Keycloak version is working well with PostgreSQL database. For using other S
 - Add openid scope in Allowed Client Scopes options of client registration access policies
 - Fix CVE-2025-7962
 - Sanitize OpenId Federation Fields
+- Fix EntityStatement representation
+- Return openid scope if RP has requested it (Dynamic Client Registration)
 
 ## [22.0.13-1.21] - 2025-08-29
 
