@@ -11,7 +11,7 @@ Full Keycloak upstream jira issue can be shown if filtered by Fix version.
 Our Keycloak version is working well with PostgreSQL database. For using other SQL databases, text field in database need to be evaluated.
 
 
-## [UNRELEASED] 
+## [22.0.13-1.22] - 2025-09-08
 
 ### Added
 - Search in User Identity Provider Linkin
@@ -28,6 +28,7 @@ Our Keycloak version is working well with PostgreSQL database. For using other S
 - Sanitize OpenId Federation Fields
 - Fix EntityStatement representation
 - Return openid scope if RP has requested it (Dynamic Client Registration)
+- Fix bug in jwt decoding
 
 ## [22.0.13-1.21] - 2025-08-29
 
