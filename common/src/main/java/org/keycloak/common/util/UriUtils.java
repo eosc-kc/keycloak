@@ -138,4 +138,16 @@ public class UriUtils {
             throw new IllegalArgumentException("The uri [" + name + "] is malformed", e);
         }
     }
+
+    public static boolean isUri(String uri) throws IllegalArgumentException {
+        if (uri == null) {
+            return false;
+        }
+        try {
+            URI parsed = new URI(uri);
+            return true;
+        } catch (URISyntaxException e) {
+            return false;
+        }
+    }
 }
