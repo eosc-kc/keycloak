@@ -19,6 +19,7 @@ package org.keycloak.protocol.oidc.endpoints;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.function.BiConsumer;
 
 import jakarta.ws.rs.Consumes;
@@ -32,6 +33,7 @@ import jakarta.ws.rs.core.Response;
 import org.keycloak.OAuth2Constants;
 import org.keycloak.authentication.AuthenticationProcessor;
 import org.keycloak.common.Profile;
+import org.keycloak.common.util.UriUtils;
 import org.keycloak.constants.AdapterConstants;
 import org.keycloak.events.Details;
 import org.keycloak.events.Errors;
@@ -42,10 +44,14 @@ import org.keycloak.models.AuthenticationFlowModel;
 import org.keycloak.models.ClientModel;
 import org.keycloak.models.Constants;
 import org.keycloak.models.KeycloakSession;
+import org.keycloak.models.enums.ClientRegistrationTypeEnum;
+import org.keycloak.models.enums.EntityTypeEnum;
 import org.keycloak.organization.utils.Organizations;
 import org.keycloak.protocol.AuthorizationEndpointBase;
 import org.keycloak.protocol.oidc.OIDCAdvancedConfigWrapper;
 import org.keycloak.protocol.oidc.OIDCLoginProtocol;
+import org.keycloak.protocol.oidc.endpoints.checker.AuthorizationCheckException;
+import org.keycloak.protocol.oidc.endpoints.checker.AuthorizationEndpointChecker;
 import org.keycloak.protocol.oidc.endpoints.request.AuthorizationEndpointRequest;
 import org.keycloak.protocol.oidc.endpoints.request.AuthorizationEndpointRequestParserProcessor;
 import org.keycloak.protocol.oidc.endpoints.request.RequestUriType;
@@ -54,18 +60,28 @@ import org.keycloak.protocol.oidc.utils.AcrUtils;
 import org.keycloak.protocol.oidc.utils.OIDCRedirectUriBuilder;
 import org.keycloak.protocol.oidc.utils.OIDCResponseMode;
 import org.keycloak.protocol.oidc.utils.OIDCResponseType;
+import org.keycloak.representations.idm.ClientRepresentation;
+import org.keycloak.representations.openid_federation.EntityStatement;
+import org.keycloak.representations.openid_federation.RPMetadata;
+import org.keycloak.representations.openid_federation.TrustChainResolution;
 import org.keycloak.services.ErrorPageException;
+import org.keycloak.services.ErrorResponseException;
 import org.keycloak.services.Urls;
 import org.keycloak.services.clientpolicy.ClientPolicyException;
 import org.keycloak.services.clientpolicy.context.AuthorizationRequestContext;
 import org.keycloak.services.clientpolicy.context.PreAuthorizationRequestContext;
+import org.keycloak.services.clientregistration.ClientRegistrationAuth;
+import org.keycloak.services.clientregistration.openid_federation.OpenIdFederationClientRegistrationService;
 import org.keycloak.services.managers.AuthenticationSessionManager;
 import org.keycloak.services.messages.Messages;
 import org.keycloak.services.resources.LoginActionsService;
 import org.keycloak.services.util.CacheControlUtil;
 import org.keycloak.services.util.LocaleUtil;
 import org.keycloak.sessions.AuthenticationSessionModel;
+import org.keycloak.urls.UrlType;
 import org.keycloak.util.TokenUtil;
+import org.keycloak.utils.OpenIdFederationTrustChainProcessor;
+import org.keycloak.utils.OpenIdFederationUtils;
 
 import org.jboss.logging.Logger;
 
@@ -101,10 +117,13 @@ public class AuthorizationEndpoint extends AuthorizationEndpointBase {
 
     private AuthorizationEndpointRequest request;
     private String redirectUri;
+    private OpenIdFederationTrustChainProcessor trustChainProcessor;
+    private Set<String> automaticTrustAnchors = Set.of();
 
     public AuthorizationEndpoint(KeycloakSession session, EventBuilder event) {
         super(session, event);
         event.event(EventType.LOGIN);
+        this.trustChainProcessor = new OpenIdFederationTrustChainProcessor(session);
     }
 
     @POST
@@ -148,7 +167,42 @@ public class AuthorizationEndpoint extends AuthorizationEndpointBase {
         }
         checkClient(clientId);
 
-        request = AuthorizationEndpointRequestParserProcessor.parseRequest(event, session, client, params, AuthorizationEndpointRequestParserProcessor.EndpointType.OIDC_AUTH_ENDPOINT);
+        if (automaticTrustAnchors.isEmpty()) {
+            request = AuthorizationEndpointRequestParserProcessor.parseRequest(event, session, client, params, AuthorizationEndpointRequestParserProcessor.EndpointType.OIDC_AUTH_ENDPOINT);
+        } else {
+            request = AuthorizationEndpointRequestParserProcessor.parseRequestOpenIdFederation(event, session, params, AuthorizationEndpointRequestParserProcessor.EndpointType.OIDC_AUTH_ENDPOINT);
+            if (request.getAdditionalReqParams().get("sub") != null || request.getAdditionalReqParams().get("jti") == null
+                    || request.getAdditionalReqParams().get("exp") == null || request.getIss() == null
+                    ||  !Urls.realmIssuer(session.getContext().getUri(UrlType.FRONTEND).getBaseUri(), session.getContext().getRealm().getName()).equals(request.getAdditionalReqParams().get("aud"))) {
+                event.error(Errors.INVALID_REQUEST);
+                throw new ErrorPageException(session, authenticationSession, Response.Status.BAD_REQUEST, Messages.OPENID_FEDERATION_AUTOMATIC_FALSE_REQUEST_OBJECT);
+            }
+
+            try {
+                String rpMetadata = OpenIdFederationUtils.getSelfSignedToken(clientId, session);
+                EntityStatement rpEntityStatement = trustChainProcessor.parseAndValidateSelfSigned(rpMetadata);
+                trustChainProcessor.validationRules(rpEntityStatement, false);
+                logger.info("starting validating trust chains");
+                TrustChainResolution validChain = trustChainProcessor.constructTrustChains(rpEntityStatement, automaticTrustAnchors, true);
+
+                if (validChain == null) {
+                    throw new ErrorResponseException(Errors.INVALID_TRUST_ANCHOR, "No trusted trust anchor could be found", Response.Status.NOT_FOUND);
+                }
+
+                EventBuilder event = new EventBuilder(session.getContext().getRealm(), session, session.getContext().getConnection());
+                OpenIdFederationClientRegistrationService provider = new OpenIdFederationClientRegistrationService(session);
+                provider.setEvent(event);
+                provider.setAuth(new ClientRegistrationAuth(session, provider, event, "openid-connect"));
+                ClientRepresentation clientRepresentation = provider.createOrUpdateClient(rpEntityStatement, (RPMetadata) validChain.getMetadataAfterPolicies());
+                client = realm.getClientByClientId(clientRepresentation.getClientId());
+                session.getContext().setClient(client);
+
+            } catch (ErrorPageException e) {
+                throw e;
+            } catch (Exception e) {
+                throw new ErrorResponseException(Errors.INVALID_REQUEST, e.getMessage(), Response.Status.BAD_REQUEST);
+            }
+        }
 
         AuthorizationEndpointChecker checker = new AuthorizationEndpointChecker()
                 .event(event)
@@ -161,15 +215,15 @@ public class AuthorizationEndpoint extends AuthorizationEndpointBase {
         try {
             checker.checkRedirectUri();
             this.redirectUri = checker.getRedirectUri();
-        } catch (AuthorizationEndpointChecker.AuthorizationCheckException ex) {
-            ex.throwAsErrorPageException(authenticationSession);
+        } catch (AuthorizationCheckException ex) {
+            ex.throwAsErrorPageException(authenticationSession, session);
         }
 
         try {
             checker.checkResponseType();
             this.parsedResponseType = checker.getParsedResponseType();
             this.parsedResponseMode = checker.getParsedResponseMode();
-        } catch (AuthorizationEndpointChecker.AuthorizationCheckException ex) {
+        } catch (AuthorizationCheckException ex) {
             OIDCResponseMode responseMode;
             if (checker.isInvalidResponseType(ex)) {
                 responseMode = OIDCResponseMode.parseWhenInvalidResponseType(request.getResponseMode());
@@ -190,7 +244,7 @@ public class AuthorizationEndpoint extends AuthorizationEndpointBase {
             checker.checkValidResource();
             checker.checkOIDCParams();
             checker.checkPKCEParams(true);
-        } catch (AuthorizationEndpointChecker.AuthorizationCheckException ex) {
+        } catch (AuthorizationCheckException ex) {
             return redirectErrorToClient(parsedResponseMode, ex.getError(), ex.getErrorDescription());
         }
 
@@ -280,6 +334,13 @@ public class AuthorizationEndpoint extends AuthorizationEndpointBase {
         event.client(clientId);
 
         client = realm.getClientByClientId(clientId);
+        if (UriUtils.isUri(clientId) && (client == null || !client.isEnabled())) {
+            automaticTrustAnchors = realm.getTrustAnchorsIdsBasedOnTypes(EntityTypeEnum.OPENID_PROVIDER, ClientRegistrationTypeEnum.AUTOMATIC);
+            if (!automaticTrustAnchors.isEmpty()) {
+                return;
+            }
+        }
+
         if (client == null) {
             event.error(Errors.CLIENT_NOT_FOUND);
             throw new ErrorPageException(session, authenticationSession, Response.Status.BAD_REQUEST, Messages.CLIENT_NOT_FOUND);

@@ -322,7 +322,7 @@ public class OpenIdFederationTrustChainProcessor implements TrustChainProcessor 
 //        if (splits.length != 3)
 //            throw new InvalidTrustChainException("Trust chain contains a chain-link which does not abide to the dot-delimited format of xxx.yyy.zzz");
 //        try {
-//            return  JsonSerialization.readValue(Base64.getDecoder().decode(splits[1]), clazz);
+//            return JsonSerialization.readValue(Base64.getUrlDecoder().decode(splits[1]), clazz);
 //        } catch (IOException e) {
 //            throw new InvalidTrustChainException("Trust chain does not contain a valid Entity Statement");
 //        }

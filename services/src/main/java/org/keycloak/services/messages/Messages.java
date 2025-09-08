@@ -351,6 +351,7 @@ public class Messages {
     public static final String OAUTH2_DEVICE_VERIFICATION_FAILED = "oauth2DeviceVerificationFailedMessage";
     public static final String OAUTH2_DEVICE_VERIFICATION_FAILED_HEADER = "oauth2DeviceVerificationFailedHeader";
     public static final String OAUTH2_DEVICE_CONSENT_DENIED = "oauth2DeviceConsentDeniedMessage";
+    public static final String OPENID_FEDERATION_AUTOMATIC_FALSE_REQUEST_OBJECT = "openidFederationAutomaticFalseRequestObject";
 
     public static final String CONFIRM_ORGANIZATION_MEMBERSHIP = "organization.confirm-membership";
     public static final String CONFIRM_ORGANIZATION_MEMBERSHIP_TITLE = "organization.confirm-membership.title";

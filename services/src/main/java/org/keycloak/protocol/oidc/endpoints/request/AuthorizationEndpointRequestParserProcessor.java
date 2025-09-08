@@ -34,6 +34,7 @@ import org.keycloak.models.KeycloakSession;
 import org.keycloak.protocol.oidc.OIDCAdvancedConfigWrapper;
 import org.keycloak.protocol.oidc.OIDCConfigAttributes;
 import org.keycloak.protocol.oidc.OIDCLoginProtocol;
+import org.keycloak.protocol.oidc.federation.OpenIdFederationAuthzEndpointRequestObjectParser;
 import org.keycloak.protocol.oidc.par.endpoints.request.AuthzEndpointParParser;
 import org.keycloak.protocol.oidc.utils.RedirectUtils;
 import org.keycloak.services.ErrorPageException;
@@ -53,17 +54,7 @@ public class AuthorizationEndpointRequestParserProcessor {
 
     public static AuthorizationEndpointRequest parseRequest(EventBuilder event, KeycloakSession session, ClientModel client, MultivaluedMap<String, String> requestParams, EndpointType endpointType) {
         try {
-            AuthorizationEndpointRequest request = new AuthorizationEndpointRequest();
-            boolean isResponseTypeParameterRequired = isResponseTypeParameterRequired(requestParams, endpointType);
-            AuthzEndpointQueryStringParser parser = new AuthzEndpointQueryStringParser(session, requestParams, isResponseTypeParameterRequired);
-            parser.parseRequest(request);
-
-            if (parser.getInvalidRequestMessage() != null) {
-                request.invalidRequestMessage = parser.getInvalidRequestMessage();
-            }
-            if (request.getInvalidRequestMessage() != null) {
-                return request;
-            }
+            AuthorizationEndpointRequest request = parseRequestCommon(session, requestParams, endpointType);
 
             String requestParam = requestParams.getFirst(OIDCLoginProtocol.REQUEST_PARAM);
             String requestUriParam = requestParams.getFirst(OIDCLoginProtocol.REQUEST_URI_PARAM);
@@ -115,6 +106,52 @@ public class AuthorizationEndpointRequestParserProcessor {
             event.error(Errors.INVALID_REQUEST);
             throw new ErrorPageException(session, Response.Status.BAD_REQUEST, Messages.INVALID_REQUEST);
         }
+    }
+
+    public static AuthorizationEndpointRequest parseRequestOpenIdFederation(EventBuilder event, KeycloakSession session, MultivaluedMap<String, String> requestParams, EndpointType endpointType) {
+        try {
+            AuthorizationEndpointRequest request = parseRequestCommon(session, requestParams, endpointType);
+
+            String requestParam = requestParams.getFirst(OIDCLoginProtocol.REQUEST_PARAM);
+            String requestUriParam = requestParams.getFirst(OIDCLoginProtocol.REQUEST_URI_PARAM);
+
+            if (requestParam != null && requestUriParam != null) {
+                throw new RuntimeException("Illegal to use both 'request' and 'request_uri' parameters together");
+            }
+
+            if (requestParam != null) {
+                new OpenIdFederationAuthzEndpointRequestObjectParser(session, requestParam).parseRequest(request);
+            } else if (requestUriParam != null) {
+                throw new RuntimeException("requestUriParam not supported for automatic client registration");
+            }
+
+            if (Profile.isFeatureEnabled(Profile.Feature.DYNAMIC_SCOPES)) {
+                request.authorizationRequestContext = AuthorizationContextUtil.getAuthorizationRequestContextFromScopes(session, request.getScope());
+            }
+
+            return request;
+
+        } catch (Exception e) {
+            ServicesLogger.LOGGER.invalidRequest(e);
+            event.error(Errors.INVALID_REQUEST);
+            throw new ErrorPageException(session, Response.Status.BAD_REQUEST, Messages.INVALID_REQUEST);
+        }
+    }
+
+    private static AuthorizationEndpointRequest parseRequestCommon(KeycloakSession session, MultivaluedMap<String, String> requestParams, EndpointType endpointType) {
+        AuthorizationEndpointRequest request = new AuthorizationEndpointRequest();
+        boolean isResponseTypeParameterRequired = isResponseTypeParameterRequired(requestParams, endpointType);
+        AuthzEndpointQueryStringParser parser = new AuthzEndpointQueryStringParser(session, requestParams, isResponseTypeParameterRequired);
+        parser.parseRequest(request);
+
+        if (parser.getInvalidRequestMessage() != null) {
+            request.invalidRequestMessage = parser.getInvalidRequestMessage();
+        }
+        if (request.getInvalidRequestMessage() != null) {
+            return request;
+        }
+
+        return request;
     }
 
     public static String getClientId(EventBuilder event, KeycloakSession session, MultivaluedMap<String, String> requestParams) {

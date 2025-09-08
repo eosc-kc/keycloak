@@ -45,4 +45,28 @@ public class Metadata {
     public void setRelyingPartyMetadata(RPMetadata relyingPartyMetadata) {
         this.relyingPartyMetadata = relyingPartyMetadata;
     }
+
+    public OauthAuthorizationServer getOauthAuthorizationServer() {
+        return oauthAuthorizationServer;
+    }
+
+    public void setOauthAuthorizationServer(OauthAuthorizationServer oauthAuthorizationServer) {
+        this.oauthAuthorizationServer = oauthAuthorizationServer;
+    }
+
+    public OauthClient getOauthClient() {
+        return oauthClient;
+    }
+
+    public void setOauthClient(OauthClient oauthClient) {
+        this.oauthClient = oauthClient;
+    }
+
+    public OauthResource getOauthResource() {
+        return oauthResource;
+    }
+
+    public void setOauthResource(OauthResource oauthResource) {
+        this.oauthResource = oauthResource;
+    }
 }
