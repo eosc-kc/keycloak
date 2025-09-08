@@ -1,8 +1,7 @@
 package org.keycloak.models.enums;
 
 public enum ClientRegistrationTypeEnum {
-    //AUTOMATIC("automatic"),
-    EXPLICIT("explicit");
+    EXPLICIT("explicit"), AUTOMATIC("automatic");
 
     private final String value;
 

@@ -50,7 +50,8 @@ import org.keycloak.models.RealmModel;
 import org.keycloak.models.SingleUseObjectProvider;
 import org.keycloak.protocol.AuthorizationEndpointBase;
 import org.keycloak.protocol.oidc.OIDCLoginProtocol;
-import org.keycloak.protocol.oidc.endpoints.AuthorizationEndpointChecker;
+import org.keycloak.protocol.oidc.endpoints.checker.AuthorizationCheckException;
+import org.keycloak.protocol.oidc.endpoints.checker.AuthorizationEndpointChecker;
 import org.keycloak.protocol.oidc.endpoints.request.AuthorizationEndpointRequest;
 import org.keycloak.protocol.oidc.endpoints.request.AuthorizationEndpointRequestParserProcessor;
 import org.keycloak.protocol.oidc.grants.device.DeviceGrantType;
@@ -145,7 +146,7 @@ public class DeviceEndpoint extends AuthorizationEndpointBase implements RealmRe
 
         try {
             checker.checkPKCEParams(false);
-        } catch (AuthorizationEndpointChecker.AuthorizationCheckException ex) {
+        } catch (AuthorizationCheckException ex) {
             throw new ErrorResponseException(ex.getError(), ex.getErrorDescription(), Response.Status.BAD_REQUEST);
         }
 

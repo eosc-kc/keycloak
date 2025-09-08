@@ -30,7 +30,9 @@ import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 
+import org.keycloak.OAuth2Constants;
 import org.keycloak.common.util.Time;
+import org.keycloak.events.Details;
 import org.keycloak.models.ClientModel;
 import org.keycloak.models.KeycloakSession;
 import org.keycloak.representations.idm.ClientRepresentation;
@@ -73,7 +75,8 @@ public class OIDCClientRegistrationProvider extends AbstractClientRegistrationPr
         try {
             ClientRepresentation client = createOidcClient(clientOIDC, session, null);
             URI uri = getRegistrationClientUri(client.getClientId());
-            clientOIDC = DescriptionConverter.toExternalResponse(session, client, uri, OIDCClientRepresentation.class);
+            clientOIDC = DescriptionConverter.toExternalResponse(session, client, uri, OIDCClientRepresentation.class, clientOIDC.getScope()!=null && clientOIDC.getScope().contains(OAuth2Constants.SCOPE_OPENID));
+            event.detail(Details.GRANTED_CLIENT, clientOIDC.getScope());
             clientOIDC.setClientIdIssuedAt(Time.currentTime());
             return cors().add(Response.created(uri).entity(clientOIDC));
         } catch (ClientRegistrationException cre) {
@@ -90,7 +93,7 @@ public class OIDCClientRegistrationProvider extends AbstractClientRegistrationPr
 
         ClientRepresentation clientRepresentation = get(client);
 
-        OIDCClientRepresentation clientOIDC = DescriptionConverter.toExternalResponse(session, clientRepresentation, getRegistrationClientUri(clientId), OIDCClientRepresentation.class);
+        OIDCClientRepresentation clientOIDC = DescriptionConverter.toExternalResponse(session, clientRepresentation, getRegistrationClientUri(clientId), OIDCClientRepresentation.class, false);
         return cors().add(Response.ok(clientOIDC));
     }
 
@@ -102,7 +105,8 @@ public class OIDCClientRegistrationProvider extends AbstractClientRegistrationPr
         try {
 
             ClientRepresentation client = updateOidcClient(clientId, clientOIDC, session, null);
-            OIDCClientRepresentation updatedClient = DescriptionConverter.toExternalResponse(session, client, getRegistrationClientUri(clientId), OIDCClientRepresentation.class);
+            OIDCClientRepresentation updatedClient = DescriptionConverter.toExternalResponse(session, client, getRegistrationClientUri(clientId), OIDCClientRepresentation.class, clientOIDC.getScope()!=null && clientOIDC.getScope().contains(OAuth2Constants.SCOPE_OPENID));
+            event.detail(Details.GRANTED_CLIENT, updatedClient.getScope());
             return cors().add(Response.ok(updatedClient));
         } catch (ClientRegistrationException cre) {
             ServicesLogger.LOGGER.clientRegistrationException(cre.getMessage());
