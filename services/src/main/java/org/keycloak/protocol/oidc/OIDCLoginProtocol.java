@@ -46,7 +46,8 @@ import org.keycloak.models.RealmModel;
 import org.keycloak.models.UserSessionModel;
 import org.keycloak.protocol.ClientData;
 import org.keycloak.protocol.LoginProtocol;
-import org.keycloak.protocol.oidc.endpoints.AuthorizationEndpointChecker;
+import org.keycloak.protocol.oidc.endpoints.checker.AuthorizationCheckException;
+import org.keycloak.protocol.oidc.endpoints.checker.AuthorizationEndpointChecker;
 import org.keycloak.protocol.oidc.endpoints.request.AuthorizationEndpointRequest;
 import org.keycloak.protocol.oidc.utils.LogoutUtil;
 import org.keycloak.protocol.oidc.utils.OAuth2Code;
@@ -435,8 +436,8 @@ public class OIDCLoginProtocol implements LoginProtocol {
         try {
             checker.checkResponseType();
             checker.checkRedirectUri();
-        } catch (AuthorizationEndpointChecker.AuthorizationCheckException ex) {
-            ex.throwAsErrorPageException(null);
+        } catch (AuthorizationCheckException ex) {
+            ex.throwAsErrorPageException(null, session);
         }
 
         setupResponseTypeAndMode(clientData.getResponseType(), clientData.getResponseMode());
