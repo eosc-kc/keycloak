@@ -59,7 +59,7 @@ public interface TokenManager {
      * @param <T>
      * @return The decoded token, or <code>null</code> if the token was not valid
      */
-    <T extends Token> T decode(String token, Class<T> clazz);
+    <T> T decode(String token, Class<T> clazz);
 
     String signatureAlgorithm(TokenCategory category);
 

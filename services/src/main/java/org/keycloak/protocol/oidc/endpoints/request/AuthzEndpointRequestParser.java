@@ -103,6 +103,7 @@ public abstract class AuthzEndpointRequestParser {
         KNOWN_REQ_PARAMS.add(OAuth2Constants.CLIENT_ASSERTION_TYPE);
         KNOWN_REQ_PARAMS.add(OAuth2Constants.CLIENT_ASSERTION);
         KNOWN_REQ_PARAMS.add(OAuth2Constants.CLIENT_SECRET);
+        KNOWN_REQ_PARAMS.add(OAuth2Constants.ISSUER);
     }
 
     protected AuthzEndpointRequestParser(KeycloakSession keycloakSession) {
@@ -150,6 +151,9 @@ public abstract class AuthzEndpointRequestParser {
         request.codeChallengeMethod = replaceIfNotNull(request.codeChallengeMethod, getAndValidateParameter(OIDCLoginProtocol.CODE_CHALLENGE_METHOD_PARAM));
 
         request.dpopJkt = replaceIfNotNull(request.dpopJkt, getAndValidateParameter(OIDCLoginProtocol.DPOP_JKT));
+
+        //OpenId Federation iss
+        request.iss = replaceIfNotNull(request.iss, getParameter(OAuth2Constants.ISSUER));
 
         extractAdditionalReqParams(request.additionalReqParams);
     }
