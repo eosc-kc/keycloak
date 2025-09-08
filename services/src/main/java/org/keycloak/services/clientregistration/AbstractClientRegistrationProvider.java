@@ -103,6 +103,8 @@ public abstract class AbstractClientRegistrationProvider implements ClientRegist
         if (exp != null)
             client.getAttributes().put(EXPIRATION_TIME, exp.toString() );
 
+        event.detail(Details.REQUESTED_SCOPES, clientOIDC.getScope());
+
         OIDCClientRegistrationContext oidcContext = new OIDCClientRegistrationContext(session, client, this, clientOIDC);
         client = create(oidcContext, exp == null ? EventType.CLIENT_REGISTER : EventType.FEDERATION_CLIENT_REGISTER);
 
@@ -116,6 +118,7 @@ public abstract class AbstractClientRegistrationProvider implements ClientRegist
 
     protected ClientRepresentation updateOidcClient(String clientId, OIDCClientRepresentation clientOIDC, KeycloakSession session, Long exp) {
         ClientRepresentation client = DescriptionConverter.toInternal(session, clientOIDC);
+        event.detail(Details.REQUESTED_SCOPES, clientOIDC.getScope());        
         if (clientOIDC.getScope() != null) {
             ClientModel oldClient = session.getContext().getRealm().getClientById(clientOIDC.getClientId());
             Collection<String> defaultClientScopes = oldClient.getClientScopes(true).keySet();
