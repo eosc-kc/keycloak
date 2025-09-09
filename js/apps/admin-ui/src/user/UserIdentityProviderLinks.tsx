@@ -37,7 +37,6 @@ export const UserIdentityProviderLinks = ({
   const [key, setKey] = useState(0);
   const [federatedId, setFederatedId] = useState("");
   const [isLinkIdPModalOpen, setIsLinkIdPModalOpen] = useState(false);
-
   const { realm } = useRealm();
   const { addAlert, addError } = useAlerts();
   const { t } = useTranslation("users");

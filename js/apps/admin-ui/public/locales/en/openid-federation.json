@@ -48,5 +48,8 @@
   "generalSettings": "General Settings",
   "openIdFederationSettings": "Trust Anchor Settings",
   "openIDFederationEndpointConfiguration": "OpenID Federation Endpoint Configuration",
-  "endpoint": "Endpoint"
+  "endpoint": "Endpoint",
+  "identityProviderSettings": "Identity Provider Settings",
+  "advancedSettings": "Advanced Settings",
+  "oidcSettings": "OpenID Connect settings"
 }

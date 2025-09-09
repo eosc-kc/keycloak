@@ -26,7 +26,8 @@ import org.keycloak.headers.SecurityHeadersProvider;
 import org.keycloak.models.KeycloakSession;
 import org.keycloak.models.SingleUseObjectProvider;
 import org.keycloak.protocol.oidc.OIDCLoginProtocolService;
-import org.keycloak.protocol.oidc.endpoints.AuthorizationEndpointChecker;
+import org.keycloak.protocol.oidc.endpoints.checker.AuthorizationCheckException;
+import org.keycloak.protocol.oidc.endpoints.checker.AuthorizationEndpointChecker;
 import org.keycloak.protocol.oidc.endpoints.request.AuthorizationEndpointRequest;
 import org.keycloak.protocol.oidc.par.ParResponse;
 import org.keycloak.protocol.oidc.par.clientpolicy.context.PushedAuthorizationRequestContext;
@@ -107,23 +108,23 @@ public class ParEndpoint extends AbstractParEndpoint {
 
         try {
             checker.checkRedirectUri();
-        } catch (AuthorizationEndpointChecker.AuthorizationCheckException ex) {
+        } catch (AuthorizationCheckException ex) {
             throw throwErrorResponseException(OAuthErrorException.INVALID_REQUEST, "Invalid parameter: redirect_uri", Response.Status.BAD_REQUEST);
         }
 
         try {
             checker.checkResponseType();
-        } catch (AuthorizationEndpointChecker.AuthorizationCheckException ex) {
+        } catch (AuthorizationCheckException ex) {
             if (ex.getError().equals(OAuthErrorException.UNSUPPORTED_RESPONSE_TYPE)) {
                 throw throwErrorResponseException(OAuthErrorException.INVALID_REQUEST, "Unsupported response type", Response.Status.BAD_REQUEST);
             } else {
-                ex.throwAsCorsErrorResponseException(cors);
+                ex.throwAsCorsErrorResponseException(cors, checker.getEvent());
             }
         }
 
         try {
             checker.checkValidScope();
-        } catch (AuthorizationEndpointChecker.AuthorizationCheckException ex) {
+        } catch (AuthorizationCheckException ex) {
             // PAR throws this as "invalid_request" error
             throw throwErrorResponseException(OAuthErrorException.INVALID_REQUEST, ex.getErrorDescription(), Response.Status.BAD_REQUEST);
         }
@@ -133,8 +134,8 @@ public class ParEndpoint extends AbstractParEndpoint {
             checker.checkOIDCRequest();
             checker.checkOIDCParams();
             checker.checkPKCEParams(true);
-        } catch (AuthorizationEndpointChecker.AuthorizationCheckException ex) {
-            ex.throwAsCorsErrorResponseException(cors);
+        } catch (AuthorizationCheckException ex) {
+            ex.throwAsCorsErrorResponseException(cors, checker.getEvent());
         }
 
         try {

@@ -4,13 +4,13 @@ import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
 import { useParams } from "../../utils/useParams";
 import { ViewHeader } from "../../components/view-header/ViewHeader";
-import { toOpenIdFederation } from "../routes/OpenIdFederation";
 import { useAlerts } from "../../components/alert/Alerts";
 import type { OpenIdFederationParams } from "../routes/OpenIdFederation";
 import { adminClient } from "../../admin-client";
 import { FormProvider, useForm } from "react-hook-form";
 import { OpenIdFederationForm } from "./OpenIdFederationForm";
 import OpenIdFederationRepresentation from "libs/keycloak-admin-client/lib/defs/openIdFederationRepresentation";
+import { toOpenIdFederationEdit } from "../routes/OpenIdFederationEdit";
 
 export default function AddOpenIdFederation() {
   const { t } = useTranslation("openid-federation");
@@ -23,13 +23,20 @@ export default function AddOpenIdFederation() {
   const save = async (r: OpenIdFederationRepresentation) => {
     r = convertFormValuesToObject(r);
     try {
-      const savedIdentityFederation: OpenIdFederationRepresentation = { ...r };
-      await adminClient.openIdFederations.create(savedIdentityFederation);
+      const savedOpenIdFederation: OpenIdFederationRepresentation = { ...r };
+      const createdOpenIdFederation =
+        await adminClient.openIdFederations.create(savedOpenIdFederation);
       addAlert(t("saveSuccess"), AlertVariant.success);
+      navigate(
+        toOpenIdFederationEdit({
+          realm: realmName,
+          id: createdOpenIdFederation.id,
+          tab: "settings",
+        }),
+      );
     } catch (error) {
       addError("realm-settings:saveError", error);
     }
-    navigate(toOpenIdFederation({ realm: realmName! }));
   };
   return (
     <>

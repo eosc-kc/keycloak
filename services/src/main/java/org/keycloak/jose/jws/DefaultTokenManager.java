@@ -93,7 +93,7 @@ public class DefaultTokenManager implements TokenManager {
     }
 
     @Override
-    public <T extends Token> T decode(String token, Class<T> clazz) {
+    public <T> T decode(String token, Class<T> clazz) {
         if (token == null) {
             return null;
         }

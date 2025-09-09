@@ -1,11 +1,9 @@
-import { PageSection, AlertVariant } from "@patternfly/react-core";
+import { AlertVariant } from "@patternfly/react-core";
 import { convertFormValuesToObject } from "../../util";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
-import { useNavigate } from "react-router-dom";
 import { useParams } from "../../utils/useParams";
 import { ViewHeader } from "../../components/view-header/ViewHeader";
-import { toOpenIdFederation } from "../routes/OpenIdFederation";
 import { useAlerts } from "../../components/alert/Alerts";
 import { adminClient } from "../../admin-client";
 import { KeycloakSpinner } from "../../components/keycloak-spinner/KeycloakSpinner";
@@ -17,9 +15,10 @@ import OpenIdFederationRepresentation from "libs/keycloak-admin-client/lib/defs/
 
 export default function EditIdentityFederation() {
   const { t } = useTranslation("openid-federation");
-  const navigate = useNavigate();
   const { addAlert, addError } = useAlerts();
   const { realm: realmName, id: id } = useParams<OpenIdFederationEditParams>();
+  const [key, setKey] = useState(0);
+  const refresh = () => setKey(key + 1);
   const [openIdFederation, setOpenIdFederation] =
     useState<OpenIdFederationRepresentation>();
 
@@ -31,7 +30,7 @@ export default function EditIdentityFederation() {
         internalId: id,
       }),
     setOpenIdFederation,
-    [id],
+    [id, key],
   );
 
   const save = async (r: OpenIdFederationRepresentation) => {
@@ -42,11 +41,11 @@ export default function EditIdentityFederation() {
         { internalId: id },
         savedIdentityFederation,
       );
+      refresh();
       addAlert(t("saveSuccess"), AlertVariant.success);
     } catch (error) {
       addError("realm-settings:saveError", error);
     }
-    navigate(toOpenIdFederation({ realm: realmName! }));
   };
   if (!openIdFederation) {
     return <KeycloakSpinner />;
@@ -56,15 +55,14 @@ export default function EditIdentityFederation() {
         <ViewHeader
           titleKey="openid-federation:editOpenIdFederation"
           subKey="openid-federation:editOpenIdFederationExplanation"
+          divider={false}
         />
-        <PageSection variant="light">
-          <FormProvider {...form}>
-            <OpenIdFederationForm
-              openIdFederation={openIdFederation}
-              save={save}
-            />
-          </FormProvider>
-        </PageSection>
+        <FormProvider {...form}>
+          <OpenIdFederationForm
+            openIdFederation={openIdFederation}
+            save={save}
+          />
+        </FormProvider>
       </>
     );
 }

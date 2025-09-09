@@ -58,6 +58,7 @@ const OpenIdFederationLink = (
       to={toOpenIdFederationEdit({
         realm,
         id: openIdFederation.internalId || "",
+        tab: "settings",
       })}
     >
       {openIdFederation.trustAnchor}

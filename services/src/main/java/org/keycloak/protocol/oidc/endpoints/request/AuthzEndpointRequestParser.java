@@ -78,6 +78,7 @@ public abstract class AuthzEndpointRequestParser {
         KNOWN_REQ_PARAMS.add(OAuth2Constants.CLIENT_ASSERTION_TYPE);
         KNOWN_REQ_PARAMS.add(OAuth2Constants.CLIENT_ASSERTION);
         KNOWN_REQ_PARAMS.add(OAuth2Constants.CLIENT_SECRET);
+        KNOWN_REQ_PARAMS.add(OAuth2Constants.ISSUER);
     }
 
     public void parseRequest(AuthorizationEndpointRequest request) {
@@ -113,6 +114,9 @@ public abstract class AuthzEndpointRequestParser {
         // https://tools.ietf.org/html/rfc7636#section-6.1
         request.codeChallenge = replaceIfNotNull(request.codeChallenge, getParameter(OIDCLoginProtocol.CODE_CHALLENGE_PARAM));
         request.codeChallengeMethod = replaceIfNotNull(request.codeChallengeMethod, getParameter(OIDCLoginProtocol.CODE_CHALLENGE_METHOD_PARAM));
+
+        //OpenId Federation iss
+        request.iss = replaceIfNotNull(request.iss, getParameter(OAuth2Constants.ISSUER));
 
         extractAdditionalReqParams(request.additionalReqParams);
     }
