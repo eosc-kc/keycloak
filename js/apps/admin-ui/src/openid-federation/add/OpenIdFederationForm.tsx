@@ -166,7 +166,9 @@ export const OpenIdFederationForm = ({
                     field.onChange(value as string);
                     setPromptOpen(false);
                   }}
-                  selections={field.value || t(`prompts.unspecified`)}
+                  selections={
+                    field.value || t(`identity-providers:prompts.unspecified`)
+                  }
                   variant={SelectVariant.single}
                   aria-label={t("prompt")}
                   isOpen={promptOpen}
@@ -177,7 +179,7 @@ export const OpenIdFederationForm = ({
                       key={key}
                       value={val}
                     >
-                      {t(`prompts.${key}`)}
+                      {t(`identity-providers:prompts.${key}`)}
                     </SelectOption>
                   ))}
                 </Select>

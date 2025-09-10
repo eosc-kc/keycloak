@@ -110,30 +110,20 @@ export const AdvancedSettings = () => {
 
   return (
     <>
-      <SwitchField
-        field="idpConfiguration.storeToken"
-        label="storeTokens"
-        fieldType="boolean"
-      />
+      <SwitchField field="idpConfiguration.storeToken" label="storeTokens" />
       <SwitchField
         field="idpConfiguration.addReadTokenRoleOnCreate"
         label="storedTokensReadable"
-        fieldType="boolean"
       />
 
       <SwitchField
         field="idpConfiguration.isAccessTokenJWT"
         label="isAccessTokenJWT"
       />
-      <SwitchField
-        field="idpConfiguration.trustEmail"
-        label="trustEmail"
-        fieldType="boolean"
-      />
+      <SwitchField field="idpConfiguration.trustEmail" label="trustEmail" />
       <SwitchField
         field="idpConfiguration.linkOnly"
         label="accountLinkingOnly"
-        fieldType="boolean"
       />
       <SwitchField
         field="idpConfiguration.hideOnLoginPage"
