@@ -11,6 +11,7 @@ import org.keycloak.models.AuthenticationFlowModel;
 import org.keycloak.models.IdentityProviderModel;
 import org.keycloak.models.IdentityProviderSyncMode;
 import org.keycloak.models.KeycloakSession;
+import org.keycloak.models.ModelException;
 import org.keycloak.models.OpenIdFederationGeneralConfig;
 import org.keycloak.models.RealmModel;
 import org.keycloak.models.enums.ClientRegistrationTypeEnum;
@@ -90,14 +91,21 @@ public class OpenIdFederationUtils {
         model.setTrustEmail(Boolean.valueOf(federationIdPConfig.get("trustEmail")));
         model.setSyncMode(federationIdPConfig.get("syncMode") != null ? IdentityProviderSyncMode.valueOf(federationIdPConfig.get("syncMode")) : IdentityProviderSyncMode.IMPORT);
         if (federationIdPConfig.get("firstBrokerLoginFlowAlias") == null) {
-            AuthenticationFlowModel flowModel = realm.getFlowByAlias(DefaultAuthenticationFlows.FIRST_BROKER_LOGIN_FLOW);
-            model.setFirstBrokerLoginFlowId(flowModel.getId());
+            model.setFirstBrokerLoginFlowId(realm.getFlowByAlias(DefaultAuthenticationFlows.FIRST_BROKER_LOGIN_FLOW).getId());
         } else {
-            model.setFirstBrokerLoginFlowId(federationIdPConfig.get("firstBrokerLoginFlowAlias"));
+            AuthenticationFlowModel flowModel = realm.getFlowByAlias(federationIdPConfig.get("firstBrokerLoginFlowAlias"));
+            if (flowModel == null) {
+                throw new ModelException("No available authentication flow with alias: " + federationIdPConfig.get("firstBrokerLoginFlowAlias"));
+            }
+            model.setFirstBrokerLoginFlowId(flowModel.getId());
         }
 
         if (federationIdPConfig.get("postBrokerLoginFlowAlias") != null) {
-            model.setFirstBrokerLoginFlowId(federationIdPConfig.get("postBrokerLoginFlowAlias"));
+            AuthenticationFlowModel flowModel = realm.getFlowByAlias(federationIdPConfig.get("postBrokerLoginFlowAlias"));
+            if (flowModel == null) {
+                throw new ModelException("No available authentication flow with alias: " + federationIdPConfig.get("postBrokerLoginFlowAlias"));
+            }
+            model.setPostBrokerLoginFlowId(flowModel.getId());
         }
 
         federationIdPConfig.remove(OAuth2IdentityProviderConfig.DEFAULT_SCOPE);
