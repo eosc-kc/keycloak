@@ -7,4 +7,4 @@ export default interface OpenIdFederationRepresentation {
 }
 
 export type EntityTypesSupported = "OPENID_PROVIDER" | "OPENID_RELYING_PARTY";
-export type ClientRegistrationTypesSupported = "EXPLICIT";
+export type ClientRegistrationTypesSupported = "EXPLICIT" | "AUTOMATIC";

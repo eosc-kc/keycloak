@@ -49,7 +49,7 @@ const entityTypesSupportedValues: EntityTypesSupported[] = [
   "OPENID_RELYING_PARTY",
 ];
 const clientRegistrationTypesSupportedValues: ClientRegistrationTypesSupported[] =
-  ["EXPLICIT"];
+  ["EXPLICIT", "AUTOMATIC"];
 const promptOptions = {
   unspecified: "",
   none: "none",
