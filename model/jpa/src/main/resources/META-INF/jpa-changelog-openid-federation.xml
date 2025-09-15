@@ -48,25 +48,6 @@
     </changeSet>
 
     <changeSet author="cgeorgilakis@grnet.gr" id="migrate-openidFederationEntityTypes">
-        <sql>
-            INSERT INTO realm_attribute (name, realm_id, value)
-            SELECT
-            'openidFederationEntityTypes' AS name,
-            fed.realm_id,
-            o.value
-            FROM openid_federation_attribute o
-            JOIN openid_federation fed
-            ON fed.internal_id = o.openid_federation_id
-            WHERE o.name = 'openidFederationEntityTypes';
-        </sql>
-
-        <sql>
-            DELETE FROM openid_federation_attribute
-            WHERE name = 'openidFederationEntityTypes';
-        </sql>
-    </changeSet>
-
-    <changeSet author="cgeorgilakis@grnet.gr" id="migrate-openidFederationEntityTypes">
         <sql dbms="postgresql,h2,mariadb">
             INSERT INTO realm_attribute (name, realm_id, value)
             SELECT
