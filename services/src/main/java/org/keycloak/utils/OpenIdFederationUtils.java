@@ -90,20 +90,20 @@ public class OpenIdFederationUtils {
         model.setStoreToken(Boolean.valueOf(federationIdPConfig.get("storeToken")));
         model.setTrustEmail(Boolean.valueOf(federationIdPConfig.get("trustEmail")));
         model.setSyncMode(federationIdPConfig.get("syncMode") != null ? IdentityProviderSyncMode.valueOf(federationIdPConfig.get("syncMode")) : IdentityProviderSyncMode.IMPORT);
-        if (federationIdPConfig.get("firstBrokerLoginFlowAlias") == null) {
+        if (federationIdPConfig.get("firstBrokerLoginFlowAlias") == null || federationIdPConfig.get("postBrokerLoginFlowAlias").isEmpty()) {
             model.setFirstBrokerLoginFlowId(realm.getFlowByAlias(DefaultAuthenticationFlows.FIRST_BROKER_LOGIN_FLOW).getId());
         } else {
             AuthenticationFlowModel flowModel = realm.getFlowByAlias(federationIdPConfig.get("firstBrokerLoginFlowAlias"));
             if (flowModel == null) {
-                throw new ModelException("No available authentication flow with alias: " + federationIdPConfig.get("firstBrokerLoginFlowAlias"));
+                throw new ModelException("No available First Broker Login authentication flow with alias: " + federationIdPConfig.get("firstBrokerLoginFlowAlias"));
             }
             model.setFirstBrokerLoginFlowId(flowModel.getId());
         }
 
-        if (federationIdPConfig.get("postBrokerLoginFlowAlias") != null) {
+        if (federationIdPConfig.get("postBrokerLoginFlowAlias") != null &&  !federationIdPConfig.get("postBrokerLoginFlowAlias").isEmpty()) {
             AuthenticationFlowModel flowModel = realm.getFlowByAlias(federationIdPConfig.get("postBrokerLoginFlowAlias"));
             if (flowModel == null) {
-                throw new ModelException("No available authentication flow with alias: " + federationIdPConfig.get("postBrokerLoginFlowAlias"));
+                throw new ModelException("No available Post Broker Login authentication flow with alias: " + federationIdPConfig.get("postBrokerLoginFlowAlias"));
             }
             model.setPostBrokerLoginFlowId(flowModel.getId());
         }
