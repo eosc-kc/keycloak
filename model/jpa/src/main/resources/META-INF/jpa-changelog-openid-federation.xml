@@ -66,8 +66,40 @@
         </sql>
     </changeSet>
 
-    <changeSet author="cgeorgilakis@grnet.gr" id="migrate-openidFederationClientRegistrationTypesSupported">
+    <changeSet author="cgeorgilakis@grnet.gr" id="migrate-openidFederationEntityTypes">
+        <sql dbms="postgresql,h2,mariadb">
+            INSERT INTO realm_attribute (name, realm_id, value)
+            SELECT
+            'openidFederationEntityTypes' AS name,
+            fed.realm_id,
+            o.value
+            FROM openid_federation_attribute o
+            JOIN openid_federation fed
+            ON fed.internal_id = o.openid_federation_id
+            WHERE o.name = 'openidFederationEntityTypes'
+            LIMIT 1;
+        </sql>
+        <sql dbms="oracle">
+            INSERT INTO realm_attribute (name, realm_id, value)
+            SELECT
+            'openidFederationEntityTypes' AS name,
+            fed.realm_id,
+            o.value
+            FROM openid_federation_attribute o
+            JOIN openid_federation fed
+            ON fed.internal_id = o.openid_federation_id
+            WHERE o.name = 'openidFederationEntityTypes'
+            FETCH FIRST 1 ROWS ONLY;
+        </sql>
+
         <sql>
+            DELETE FROM openid_federation_attribute
+            WHERE name = 'openidFederationEntityTypes';
+        </sql>
+    </changeSet>
+
+    <changeSet author="cgeorgilakis@grnet.gr" id="migrate-openidFederationClientRegistrationTypesSupported">
+        <sql dbms="postgresql,h2,mariadb">
             INSERT INTO realm_attribute (name, realm_id, value)
             SELECT
             CASE
@@ -83,8 +115,29 @@
             JOIN realm_attribute et
             ON et.realm_id = fed.realm_id
             AND et.name = 'openidFederationEntityTypes'
-            WHERE o.name = 'openidFederationClientRegistrationTypesSupported';
+            WHERE o.name = 'openidFederationClientRegistrationTypesSupported'
+            LIMIT 1;
         </sql>
+        <sql dbms="oracle">
+            INSERT INTO realm_attribute (name, realm_id, value)
+            SELECT
+            CASE
+            WHEN et.value = 'OPENID_PROVIDER' THEN 'openidFederationOPClientRegistrationTypesSupported'
+            WHEN et.value = 'OPENID_RELYING_PARTY' THEN 'openidFederationRPClientRegistrationTypesSupported'
+            ELSE 'openidFederationClientRegistrationTypesSupported'
+            END AS name,
+            fed.realm_id,
+            o.value
+            FROM openid_federation_attribute o
+            JOIN openid_federation fed
+            ON fed.internal_id = o.openid_federation_id
+            JOIN realm_attribute et
+            ON et.realm_id = fed.realm_id
+            AND et.name = 'openidFederationEntityTypes'
+            WHERE o.name = 'openidFederationClientRegistrationTypesSupported'
+            FETCH FIRST 1 ROWS ONLY;
+        </sql>
+
         <sql>
             DELETE FROM openid_federation_attribute
             WHERE name = 'openidFederationEntityTypes';

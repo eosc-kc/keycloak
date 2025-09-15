@@ -36,6 +36,7 @@ import org.keycloak.models.KeycloakSession;
 import org.keycloak.models.enums.ClientRegistrationTypeEnum;
 import org.keycloak.models.enums.EntityTypeEnum;
 import org.keycloak.models.utils.KeycloakModelUtils;
+import org.keycloak.models.utils.RepresentationToModel;
 import org.keycloak.models.OpenIdFederationConfig;
 import org.keycloak.protocol.AuthorizationEndpointBase;
 import org.keycloak.protocol.oidc.OIDCLoginProtocol;
@@ -77,6 +78,7 @@ import jakarta.ws.rs.core.Response;
 import org.keycloak.utils.OpenIdFederationTrustChainProcessor;
 import org.keycloak.utils.OpenIdFederationUtils;
 
+import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -182,42 +184,7 @@ public class AuthorizationEndpoint extends AuthorizationEndpointBase {
         }
         checkClient(clientId);
 
-        if (!automaticRegistration) {
-            request = AuthorizationEndpointRequestParserProcessor.parseRequest(event, session, client, params, AuthorizationEndpointRequestParserProcessor.EndpointType.OIDC_AUTH_ENDPOINT);
-        } else {
-            request = AuthorizationEndpointRequestParserProcessor.parseRequestOpenIdFederation(event, session, params, AuthorizationEndpointRequestParserProcessor.EndpointType.OIDC_AUTH_ENDPOINT);
-            if (request.getAdditionalReqParams().get("sub") != null || request.getAdditionalReqParams().get("jti") == null
-                    || request.getAdditionalReqParams().get("exp") == null || request.getIss() == null
-                    ||  !Urls.realmIssuer(session.getContext().getUri(UrlType.FRONTEND).getBaseUri(), session.getContext().getRealm().getName()).equals(request.getAdditionalReqParams().get("aud"))) {
-                event.error(Errors.INVALID_REQUEST);
-                throw new ErrorPageException(session, authenticationSession, Response.Status.BAD_REQUEST, Messages.OPENID_FEDERATION_AUTOMATIC_FALSE_REQUEST_OBJECT);
-            }
-
-            try {
-                String rpMetadata = OpenIdFederationUtils.getSelfSignedToken(clientId, session);
-                EntityStatement rpEntityStatement = trustChainProcessor.parseAndValidateSelfSigned(rpMetadata);
-                trustChainProcessor.validationRules(rpEntityStatement, false);
-                logger.info("starting validating trust chains");
-                TrustChainResolution validChain = trustChainProcessor.constructTrustChains(rpEntityStatement, realm.getOpenIdFederations().stream().map(OpenIdFederationConfig::getTrustAnchor).collect(Collectors.toSet()), true);
-
-                if (validChain == null) {
-                    throw new ErrorResponseException(Errors.INVALID_TRUST_ANCHOR, "No trusted trust anchor could be found", Response.Status.NOT_FOUND);
-                }
-
-                EventBuilder event = new EventBuilder(session.getContext().getRealm(), session, session.getContext().getConnection());
-                OpenIdFederationClientRegistrationService provider = new OpenIdFederationClientRegistrationService(session);
-                provider.setEvent(event);
-                provider.setAuth(new ClientRegistrationAuth(session, provider, event, "openid-connect"));
-                ClientRepresentation clientRepresentation = provider.createOrUpdateClient(rpEntityStatement, (RPMetadata) validChain.getMetadataAfterPolicies());
-                client = realm.getClientByClientId(clientRepresentation.getClientId());
-                session.getContext().setClient(client);
-
-            } catch (ErrorPageException e) {
-                throw e;
-            } catch (Exception e) {
-                throw new ErrorResponseException(Errors.INVALID_REQUEST, e.getMessage(), Response.Status.BAD_REQUEST);
-            }
-        }
+        request = automaticRegistration ? AuthorizationEndpointRequestParserProcessor.parseRequestOpenIdFederation(event, session, client, params, AuthorizationEndpointRequestParserProcessor.EndpointType.OIDC_AUTH_ENDPOINT) :AuthorizationEndpointRequestParserProcessor.parseRequest(event, session, client, params, AuthorizationEndpointRequestParserProcessor.EndpointType.OIDC_AUTH_ENDPOINT);
 
         AuthorizationEndpointChecker checker = new AuthorizationEndpointChecker()
                 .event(event)
@@ -317,8 +284,29 @@ public class AuthorizationEndpoint extends AuthorizationEndpointBase {
 
         client = realm.getClientByClientId(clientId);
         if (UriUtils.isUri(clientId) && (client == null || !client.isEnabled()) && realm.isOpenIdFederationTypeRegistrationSupported(EntityTypeEnum.OPENID_PROVIDER, ClientRegistrationTypeEnum.AUTOMATIC)) {
-            automaticRegistration = true;
-            return;
+                try {
+                    String rpMetadata = OpenIdFederationUtils.getSelfSignedToken(clientId, session);
+                    EntityStatement rpEntityStatement = trustChainProcessor.parseAndValidateSelfSigned(rpMetadata);
+                    trustChainProcessor.validationRules(rpEntityStatement, false);
+                    logger.info("starting validating trust chains");
+                    TrustChainResolution validChain = trustChainProcessor.constructTrustChains(rpEntityStatement, realm.getOpenIdFederations().stream().map(OpenIdFederationConfig::getTrustAnchor).collect(Collectors.toSet()), true);
+
+                    if (validChain == null) {
+                        throw new ErrorResponseException(Errors.INVALID_TRUST_ANCHOR, "No trusted trust anchor could be found", Response.Status.NOT_FOUND);
+                    }
+
+                    EventBuilder event = new EventBuilder(session.getContext().getRealm(), session, session.getContext().getConnection());
+                    OpenIdFederationClientRegistrationService provider = new OpenIdFederationClientRegistrationService(session);
+                    provider.setEvent(event);
+                    provider.setAuth(new ClientRegistrationAuth(session, provider, event, "openid-connect"));
+                    ClientRepresentation clientRepresentation = provider.createOrUpdateClient(rpEntityStatement, (RPMetadata) validChain.getMetadataAfterPolicies());
+                    client = realm.getClientByClientId(clientRepresentation.getClientId());
+                    automaticRegistration = true;
+                } catch (ErrorPageException e) {
+                    throw e;
+                } catch (Exception e) {
+                    throw new ErrorResponseException(Errors.INVALID_REQUEST, e.getMessage(), Response.Status.BAD_REQUEST);
+                }
         }
 
         if (client == null) {
