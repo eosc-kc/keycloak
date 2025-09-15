@@ -333,8 +333,8 @@ public interface RealmModel extends RoleContainerModel {
         return Stream.empty();
     };
 
-    default Set<String> getTrustAnchorsIdsBasedOnTypes(EntityTypeEnum entityType, ClientRegistrationTypeEnum clientRegistrationType) {
-        return getTrustAnchorsBasedOnTypes(entityType, clientRegistrationType).map(OpenIdFederationConfig::getTrustAnchor).collect(Collectors.toSet());
+    default boolean isOpenIdFederationTypeRegistrationSupported(EntityTypeEnum entityType, ClientRegistrationTypeEnum clientRegistrationType) {
+        return isOpenIdFederationEnabled() && getOpenIdFederationGeneralConfig().getEntityTypes().contains(entityType) && EntityTypeEnum.OPENID_RELYING_PARTY.equals(entityType) ? getOpenIdFederationGeneralConfig().getOpClientRegistrationTypesSupported().contains(clientRegistrationType) : getOpenIdFederationGeneralConfig().getRpClientRegistrationTypesSupported().contains(clientRegistrationType) ;
     };
 
     default void setOpenIdFederationGeneralConfig(OpenIdFederationGeneralConfig generalConfig) {

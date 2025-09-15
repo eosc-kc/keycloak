@@ -16,6 +16,9 @@ Our Keycloak version is working well with PostgreSQL database. For using other S
 - OpenID Federation Automatic Registration as OP 
 - OID-FED settings for OPs
 
+### Changed
+- Move entityType and ClientRegistrationType to OpenId Federation general settings
+
 
 ## [22.0.13-1.22] - 2025-09-08
 
