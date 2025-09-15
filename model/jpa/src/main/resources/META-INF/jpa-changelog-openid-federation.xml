@@ -82,7 +82,7 @@
             ON fed.internal_id = o.openid_federation_id
             JOIN realm_attribute et
             ON et.realm_id = fed.realm_id
-            AND et."name" = 'openidFederationEntityTypes'
+            AND et.name = 'openidFederationEntityTypes'
             WHERE o.name = 'openidFederationClientRegistrationTypesSupported';
         </sql>
         <sql>
