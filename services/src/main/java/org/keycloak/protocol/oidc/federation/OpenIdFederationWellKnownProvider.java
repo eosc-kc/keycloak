@@ -77,15 +77,11 @@ public class OpenIdFederationWellKnownProvider extends OIDCWellKnownProvider {
                 opMetadata.setFederationRegistrationEndpoint(backendUriInfo.getBaseUriBuilder().clone().path(RealmsResource.class).path(RealmsResource.class, "getOpenIdFederationClientsService").build(realm.getName()).toString());
             }
             opMetadata.setClientRegistrationTypesSupported(opRegistrationTypes.stream().map(ClientRegistrationTypeEnum::getValue).collect(Collectors.toList()));
-            opMetadata.setContacts(openIdFederationConfig.getContacts());
-            opMetadata.setLogoUri(openIdFederationConfig.getLogoUri());
-            opMetadata.setPolicyUri(openIdFederationConfig.getPolicyUri());
-            opMetadata.setCommonMetadata(common);
             metadata.setOpenIdProviderMetadata(opMetadata);
         }
 
         if (openIdFederationConfig.getEntityTypes() != null && openIdFederationConfig.getEntityTypes().contains(EntityTypeEnum.OPENID_RELYING_PARTY)) {
-            RPMetadata rPMetadata = OpenIdFederationUtils.createRPMetadata(openIdFederationConfig, rpRegistrationTypes.stream(), common, RealmsResource.protocolUrl(backendUriInfo).clone().path(OIDCLoginProtocolService.class, "certs").build(realm.getName(),
+            RPMetadata rPMetadata = OpenIdFederationUtils.createRPMetadata(openIdFederationConfig, rpRegistrationTypes.stream(), null, RealmsResource.protocolUrl(backendUriInfo).clone().path(OIDCLoginProtocolService.class, "certs").build(realm.getName(),
                     OIDCLoginProtocol.LOGIN_PROTOCOL).toString(), frontendUriInfo, realm.getName());
             // For now, use default subject types since we removed the individual federation configs
             List<String> openIdFederationSubjectTypes = OIDCWellKnownProvider.DEFAULT_SUBJECT_TYPES_SUPPORTED;

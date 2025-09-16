@@ -1061,7 +1061,7 @@ public class RealmAdapter implements LegacyRealmModel, JpaModel<RealmEntity> {
     @Override
     public boolean isOpenIdFederationTypeRegistrationSupported(EntityTypeEnum entityType, ClientRegistrationTypeEnum clientRegistrationType) {
         OpenIdFederationGeneralConfig generalConfig = getOpenIdFederationGeneralConfig();
-        if (generalConfig == null) {
+        if (generalConfig == null ||  generalConfig.getEntityTypes() == null) {
             return false;
         }
 
