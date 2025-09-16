@@ -125,6 +125,9 @@ public class ModelToRepresentation {
         REALM_EXCLUDED_ATTRIBUTES.add(Constants.OPENID_FEDERATION_ORGANIZATION_URI);
         REALM_EXCLUDED_ATTRIBUTES.add(Constants.OPENID_FEDERATION_LOGO_URI);
         REALM_EXCLUDED_ATTRIBUTES.add(Constants.OPENID_FEDERATION_POLICY_URI);
+        REALM_EXCLUDED_ATTRIBUTES.add(Constants.OPENID_FEDERATION_ENTITY_TYPES);
+        REALM_EXCLUDED_ATTRIBUTES.add(Constants.OPENID_FEDERATION_OP_CLIENT_REGISTRATION_TYPES_SUPPORTED);
+        REALM_EXCLUDED_ATTRIBUTES.add(Constants.OPENID_FEDERATION_RP_CLIENT_REGISTRATION_TYPES_SUPPORTED);
     }
 
     private static final Logger LOG = Logger.getLogger(ModelToRepresentation.class);
@@ -529,6 +532,12 @@ public class ModelToRepresentation {
             rep.setOpenIdFederationLifespan(openIdFederationConfig.getLifespan());
             rep.setOpenIdFederationResolveEndpoint(openIdFederationConfig.getFederationResolveEndpoint());
             rep.setOpenIdFederationHistoricalKeysEndpoint(openIdFederationConfig.getFederationHistoricalKeysEndpoint());
+            if (openIdFederationConfig.getEntityTypes() != null)
+                rep.setOpenIdFederationEntityTypes(openIdFederationConfig.getEntityTypes().stream().map(EntityTypeEnum::name).collect(Collectors.toList()));
+            if (openIdFederationConfig.getOpClientRegistrationTypesSupported() != null)
+                rep.setOpenIdFederationOPClientRegistrationTypesSupported(openIdFederationConfig.getOpClientRegistrationTypesSupported().stream().map(ClientRegistrationTypeEnum::name).collect(Collectors.toList()));
+            if (openIdFederationConfig.getRpClientRegistrationTypesSupported() != null)
+                rep.setOpenIdFederationRPClientRegistrationTypesSupported(openIdFederationConfig.getRpClientRegistrationTypesSupported().stream().map(ClientRegistrationTypeEnum::name).collect(Collectors.toList()));
             if (internal && openIdFederationConfig.getOpenIdFederationList() != null) {
                 rep.setOpenIdFederationList(openIdFederationConfig.getOpenIdFederationList().stream().map(x -> toRepresentation(x)).collect(Collectors.toList()));
             }
