@@ -20,6 +20,8 @@ package org.keycloak.models;
 import java.util.Comparator;
 import org.keycloak.common.enums.SslRequired;
 import org.keycloak.component.ComponentModel;
+import org.keycloak.models.enums.ClientRegistrationTypeEnum;
+import org.keycloak.models.enums.EntityTypeEnum;
 import org.keycloak.provider.Provider;
 import org.keycloak.provider.ProviderEvent;
 import org.keycloak.representations.idm.RealmRepresentation;
@@ -332,6 +334,11 @@ public interface RealmModel extends RoleContainerModel {
 
     default boolean isOpenIdFederationEnabled() {
         return getOpenIdFederationGeneralConfig() != null;
+    };
+
+
+    default boolean isOpenIdFederationTypeRegistrationSupported(EntityTypeEnum entityType, ClientRegistrationTypeEnum clientRegistrationType) {
+        return isOpenIdFederationEnabled() && getOpenIdFederationGeneralConfig().getEntityTypes() != null && getOpenIdFederationGeneralConfig().getOpClientRegistrationTypesSupported() != null && getOpenIdFederationGeneralConfig().getEntityTypes().contains(entityType) && getOpenIdFederationGeneralConfig().getOpClientRegistrationTypesSupported().contains(clientRegistrationType) ;
     };
 
     default void setOpenIdFederationGeneralConfig(OpenIdFederationGeneralConfig generalConfig) {

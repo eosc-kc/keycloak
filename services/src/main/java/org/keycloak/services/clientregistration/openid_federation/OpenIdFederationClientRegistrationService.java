@@ -12,9 +12,9 @@ import org.keycloak.events.Errors;
 import org.keycloak.exceptions.InvalidTrustChainException;
 import org.keycloak.models.KeycloakSession;
 import org.keycloak.models.OpenIdFederationConfig;
-import org.keycloak.models.OpenIdFederationGeneralConfig;
 import org.keycloak.models.RealmModel;
 import org.keycloak.models.enums.ClientRegistrationTypeEnum;
+import org.keycloak.models.enums.EntityTypeEnum;
 import org.keycloak.representations.idm.ClientRepresentation;
 import org.keycloak.representations.openid_federation.EntityStatement;
 import org.keycloak.representations.openid_federation.EntityStatementExplicitResponse;
@@ -50,10 +50,7 @@ public class OpenIdFederationClientRegistrationService extends AbstractClientReg
     @Consumes({"application/entity-statement+jwt", "application/trust-chain+json"})
     public Response explicitClientRegistration(String body, @Context HttpHeaders headers) {
         RealmModel realm = session.getContext().getRealm();
-        OpenIdFederationGeneralConfig config = realm.getOpenIdFederationGeneralConfig();
-        //TODO In future, we need to check for being OP and support explicit registration
-        //Avoid check now as only posibility is OP with explicit registration
-        if (!realm.isOpenIdFederationEnabled() || config.getAuthorityHints().isEmpty()) {
+        if (!realm.isOpenIdFederationTypeRegistrationSupported(EntityTypeEnum.OPENID_PROVIDER, ClientRegistrationTypeEnum.EXPLICIT) || realm.getOpenIdFederations().isEmpty()) {
             throw new ErrorResponseException(Errors.INVALID_REQUEST, "Explicit OpenID Federation Client Registration is not supported in this realm", Response.Status.BAD_REQUEST);
         }
         checkSsl();
@@ -68,12 +65,8 @@ public class OpenIdFederationClientRegistrationService extends AbstractClientReg
             }
 
             validationRules(statement);
-
-            Set<String> trustAnchorIds = config.getOpenIdFederationList().stream().map(OpenIdFederationConfig::getTrustAnchor).collect(Collectors.toSet());
-
             logger.info("starting validating trust chains");
-            TrustChainResolution validTrustChain = trustChainProcessor.constructTrustChains(statement, trustAnchorIds);
-
+            TrustChainResolution validTrustChain = trustChainProcessor.constructTrustChains(statement, realm.getOpenIdFederations().stream().map(OpenIdFederationConfig::getTrustAnchor).collect(Collectors.toSet()));
             if (validTrustChain == null) {
                 throw new ErrorResponseException(Errors.INVALID_TRUST_ANCHOR, "No trusted trust anchor could be found", Response.Status.NOT_FOUND);
             }
@@ -109,7 +102,6 @@ public class OpenIdFederationClientRegistrationService extends AbstractClientReg
             responseStatement.type(TokenUtil.EXPLICIT_REGISTRATION_RESPONSE_JWT);
             String token = session.tokens().encodeForOpenIdFederation(responseStatement);
             return Response.ok(token).header("Content-Type", TokenUtil.APPLICATION_EXPLICIT_REGISTRATION_RESPONSE_JWT).build();
-
 
         } else {
             // TODO Handle Trust Chain

@@ -43,15 +43,14 @@ public class OpenIdFederationWellKnownProvider extends OIDCWellKnownProvider {
         RealmModel realm = session.getContext().getRealm();
         OpenIdFederationGeneralConfig openIdFederationConfig = realm.getOpenIdFederationGeneralConfig();
 
-        if (openIdFederationConfig ==  null || openIdFederationConfig.getOpenIdFederationList().isEmpty())
+        if (openIdFederationConfig ==  null || openIdFederationConfig.getOpenIdFederationList().isEmpty() || openIdFederationConfig.getEntityTypes() == null || openIdFederationConfig.getEntityTypes().isEmpty())
             throw new NotFoundException();
 
         UriInfo frontendUriInfo = session.getContext().getUri(UrlType.FRONTEND);
         UriInfo backendUriInfo = session.getContext().getUri(UrlType.BACKEND);
         Metadata metadata = new Metadata();
-        CommonMetadata common = OpenIdFederationUtils.commonMetadata(openIdFederationConfig);
 
-        if (openIdFederationConfig.getOpenIdFederationList().stream().flatMap(x -> x.getEntityTypes().stream()).anyMatch(EntityTypeEnum.OPENID_PROVIDER::equals)) {
+        if (openIdFederationConfig.getEntityTypes().contains(EntityTypeEnum.OPENID_PROVIDER) && openIdFederationConfig.getOpClientRegistrationTypesSupported() != null && !openIdFederationConfig.getOpClientRegistrationTypesSupported().isEmpty()) {
             OPMetadata opMetadata;
             try {
                 opMetadata = from(((OIDCConfigurationRepresentation) super.getConfig()));
@@ -59,21 +58,17 @@ public class OpenIdFederationWellKnownProvider extends OIDCWellKnownProvider {
                 throw new InternalServerErrorException("Could not form the configuration response");
             }
 
-            Set<ClientRegistrationTypeEnum> registrationTypes = openIdFederationConfig.getOpenIdFederationList().stream().flatMap(x -> x.getClientRegistrationTypesSupported().stream()).collect(Collectors.toSet());
-            if (registrationTypes.contains(ClientRegistrationTypeEnum.EXPLICIT)) {
+            if (openIdFederationConfig.getOpClientRegistrationTypesSupported().contains(ClientRegistrationTypeEnum.EXPLICIT)) {
                 opMetadata.setFederationRegistrationEndpoint(backendUriInfo.getBaseUriBuilder().clone().path(RealmsResource.class).path(RealmsResource.class, "getOpenIdFederationClientsService").build(realm.getName()).toString());
             }
-            opMetadata.setClientRegistrationTypesSupported(registrationTypes.stream().map(ClientRegistrationTypeEnum::getValue).collect(Collectors.toList()));
-            opMetadata.setContacts(openIdFederationConfig.getContacts());
-            opMetadata.setLogoUri(openIdFederationConfig.getLogoUri());
-            opMetadata.setPolicyUri(openIdFederationConfig.getPolicyUri());
-            opMetadata.setCommonMetadata(common);
+            opMetadata.setClientRegistrationTypesSupported(openIdFederationConfig.getOpClientRegistrationTypesSupported().stream().map(ClientRegistrationTypeEnum::getValue).collect(Collectors.toList()));
             metadata.setOpenIdProviderMetadata(opMetadata);
         }
 
         if (openIdFederationConfig.getFederationResolveEndpoint() != null || openIdFederationConfig.getFederationHistoricalKeysEndpoint() != null ||
-                openIdFederationConfig.getOrganizationName() != null || ! openIdFederationConfig.getContacts().isEmpty() ||
+                openIdFederationConfig.getOrganizationName() != null || openIdFederationConfig.getContacts() != null ||
                 openIdFederationConfig.getOrganizationUri() != null || openIdFederationConfig.getPolicyUri() != null || openIdFederationConfig.getLogoUri() != null) {
+            CommonMetadata common = OpenIdFederationUtils.commonMetadata(openIdFederationConfig);
             OpenIdFederationEntity federationEntity = getOpenIdFederationEntity(openIdFederationConfig, common);
             metadata.setFederationEntity(federationEntity);
         }

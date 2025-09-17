@@ -51,6 +51,8 @@ import org.keycloak.models.WebAuthnPolicy;
 import org.keycloak.models.cache.CachedRealmModel;
 import org.keycloak.models.cache.UserCache;
 import org.keycloak.models.cache.infinispan.entities.CachedRealm;
+import org.keycloak.models.enums.ClientRegistrationTypeEnum;
+import org.keycloak.models.enums.EntityTypeEnum;
 import org.keycloak.representations.idm.RealmRepresentation;
 import org.keycloak.storage.UserStorageProvider;
 import org.keycloak.storage.UserStorageUtil;
@@ -793,6 +795,13 @@ public class RealmAdapter implements CachedRealmModel {
     }
 
     @Override
+    public boolean isOpenIdFederationTypeRegistrationSupported(EntityTypeEnum entityType, ClientRegistrationTypeEnum clientRegistrationType) {
+        if (isUpdated()) return updated.isOpenIdFederationTypeRegistrationSupported(entityType, clientRegistrationType);
+        return isOpenIdFederationEnabled() && cached.getOpenIdFederationConfig().getEntityTypes()!= null && cached.getOpenIdFederationConfig().getEntityTypes().contains(entityType)
+                && cached.getOpenIdFederationConfig().getOpClientRegistrationTypesSupported() != null && cached.getOpenIdFederationConfig().getOpClientRegistrationTypesSupported().contains(clientRegistrationType);
+    }
+
+    @Override
     public OpenIdFederationGeneralConfig getOpenIdFederationGeneralConfig() {
         if (isUpdated()) return updated.getOpenIdFederationGeneralConfig();
         return cached.getOpenIdFederationConfig();
@@ -807,7 +816,7 @@ public class RealmAdapter implements CachedRealmModel {
     @Override
     public List<OpenIdFederationConfig> getOpenIdFederations() {
         if (isUpdated()) return updated.getOpenIdFederations();
-        return isOpenIdFederationEnabled() ?  cached.getOpenIdFederationConfig().getOpenIdFederationList() : List.of();
+        return isOpenIdFederationEnabled() ? cached.getOpenIdFederationConfig().getOpenIdFederationList() : List.of();
     }
 
     @Override

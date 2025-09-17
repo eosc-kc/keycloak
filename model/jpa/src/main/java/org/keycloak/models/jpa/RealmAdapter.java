@@ -1094,6 +1094,14 @@ public class RealmAdapter implements StorageProviderRealmModel, JpaModel<RealmEn
     }
 
     @Override
+    public boolean isOpenIdFederationTypeRegistrationSupported(EntityTypeEnum entityType, ClientRegistrationTypeEnum clientRegistrationType) {
+        OpenIdFederationGeneralConfig generalConfig = getOpenIdFederationGeneralConfig();
+
+        return generalConfig != null && generalConfig.getEntityTypes() != null && generalConfig.getEntityTypes().contains(entityType) &&
+                generalConfig.getOpClientRegistrationTypesSupported() != null && generalConfig.getOpClientRegistrationTypesSupported().contains(clientRegistrationType);
+    }
+
+    @Override
     public OpenIdFederationGeneralConfig getOpenIdFederationGeneralConfig() {
         //for enabling OpenId Federation at least one Federation configuration needs to exist
         if (getAttribute(Constants.OPENID_FEDERATION_ENABLED, Boolean.TRUE)) {
@@ -1112,7 +1120,19 @@ public class RealmAdapter implements StorageProviderRealmModel, JpaModel<RealmEn
             config.setLifespan(getAttribute(Constants.OPENID_FEDERATION_LIFESPAN, 86400));
             config.setFederationResolveEndpoint(getAttribute(Constants.OPENID_FEDERATION_RESOLVE_ENDPOINT));
             config.setFederationHistoricalKeysEndpoint(getAttribute(Constants.OPENID_FEDERATION_HISTORICAL_KEYS_ENDPOINT));
+            String entityTypes = getAttribute(Constants.OPENID_FEDERATION_ENTITY_TYPES);
+            if (entityTypes != null && !entityTypes.isEmpty()) {
+                config.setEntityTypes(Arrays.asList(entityTypes.split(",")).stream()
+                        .map(EntityTypeEnum::valueOf)
+                        .collect(Collectors.toList()));
+            }
 
+            String opClientRegistrationTypesStr = getAttribute(Constants.OPENID_FEDERATION_OP_CLIENT_REGISTRATION_TYPES_SUPPORTED);
+            if (opClientRegistrationTypesStr != null && !opClientRegistrationTypesStr.isEmpty()) {
+                config.setOpClientRegistrationTypesSupported(Arrays.asList(opClientRegistrationTypesStr.split(",")).stream()
+                        .map(ClientRegistrationTypeEnum::valueOf)
+                        .collect(Collectors.toList()));
+            }
             config.setOpenIdFederationList(getOpenIdFederationList(realm.getOpenIdFederationList()));
             return config;
         } else {
@@ -1143,6 +1163,17 @@ public class RealmAdapter implements StorageProviderRealmModel, JpaModel<RealmEn
             setAttribute(Constants.OPENID_FEDERATION_LIFESPAN, generalConfig.getLifespan() == null ? String.valueOf(86400) : String.valueOf(generalConfig.getLifespan()));
             setAttribute(Constants.OPENID_FEDERATION_RESOLVE_ENDPOINT, generalConfig.getFederationResolveEndpoint());
             setAttribute(Constants.OPENID_FEDERATION_HISTORICAL_KEYS_ENDPOINT, generalConfig.getFederationHistoricalKeysEndpoint());
+            if (generalConfig.getEntityTypes() == null || generalConfig.getEntityTypes().isEmpty()) {
+                removeAttribute(Constants.OPENID_FEDERATION_ENTITY_TYPES);
+            } else {
+                setAttribute(Constants.OPENID_FEDERATION_ENTITY_TYPES, generalConfig.getEntityTypes().stream().map(EntityTypeEnum::name).collect(Collectors.joining(",")));
+            }
+            if (generalConfig.getOpClientRegistrationTypesSupported() == null || generalConfig.getOpClientRegistrationTypesSupported().isEmpty()) {
+                removeAttribute(Constants.OPENID_FEDERATION_OP_CLIENT_REGISTRATION_TYPES_SUPPORTED);
+            } else {
+                setAttribute(Constants.OPENID_FEDERATION_OP_CLIENT_REGISTRATION_TYPES_SUPPORTED, generalConfig.getOpClientRegistrationTypesSupported().stream().map(ClientRegistrationTypeEnum::name).collect(Collectors.joining(",")));
+            }
+
             if (!generalConfig.getOpenIdFederationList().isEmpty()) {
                 realm.setOpenIdFederationList(generalConfig.getOpenIdFederationList().stream().map(fedConfig -> {
                     OpenIdFederationEntity fedEntity = new OpenIdFederationEntity();
@@ -1164,12 +1195,7 @@ public class RealmAdapter implements StorageProviderRealmModel, JpaModel<RealmEn
             OpenIdFederationConfig fedConfig = new OpenIdFederationConfig();
             fedConfig.setInternalId(fedEntity.getInternalId());
             fedConfig.setTrustAnchor(fedEntity.getTrustAnchor());
-            String clientRegistrationTypesSupportedStr = fedEntity.getConfig().get(Constants.OPENID_FEDERATION_CLIENT_REGISTRATION_TYPES_SUPPORTED);
-            List<String> clientRegistrationTypesSupported = (clientRegistrationTypesSupportedStr == null || clientRegistrationTypesSupportedStr.isEmpty()) ? new ArrayList<>() : Arrays.asList(clientRegistrationTypesSupportedStr.split("##"));
-            fedConfig.setClientRegistrationTypesSupported(clientRegistrationTypesSupported.stream().map(x -> ClientRegistrationTypeEnum.valueOf(x)).collect(Collectors.toList()));
-            String entityTypesStr = fedEntity.getConfig().get(Constants.OPENID_FEDERATION_ENTITY_TYPES);
-            List<String> entityTypes = (entityTypesStr == null || entityTypesStr.isEmpty()) ? new ArrayList<>() : Arrays.asList(entityTypesStr.split("##"));
-            fedConfig.setEntityTypes(entityTypes.stream().map(x -> EntityTypeEnum.valueOf(x)).collect(Collectors.toList()));
+            
             return fedConfig;
         }).collect(Collectors.toList());
     }
@@ -1193,8 +1219,6 @@ public class RealmAdapter implements StorageProviderRealmModel, JpaModel<RealmEn
 
     private void transformToOpenIdFederationEntity(OpenIdFederationEntity fedEntity, OpenIdFederationConfig fedConfig){
         fedEntity.setTrustAnchor(fedConfig.getTrustAnchor());
-        fedEntity.getConfig().put(Constants.OPENID_FEDERATION_ENTITY_TYPES, fedConfig.getEntityTypes().stream().map(x -> x.name()).collect(Collectors.joining("##")));
-        fedEntity.getConfig().put(Constants.OPENID_FEDERATION_CLIENT_REGISTRATION_TYPES_SUPPORTED, fedConfig.getClientRegistrationTypesSupported().stream().map(x -> x.name()).collect(Collectors.joining("##")));
         fedEntity.setRealm(realm);
     }
 

@@ -170,7 +170,8 @@ public class RealmRepresentation {
     private String openIdFederationResolveEndpoint;
     private String openIdFederationHistoricalKeysEndpoint;
     private List<OpenIdFederationRepresentation> openIdFederationList;
-
+    private List<String> openIdFederationEntityTypes;
+    private List<String> openIdFederationOPClientRegistrationTypesSupported;
 
     // Client Policies/Profiles
 
@@ -1373,6 +1374,22 @@ public class RealmRepresentation {
 
     public void setOpenIdFederationList(List<OpenIdFederationRepresentation> openIdFederationList) {
         this.openIdFederationList = openIdFederationList;
+    }
+
+    public List<String> getOpenIdFederationEntityTypes() {
+        return openIdFederationEntityTypes;
+    }
+
+    public void setOpenIdFederationEntityTypes(List<String> openIdFederationEntityTypes) {
+        this.openIdFederationEntityTypes = openIdFederationEntityTypes;
+    }
+
+    public List<String> getOpenIdFederationOPClientRegistrationTypesSupported() {
+        return openIdFederationOPClientRegistrationTypesSupported;
+    }
+
+    public void setOpenIdFederationOPClientRegistrationTypesSupported(List<String> openIdFederationOPClientRegistrationTypesSupported) {
+        this.openIdFederationOPClientRegistrationTypesSupported = openIdFederationOPClientRegistrationTypesSupported;
     }
 
     // Client Policies/Profiles

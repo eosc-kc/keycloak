@@ -41,12 +41,12 @@ public class OpenIdFederationWellKnownProviderTest extends AbstractWellKnownProv
             realmRep.setOpenIdFederationOrganizationName("Keycloak");
             realmRep.setOpenIdFederationResolveEndpoint("https://edugain.org/resolve");
             realmRep.setOpenIdFederationAuthorityHints(Stream.of("https://edugain.org/federation").collect(Collectors.toList()));
+            realmRep.setOpenIdFederationOPClientRegistrationTypesSupported(Stream.of("EXPLICIT").collect(Collectors.toList()));
+            realmRep.setOpenIdFederationEntityTypes(Stream.of("OPENID_PROVIDER").collect(Collectors.toList()));
             testRealm.update(realmRep);
 
             OpenIdFederationRepresentation openIdFederationRepresentation = new OpenIdFederationRepresentation();
             openIdFederationRepresentation.setTrustAnchor("https://edugain.org/trust-anchor");
-            openIdFederationRepresentation.setClientRegistrationTypesSupported(Stream.of("EXPLICIT").collect(Collectors.toList()));
-            openIdFederationRepresentation.setEntityTypes(Stream.of("OPENID_PROVIDER").collect(Collectors.toList()));
             testRealm.openIdFederationsResource().create(openIdFederationRepresentation);
 
             //When Open Id Federation is configured
@@ -68,6 +68,10 @@ public class OpenIdFederationWellKnownProviderTest extends AbstractWellKnownProv
             realmRep.setOpenIdFederationEnabled(false);
             testRealm.update(realmRep);
         } finally {
+            RealmResource testRealm = adminClient.realm("test");
+            RealmRepresentation realmRep = testRealm.toRepresentation();
+            realmRep.setOpenIdFederationEnabled(false);
+            testRealm.update(realmRep);
             client.close();
         }
     }

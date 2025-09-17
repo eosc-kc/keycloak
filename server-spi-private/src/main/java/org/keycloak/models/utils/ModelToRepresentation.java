@@ -142,6 +142,8 @@ public class ModelToRepresentation {
         REALM_EXCLUDED_ATTRIBUTES.add(Constants.OPENID_FEDERATION_ORGANIZATION_URI);
         REALM_EXCLUDED_ATTRIBUTES.add(Constants.OPENID_FEDERATION_LOGO_URI);
         REALM_EXCLUDED_ATTRIBUTES.add(Constants.OPENID_FEDERATION_POLICY_URI);
+        REALM_EXCLUDED_ATTRIBUTES.add(Constants.OPENID_FEDERATION_ENTITY_TYPES);
+        REALM_EXCLUDED_ATTRIBUTES.add(Constants.OPENID_FEDERATION_OP_CLIENT_REGISTRATION_TYPES_SUPPORTED);
     }
 
     public static Set<String> CLIENT_EXCLUDED_ATTRIBUTES = new HashSet<>();
@@ -543,6 +545,10 @@ public class ModelToRepresentation {
             rep.setOpenIdFederationLifespan(openIdFederationGeneralConfig.getLifespan());
             rep.setOpenIdFederationResolveEndpoint(openIdFederationGeneralConfig.getFederationResolveEndpoint());
             rep.setOpenIdFederationHistoricalKeysEndpoint(openIdFederationGeneralConfig.getFederationHistoricalKeysEndpoint());
+            if (openIdFederationGeneralConfig.getEntityTypes() != null)
+                rep.setOpenIdFederationEntityTypes(openIdFederationGeneralConfig.getEntityTypes().stream().map(EntityTypeEnum::name).collect(Collectors.toList()));
+            if (openIdFederationGeneralConfig.getOpClientRegistrationTypesSupported() != null)
+                rep.setOpenIdFederationOPClientRegistrationTypesSupported(openIdFederationGeneralConfig.getOpClientRegistrationTypesSupported().stream().map(ClientRegistrationTypeEnum::name).collect(Collectors.toList()));
             if (internal && openIdFederationGeneralConfig.getOpenIdFederationList() != null) {
                 rep.setOpenIdFederationList(openIdFederationGeneralConfig.getOpenIdFederationList().stream().map(x -> toRepresentation(x)).collect(Collectors.toList()));
             }
@@ -951,8 +957,6 @@ public class ModelToRepresentation {
         OpenIdFederationRepresentation federationRep = new OpenIdFederationRepresentation();
         federationRep.setInternalId(model.getInternalId());
         federationRep.setTrustAnchor(model.getTrustAnchor());
-        federationRep.setEntityTypes(model.getEntityTypes().stream().map(EntityTypeEnum::toString).collect(Collectors.toList()));
-        federationRep.setClientRegistrationTypesSupported(model.getClientRegistrationTypesSupported().stream().map(ClientRegistrationTypeEnum::toString).collect(Collectors.toList()));
         return federationRep;
 
     }
