@@ -90,7 +90,7 @@ public class OpenIdFederationWellKnownProvider extends OIDCWellKnownProvider {
         }
 
         if (openIdFederationConfig.getFederationResolveEndpoint() != null || openIdFederationConfig.getFederationHistoricalKeysEndpoint() != null ||
-                openIdFederationConfig.getOrganizationName() != null || ! openIdFederationConfig.getContacts().isEmpty() ||
+                openIdFederationConfig.getOrganizationName() != null || openIdFederationConfig.getContacts() != null ||
                 openIdFederationConfig.getOrganizationUri() != null || openIdFederationConfig.getPolicyUri() != null || openIdFederationConfig.getLogoUri() != null) {
             OpenIdFederationEntity federationEntity = getOpenIdFederationEntity(openIdFederationConfig, common);
             metadata.setFederationEntity(federationEntity);
