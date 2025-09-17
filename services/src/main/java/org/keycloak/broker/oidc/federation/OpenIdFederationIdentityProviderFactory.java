@@ -12,7 +12,7 @@ public class OpenIdFederationIdentityProviderFactory extends OIDCIdentityProvide
 
     @Override
     public String getName() {
-        return "OpenId Connect Federation";
+        return "OpenID Federation";
     }
 
     @Override
