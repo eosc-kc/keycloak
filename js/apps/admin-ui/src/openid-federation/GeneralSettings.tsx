@@ -1,7 +1,6 @@
 import type RealmRepresentation from "@keycloak/keycloak-admin-client/lib/defs/realmRepresentation";
 import { useAlerts } from "../components/alert/Alerts";
 import {
-  ActionGroup,
   AlertVariant,
   Button,
   ButtonVariant,
@@ -12,6 +11,9 @@ import {
   ToolbarItem,
   Stack,
   StackItem,
+  Select,
+  SelectVariant,
+  SelectOption,
 } from "@patternfly/react-core";
 import { adminClient } from "../admin-client";
 import { useConfirmDialog } from "../components/confirm-dialog/ConfirmDialog";
@@ -33,12 +35,14 @@ import {
 import { useRealm } from "../context/realm-context/RealmContext";
 import { toOpenIdFederationEdit } from "./routes/OpenIdFederationEdit";
 import { ListEmptyState } from "../components/list-empty-state/ListEmptyState";
-import OpenIdFederationRepresentation, {
-  ClientRegistrationTypesSupported,
-  EntityTypesSupported,
-} from "libs/keycloak-admin-client/lib/defs/openIdFederationRepresentation";
+import OpenIdFederationRepresentation from "libs/keycloak-admin-client/lib/defs/openIdFederationRepresentation";
 import { ScrollForm } from "../components/scroll-form/ScrollForm";
 import { FormattedLink } from "../components/external-link/FormattedLink";
+import {
+  ClientRegistrationTypesSupported,
+  EntityTypesSupported,
+} from "@keycloak/keycloak-admin-client/lib/defs/realmRepresentation";
+import { FixedButtonsGroup } from "../components/form/FixedButtonGroup";
 
 type OpenIdFederationGeneralTabProps = {
   realm: RealmRepresentation;
@@ -48,6 +52,11 @@ type OpenIdFederationGeneralTabProps = {
   ) => void;
   save: (realm: RealmRepresentation) => void;
 };
+
+const openIdFederationOPClientRegistrationTypesSupported: ClientRegistrationTypesSupported[] =
+  ["EXPLICIT"];
+const openIdFederationRPClientRegistrationTypesSupported: ClientRegistrationTypesSupported[] =
+  ["EXPLICIT", "AUTOMATIC"];
 
 const OpenIdFederationLink = (
   openIdFederation: OpenIdFederationRepresentation,
@@ -79,7 +88,7 @@ export const OpenIdFederationGeneralSettings = ({
     control,
     handleSubmit,
     setValue,
-    formState: { isDirty, errors },
+    formState: { errors },
   } = form;
   const { addAlert, addError } = useAlerts();
   const navigate = useNavigate();
@@ -89,6 +98,15 @@ export const OpenIdFederationGeneralSettings = ({
   const [isOpenIdFederationEnabled, setIsOpenIdFederationEnabled] = useState(
     !!realm.openIdFederationEnabled,
   );
+  const [
+    openOPClientRegistrationTypesSupported,
+    setOpenOPClientRegistrationTypesSupported,
+  ] = useState(false);
+  const [
+    openRPClientRegistrationTypesSupported,
+    setOpenRPClientRegistrationTypesSupported,
+  ] = useState(false);
+
   const { realm: realmName } = useRealm();
 
   const [toggleDeleteDialog, DeleteConfirm] = useConfirmDialog({
@@ -118,12 +136,36 @@ export const OpenIdFederationGeneralSettings = ({
     },
   });
 
+  const openIdFederationEntityTypes = useWatch({
+    control,
+    name: "openIdFederationEntityTypes",
+    defaultValue: [],
+  }) as EntityTypesSupported[];
   const openIdFederationEnabled = useWatch({
     control,
     name: "openIdFederationEnabled",
   }) as boolean;
   const setupForm = () => {
-    convertToFormValues(realm, setValue);
+    const defaultValues: RealmRepresentation = {
+      ...realm,
+      openIdFederationContacts: realm.openIdFederationContacts ?? [],
+      openIdFederationAuthorityHints:
+        realm.openIdFederationAuthorityHints ?? [],
+      openIdFederationLogoUri: realm.openIdFederationLogoUri ?? "",
+      openIdFederationPolicyUri: realm.openIdFederationPolicyUri ?? "",
+      openIdFederationOrganizationName:
+        realm.openIdFederationOrganizationName ?? "",
+      openIdFederationOrganizationUri:
+        realm.openIdFederationOrganizationUri ?? "",
+      openIdFederationResolveEndpoint:
+        realm.openIdFederationResolveEndpoint ?? "",
+      openIdFederationHistoricalKeysEndpoint:
+        realm.openIdFederationHistoricalKeysEndpoint ?? "",
+      openIdFederationLifespan: realm.openIdFederationLifespan ?? 86400,
+      openIdFederationEnabled: realm.openIdFederationEnabled ?? false,
+      // ...add other fields as needed
+    };
+    convertToFormValues(defaultValues, setValue);
   };
 
   useEffect(() => {
@@ -340,23 +382,256 @@ export const OpenIdFederationGeneralSettings = ({
                       </FormGroup>
                     </>
                   )}
-                  <ActionGroup>
-                    <Button
-                      variant="primary"
-                      type="submit"
-                      data-testid="general-tab-save"
-                      isDisabled={!isDirty}
+                </FormAccess>
+              </FormProvider>
+            ),
+          },
+          {
+            title: t("openIdProviderSettings"),
+            panel: (
+              <FormProvider {...form}>
+                <FormAccess
+                  isHorizontal
+                  role="manage-realm"
+                  className="pf-u-mt-lg"
+                  onSubmit={handleSubmit(save)}
+                >
+                  <FormGroup
+                    hasNoPaddingTop
+                    label={t("enableOpenIdProvider")}
+                    fieldId="kc-enableOpenIdProvider"
+                  >
+                    <Controller
+                      name="openIdFederationEntityTypes"
+                      defaultValue={[]}
+                      control={control}
+                      render={({ field }) => (
+                        <Switch
+                          label={t("common:on")}
+                          labelOff={t("common:off")}
+                          isChecked={openIdFederationEntityTypes.includes(
+                            "OPENID_PROVIDER",
+                          )}
+                          onChange={(value) => {
+                            field.onChange(!value);
+                            if (value) {
+                              setValue("openIdFederationEntityTypes", [
+                                ...openIdFederationEntityTypes,
+                                "OPENID_PROVIDER",
+                              ]);
+                            } else {
+                              setValue(
+                                "openIdFederationEntityTypes",
+                                openIdFederationEntityTypes.filter(
+                                  (item) => item !== "OPENID_PROVIDER",
+                                ),
+                              );
+                            }
+                          }}
+                          aria-label={t("clientAuthentication")}
+                        />
+                      )}
+                    />
+                  </FormGroup>
+                  {openIdFederationEntityTypes.includes("OPENID_PROVIDER") && (
+                    <FormGroup
+                      label={t(
+                        "openIdFederationRPClientRegistrationTypesSupported",
+                      )}
+                      labelIcon={
+                        <HelpItem
+                          helpText={t(
+                            "openid-federation-help:openIdFederationRPClientRegistrationTypesSupported",
+                          )}
+                          fieldLabelId="resetTypesSupported"
+                        />
+                      }
+                      helperTextInvalid={t("common:required")}
+                      fieldId="types-supported"
                     >
-                      {t("common:save")}
-                    </Button>
-                    <Button
-                      data-testid="general-tab-revert"
-                      variant="link"
-                      onClick={setupForm}
+                      <Controller
+                        name={`openIdFederationRPClientRegistrationTypesSupported`}
+                        defaultValue={[] as ClientRegistrationTypesSupported[]}
+                        control={control}
+                        render={({ field }) => (
+                          <Select
+                            maxHeight={375}
+                            toggleId={
+                              "openIdFederationRPClientRegistrationTypesSupported"
+                            }
+                            variant={SelectVariant.typeaheadMulti}
+                            chipGroupProps={{
+                              numChips: 3,
+                            }}
+                            placeholderText={t(
+                              "clientRegistrationTypesSupportedPlaceholder",
+                            )}
+                            menuAppendTo="parent"
+                            onToggle={(open) =>
+                              setOpenOPClientRegistrationTypesSupported(open)
+                            }
+                            isOpen={openOPClientRegistrationTypesSupported}
+                            selections={field.value as string[]}
+                            onSelect={(_, selectedValue) => {
+                              const value:
+                                | ClientRegistrationTypesSupported[]
+                                | undefined = field.value;
+                              field.onChange(
+                                value?.find((item) => item === selectedValue)
+                                  ? value.filter(
+                                      (item) => item !== selectedValue,
+                                    )
+                                  : [...(value ? value : []), selectedValue],
+                              );
+                            }}
+                            onClear={(event) => {
+                              event.stopPropagation();
+                              field.onChange([]);
+                            }}
+                            typeAheadAriaLabel={t("resetActions")}
+                          >
+                            {openIdFederationRPClientRegistrationTypesSupported.map(
+                              (name) => (
+                                <SelectOption
+                                  key={name}
+                                  value={name}
+                                  data-testid={`${name}-option`}
+                                >
+                                  {name}
+                                </SelectOption>
+                              ),
+                            )}
+                          </Select>
+                        )}
+                      />
+                    </FormGroup>
+                  )}
+                </FormAccess>
+              </FormProvider>
+            ),
+          },
+          {
+            title: t("openIdRelyingPartySettings"),
+            panel: (
+              <FormProvider {...form}>
+                <FormAccess
+                  isHorizontal
+                  role="manage-realm"
+                  className="pf-u-mt-lg"
+                  onSubmit={handleSubmit(save)}
+                >
+                  <FormGroup
+                    hasNoPaddingTop
+                    label={t("enableOpenIdProvider")}
+                    fieldId="kc-enableOpenIdProvider"
+                  >
+                    <Controller
+                      name="openIdFederationEntityTypes"
+                      defaultValue={[]}
+                      control={control}
+                      render={({ field }) => (
+                        <Switch
+                          label={t("common:on")}
+                          labelOff={t("common:off")}
+                          isChecked={openIdFederationEntityTypes.includes(
+                            "OPENID_RELYING_PARTY",
+                          )}
+                          onChange={(value) => {
+                            field.onChange(!value);
+                            if (value) {
+                              setValue("openIdFederationEntityTypes", [
+                                ...openIdFederationEntityTypes,
+                                "OPENID_RELYING_PARTY",
+                              ]);
+                            } else {
+                              setValue(
+                                "openIdFederationEntityTypes",
+                                openIdFederationEntityTypes.filter(
+                                  (item) => item !== "OPENID_RELYING_PARTY",
+                                ),
+                              );
+                            }
+                          }}
+                          aria-label={t("clientAuthentication")}
+                        />
+                      )}
+                    />
+                  </FormGroup>
+                  {openIdFederationEntityTypes.includes(
+                    "OPENID_RELYING_PARTY",
+                  ) && (
+                    <FormGroup
+                      label={t(
+                        "openIdFederationOPClientRegistrationTypesSupported",
+                      )}
+                      labelIcon={
+                        <HelpItem
+                          helpText={t(
+                            "openid-federation-help:openIdFederationOPClientRegistrationTypesSupported",
+                          )}
+                          fieldLabelId="resetTypesSupported"
+                        />
+                      }
+                      helperTextInvalid={t("common:required")}
+                      fieldId="types-supported"
                     >
-                      {t("common:revert")}
-                    </Button>
-                  </ActionGroup>
+                      <Controller
+                        name={`openIdFederationOPClientRegistrationTypesSupported`}
+                        defaultValue={[] as ClientRegistrationTypesSupported[]}
+                        control={control}
+                        render={({ field }) => (
+                          <Select
+                            maxHeight={375}
+                            toggleId={
+                              "openIdFederationList.openIdFederationOPClientRegistrationTypesSupported"
+                            }
+                            variant={SelectVariant.typeaheadMulti}
+                            chipGroupProps={{
+                              numChips: 3,
+                            }}
+                            placeholderText={t(
+                              "clientRegistrationTypesSupportedPlaceholder",
+                            )}
+                            menuAppendTo="parent"
+                            onToggle={(open) =>
+                              setOpenRPClientRegistrationTypesSupported(open)
+                            }
+                            isOpen={openRPClientRegistrationTypesSupported}
+                            selections={field.value as string[]}
+                            onSelect={(_, selectedValue) => {
+                              const value:
+                                | ClientRegistrationTypesSupported[]
+                                | undefined = field.value;
+                              field.onChange(
+                                value?.find((item) => item === selectedValue)
+                                  ? value.filter(
+                                      (item) => item !== selectedValue,
+                                    )
+                                  : [...(value ? value : []), selectedValue],
+                              );
+                            }}
+                            onClear={(event) => {
+                              event.stopPropagation();
+                              field.onChange([]);
+                            }}
+                            typeAheadAriaLabel={t("resetActions")}
+                          >
+                            {openIdFederationOPClientRegistrationTypesSupported.map(
+                              (name) => (
+                                <SelectOption
+                                  key={name}
+                                  value={name}
+                                  data-testid={`${name}-option`}
+                                >
+                                  {name}
+                                </SelectOption>
+                              ),
+                            )}
+                          </Select>
+                        )}
+                      />
+                    </FormGroup>
+                  )}
                 </FormAccess>
               </FormProvider>
             ),
@@ -381,6 +656,7 @@ export const OpenIdFederationGeneralSettings = ({
                               navigate(
                                 toOpenIdFederationCreate({
                                   realm: realm.realm as string,
+                                  tab: "settings",
                                 }),
                               )
                             }
@@ -406,26 +682,6 @@ export const OpenIdFederationGeneralSettings = ({
                           ),
                           displayKey: t("trustAnchor"),
                         },
-                        {
-                          name: "entityTypes",
-                          displayKey: t("entityTypes"),
-                          cellRenderer: (row) => {
-                            const value: EntityTypesSupported[] | undefined =
-                              row.entityTypes;
-                            return value ? value.map((v) => v).join(", ") : "";
-                          },
-                        },
-                        {
-                          name: "clientRegistrationTypesSupported",
-                          displayKey: t("clientRegistrationTypesSupported"),
-                          cellRenderer: (row) => {
-                            const value:
-                              | ClientRegistrationTypesSupported[]
-                              | undefined =
-                              row.clientRegistrationTypesSupported;
-                            return value ? value.map((v) => v).join(", ") : "";
-                          },
-                        },
                       ]}
                       emptyState={
                         <ListEmptyState
@@ -436,6 +692,7 @@ export const OpenIdFederationGeneralSettings = ({
                             navigate(
                               toOpenIdFederationCreate({
                                 realm: realm.realm as string,
+                                tab: "settings",
                               }),
                             )
                           }
@@ -448,6 +705,14 @@ export const OpenIdFederationGeneralSettings = ({
             : []),
         ]}
       />
+      <FormAccess
+        isHorizontal
+        role="manage-realm"
+        className="pf-u-mt-lg"
+        onSubmit={handleSubmit(save)}
+      >
+        <FixedButtonsGroup name="idp-details" isSubmit reset={setupForm} />
+      </FormAccess>
     </PageSection>
   );
 };

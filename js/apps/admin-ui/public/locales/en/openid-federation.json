@@ -51,5 +51,11 @@
   "endpoint": "Endpoint",
   "identityProviderSettings": "Identity Provider Settings",
   "advancedSettings": "Advanced Settings",
-  "oidcSettings": "OpenID Connect settings"
+  "oidcSettings": "OpenID Connect settings",
+  "openIdProviderSettings": "OpenID Provider Settings",
+  "openIdRelyingPartySettings": "OpenID Relying Party Settings",
+  "enableOpenIdProvider": "Enable OpenID Provider",
+  "enableOpenIdRelyingParty": "Enable OpenID Relying Party",
+  "openIdFederationRPClientRegistrationTypesSupported": "Relying Party Client Registration Types",
+  "openIdFederationOPClientRegistrationTypesSupported": "Provider Client Registration Types"
 }

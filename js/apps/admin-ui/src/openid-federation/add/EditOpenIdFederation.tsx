@@ -1,4 +1,4 @@
-import { AlertVariant } from "@patternfly/react-core";
+import { AlertVariant, PageSection } from "@patternfly/react-core";
 import { convertFormValuesToObject } from "../../util";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -12,12 +12,14 @@ import { FormProvider, useForm } from "react-hook-form";
 import { OpenIdFederationForm } from "./OpenIdFederationForm";
 import { OpenIdFederationEditParams } from "../routes/OpenIdFederationEdit";
 import OpenIdFederationRepresentation from "libs/keycloak-admin-client/lib/defs/openIdFederationRepresentation";
+import RealmRepresentation from "libs/keycloak-admin-client/lib/defs/realmRepresentation";
 
 export default function EditIdentityFederation() {
   const { t } = useTranslation("openid-federation");
   const { addAlert, addError } = useAlerts();
   const { realm: realmName, id: id } = useParams<OpenIdFederationEditParams>();
   const [key, setKey] = useState(0);
+  const [realm, setRealm] = useState<RealmRepresentation>();
   const refresh = () => setKey(key + 1);
   const [openIdFederation, setOpenIdFederation] =
     useState<OpenIdFederationRepresentation>();
@@ -32,6 +34,10 @@ export default function EditIdentityFederation() {
     setOpenIdFederation,
     [id, key],
   );
+
+  useFetch(() => adminClient.realms.findOne({ realm: realmName }), setRealm, [
+    key,
+  ]);
 
   const save = async (r: OpenIdFederationRepresentation) => {
     r = convertFormValuesToObject(r);
@@ -55,14 +61,16 @@ export default function EditIdentityFederation() {
         <ViewHeader
           titleKey="openid-federation:editOpenIdFederation"
           subKey="openid-federation:editOpenIdFederationExplanation"
-          divider={false}
         />
-        <FormProvider {...form}>
-          <OpenIdFederationForm
-            openIdFederation={openIdFederation}
-            save={save}
-          />
-        </FormProvider>
+        <PageSection variant="light">
+          <FormProvider {...form}>
+            <OpenIdFederationForm
+              openIdFederation={openIdFederation}
+              save={save}
+              realm={realm}
+            />
+          </FormProvider>
+        </PageSection>
       </>
     );
 }

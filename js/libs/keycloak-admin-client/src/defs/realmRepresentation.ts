@@ -134,8 +134,13 @@ export default interface RealmRepresentation {
   openIdFederationResolveEndpoint?: string;
   openIdFederationHistoricalKeysEndpoint?: string;
   openIdFederationLifespan?: number;
+  openIdFederationEntityTypes?: EntityTypesSupported[];
+  openIdFederationOPClientRegistrationTypesSupported?: ClientRegistrationTypesSupported[];
+  openIdFederationRPClientRegistrationTypesSupported?: ClientRegistrationTypesSupported[];
 }
 
+export type ClientRegistrationTypesSupported = "EXPLICIT" | "AUTOMATIC";
+export type EntityTypesSupported = "OPENID_PROVIDER" | "OPENID_RELYING_PARTY";
 export type PartialImportRealmRepresentation = RealmRepresentation & {
   ifResourceExists: "FAIL" | "SKIP" | "OVERWRITE";
 };

@@ -11,15 +11,23 @@ import { FormProvider, useForm } from "react-hook-form";
 import { OpenIdFederationForm } from "./OpenIdFederationForm";
 import OpenIdFederationRepresentation from "libs/keycloak-admin-client/lib/defs/openIdFederationRepresentation";
 import { toOpenIdFederationEdit } from "../routes/OpenIdFederationEdit";
+import { useFetch } from "../../utils/useFetch";
+import RealmRepresentation from "libs/keycloak-admin-client/lib/defs/realmRepresentation";
+import { useState } from "react";
 
 export default function AddOpenIdFederation() {
   const { t } = useTranslation("openid-federation");
   const navigate = useNavigate();
   const { addAlert, addError } = useAlerts();
   const { realm: realmName } = useParams<OpenIdFederationParams>();
+  const [realm, setRealm] = useState<RealmRepresentation>();
 
   const form = useForm<OpenIdFederationRepresentation>();
-
+  useFetch(
+    () => adminClient.realms.findOne({ realm: realmName }),
+    setRealm,
+    [],
+  );
   const save = async (r: OpenIdFederationRepresentation) => {
     r = convertFormValuesToObject(r);
     try {
@@ -46,7 +54,7 @@ export default function AddOpenIdFederation() {
       />
       <PageSection variant="light">
         <FormProvider {...form}>
-          <OpenIdFederationForm save={save} />
+          <OpenIdFederationForm save={save} realm={realm} />
         </FormProvider>
       </PageSection>
     </>

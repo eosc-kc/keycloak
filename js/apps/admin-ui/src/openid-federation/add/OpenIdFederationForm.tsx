@@ -1,7 +1,3 @@
-import OpenIdFederationRepresentation, {
-  EntityTypesSupported,
-  ClientRegistrationTypesSupported,
-} from "@keycloak/keycloak-admin-client/lib/defs/openIdFederationRepresentation";
 import {
   ActionGroup,
   Button,
@@ -39,17 +35,10 @@ import { FormGroupField } from "../../identity-providers/component/FormGroupFiel
 import { AdvancedSettings } from "./AdvancedSettings";
 import { ScrollForm } from "../../components/scroll-form/ScrollForm";
 import { FixedButtonsGroup } from "../../components/form/FixedButtonGroup";
+import OpenIdFederationRepresentation from "libs/keycloak-admin-client/lib/defs/openIdFederationRepresentation";
+import RealmRepresentation from "libs/keycloak-admin-client/lib/defs/realmRepresentation";
+import { toOpenIdFederationCreate } from "../routes/OpenIdFederationCreate";
 
-type OpenIdFederationGeneralTabProps = {
-  save: (openIdFederation: OpenIdFederationRepresentation) => void;
-  openIdFederation?: OpenIdFederationRepresentation;
-};
-const entityTypesSupportedValues: EntityTypesSupported[] = [
-  "OPENID_PROVIDER",
-  "OPENID_RELYING_PARTY",
-];
-const clientRegistrationTypesSupportedValues: ClientRegistrationTypesSupported[] =
-  ["EXPLICIT", "AUTOMATIC"];
 const promptOptions = {
   unspecified: "",
   none: "none",
@@ -58,24 +47,23 @@ const promptOptions = {
   select_account: "select_account",
 };
 
+interface OpenIdFederationFormProps {
+  save: (data: OpenIdFederationRepresentation) => void;
+  openIdFederation?: OpenIdFederationRepresentation;
+  realm?: RealmRepresentation;
+}
+
 export const OpenIdFederationForm = ({
   save,
   openIdFederation = {
     trustAnchor: "",
-    entityTypes: [],
-    clientRegistrationTypesSupported: [],
   },
-}: OpenIdFederationGeneralTabProps) => {
+  realm,
+}: OpenIdFederationFormProps) => {
   const { t } = useTranslation("openid-federation");
 
-  const [
-    openClientRegistrationTypesSupported,
-    setOpenClientRegistrationTypesSupported,
-  ] = useState(false);
-
   const [promptOpen, setPromptOpen] = useState(false);
-  const [openEntityTypes, setOpenEntityTypes] = useState(false);
-  const { realm } = useRealm();
+  const { realm: realmName } = useRealm();
   const { id } = useParams<OpenIdFederationEditParams>();
 
   const {
@@ -99,11 +87,17 @@ export const OpenIdFederationForm = ({
   useEffect(setupForm, []);
 
   const toTab = (tab: OpenIdFederationTab) =>
-    toOpenIdFederationEdit({
-      realm,
-      id: id || "",
-      tab,
-    });
+    id
+      ? toOpenIdFederationEdit({
+          realm: realmName,
+          id: id || "",
+          tab,
+        })
+      : toOpenIdFederationCreate({
+          realm: realmName,
+          tab,
+        });
+
   const useTab = (tab: OpenIdFederationTab) => useRoutableTab(toTab(tab));
 
   const settingsTab = useTab("settings");
@@ -293,157 +287,6 @@ export const OpenIdFederationForm = ({
                   })}
                 />
               </FormGroup>
-              <FormGroup
-                label={t("entityTypes")}
-                isRequired
-                labelIcon={
-                  <HelpItem
-                    helpText={t("openid-federation-help:entityTypes")}
-                    fieldLabelId="resetEntityTypes"
-                  />
-                }
-                validated={
-                  errors.entityTypes
-                    ? ValidatedOptions.error
-                    : ValidatedOptions.default
-                }
-                helperTextInvalid={t("common:required")}
-                fieldId="entity-types"
-              >
-                <Controller
-                  name={`entityTypes`}
-                  defaultValue={[] as EntityTypesSupported[]}
-                  control={control}
-                  rules={{
-                    required: {
-                      value: true,
-                      message: t("common:required"),
-                    },
-                  }}
-                  render={({ field }) => (
-                    <Select
-                      maxHeight={375}
-                      toggleId={"entityTypes"}
-                      variant={SelectVariant.typeaheadMulti}
-                      chipGroupProps={{
-                        numChips: 3,
-                      }}
-                      placeholderText={t("entityTypesPlaceholder")}
-                      menuAppendTo="parent"
-                      validated={errors.entityTypes ? "error" : "default"}
-                      onToggle={(open) => setOpenEntityTypes(open)}
-                      isOpen={openEntityTypes}
-                      selections={field.value as string[]}
-                      onSelect={(_, selectedValue) => {
-                        const value: EntityTypesSupported[] | undefined =
-                          field.value;
-                        field.onChange(
-                          value.find((item) => item === selectedValue)
-                            ? value.filter((item) => item !== selectedValue)
-                            : [...(value ? value : []), selectedValue],
-                        );
-                      }}
-                      onClear={(event) => {
-                        event.stopPropagation();
-                        field.onChange([]);
-                      }}
-                      typeAheadAriaLabel={t("resetActions")}
-                    >
-                      {entityTypesSupportedValues.map((name) => (
-                        <SelectOption
-                          key={name}
-                          value={name}
-                          data-testid={`${name}-option`}
-                        >
-                          {name}
-                        </SelectOption>
-                      ))}
-                    </Select>
-                  )}
-                />
-              </FormGroup>
-              <FormGroup
-                label={t("clientRegistrationTypesSupported")}
-                isRequired
-                labelIcon={
-                  <HelpItem
-                    helpText={t(
-                      "openid-federation-help:clientRegistrationTypesSupported",
-                    )}
-                    fieldLabelId="resetTypesSupported"
-                  />
-                }
-                validated={
-                  errors.clientRegistrationTypesSupported
-                    ? ValidatedOptions.error
-                    : ValidatedOptions.default
-                }
-                helperTextInvalid={t("common:required")}
-                fieldId="types-supported"
-              >
-                <Controller
-                  name={`clientRegistrationTypesSupported`}
-                  defaultValue={[] as ClientRegistrationTypesSupported[]}
-                  control={control}
-                  rules={{
-                    required: {
-                      value: true,
-                      message: t("common:required"),
-                    },
-                  }}
-                  render={({ field }) => (
-                    <Select
-                      maxHeight={375}
-                      toggleId={
-                        "openIdFederationList.clientRegistrationTypesSupported"
-                      }
-                      variant={SelectVariant.typeaheadMulti}
-                      chipGroupProps={{
-                        numChips: 3,
-                      }}
-                      placeholderText={t(
-                        "clientRegistrationTypesSupportedPlaceholder",
-                      )}
-                      validated={
-                        errors.clientRegistrationTypesSupported
-                          ? "error"
-                          : "default"
-                      }
-                      menuAppendTo="parent"
-                      onToggle={(open) =>
-                        setOpenClientRegistrationTypesSupported(open)
-                      }
-                      isOpen={openClientRegistrationTypesSupported}
-                      selections={field.value as string[]}
-                      onSelect={(_, selectedValue) => {
-                        const value:
-                          | ClientRegistrationTypesSupported[]
-                          | undefined = field.value;
-                        field.onChange(
-                          value.find((item) => item === selectedValue)
-                            ? value.filter((item) => item !== selectedValue)
-                            : [...(value ? value : []), selectedValue],
-                        );
-                      }}
-                      onClear={(event) => {
-                        event.stopPropagation();
-                        field.onChange([]);
-                      }}
-                      typeAheadAriaLabel={t("resetActions")}
-                    >
-                      {clientRegistrationTypesSupportedValues.map((name) => (
-                        <SelectOption
-                          key={name}
-                          value={name}
-                          data-testid={`${name}-option`}
-                        >
-                          {name}
-                        </SelectOption>
-                      ))}
-                    </Select>
-                  )}
-                />
-              </FormGroup>
               <ActionGroup>
                 <Button
                   variant="primary"
@@ -464,7 +307,9 @@ export const OpenIdFederationForm = ({
             </FormAccess>
           </PageSection>
         </Tab>
-        {openIdFederation.entityTypes.includes("OPENID_RELYING_PARTY") && (
+        {realm?.openIdFederationEntityTypes?.includes(
+          "OPENID_RELYING_PARTY",
+        ) && (
           <Tab
             id="idp"
             title={<TabTitleText>{t("identityProviderSettings")}</TabTitleText>}
