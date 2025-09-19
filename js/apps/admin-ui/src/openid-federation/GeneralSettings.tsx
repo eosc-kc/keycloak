@@ -53,9 +53,9 @@ type OpenIdFederationGeneralTabProps = {
   save: (realm: RealmRepresentation) => void;
 };
 
-const openIdFederationOPClientRegistrationTypesSupported: ClientRegistrationTypesSupported[] =
-  ["EXPLICIT"];
 const openIdFederationRPClientRegistrationTypesSupported: ClientRegistrationTypesSupported[] =
+  ["EXPLICIT"];
+const openIdFederationOPClientRegistrationTypesSupported: ClientRegistrationTypesSupported[] =
   ["EXPLICIT", "AUTOMATIC"];
 
 const OpenIdFederationLink = (
@@ -456,7 +456,7 @@ export const OpenIdFederationGeneralSettings = ({
                       fieldId="types-supported"
                     >
                       <Controller
-                        name={`openIdFederationRPClientRegistrationTypesSupported`}
+                        name={`openIdFederationOPClientRegistrationTypesSupported`}
                         defaultValue={[] as ClientRegistrationTypesSupported[]}
                         control={control}
                         rules={{
@@ -470,7 +470,7 @@ export const OpenIdFederationGeneralSettings = ({
                           <Select
                             maxHeight={375}
                             toggleId={
-                              "openIdFederationRPClientRegistrationTypesSupported"
+                              "openIdFederationOPClientRegistrationTypesSupported"
                             }
                             variant={SelectVariant.typeaheadMulti}
                             chipGroupProps={{
@@ -503,7 +503,7 @@ export const OpenIdFederationGeneralSettings = ({
                             }}
                             typeAheadAriaLabel={t("resetActions")}
                           >
-                            {openIdFederationRPClientRegistrationTypesSupported.map(
+                            {openIdFederationOPClientRegistrationTypesSupported.map(
                               (name) => (
                                 <SelectOption
                                   key={name}
@@ -595,7 +595,7 @@ export const OpenIdFederationGeneralSettings = ({
                       fieldId="types-supported"
                     >
                       <Controller
-                        name={`openIdFederationOPClientRegistrationTypesSupported`}
+                        name={`openIdFederationRPClientRegistrationTypesSupported`}
                         defaultValue={[] as ClientRegistrationTypesSupported[]}
                         control={control}
                         rules={{
@@ -641,7 +641,7 @@ export const OpenIdFederationGeneralSettings = ({
                             }}
                             typeAheadAriaLabel={t("resetActions")}
                           >
-                            {openIdFederationOPClientRegistrationTypesSupported.map(
+                            {openIdFederationRPClientRegistrationTypesSupported.map(
                               (name) => (
                                 <SelectOption
                                   key={name}
