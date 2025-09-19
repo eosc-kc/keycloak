@@ -436,15 +436,21 @@ export const OpenIdFederationGeneralSettings = ({
                   {openIdFederationEntityTypes.includes("OPENID_PROVIDER") && (
                     <FormGroup
                       label={t(
-                        "openIdFederationRPClientRegistrationTypesSupported",
+                        "openIdFederationClientRegistrationTypesSupported",
                       )}
+                      isRequired
                       labelIcon={
                         <HelpItem
                           helpText={t(
-                            "openid-federation-help:openIdFederationRPClientRegistrationTypesSupported",
+                            "openid-federation-help:openIdFederationOPClientRegistrationTypesSupported",
                           )}
-                          fieldLabelId="resetTypesSupported"
+                          fieldLabelId="resetopenIdFederationOPClientRegistrationTypesSupported"
                         />
+                      }
+                      validated={
+                        errors.openIdFederationOPClientRegistrationTypesSupported
+                          ? ValidatedOptions.error
+                          : ValidatedOptions.default
                       }
                       helperTextInvalid={t("common:required")}
                       fieldId="types-supported"
@@ -453,6 +459,13 @@ export const OpenIdFederationGeneralSettings = ({
                         name={`openIdFederationRPClientRegistrationTypesSupported`}
                         defaultValue={[] as ClientRegistrationTypesSupported[]}
                         control={control}
+                        rules={{
+                          required: {
+                            value: true,
+
+                            message: t("common:required"),
+                          },
+                        }}
                         render={({ field }) => (
                           <Select
                             maxHeight={375}
@@ -522,8 +535,8 @@ export const OpenIdFederationGeneralSettings = ({
                 >
                   <FormGroup
                     hasNoPaddingTop
-                    label={t("enableOpenIdProvider")}
-                    fieldId="kc-enableOpenIdProvider"
+                    label={t("enableOpenIdRelyingParty")}
+                    fieldId="kc-enableOpenIdRelyingParty"
                   >
                     <Controller
                       name="openIdFederationEntityTypes"
@@ -562,15 +575,21 @@ export const OpenIdFederationGeneralSettings = ({
                   ) && (
                     <FormGroup
                       label={t(
-                        "openIdFederationOPClientRegistrationTypesSupported",
+                        "openIdFederationClientRegistrationTypesSupported",
                       )}
+                      isRequired
                       labelIcon={
                         <HelpItem
                           helpText={t(
-                            "openid-federation-help:openIdFederationOPClientRegistrationTypesSupported",
+                            "openid-federation-help:openIdFederationRPClientRegistrationTypesSupported",
                           )}
-                          fieldLabelId="resetTypesSupported"
+                          fieldLabelId="resetOpenIdFederationRPClientRegistrationTypesSupported"
                         />
+                      }
+                      validated={
+                        errors.openIdFederationOPClientRegistrationTypesSupported
+                          ? ValidatedOptions.error
+                          : ValidatedOptions.default
                       }
                       helperTextInvalid={t("common:required")}
                       fieldId="types-supported"
@@ -579,6 +598,12 @@ export const OpenIdFederationGeneralSettings = ({
                         name={`openIdFederationOPClientRegistrationTypesSupported`}
                         defaultValue={[] as ClientRegistrationTypesSupported[]}
                         control={control}
+                        rules={{
+                          required: {
+                            value: true,
+                            message: t("common:required"),
+                          },
+                        }}
                         render={({ field }) => (
                           <Select
                             maxHeight={375}
