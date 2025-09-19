@@ -587,7 +587,7 @@ export const OpenIdFederationGeneralSettings = ({
                         />
                       }
                       validated={
-                        errors.openIdFederationOPClientRegistrationTypesSupported
+                        errors.openIdFederationRPClientRegistrationTypesSupported
                           ? ValidatedOptions.error
                           : ValidatedOptions.default
                       }
