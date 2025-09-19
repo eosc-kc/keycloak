@@ -12,5 +12,7 @@
   "openIdFederationResolveEndpoint": "The endpoint used to resolve OpenID Federation entities.",
   "openIdFederationHistoricalKeysEndpoint": "The endpoint exposing historical keys for this entity.",
   "openIdFederationLifespan": "The amount of time (in seconds) that federation metadata is considered valid before it must be refreshed.",
-  "endpoint": "The endpoint for OpenID Federation metadata."
+  "endpoint": "The endpoint for OpenID Federation metadata.",
+  "openIdFederationOPClientRegistrationTypesSupported": "The client registration types supported by the OP. Valid values are automatic and explicit. At least one must be selected.",
+  "openIdFederationRPClientRegistrationTypesSupported": "The client registration types supported by the RP. Currently, only explicit is supported (automatic is not available). At least one option must be selected."
 }

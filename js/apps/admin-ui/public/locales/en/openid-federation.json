@@ -54,8 +54,7 @@
   "oidcSettings": "OpenID Connect settings",
   "openIdProviderSettings": "OpenID Provider Settings",
   "openIdRelyingPartySettings": "OpenID Relying Party Settings",
-  "enableOpenIdProvider": "Enable OpenID Provider",
-  "enableOpenIdRelyingParty": "Enable OpenID Relying Party",
-  "openIdFederationRPClientRegistrationTypesSupported": "Relying Party Client Registration Types",
-  "openIdFederationOPClientRegistrationTypesSupported": "Provider Client Registration Types"
+  "enableOpenIdProvider": "Enable OpenID Provider (OP)",
+  "enableOpenIdRelyingParty": "Enable OpenID Relying Party (RP)",
+  "openIdFederationClientRegistrationTypesSupported": "Client Registration Types"
 }
