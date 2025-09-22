@@ -330,7 +330,7 @@ public interface RealmModel extends RoleContainerModel {
     };
 
     default boolean isOpenIdFederationTypeRegistrationSupported(EntityTypeEnum entityType, ClientRegistrationTypeEnum clientRegistrationType) {
-        return isOpenIdFederationEnabled() && getOpenIdFederationGeneralConfig().getEntityTypes() != null  && getOpenIdFederationGeneralConfig().getEntityTypes().contains(entityType) && (EntityTypeEnum.OPENID_RELYING_PARTY.equals(entityType) ? getOpenIdFederationGeneralConfig().getOpClientRegistrationTypesSupported().contains(clientRegistrationType) : getOpenIdFederationGeneralConfig().getRpClientRegistrationTypesSupported().contains(clientRegistrationType)) ;
+        return isOpenIdFederationEnabled() && getOpenIdFederationGeneralConfig().getEntityTypes() != null  && getOpenIdFederationGeneralConfig().getEntityTypes().contains(entityType) && (EntityTypeEnum.OPENID_PROVIDER.equals(entityType) ? getOpenIdFederationGeneralConfig().getOpClientRegistrationTypesSupported() != null && getOpenIdFederationGeneralConfig().getOpClientRegistrationTypesSupported().contains(clientRegistrationType) : getOpenIdFederationGeneralConfig().getRpClientRegistrationTypesSupported() != null && getOpenIdFederationGeneralConfig().getRpClientRegistrationTypesSupported().contains(clientRegistrationType)) ;
     };
 
     default void setOpenIdFederationGeneralConfig(OpenIdFederationGeneralConfig generalConfig) {

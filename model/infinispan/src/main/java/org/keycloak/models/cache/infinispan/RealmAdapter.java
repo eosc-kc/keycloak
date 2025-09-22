@@ -768,7 +768,7 @@ public class RealmAdapter implements CachedRealmModel {
     @Override
     public boolean isOpenIdFederationTypeRegistrationSupported(EntityTypeEnum entityType, ClientRegistrationTypeEnum clientRegistrationType) {
         if (isUpdated()) return updated.isOpenIdFederationTypeRegistrationSupported(entityType, clientRegistrationType);
-        return isOpenIdFederationEnabled() && cached.getOpenIdFederationConfig().getEntityTypes() != null && cached.getOpenIdFederationConfig().getEntityTypes().contains(entityType) && (EntityTypeEnum.OPENID_RELYING_PARTY.equals(entityType) ? cached.getOpenIdFederationConfig().getOpClientRegistrationTypesSupported().contains(clientRegistrationType) : cached.getOpenIdFederationConfig().getRpClientRegistrationTypesSupported().contains(clientRegistrationType));
+        return isOpenIdFederationEnabled() && cached.getOpenIdFederationConfig().getEntityTypes() != null && cached.getOpenIdFederationConfig().getEntityTypes().contains(entityType) && (EntityTypeEnum.OPENID_PROVIDER.equals(entityType) ? cached.getOpenIdFederationConfig().getOpClientRegistrationTypesSupported() != null && cached.getOpenIdFederationConfig().getOpClientRegistrationTypesSupported().contains(clientRegistrationType) : cached.getOpenIdFederationConfig().getRpClientRegistrationTypesSupported() != null && cached.getOpenIdFederationConfig().getRpClientRegistrationTypesSupported().contains(clientRegistrationType));
     }
 
     @Override
