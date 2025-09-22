@@ -170,4 +170,15 @@ public interface TestOIDCEndpointsApplicationResource {
     @Produces(MediaType.APPLICATION_JSON)
     @NoCache
     IntentClientBindCheckExecutor.IntentBindCheckResponse checkIntentClientBound(IntentClientBindCheckExecutor.IntentBindCheckRequest request);
+
+    @GET
+    @Path("/oidfed-rp/.well-known/openid-federation")
+    String oidfedRPWellKnownEndpoint();
+
+    @GET
+    @Path("/oidfed-ta/.well-known/openid-federation")
+    String oidfedTAWellKnownEndpoint();
+    @GET
+    @Path("/oidfed-ta/fetch")
+    String oidfedTAFetchEndpoint(@QueryParam("sub") String sub);
 }

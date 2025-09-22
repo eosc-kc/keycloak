@@ -17,6 +17,7 @@
 
 package org.keycloak.testsuite.rest.resource;
 
+import jakarta.ws.rs.core.UriBuilder;
 import org.jboss.resteasy.annotations.cache.NoCache;
 
 import javax.crypto.SecretKey;
@@ -48,6 +49,8 @@ import org.keycloak.jose.jws.JWSBuilder;
 import org.keycloak.jose.jws.JWSInput;
 import org.keycloak.jose.jws.JWSInputException;
 import org.keycloak.models.Constants;
+import org.keycloak.protocol.oidc.OIDCLoginProtocolService;
+import org.keycloak.protocol.oidc.OIDCWellKnownProvider;
 import org.keycloak.protocol.oidc.grants.ciba.CibaGrantType;
 import org.keycloak.protocol.oidc.grants.ciba.channel.AuthenticationChannelRequest;
 import org.keycloak.protocol.oidc.grants.ciba.channel.HttpAuthenticationChannelProvider;
@@ -55,9 +58,13 @@ import org.keycloak.protocol.oidc.OIDCLoginProtocol;
 import org.keycloak.protocol.oidc.grants.ciba.endpoints.ClientNotificationEndpointRequest;
 import org.keycloak.representations.AccessToken;
 import org.keycloak.representations.JsonWebToken;
+import org.keycloak.representations.openid_federation.EntityStatement;
+import org.keycloak.representations.openid_federation.RPMetadata;
 import org.keycloak.services.ErrorResponseException;
+import org.keycloak.services.Urls;
 import org.keycloak.services.clientpolicy.executor.IntentClientBindCheckExecutor;
 import org.keycloak.services.managers.AppAuthManager;
+import org.keycloak.services.resources.RealmsResource;
 import org.keycloak.testsuite.rest.TestApplicationResourceProviderFactory;
 import org.keycloak.testsuite.rest.representation.TestAuthenticationChannelRequest;
 import org.keycloak.util.JsonSerialization;
@@ -74,6 +81,7 @@ import jakarta.ws.rs.core.HttpHeaders;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.core.Response.Status;
+import org.keycloak.utils.OpenIdFederationUtils;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -767,5 +775,37 @@ public class TestingOIDCEndpointsApplicationResource {
             response.setIsBound(Boolean.TRUE);
         }
         return response;
+    }
+
+    @GET
+    @Path("/oidfed-rp/.well-known/openid-federation")
+    public String oidfedRPWellKnownEndpoint() {
+        EntityStatement entityStatement = new EntityStatement(TestApplicationResourceUrls.oidfedRP, 86400, new ArrayList<>(openIdFederationConfig.getAuthorityHints()), trustChainProcessor.getKeySet());
+        RPMetadata rPMetadata = OpenIdFederationUtils.createRPMetadata(openIdFederationConfig, rpRegistrationTypes.stream(), null, RealmsResource.protocolUrl(backendUriInfo).clone().path(OIDCLoginProtocolService.class, "certs").build(realm.getName(),
+                OIDCLoginProtocol.LOGIN_PROTOCOL).toString(), frontendUriInfo, realm.getName());
+        // For now, use default subject types since we removed the individual federation configs
+        List<String> openIdFederationSubjectTypes = OIDCWellKnownProvider.DEFAULT_SUBJECT_TYPES_SUPPORTED;
+        rPMetadata.setSubjectTypesSupported(openIdFederationSubjectTypes);
+        metadata.setRelyingPartyMetadata(rPMetadata);
+        entityStatement.setMetadata(metadata);
+
+        return session.tokens().encodeForOpenIdFederation(entityStatement);
+    };
+
+    @GET
+    @Path("/oidfed-ta/.well-known/openid-federation")
+    public String oidfedTAWellKnownEndpoint(){
+
+    };
+    @GET
+    @Path("/oidfed-ta/fetch")
+    public String oidfedTAFetchEndpoint(@QueryParam("sub") String sub){
+
+    };
+
+    private UriBuilder oidcClientEndpoints() {
+        return UriBuilder.fromUri(OAuthClient.AUTH_SERVER_ROOT)
+                .path(TestApplicationResource.class)
+                .path(TestApplicationResource.class, "oidcClientEndpoints");
     }
 }
