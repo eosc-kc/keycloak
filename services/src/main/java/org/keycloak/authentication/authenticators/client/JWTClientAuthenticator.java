@@ -173,7 +173,7 @@ public class JWTClientAuthenticator extends AbstractClientAuthenticator {
 
             if (!token.hasAnyAudience(expectedAudiences)) {
                 throw new RuntimeException("Token audience doesn't match domain. Expected audiences are any of " + expectedAudiences
-                        + " but audience from token is '" + Arrays.asList(token.getAudience()) + "'");
+                        + " but audience from token is '" + token.getAudience() == null ? "null" : Arrays.asList(token.getAudience()) + "'");
             }
 
             if (!token.isActive()) {

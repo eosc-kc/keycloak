@@ -12,8 +12,6 @@ public class TrustChainResolution {
 
     private String leafId;
 
-    private EntityStatement entityFromTA;
-
     private MetadataInterface metadataAfterPolicies;
 
     public TrustChainResolution() {
@@ -51,14 +49,6 @@ public class TrustChainResolution {
 
     public void setLeafId(String leafId) {
         this.leafId = leafId;
-    }
-
-    public EntityStatement getEntityFromTA() {
-        return entityFromTA;
-    }
-
-    public void setEntityFromTA(EntityStatement entityFromTA) {
-        this.entityFromTA = entityFromTA;
     }
 
     public MetadataInterface getMetadataAfterPolicies() {
