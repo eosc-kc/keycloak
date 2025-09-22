@@ -302,7 +302,7 @@ public class AuthorizationEndpoint extends AuthorizationEndpointBase {
                     ClientRepresentation clientRepresentation = provider.createOrUpdateClient(rpEntityStatement, (RPMetadata) validChain.getMetadataAfterPolicies());
                     client = realm.getClientByClientId(clientRepresentation.getClientId());
                     automaticRegistration = true;
-                } catch (ErrorPageException e) {
+                } catch (ErrorPageException | ErrorResponseException e) {
                     throw e;
                 } catch (Exception e) {
                     throw new ErrorResponseException(Errors.INVALID_REQUEST, e.getMessage(), Response.Status.BAD_REQUEST);

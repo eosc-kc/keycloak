@@ -258,7 +258,7 @@ public class OpenIdFederationTrustChainProcessor {
         if (!statement.getIssuer().trim().equals(statement.getSubject().trim())) {
             throw new ErrorResponseException(Errors.INVALID_ISSUER, "The registration request issuer differs from the subject.", Response.Status.NOT_FOUND);
         }
-        if (checkAudience && statement.getAudience() == null || !statement.hasAudience(Urls.realmIssuer(session.getContext().getUri(UrlType.FRONTEND).getBaseUri(), session.getContext().getRealm().getName()))) {
+        if (checkAudience && !statement.hasAudience(Urls.realmIssuer(session.getContext().getUri(UrlType.FRONTEND).getBaseUri(), session.getContext().getRealm().getName()))) {
             throw new ErrorResponseException(Errors.INVALID_REQUEST, "Aud must contain OP entity Identifier", Response.Status.BAD_REQUEST);
         }
     }
