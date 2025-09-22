@@ -20,6 +20,9 @@ Our Keycloak version is working well with PostgreSQL database. For using other S
 - Move entityType and ClientRegistrationType to OpenId Federation general settings
 - Common Metadata publish only to Federation Entity
 
+### Fixed
+- Correct error for null audience in JWTClientAuthenticator
+
 
 ## [22.0.13-1.22] - 2025-09-08
 

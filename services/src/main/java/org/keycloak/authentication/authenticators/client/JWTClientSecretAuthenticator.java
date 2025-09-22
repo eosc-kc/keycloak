@@ -175,7 +175,7 @@ public class JWTClientSecretAuthenticator extends AbstractClientAuthenticator {
             String issuerUrl = Urls.realmIssuer(context.getUriInfo().getBaseUri(), realm.getName());
             String tokenUrl = OIDCLoginProtocolService.tokenUrl(context.getUriInfo().getBaseUriBuilder()).build(realm.getName()).toString();
             if (!token.hasAudience(issuerUrl) && !token.hasAudience(tokenUrl)) {
-                throw new RuntimeException("Token audience doesn't match domain. Realm issuer is '" + issuerUrl + "' but audience from token is '" + Arrays.asList(token.getAudience()).toString() + "'");
+                throw new RuntimeException("Token audience doesn't match domain. Realm issuer is '" + issuerUrl + "' but audience from token is '" + token.getAudience() == null ? "null" : Arrays.asList(token.getAudience()) + "'");
             }
 
             if (!token.isActive()) {
