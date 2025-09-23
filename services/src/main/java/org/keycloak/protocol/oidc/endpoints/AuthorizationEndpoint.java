@@ -36,8 +36,6 @@ import org.keycloak.models.KeycloakSession;
 import org.keycloak.models.enums.ClientRegistrationTypeEnum;
 import org.keycloak.models.enums.EntityTypeEnum;
 import org.keycloak.models.utils.KeycloakModelUtils;
-import org.keycloak.models.utils.RepresentationToModel;
-import org.keycloak.models.OpenIdFederationConfig;
 import org.keycloak.protocol.AuthorizationEndpointBase;
 import org.keycloak.protocol.oidc.OIDCLoginProtocol;
 import org.keycloak.protocol.oidc.endpoints.checker.AuthorizationCheckException;
@@ -49,23 +47,16 @@ import org.keycloak.protocol.oidc.grants.device.endpoints.DeviceEndpoint;
 import org.keycloak.protocol.oidc.utils.OIDCRedirectUriBuilder;
 import org.keycloak.protocol.oidc.utils.OIDCResponseMode;
 import org.keycloak.protocol.oidc.utils.OIDCResponseType;
-import org.keycloak.representations.idm.ClientRepresentation;
-import org.keycloak.representations.openid_federation.EntityStatement;
-import org.keycloak.representations.openid_federation.RPMetadata;
-import org.keycloak.representations.openid_federation.TrustChainResolution;
 import org.keycloak.services.ErrorPageException;
 import org.keycloak.services.ErrorResponseException;
 import org.keycloak.services.Urls;
 import org.keycloak.services.clientpolicy.ClientPolicyException;
 import org.keycloak.services.clientpolicy.context.AuthorizationRequestContext;
 import org.keycloak.services.clientpolicy.context.PreAuthorizationRequestContext;
-import org.keycloak.services.clientregistration.ClientRegistrationAuth;
-import org.keycloak.services.clientregistration.openid_federation.OpenIdFederationClientRegistrationService;
 import org.keycloak.services.messages.Messages;
 import org.keycloak.services.resources.LoginActionsService;
 import org.keycloak.services.util.CacheControlUtil;
 import org.keycloak.sessions.AuthenticationSessionModel;
-import org.keycloak.urls.UrlType;
 import org.keycloak.util.TokenUtil;
 
 import jakarta.ws.rs.Consumes;
@@ -75,15 +66,10 @@ import jakarta.ws.rs.Path;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.MultivaluedMap;
 import jakarta.ws.rs.core.Response;
-import org.keycloak.utils.OpenIdFederationTrustChainProcessor;
 import org.keycloak.utils.OpenIdFederationUtils;
-
-import java.io.IOException;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.function.BiConsumer;
-import java.util.stream.Collectors;
 
 /**
  * @author <a href="mailto:sthorger@redhat.com">Stian Thorgersen</a>
@@ -115,13 +101,11 @@ public class AuthorizationEndpoint extends AuthorizationEndpointBase {
 
     private AuthorizationEndpointRequest request;
     private String redirectUri;
-    private OpenIdFederationTrustChainProcessor trustChainProcessor;
     private boolean automaticRegistration = false;
 
     public AuthorizationEndpoint(KeycloakSession session, EventBuilder event) {
         super(session, event);
         event.event(EventType.LOGIN);
-        this.trustChainProcessor = new OpenIdFederationTrustChainProcessor(session);
     }
 
     private AuthorizationEndpoint(final KeycloakSession session, final EventBuilder event, final Action action) {
@@ -285,22 +269,7 @@ public class AuthorizationEndpoint extends AuthorizationEndpointBase {
         client = realm.getClientByClientId(clientId);
         if (UriUtils.isUri(clientId) && (client == null || !client.isEnabled()) && realm.isOpenIdFederationTypeRegistrationSupported(EntityTypeEnum.OPENID_PROVIDER, ClientRegistrationTypeEnum.AUTOMATIC)) {
                 try {
-                    String rpMetadata = OpenIdFederationUtils.getSelfSignedToken(clientId, session);
-                    EntityStatement rpEntityStatement = trustChainProcessor.parseAndValidateSelfSigned(rpMetadata);
-                    trustChainProcessor.validationRules(rpEntityStatement, false);
-                    logger.info("starting validating trust chains");
-                    TrustChainResolution validChain = trustChainProcessor.constructTrustChains(rpEntityStatement, realm.getOpenIdFederations().stream().map(OpenIdFederationConfig::getTrustAnchor).collect(Collectors.toSet()), true);
-
-                    if (validChain == null) {
-                        throw new ErrorResponseException(Errors.INVALID_TRUST_ANCHOR, "No trusted trust anchor could be found", Response.Status.NOT_FOUND);
-                    }
-
-                    EventBuilder event = new EventBuilder(session.getContext().getRealm(), session, session.getContext().getConnection());
-                    OpenIdFederationClientRegistrationService provider = new OpenIdFederationClientRegistrationService(session);
-                    provider.setEvent(event);
-                    provider.setAuth(new ClientRegistrationAuth(session, provider, event, "openid-connect"));
-                    ClientRepresentation clientRepresentation = provider.createOrUpdateClient(rpEntityStatement, (RPMetadata) validChain.getMetadataAfterPolicies());
-                    client = realm.getClientByClientId(clientRepresentation.getClientId());
+                    client = OpenIdFederationUtils.createOrUpdateAutomaticClient(clientId, session, realm);
                     automaticRegistration = true;
                 } catch (ErrorPageException | ErrorResponseException e) {
                     throw e;

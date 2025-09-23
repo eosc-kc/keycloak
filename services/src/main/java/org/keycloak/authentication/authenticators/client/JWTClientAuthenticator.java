@@ -38,12 +38,15 @@ import org.keycloak.OAuthErrorException;
 import org.keycloak.authentication.AuthenticationFlowError;
 import org.keycloak.authentication.ClientAuthenticationFlowContext;
 import org.keycloak.common.util.Time;
+import org.keycloak.common.util.UriUtils;
 import org.keycloak.jose.jws.JWSInput;
 import org.keycloak.keys.loader.PublicKeyStorageManager;
 import org.keycloak.models.AuthenticationExecutionModel;
 import org.keycloak.models.ClientModel;
 import org.keycloak.models.RealmModel;
 import org.keycloak.models.SingleUseObjectProvider;
+import org.keycloak.models.enums.ClientRegistrationTypeEnum;
+import org.keycloak.models.enums.EntityTypeEnum;
 import org.keycloak.protocol.oidc.OIDCAdvancedConfigWrapper;
 import org.keycloak.protocol.oidc.OIDCConfigAttributes;
 import org.keycloak.protocol.oidc.OIDCLoginProtocol;
@@ -54,6 +57,7 @@ import org.keycloak.provider.ProviderConfigProperty;
 import org.keycloak.representations.JsonWebToken;
 import org.keycloak.services.ServicesLogger;
 import org.keycloak.services.Urls;
+import org.keycloak.utils.OpenIdFederationUtils;
 
 /**
  * Client authentication based on JWT signed by client private key .
@@ -123,16 +127,21 @@ public class JWTClientAuthenticator extends AbstractClientAuthenticator {
 
             context.getEvent().client(clientId);
             ClientModel client = realm.getClientByClientId(clientId);
-            if (client == null) {
+            if (UriUtils.isUri(clientId) && (client == null || !client.isEnabled()) && realm.isOpenIdFederationTypeRegistrationSupported(EntityTypeEnum.OPENID_PROVIDER, ClientRegistrationTypeEnum.AUTOMATIC)) {
+                try {
+                    client = OpenIdFederationUtils.createOrUpdateAutomaticClient(clientId, context.getSession(), realm);
+                } catch (Exception e) {
+                    context.failure(client == null ? AuthenticationFlowError.CLIENT_NOT_FOUND : AuthenticationFlowError.CLIENT_DISABLED, null);
+                    return;
+                }
+            } else if (client == null) {
                 context.failure(AuthenticationFlowError.CLIENT_NOT_FOUND, null);
+                return;
+            } else  if (!client.isEnabled()) {
+                context.failure(AuthenticationFlowError.CLIENT_DISABLED, null);
                 return;
             } else {
                 context.setClient(client);
-            }
-
-            if (!client.isEnabled()) {
-                context.failure(AuthenticationFlowError.CLIENT_DISABLED, null);
-                return;
             }
 
             String expectedSignatureAlg = OIDCAdvancedConfigWrapper.fromClientModel(client).getTokenEndpointAuthSigningAlg();
