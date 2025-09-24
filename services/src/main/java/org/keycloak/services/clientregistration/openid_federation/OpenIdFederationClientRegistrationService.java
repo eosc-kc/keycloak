@@ -16,7 +16,7 @@ import org.keycloak.models.RealmModel;
 import org.keycloak.models.enums.ClientRegistrationTypeEnum;
 import org.keycloak.models.enums.EntityTypeEnum;
 import org.keycloak.models.OpenIdFederationConfig;
-import org.keycloak.utils.OpenIdFederationTrustChainProcessor;
+import org.keycloak.protocol.trustchain.TrustChainProcessor;
 import org.keycloak.representations.idm.ClientRepresentation;
 import org.keycloak.representations.openid_federation.EntityStatement;
 import org.keycloak.representations.openid_federation.EntityStatementExplicitResponse;
@@ -28,6 +28,7 @@ import org.keycloak.services.clientregistration.AbstractClientRegistrationProvid
 import org.keycloak.services.clientregistration.oidc.DescriptionConverter;
 import org.keycloak.urls.UrlType;
 import org.keycloak.util.TokenUtil;
+import org.keycloak.utils.OpenIdFederationTrustChainProcessorFactory;
 
 import java.net.URI;
 import java.util.stream.Collectors;
@@ -36,11 +37,11 @@ import java.util.stream.Stream;
 public class OpenIdFederationClientRegistrationService extends AbstractClientRegistrationProvider {
 
     private static final Logger logger = Logger.getLogger(OpenIdFederationClientRegistrationService.class);
-    private final OpenIdFederationTrustChainProcessor trustChainProcessor;
+    private final TrustChainProcessor trustChainProcessor;
 
     public OpenIdFederationClientRegistrationService(KeycloakSession session) {
         super(session);
-        this.trustChainProcessor = new OpenIdFederationTrustChainProcessor(session);
+        this.trustChainProcessor = session.getProvider(TrustChainProcessor.class, OpenIdFederationTrustChainProcessorFactory.PROVIDER_ID);
     }
 
     @POST

@@ -54,6 +54,7 @@ import org.keycloak.protocol.oidc.OIDCConfigAttributes;
 import org.keycloak.protocol.oidc.OIDCLoginProtocol;
 import org.keycloak.protocol.oidc.OIDCLoginProtocolService;
 import org.keycloak.protocol.oidc.OIDCWellKnownProvider;
+import org.keycloak.protocol.trustchain.TrustChainProcessor;
 import org.keycloak.representations.idm.IdentityProviderRepresentation;
 import org.keycloak.representations.openid_federation.EntityStatement;
 import org.keycloak.representations.openid_federation.EntityStatementExplicitResponse;
@@ -71,6 +72,7 @@ import org.keycloak.services.util.ResourcesUtil;
 import org.keycloak.urls.UrlType;
 import org.keycloak.util.TokenUtil;
 import org.keycloak.utils.OpenIdFederationTrustChainProcessor;
+import org.keycloak.utils.OpenIdFederationTrustChainProcessorFactory;
 import org.keycloak.utils.OpenIdFederationUtils;
 import org.keycloak.utils.ReservedCharValidator;
 
@@ -307,7 +309,7 @@ public class IdentityProvidersResource {
             try {
                 OpenIdFederationGeneralConfig federationGeneralConfig = realm.getOpenIdFederationGeneralConfig();
                 OpenIdFederationConfig federationConfig = federationGeneralConfig.getOpenIdFederationList().stream().filter(x -> representation.getConfig().get(OpenIdFederationIdentityProviderConfig.TRUST_ANCHOR_ID).equals(x.getTrustAnchor())).findAny().orElseThrow(() -> new NotFoundException("Trust anchor does not exist"));
-                OpenIdFederationTrustChainProcessor trustChainProcessor = new OpenIdFederationTrustChainProcessor(session);
+                TrustChainProcessor trustChainProcessor = session.getProvider(TrustChainProcessor.class, OpenIdFederationTrustChainProcessorFactory.PROVIDER_ID);
                 String opIssuer = representation.getConfig().get(OIDCIdentityProviderConfig.ISSUER);
                 EntityStatement opStatement = trustChainProcessor.parseAndValidateSelfSigned(OpenIdFederationUtils.getSelfSignedToken(opIssuer, session));
                 if (!trustChainProcessor.validateEntityStatementFields(opStatement, opIssuer, opIssuer) || opStatement.getMetadata().getOpenIdProviderMetadata() == null || !opStatement.getMetadata().getOpenIdProviderMetadata().getClientRegistrationTypesSupported().contains("explicit") || opStatement.getMetadata().getOpenIdProviderMetadata().getFederationRegistrationEndpoint() == null) {

@@ -25,6 +25,7 @@ import org.keycloak.models.enums.ClientRegistrationTypeEnum;
 import org.keycloak.models.utils.DefaultAuthenticationFlows;
 import org.keycloak.protocol.oidc.OIDCConfigAttributes;
 import org.keycloak.protocol.oidc.federation.OpenIdFederationWellKnownProviderFactory;
+import org.keycloak.protocol.trustchain.TrustChainProcessor;
 import org.keycloak.representations.openid_federation.CommonMetadata;
 import org.keycloak.representations.openid_federation.EntityStatement;
 import org.keycloak.representations.openid_federation.EntityStatementExplicitResponse;
@@ -145,7 +146,7 @@ public class OpenIdFederationUtils {
 
     public static ClientModel createOrUpdateAutomaticClient(String clientId, KeycloakSession session, RealmModel realm) throws IOException, InvalidTrustChainException {
         String rpMetadata = OpenIdFederationUtils.getSelfSignedToken(clientId, session);
-        OpenIdFederationTrustChainProcessor trustChainProcessor = new OpenIdFederationTrustChainProcessor(session);
+        TrustChainProcessor trustChainProcessor = session.getProvider(TrustChainProcessor.class, OpenIdFederationTrustChainProcessorFactory.PROVIDER_ID);
         EntityStatement rpEntityStatement = trustChainProcessor.parseAndValidateSelfSigned(rpMetadata);
         trustChainProcessor.validationRules(rpEntityStatement, false);
         logger.info("starting validating trust chains");
