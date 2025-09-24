@@ -12,6 +12,7 @@ import org.keycloak.protocol.oidc.OIDCLoginProtocol;
 import org.keycloak.protocol.oidc.OIDCLoginProtocolService;
 import org.keycloak.protocol.oidc.OIDCWellKnownProvider;
 import org.keycloak.protocol.oidc.representations.OIDCConfigurationRepresentation;
+import org.keycloak.protocol.trustchain.TrustChainProcessor;
 import org.keycloak.representations.openid_federation.CommonMetadata;
 import org.keycloak.representations.openid_federation.EntityStatement;
 import org.keycloak.representations.openid_federation.OpenIdFederationEntity;
@@ -22,23 +23,22 @@ import org.keycloak.services.Urls;
 import org.keycloak.services.resources.RealmsResource;
 import org.keycloak.urls.UrlType;
 import org.keycloak.util.JsonSerialization;
-import org.keycloak.utils.OpenIdFederationTrustChainProcessor;
+import org.keycloak.utils.OpenIdFederationTrustChainProcessorFactory;
 import org.keycloak.utils.OpenIdFederationUtils;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
 public class OpenIdFederationWellKnownProvider extends OIDCWellKnownProvider {
 
-    private final OpenIdFederationTrustChainProcessor trustChainProcessor;
+    private final TrustChainProcessor trustChainProcessor;
 
     public OpenIdFederationWellKnownProvider(KeycloakSession session) {
         super(session);
-        this.trustChainProcessor = new OpenIdFederationTrustChainProcessor(session);
+        this.trustChainProcessor = session.getProvider(TrustChainProcessor.class, OpenIdFederationTrustChainProcessorFactory.PROVIDER_ID);
     }
 
     @Override

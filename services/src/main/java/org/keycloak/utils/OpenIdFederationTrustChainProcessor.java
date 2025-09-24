@@ -1,6 +1,5 @@
 package org.keycloak.utils;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.nimbusds.jose.Algorithm;
 import com.nimbusds.jose.JOSEException;
 import com.nimbusds.jose.JWSAlgorithm;
@@ -26,6 +25,7 @@ import org.keycloak.jose.jwk.JWK;
 import org.keycloak.jose.jwk.JWKBuilder;
 import org.keycloak.models.KeycloakSession;
 import org.keycloak.models.enums.EntityTypeEnum;
+import org.keycloak.protocol.trustchain.TrustChainProcessor;
 import org.keycloak.representations.openid_federation.AbstractMetadataPolicy;
 import org.keycloak.representations.openid_federation.EntityStatement;
 import org.keycloak.representations.openid_federation.OPMetadataPolicy;
@@ -56,7 +56,7 @@ import org.keycloak.urls.UrlType;
 import org.keycloak.util.JsonSerialization;
 import org.keycloak.util.TokenUtil;
 
-public class OpenIdFederationTrustChainProcessor {
+public class OpenIdFederationTrustChainProcessor implements TrustChainProcessor {
 
     private static final Logger logger = Logger.getLogger(OpenIdFederationTrustChainProcessor.class);
     private  final KeycloakSession session;
@@ -71,6 +71,7 @@ public class OpenIdFederationTrustChainProcessor {
      * @param trustAnchorIds this should hold the trust anchor ids
      * @return any valid trust chains from the leaf node JWT to the trust anchor.
      */
+    @Override
     public TrustChainResolution constructTrustChains(EntityStatement leafEs, Set<String> trustAnchorIds, boolean forRp) {
 
         List<TrustChainResolution> trustChainResolutions = subTrustChains(leafEs.getSubject(), leafEs, trustAnchorIds, new HashSet<>(), forRp);
@@ -103,7 +104,8 @@ public class OpenIdFederationTrustChainProcessor {
         return null;
     }
 
-    private List<TrustChainResolution> subTrustChains(String initialEntity, EntityStatement leafEs, Set<String> trustAnchorIds, Set<String> visitedNodes, boolean forRp) {
+    @Override
+    public List<TrustChainResolution> subTrustChains(String initialEntity, EntityStatement leafEs, Set<String> trustAnchorIds, Set<String> visitedNodes, boolean forRp) {
 
         List<TrustChainResolution> chainsList = new ArrayList<>();
         visitedNodes.add(leafEs.getSubject());
@@ -164,12 +166,14 @@ public class OpenIdFederationTrustChainProcessor {
 
     }
 
+    @Override
     public EntityStatement parseAndValidateSelfSigned(String token) throws InvalidTrustChainException {
         EntityStatement statement = parse(token, EntityStatement.class);
         validateToken(token, statement.getJwks());
         return statement;
     }
 
+    @Override
     public <T extends EntityStatement> T parseAndValidateSelfSigned(String token, Class<T> clazz, JSONWebKeySet jwks) throws InvalidTrustChainException {
         T statement = parse(token, clazz);
         validateToken(token, jwks);
@@ -221,11 +225,12 @@ public class OpenIdFederationTrustChainProcessor {
         return jwtProcessor;
     }
 
+    @Override
     public boolean validateEntityStatementFields(EntityStatement statement, String issuer, String subject) {
         return statement.getIssuer() == null || statement.getIssuer().equals(issuer) || statement.getSubject() == null || statement.getSubject().equals(subject) || statement.getIat() == null || LocalDateTime.now().toEpochSecond(ZoneOffset.UTC) > statement.getIat() || statement.getExp() == null || LocalDateTime.now().toEpochSecond(ZoneOffset.UTC) < statement.getExp();
     }
 
-    public <T extends EntityStatement> T parse(String token, Class<T> clazz) throws InvalidTrustChainException {
+    private <T extends EntityStatement> T parse(String token, Class<T> clazz) throws InvalidTrustChainException {
         String[] splits = token.split("\\.");
         if (splits.length != 3)
             throw new InvalidTrustChainException("Trust chain contains a chain-link which does not abide to the dot-delimited format of xxx.yyy.zzz");
@@ -236,6 +241,7 @@ public class OpenIdFederationTrustChainProcessor {
         }
     }
 
+    @Override
     public void validationRules(EntityStatement statement, boolean checkAudience) {
         if (statement.getIssuer() == null) {
             throw new ErrorResponseException(Errors.INVALID_ISSUER, "No issuer in the request.", Response.Status.NOT_FOUND);
@@ -263,6 +269,7 @@ public class OpenIdFederationTrustChainProcessor {
         }
     }
 
+    @Override
     public JSONWebKeySet getKeySet() {
         List<JWK> keys = new LinkedList<>();
         session.keys().getKeysStream(session.getContext().getRealm())
@@ -284,4 +291,7 @@ public class OpenIdFederationTrustChainProcessor {
         return keySet;
     }
 
+    @Override
+    public void close() {
+    }
 }
