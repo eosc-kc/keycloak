@@ -386,282 +386,310 @@ export const OpenIdFederationGeneralSettings = ({
               </FormProvider>
             ),
           },
-          {
-            title: t("openIdProviderSettings"),
-            panel: (
-              <FormProvider {...form}>
-                <FormAccess
-                  isHorizontal
-                  role="manage-realm"
-                  className="pf-u-mt-lg"
-                  onSubmit={handleSubmit(save)}
-                >
-                  <FormGroup
-                    hasNoPaddingTop
-                    label={t("enableOpenIdProvider")}
-                    fieldId="kc-enableOpenIdProvider"
-                  >
-                    <Controller
-                      name="openIdFederationEntityTypes"
-                      defaultValue={[]}
-                      control={control}
-                      render={({ field }) => (
-                        <Switch
-                          label={t("common:on")}
-                          labelOff={t("common:off")}
-                          isChecked={openIdFederationEntityTypes.includes(
-                            "OPENID_PROVIDER",
-                          )}
-                          onChange={(value) => {
-                            field.onChange(!value);
-                            if (value) {
-                              setValue("openIdFederationEntityTypes", [
-                                ...openIdFederationEntityTypes,
-                                "OPENID_PROVIDER",
-                              ]);
-                            } else {
-                              setValue(
-                                "openIdFederationEntityTypes",
-                                openIdFederationEntityTypes.filter(
-                                  (item) => item !== "OPENID_PROVIDER",
-                                ),
-                              );
+          ...(openIdFederationEnabled
+            ? [
+                {
+                  title: t("openIdProviderSettings"),
+                  panel: (
+                    <FormProvider {...form}>
+                      <FormAccess
+                        isHorizontal
+                        role="manage-realm"
+                        className="pf-u-mt-lg"
+                        onSubmit={handleSubmit(save)}
+                      >
+                        <FormGroup
+                          hasNoPaddingTop
+                          label={t("enableOpenIdProvider")}
+                          fieldId="kc-enableOpenIdProvider"
+                        >
+                          <Controller
+                            name="openIdFederationEntityTypes"
+                            defaultValue={[]}
+                            control={control}
+                            render={({ field }) => (
+                              <Switch
+                                label={t("common:on")}
+                                labelOff={t("common:off")}
+                                isChecked={openIdFederationEntityTypes.includes(
+                                  "OPENID_PROVIDER",
+                                )}
+                                onChange={(value) => {
+                                  field.onChange(!value);
+                                  if (value) {
+                                    setValue("openIdFederationEntityTypes", [
+                                      ...openIdFederationEntityTypes,
+                                      "OPENID_PROVIDER",
+                                    ]);
+                                  } else {
+                                    setValue(
+                                      "openIdFederationEntityTypes",
+                                      openIdFederationEntityTypes.filter(
+                                        (item) => item !== "OPENID_PROVIDER",
+                                      ),
+                                    );
+                                  }
+                                }}
+                                aria-label={t("clientAuthentication")}
+                              />
+                            )}
+                          />
+                        </FormGroup>
+                        {openIdFederationEntityTypes.includes(
+                          "OPENID_PROVIDER",
+                        ) && (
+                          <FormGroup
+                            label={t(
+                              "openIdFederationClientRegistrationTypesSupported",
+                            )}
+                            isRequired
+                            labelIcon={
+                              <HelpItem
+                                helpText={t(
+                                  "openid-federation-help:openIdFederationOPClientRegistrationTypesSupported",
+                                )}
+                                fieldLabelId="resetopenIdFederationOPClientRegistrationTypesSupported"
+                              />
                             }
-                          }}
-                          aria-label={t("clientAuthentication")}
-                        />
-                      )}
-                    />
-                  </FormGroup>
-                  {openIdFederationEntityTypes.includes("OPENID_PROVIDER") && (
-                    <FormGroup
-                      label={t(
-                        "openIdFederationClientRegistrationTypesSupported",
-                      )}
-                      isRequired
-                      labelIcon={
-                        <HelpItem
-                          helpText={t(
-                            "openid-federation-help:openIdFederationOPClientRegistrationTypesSupported",
-                          )}
-                          fieldLabelId="resetopenIdFederationOPClientRegistrationTypesSupported"
-                        />
-                      }
-                      validated={
-                        errors.openIdFederationOPClientRegistrationTypesSupported
-                          ? ValidatedOptions.error
-                          : ValidatedOptions.default
-                      }
-                      helperTextInvalid={t("common:required")}
-                      fieldId="types-supported"
-                    >
-                      <Controller
-                        name={`openIdFederationOPClientRegistrationTypesSupported`}
-                        defaultValue={[] as ClientRegistrationTypesSupported[]}
-                        control={control}
-                        rules={{
-                          required: {
-                            value: true,
+                            validated={
+                              errors.openIdFederationOPClientRegistrationTypesSupported
+                                ? ValidatedOptions.error
+                                : ValidatedOptions.default
+                            }
+                            helperTextInvalid={t("common:required")}
+                            fieldId="types-supported"
+                          >
+                            <Controller
+                              name={`openIdFederationOPClientRegistrationTypesSupported`}
+                              defaultValue={
+                                [] as ClientRegistrationTypesSupported[]
+                              }
+                              control={control}
+                              rules={{
+                                required: {
+                                  value: true,
 
-                            message: t("common:required"),
-                          },
-                        }}
-                        render={({ field }) => (
-                          <Select
-                            maxHeight={375}
-                            toggleId={
-                              "openIdFederationOPClientRegistrationTypesSupported"
-                            }
-                            variant={SelectVariant.typeaheadMulti}
-                            chipGroupProps={{
-                              numChips: 3,
-                            }}
-                            placeholderText={t(
-                              "clientRegistrationTypesSupportedPlaceholder",
-                            )}
-                            menuAppendTo="parent"
-                            onToggle={(open) =>
-                              setOpenOPClientRegistrationTypesSupported(open)
-                            }
-                            isOpen={openOPClientRegistrationTypesSupported}
-                            selections={field.value as string[]}
-                            onSelect={(_, selectedValue) => {
-                              const value:
-                                | ClientRegistrationTypesSupported[]
-                                | undefined = field.value;
-                              field.onChange(
-                                value?.find((item) => item === selectedValue)
-                                  ? value.filter(
-                                      (item) => item !== selectedValue,
+                                  message: t("common:required"),
+                                },
+                              }}
+                              render={({ field }) => (
+                                <Select
+                                  maxHeight={375}
+                                  toggleId={
+                                    "openIdFederationOPClientRegistrationTypesSupported"
+                                  }
+                                  variant={SelectVariant.typeaheadMulti}
+                                  chipGroupProps={{
+                                    numChips: 3,
+                                  }}
+                                  placeholderText={t(
+                                    "clientRegistrationTypesSupportedPlaceholder",
+                                  )}
+                                  menuAppendTo="parent"
+                                  onToggle={(open) =>
+                                    setOpenOPClientRegistrationTypesSupported(
+                                      open,
                                     )
-                                  : [...(value ? value : []), selectedValue],
-                              );
-                            }}
-                            onClear={(event) => {
-                              event.stopPropagation();
-                              field.onChange([]);
-                            }}
-                            typeAheadAriaLabel={t("resetActions")}
-                          >
-                            {openIdFederationOPClientRegistrationTypesSupported.map(
-                              (name) => (
-                                <SelectOption
-                                  key={name}
-                                  value={name}
-                                  data-testid={`${name}-option`}
+                                  }
+                                  isOpen={
+                                    openOPClientRegistrationTypesSupported
+                                  }
+                                  selections={field.value as string[]}
+                                  onSelect={(_, selectedValue) => {
+                                    const value:
+                                      | ClientRegistrationTypesSupported[]
+                                      | undefined = field.value;
+                                    field.onChange(
+                                      value?.find(
+                                        (item) => item === selectedValue,
+                                      )
+                                        ? value.filter(
+                                            (item) => item !== selectedValue,
+                                          )
+                                        : [
+                                            ...(value ? value : []),
+                                            selectedValue,
+                                          ],
+                                    );
+                                  }}
+                                  onClear={(event) => {
+                                    event.stopPropagation();
+                                    field.onChange([]);
+                                  }}
+                                  typeAheadAriaLabel={t("resetActions")}
                                 >
-                                  {name}
-                                </SelectOption>
-                              ),
-                            )}
-                          </Select>
+                                  {openIdFederationOPClientRegistrationTypesSupported.map(
+                                    (name) => (
+                                      <SelectOption
+                                        key={name}
+                                        value={name}
+                                        data-testid={`${name}-option`}
+                                      >
+                                        {name}
+                                      </SelectOption>
+                                    ),
+                                  )}
+                                </Select>
+                              )}
+                            />
+                          </FormGroup>
                         )}
-                      />
-                    </FormGroup>
-                  )}
-                </FormAccess>
-              </FormProvider>
-            ),
-          },
-          {
-            title: t("openIdRelyingPartySettings"),
-            panel: (
-              <FormProvider {...form}>
-                <FormAccess
-                  isHorizontal
-                  role="manage-realm"
-                  className="pf-u-mt-lg"
-                  onSubmit={handleSubmit(save)}
-                >
-                  <FormGroup
-                    hasNoPaddingTop
-                    label={t("enableOpenIdRelyingParty")}
-                    fieldId="kc-enableOpenIdRelyingParty"
-                  >
-                    <Controller
-                      name="openIdFederationEntityTypes"
-                      defaultValue={[]}
-                      control={control}
-                      render={({ field }) => (
-                        <Switch
-                          label={t("common:on")}
-                          labelOff={t("common:off")}
-                          isChecked={openIdFederationEntityTypes.includes(
-                            "OPENID_RELYING_PARTY",
-                          )}
-                          onChange={(value) => {
-                            field.onChange(!value);
-                            if (value) {
-                              setValue("openIdFederationEntityTypes", [
-                                ...openIdFederationEntityTypes,
-                                "OPENID_RELYING_PARTY",
-                              ]);
-                            } else {
-                              setValue(
-                                "openIdFederationEntityTypes",
-                                openIdFederationEntityTypes.filter(
-                                  (item) => item !== "OPENID_RELYING_PARTY",
-                                ),
-                              );
-                            }
-                          }}
-                          aria-label={t("clientAuthentication")}
-                        />
-                      )}
-                    />
-                  </FormGroup>
-                  {openIdFederationEntityTypes.includes(
-                    "OPENID_RELYING_PARTY",
-                  ) && (
-                    <FormGroup
-                      label={t(
-                        "openIdFederationClientRegistrationTypesSupported",
-                      )}
-                      isRequired
-                      labelIcon={
-                        <HelpItem
-                          helpText={t(
-                            "openid-federation-help:openIdFederationRPClientRegistrationTypesSupported",
-                          )}
-                          fieldLabelId="resetOpenIdFederationRPClientRegistrationTypesSupported"
-                        />
-                      }
-                      validated={
-                        errors.openIdFederationRPClientRegistrationTypesSupported
-                          ? ValidatedOptions.error
-                          : ValidatedOptions.default
-                      }
-                      helperTextInvalid={t("common:required")}
-                      fieldId="types-supported"
-                    >
-                      <Controller
-                        name={`openIdFederationRPClientRegistrationTypesSupported`}
-                        defaultValue={[] as ClientRegistrationTypesSupported[]}
-                        control={control}
-                        rules={{
-                          required: {
-                            value: true,
-                            message: t("common:required"),
-                          },
-                        }}
-                        render={({ field }) => (
-                          <Select
-                            maxHeight={375}
-                            toggleId={
-                              "openIdFederationList.openIdFederationOPClientRegistrationTypesSupported"
-                            }
-                            variant={SelectVariant.typeaheadMulti}
-                            chipGroupProps={{
-                              numChips: 3,
-                            }}
-                            placeholderText={t(
-                              "clientRegistrationTypesSupportedPlaceholder",
+                      </FormAccess>
+                    </FormProvider>
+                  ),
+                },
+                {
+                  title: t("openIdRelyingPartySettings"),
+                  panel: (
+                    <FormProvider {...form}>
+                      <FormAccess
+                        isHorizontal
+                        role="manage-realm"
+                        className="pf-u-mt-lg"
+                        onSubmit={handleSubmit(save)}
+                      >
+                        <FormGroup
+                          hasNoPaddingTop
+                          label={t("enableOpenIdRelyingParty")}
+                          fieldId="kc-enableOpenIdRelyingParty"
+                        >
+                          <Controller
+                            name="openIdFederationEntityTypes"
+                            defaultValue={[]}
+                            control={control}
+                            render={({ field }) => (
+                              <Switch
+                                label={t("common:on")}
+                                labelOff={t("common:off")}
+                                isChecked={openIdFederationEntityTypes.includes(
+                                  "OPENID_RELYING_PARTY",
+                                )}
+                                onChange={(value) => {
+                                  field.onChange(!value);
+                                  if (value) {
+                                    setValue("openIdFederationEntityTypes", [
+                                      ...openIdFederationEntityTypes,
+                                      "OPENID_RELYING_PARTY",
+                                    ]);
+                                  } else {
+                                    setValue(
+                                      "openIdFederationEntityTypes",
+                                      openIdFederationEntityTypes.filter(
+                                        (item) =>
+                                          item !== "OPENID_RELYING_PARTY",
+                                      ),
+                                    );
+                                  }
+                                }}
+                                aria-label={t("clientAuthentication")}
+                              />
                             )}
-                            menuAppendTo="parent"
-                            onToggle={(open) =>
-                              setOpenRPClientRegistrationTypesSupported(open)
+                          />
+                        </FormGroup>
+                        {openIdFederationEntityTypes.includes(
+                          "OPENID_RELYING_PARTY",
+                        ) && (
+                          <FormGroup
+                            label={t(
+                              "openIdFederationClientRegistrationTypesSupported",
+                            )}
+                            isRequired
+                            labelIcon={
+                              <HelpItem
+                                helpText={t(
+                                  "openid-federation-help:openIdFederationRPClientRegistrationTypesSupported",
+                                )}
+                                fieldLabelId="resetOpenIdFederationRPClientRegistrationTypesSupported"
+                              />
                             }
-                            isOpen={openRPClientRegistrationTypesSupported}
-                            selections={field.value as string[]}
-                            onSelect={(_, selectedValue) => {
-                              const value:
-                                | ClientRegistrationTypesSupported[]
-                                | undefined = field.value;
-                              field.onChange(
-                                value?.find((item) => item === selectedValue)
-                                  ? value.filter(
-                                      (item) => item !== selectedValue,
+                            validated={
+                              errors.openIdFederationRPClientRegistrationTypesSupported
+                                ? ValidatedOptions.error
+                                : ValidatedOptions.default
+                            }
+                            helperTextInvalid={t("common:required")}
+                            fieldId="types-supported"
+                          >
+                            <Controller
+                              name={`openIdFederationRPClientRegistrationTypesSupported`}
+                              defaultValue={
+                                [] as ClientRegistrationTypesSupported[]
+                              }
+                              control={control}
+                              rules={{
+                                required: {
+                                  value: true,
+                                  message: t("common:required"),
+                                },
+                              }}
+                              render={({ field }) => (
+                                <Select
+                                  maxHeight={375}
+                                  toggleId={
+                                    "openIdFederationList.openIdFederationOPClientRegistrationTypesSupported"
+                                  }
+                                  variant={SelectVariant.typeaheadMulti}
+                                  chipGroupProps={{
+                                    numChips: 3,
+                                  }}
+                                  placeholderText={t(
+                                    "clientRegistrationTypesSupportedPlaceholder",
+                                  )}
+                                  menuAppendTo="parent"
+                                  onToggle={(open) =>
+                                    setOpenRPClientRegistrationTypesSupported(
+                                      open,
                                     )
-                                  : [...(value ? value : []), selectedValue],
-                              );
-                            }}
-                            onClear={(event) => {
-                              event.stopPropagation();
-                              field.onChange([]);
-                            }}
-                            typeAheadAriaLabel={t("resetActions")}
-                          >
-                            {openIdFederationRPClientRegistrationTypesSupported.map(
-                              (name) => (
-                                <SelectOption
-                                  key={name}
-                                  value={name}
-                                  data-testid={`${name}-option`}
+                                  }
+                                  isOpen={
+                                    openRPClientRegistrationTypesSupported
+                                  }
+                                  selections={field.value as string[]}
+                                  onSelect={(_, selectedValue) => {
+                                    const value:
+                                      | ClientRegistrationTypesSupported[]
+                                      | undefined = field.value;
+                                    field.onChange(
+                                      value?.find(
+                                        (item) => item === selectedValue,
+                                      )
+                                        ? value.filter(
+                                            (item) => item !== selectedValue,
+                                          )
+                                        : [
+                                            ...(value ? value : []),
+                                            selectedValue,
+                                          ],
+                                    );
+                                  }}
+                                  onClear={(event) => {
+                                    event.stopPropagation();
+                                    field.onChange([]);
+                                  }}
+                                  typeAheadAriaLabel={t("resetActions")}
                                 >
-                                  {name}
-                                </SelectOption>
-                              ),
-                            )}
-                          </Select>
+                                  {openIdFederationRPClientRegistrationTypesSupported.map(
+                                    (name) => (
+                                      <SelectOption
+                                        key={name}
+                                        value={name}
+                                        data-testid={`${name}-option`}
+                                      >
+                                        {name}
+                                      </SelectOption>
+                                    ),
+                                  )}
+                                </Select>
+                              )}
+                            />
+                          </FormGroup>
                         )}
-                      />
-                    </FormGroup>
-                  )}
-                </FormAccess>
-              </FormProvider>
-            ),
-          },
-          // Only include the Trust Anchor Settings section if enabled
+                      </FormAccess>
+                    </FormProvider>
+                  ),
+                },
+              ]
+            : []),
           ...(isOpenIdFederationEnabled
             ? [
                 {
