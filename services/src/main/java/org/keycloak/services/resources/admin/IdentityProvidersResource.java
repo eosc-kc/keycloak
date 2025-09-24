@@ -27,6 +27,7 @@ import org.eclipse.microprofile.openapi.annotations.parameters.Parameter;
 import org.eclipse.microprofile.openapi.annotations.tags.Tag;
 import org.jboss.resteasy.annotations.cache.NoCache;
 import org.keycloak.broker.oidc.OAuth2IdentityProviderConfig;
+import org.keycloak.broker.oidc.OIDCIdentityProvider;
 import org.keycloak.broker.oidc.OIDCIdentityProviderConfig;
 import org.keycloak.broker.oidc.federation.OpenIdFederationIdentityProviderConfig;
 import org.keycloak.broker.oidc.federation.OpenIdFederationIdentityProviderFactory;
@@ -339,6 +340,7 @@ public class IdentityProvidersResource {
                         OIDCLoginProtocol.LOGIN_PROTOCOL).toString(), frontendUriInfo, realm.getName());
                 metadataFromOP(rPMetadata, federationConfig.getIdpConfiguration(), op, opStatement.getSubject());
                 metadataFromFederation(rPMetadata, federationConfig.getIdpConfiguration());
+                rPMetadata.setPostLogoutRedirectUris(Stream.of(OIDCIdentityProvider.getLogoutResponse(frontendUriInfo, realm.getName(), representation.getAlias())).collect(Collectors.toList()));
                 metadata.setRelyingPartyMetadata(rPMetadata);
                 entityStatement.setMetadata(metadata);
                 StringEntity entity = new StringEntity(session.tokens().encodeForOpenIdFederation(entityStatement), ContentType.create(TokenUtil.APPLICATION_ENTITY_STATEMENT_JWT));

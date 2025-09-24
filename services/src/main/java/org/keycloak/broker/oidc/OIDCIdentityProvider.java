@@ -201,14 +201,18 @@ public class OIDCIdentityProvider extends AbstractOAuth2IdentityProvider<OIDCIde
             UriBuilder logoutUri = UriBuilder.fromUri(getConfig().getLogoutUrl())
                     .queryParam("state", sessionId);
             if (idToken != null) logoutUri.queryParam("id_token_hint", idToken);
-            String redirect = RealmsResource.brokerUrl(uriInfo)
-                    .path(IdentityBrokerService.class, "getEndpoint")
-                    .path(OIDCEndpoint.class, "logoutResponse")
-                    .build(realm.getName(), getConfig().getAlias()).toString();
+            String redirect = getLogoutResponse(uriInfo, realm.getName(), getConfig().getAlias());
             logoutUri.queryParam("post_logout_redirect_uri", redirect);
             Response response = Response.status(302).location(logoutUri.build()).build();
             return response;
         }
+    }
+
+    public static String getLogoutResponse(UriInfo uriInfo, String realmName, String alias) {
+       return RealmsResource.brokerUrl(uriInfo)
+                .path(IdentityBrokerService.class, "getEndpoint")
+                .path(OIDCEndpoint.class, "logoutResponse")
+                .build(realmName, alias).toString();
     }
 
     @Override

@@ -22,6 +22,7 @@ Our Keycloak version is working well with PostgreSQL database. For using other S
 
 ### Fixed
 - Correct error for null audience in JWTClientAuthenticator
+- Correct logout for OpenId Federation IdP
 
 
 ## [22.0.13-1.22] - 2025-09-08
