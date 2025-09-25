@@ -41,6 +41,8 @@ export default function EditIdentityFederation() {
 
   const save = async (r: OpenIdFederationRepresentation) => {
     r = convertFormValuesToObject(r);
+    r.idpConfiguration?.defaultScope === "" &&
+      delete r.idpConfiguration.defaultScope;
     try {
       const savedIdentityFederation: OpenIdFederationRepresentation = { ...r };
       await adminClient.openIdFederations.update(

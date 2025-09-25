@@ -30,6 +30,8 @@ export default function AddOpenIdFederation() {
   );
   const save = async (r: OpenIdFederationRepresentation) => {
     r = convertFormValuesToObject(r);
+    r.idpConfiguration?.defaultScope === "" &&
+      delete r.idpConfiguration.defaultScope;
     try {
       const savedOpenIdFederation: OpenIdFederationRepresentation = { ...r };
       const createdOpenIdFederation =
