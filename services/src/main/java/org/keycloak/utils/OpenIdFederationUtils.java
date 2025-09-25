@@ -91,10 +91,9 @@ public class OpenIdFederationUtils {
         return rPMetadata;
     }
 
-    public static void convertEntityStatementToIdp(IdentityProviderModel model, RealmModel realm, String alias, EntityStatementExplicitResponse entityStatement, Map<String, String> federationIdPConfig) {
+    public static void convertEntityStatementToIdp(IdentityProviderModel model, RealmModel realm, EntityStatementExplicitResponse entityStatement, Map<String, String> federationIdPConfig) {
         RPMetadata rp = entityStatement.getMetadata().getRelyingPartyMetadata();
 
-        model.setAlias(alias);
         model.setProviderId(OpenIdFederationWellKnownProviderFactory.PROVIDER_ID);
         model.setAddReadTokenRoleOnCreate(Boolean.valueOf(federationIdPConfig.get("addReadTokenRoleOnCreate")));
         model.setDisplayName(rp.getClientName());
