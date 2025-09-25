@@ -107,7 +107,7 @@ public class OpenIdFederationClientRegistrationService extends AbstractClientReg
             logger.error("The following error was thrown during OpenId Federation Client explicit registration", e);
             throw new ErrorResponseException(Errors.INVALID_METADATA, "Client metadata invalid", Response.Status.BAD_REQUEST);
         }
-
+        event.detail(Details.REQUESTED_SCOPES, client.getOptionalClientScopes());
         return client;
     }
 
