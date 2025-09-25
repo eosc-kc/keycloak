@@ -308,52 +308,14 @@ public class IdentityProvidersResource {
     private IdentityProviderModel createModelForOpenIdFederation(IdentityProviderRepresentation representation){
         if (realm.isOpenIdFederationTypeRegistrationSupported(EntityTypeEnum.OPENID_RELYING_PARTY, ClientRegistrationTypeEnum.EXPLICIT) && representation.getConfig().get(OIDCIdentityProviderConfig.ISSUER) != null) {
             try {
-                OpenIdFederationGeneralConfig federationGeneralConfig = realm.getOpenIdFederationGeneralConfig();
-                OpenIdFederationConfig federationConfig = federationGeneralConfig.getOpenIdFederationList().stream().filter(x -> representation.getConfig().get(OpenIdFederationIdentityProviderConfig.TRUST_ANCHOR_ID).equals(x.getTrustAnchor())).findAny().orElseThrow(() -> new NotFoundException("Trust anchor does not exist"));
-                TrustChainProcessor trustChainProcessor = session.getProvider(TrustChainProcessor.class, OpenIdFederationTrustChainProcessorFactory.PROVIDER_ID);
-                String opIssuer = representation.getConfig().get(OIDCIdentityProviderConfig.ISSUER);
-                EntityStatement opStatement = trustChainProcessor.parseAndValidateSelfSigned(OpenIdFederationUtils.getSelfSignedToken(opIssuer, session));
-                if (!trustChainProcessor.validateEntityStatementFields(opStatement, opIssuer, opIssuer) || opStatement.getMetadata().getOpenIdProviderMetadata() == null || !opStatement.getMetadata().getOpenIdProviderMetadata().getClientRegistrationTypesSupported().contains("explicit") || opStatement.getMetadata().getOpenIdProviderMetadata().getFederationRegistrationEndpoint() == null) {
-                    throw new BadRequestException("No valid OP Entity Statement");
-                }
-                TrustChainResolution trustChainResolution = trustChainProcessor.constructTrustChains(opStatement, Stream.of(federationConfig.getTrustAnchor()).collect(Collectors.toSet()),  false);
-                if (trustChainResolution == null) {
-                    throw new BadRequestException("No common trust chain found");
-                }
-                OPMetadata op = (OPMetadata) trustChainResolution.getMetadataAfterPolicies();
-                IdentityProviderModel model = OIDCIdentityProviderFactory.parseOIDCConfig(op,  OpenIdFederationIdentityProviderConfig.class, new OpenIdFederationIdentityProviderConfig());
-                if (representation.getConfig().get("guiOrder") != null && !representation.getConfig().get("guiOrder").isEmpty()) {
+                  IdentityProviderModel model = new OpenIdFederationIdentityProviderConfig();
+                  if (representation.getConfig().get("guiOrder") != null && !representation.getConfig().get("guiOrder").isEmpty()) {
                     model.getConfig().put("guiOrder", representation.getConfig().get("guiOrder"));
-                }
-
-                UriInfo frontendUriInfo = session.getContext().getUri(UrlType.FRONTEND);
-                UriInfo backendUriInfo = session.getContext().getUri(UrlType.BACKEND);
-                JSONWebKeySet jwks = trustChainProcessor.getKeySet();
-                EntityStatement entityStatement = new EntityStatement(Urls.realmIssuer(frontendUriInfo.getBaseUri(), realm.getName()), Long.valueOf(federationGeneralConfig.getLifespan()), Stream.of(trustChainResolution.getLeafId()).collect(Collectors.toList()), jwks);
-                entityStatement.addAudience(opIssuer);
-                Metadata metadata = new Metadata();
-                // Use RP client registration types from general config
-                Stream<ClientRegistrationTypeEnum> rpRegistrationTypes = federationGeneralConfig.getRpClientRegistrationTypesSupported() != null ? 
-                    federationGeneralConfig.getRpClientRegistrationTypesSupported().stream() : 
-                    Stream.empty();
-                RPMetadata rPMetadata = OpenIdFederationUtils.createRPMetadata(federationGeneralConfig, rpRegistrationTypes, OpenIdFederationUtils.commonMetadata(federationGeneralConfig), RealmsResource.protocolUrl(backendUriInfo).clone().path(OIDCLoginProtocolService.class, "certs").build(realm.getName(),
-                        OIDCLoginProtocol.LOGIN_PROTOCOL).toString(), frontendUriInfo, realm.getName());
-                metadataFromOP(rPMetadata, federationConfig.getIdpConfiguration(), op, opStatement.getSubject());
-                metadataFromFederation(rPMetadata, federationConfig.getIdpConfiguration());
-                rPMetadata.setPostLogoutRedirectUris(Stream.of(OIDCIdentityProvider.getLogoutResponse(frontendUriInfo, realm.getName(), representation.getAlias())).collect(Collectors.toList()));
-                metadata.setRelyingPartyMetadata(rPMetadata);
-                entityStatement.setMetadata(metadata);
-                StringEntity entity = new StringEntity(session.tokens().encodeForOpenIdFederation(entityStatement), ContentType.create(TokenUtil.APPLICATION_ENTITY_STATEMENT_JWT));
-                SimpleHttp.Response response = SimpleHttp.doPost(op.getFederationRegistrationEndpoint(), session).entity(entity).asResponse();
-                if (response.getStatus() < 200 || response.getStatus() >= 400) {
-                    throw new BadRequestException("Error during explicit client registration with body : "+ response.asString());
-                }
-                EntityStatementExplicitResponse statementResponse = trustChainProcessor.parseAndValidateSelfSigned(response.asString(), EntityStatementExplicitResponse.class, opStatement.getJwks());
-                if (!trustChainProcessor.validateEntityStatementFields(statementResponse, opIssuer, opIssuer) || statementResponse.getTrustAnchor() == null || LocalDateTime.now().toEpochSecond(ZoneOffset.UTC) > statementResponse.getExp() ) {
-                    throw new BadRequestException("No valid OP Entity Statement");
-                }
-                OpenIdFederationUtils.convertEntityStatementToIdp(model, realm, representation.getAlias(), statementResponse, new HashMap<>(federationConfig.getIdpConfiguration()));
-                return model;
+                  }
+                  model.setAlias(representation.getAlias());
+                  TrustChainProcessor trustChainProcessor = session.getProvider(TrustChainProcessor.class, OpenIdFederationTrustChainProcessorFactory.PROVIDER_ID);
+                  trustChainProcessor.rPexcplicitRegistration(representation.getConfig().get(OIDCIdentityProviderConfig.ISSUER), representation.getConfig().get(OpenIdFederationIdentityProviderConfig.TRUST_ANCHOR_ID), model, realm);
+                  return model;
             } catch (Exception e) {
                 throw ErrorResponse.error(e.getMessage(), BAD_REQUEST);
             }
@@ -367,22 +329,6 @@ public class IdentityProvidersResource {
         AutoUpdateIdentityProviders autoUpdateProvider = new AutoUpdateIdentityProviders(alias, realm.getId());
         ClusterAwareScheduledTaskRunner taskRunner = new ClusterAwareScheduledTaskRunner(session.getKeycloakSessionFactory(), autoUpdateProvider, interval);
         timer.schedule(taskRunner, interval, realm.getId()+"_AutoUpdateIdP_" + alias);
-    }
-
-    private void metadataFromFederation(RPMetadata rPMetadata, Map<String, String> federationConfig){
-        rPMetadata.setScope(federationConfig.get(OAuth2IdentityProviderConfig.DEFAULT_SCOPE));
-    }
-
-    private void metadataFromOP(RPMetadata rPMetadata, Map<String, String> federationConfig, OPMetadata opMetadata, String subject) {
-        List<String> subjectTypesSupported = federationConfig.get(OpenIdFederationUtils.SUBJECT_TYPES_SUPPORTED) == null
-                ? OIDCWellKnownProvider.DEFAULT_SUBJECT_TYPES_SUPPORTED
-                : Arrays.asList(federationConfig.get(OpenIdFederationUtils.SUBJECT_TYPES_SUPPORTED).split("##"));
-
-        rPMetadata.setSubjectType(subjectTypesSupported.stream()
-                .filter(x -> opMetadata.getSubjectTypesSupported().contains(x))
-                .findFirst()
-                .orElseThrow(() -> new BadRequestException("No subject type common exists")));
-        rPMetadata.setClientName(opMetadata.getCommonMetadata().getOrganizationName() != null ? opMetadata.getCommonMetadata().getOrganizationName() : subject);
     }
 
     @Path("instances/{alias}")
