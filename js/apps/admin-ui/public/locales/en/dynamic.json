@@ -176,6 +176,10 @@
     "label": "Allow Default Scopes",
     "tooltip": "If on, newly registered clients will be allowed to have client scopes mentioned in realm default client scopes or realm optional client scopes"
   },
+  "add-default-scopes": {
+    "label": "Add Default Scopes",
+    "tooltip": "If enabled, all realm-level client scopes marked as default will be automatically assigned as default to newly registered clients"
+  },
   "allowed-protocol-mappers": {
     "label": "Allowed Protocol Mappers",
     "tooltip": "Whitelist of allowed protocol mapper providers. If there is an attempt to register client, which contains some protocol mappers, which were not whitelisted, registration request will be rejected."

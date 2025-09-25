@@ -17,6 +17,7 @@
 
 package org.keycloak.services.clientregistration.policy.impl;
 
+import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -59,6 +60,24 @@ public class ClientScopesClientRegistrationPolicy implements ClientRegistrationP
 
         checkClientScopesAllowed(requestedDefaultScopeNames, allowedDefaultScopeNames);
         checkClientScopesAllowed(requestedOptionalScopeNames, allowedOptionalScopeNames);
+
+        if (componentModel.get(ClientScopesClientRegistrationPolicyFactory.ALLOW_DEFAULT_SCOPES, true) && (requestedDefaultScopeNames != null || requestedOptionalScopeNames != null)) {
+            //if requested scopes list is not empty and add-default-scopes is true, add realm default scopes
+            List<String> defaultRealmScopes = realm.getDefaultClientScopesStream(true).map(ClientScopeModel::getName).collect(Collectors.toList());
+            if (!defaultRealmScopes.isEmpty()) {
+                if (context.getClient().getDefaultClientScopes() == null) {
+                    context.getClient().setDefaultClientScopes(new ArrayList<>());
+                }
+                for (String s : defaultRealmScopes) {
+                    if (!context.getClient().getDefaultClientScopes().contains(s)) {
+                        context.getClient().getDefaultClientScopes().add(s);
+                    }
+                }
+                if (requestedOptionalScopeNames != null) {
+                    context.getClient().getOptionalClientScopes().removeIf(x -> defaultRealmScopes.contains(x));
+                }
+            }
+        }
     }
 
     @Override
