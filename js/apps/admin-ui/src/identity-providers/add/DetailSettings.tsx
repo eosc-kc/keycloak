@@ -215,7 +215,10 @@ export default function DetailSettings() {
       }
       reset(fetchedProvider);
       setProvider(fetchedProvider);
-      setRefreshEnabled(fetchedProvider.config!.metadataUrl);
+      setRefreshEnabled(
+        fetchedProvider.config!.metadataUrl ||
+          providerId === "openid-federation",
+      );
 
       if (fetchedProvider.config!.authnContextClassRefs) {
         form.setValue(
@@ -304,7 +307,11 @@ export default function DetailSettings() {
     continueButtonVariant: ButtonVariant.primary,
     onConfirm: async () => {
       try {
-        await adminClient.identityProviders.refresh({ alias: alias });
+        if (providerId === "openid-federation") {
+          await adminClient.identityProviders.refreshOidFed({ alias: alias });
+        } else {
+          await adminClient.identityProviders.refresh({ alias: alias });
+        }
         addAlert(t("refreshSuccess"), AlertVariant.success);
         refresh();
       } catch (error) {
