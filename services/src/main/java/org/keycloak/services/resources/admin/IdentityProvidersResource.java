@@ -254,7 +254,7 @@ public class IdentityProvidersResource {
                 OpenIdFederationIdPExpirationTask task = new OpenIdFederationIdPExpirationTask(identityProvider.getAlias(), realm.getId());
                 long expiration = Long.valueOf(identityProvider.getConfig().get(OIDCConfigAttributes.EXPIRATION_TIME)) * 1000 - Time.currentTimeMillis();
                 ClusterAwareScheduledTaskRunner taskRunner = new ClusterAwareScheduledTaskRunner(session.getKeycloakSessionFactory(), task, expiration);
-                timer.schedule(taskRunner, expiration, "OpenIdFederationIdPExpirationTask_" + identityProvider.getAlias());
+                timer.scheduleOnce(taskRunner, expiration, "OpenIdFederationIdPExpirationTask_" + identityProvider.getAlias());
             }
             adminEvent.operation(OperationType.CREATE).resourcePath(session.getContext().getUri(), identityProvider.getAlias())
                     .representation(StripSecretsUtils.stripSecrets(session, representation)).success();
@@ -282,8 +282,7 @@ public class IdentityProvidersResource {
                   }
                   model.setAlias(representation.getAlias());
                   TrustChainProcessor trustChainProcessor = session.getProvider(TrustChainProcessor.class, OpenIdFederationTrustChainProcessorFactory.PROVIDER_ID);
-                  trustChainProcessor.rPexcplicitRegistration(representation.getConfig().get(OIDCIdentityProviderConfig.ISSUER), representation.getConfig().get(OpenIdFederationIdentityProviderConfig.TRUST_ANCHOR_ID), model, realm);
-                  return model;
+                  return trustChainProcessor.rPexcplicitRegistration(representation.getConfig().get(OIDCIdentityProviderConfig.ISSUER), representation.getConfig().get(OpenIdFederationIdentityProviderConfig.TRUST_ANCHOR_ID), model, realm);
             } catch (Exception e) {
                 throw ErrorResponse.error(e.getMessage(), BAD_REQUEST);
             }

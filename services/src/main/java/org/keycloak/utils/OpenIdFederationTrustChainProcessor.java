@@ -13,6 +13,7 @@ import org.keycloak.broker.oidc.OIDCIdentityProviderConfig;
 import org.keycloak.broker.oidc.OIDCIdentityProviderFactory;
 import org.keycloak.broker.oidc.federation.OpenIdFederationIdentityProviderConfig;
 import org.keycloak.common.VerificationException;
+import org.keycloak.common.util.Time;
 import org.keycloak.crypto.KeyType;
 import org.keycloak.crypto.KeyUse;
 import org.keycloak.crypto.PublicKeysWrapper;
@@ -36,6 +37,7 @@ import org.keycloak.models.OpenIdFederationGeneralConfig;
 import org.keycloak.models.RealmModel;
 import org.keycloak.models.enums.ClientRegistrationTypeEnum;
 import org.keycloak.models.enums.EntityTypeEnum;
+import org.keycloak.protocol.oidc.OIDCConfigAttributes;
 import org.keycloak.protocol.oidc.OIDCLoginProtocol;
 import org.keycloak.protocol.oidc.OIDCLoginProtocolService;
 import org.keycloak.protocol.oidc.OIDCWellKnownProvider;
@@ -68,6 +70,9 @@ import java.util.stream.Stream;
 import org.keycloak.events.Errors;
 import org.keycloak.services.Urls;
 import org.keycloak.services.resources.RealmsResource;
+import org.keycloak.services.scheduled.ClusterAwareScheduledTaskRunner;
+import org.keycloak.services.scheduled.OpenIdFederationIdPExpirationTask;
+import org.keycloak.timer.TimerProvider;
 import org.keycloak.urls.UrlType;
 import org.keycloak.util.JWKSUtils;
 import org.keycloak.util.TokenUtil;
@@ -281,8 +286,12 @@ public class OpenIdFederationTrustChainProcessor implements TrustChainProcessor 
     @Override
     public void updateIdP(IdentityProviderModel model, RealmModel realm){
         try {
-            rPexcplicitRegistration(model.getConfig().get(OIDCIdentityProviderConfig.ISSUER), model.getConfig().get(OpenIdFederationIdentityProviderConfig.TRUST_ANCHOR_ID), model, realm);
-            model.setEnabled(true);
+            model = rPexcplicitRegistration(model.getConfig().get(OIDCIdentityProviderConfig.ISSUER), model.getConfig().get(OpenIdFederationIdentityProviderConfig.TRUST_ANCHOR_ID), model, realm);
+            TimerProvider timer = session.getProvider(TimerProvider.class);
+            OpenIdFederationIdPExpirationTask task = new OpenIdFederationIdPExpirationTask(model.getAlias(), realm.getId());
+            long expiration = Long.valueOf(model.getConfig().get(OIDCConfigAttributes.EXPIRATION_TIME)) * 1000 - Time.currentTimeMillis();
+            ClusterAwareScheduledTaskRunner taskRunner = new ClusterAwareScheduledTaskRunner(session.getKeycloakSessionFactory(), task, expiration);
+            timer.scheduleOnce(taskRunner, expiration, "OpenIdFederationIdPExpirationTask_" + model.getAlias());
         } catch (Exception e) {
             model.setEnabled(false);
         }
@@ -290,7 +299,7 @@ public class OpenIdFederationTrustChainProcessor implements TrustChainProcessor 
     }
 
     @Override
-    public void rPexcplicitRegistration(String opIssuer, String trustAnchor, IdentityProviderModel model, RealmModel realm) throws Exception {
+    public IdentityProviderModel rPexcplicitRegistration(String opIssuer, String trustAnchor, IdentityProviderModel model, RealmModel realm) throws Exception {
         OpenIdFederationGeneralConfig federationGeneralConfig = realm.getOpenIdFederationGeneralConfig();
         OpenIdFederationConfig federationConfig = federationGeneralConfig.getOpenIdFederationList().stream().filter(x -> trustAnchor.equals(x.getTrustAnchor())).findAny().orElseThrow(() -> new NotFoundException("Trust anchor does not exist"));
         EntityStatement opStatement = parseAndValidateSelfSigned(OpenIdFederationUtils.getSelfSignedToken(opIssuer, session));
@@ -333,11 +342,7 @@ public class OpenIdFederationTrustChainProcessor implements TrustChainProcessor 
         if (!validateEntityStatementFields(statementResponse, opIssuer, opIssuer) || statementResponse.getTrustAnchor() == null || LocalDateTime.now().toEpochSecond(ZoneOffset.UTC) > statementResponse.getExp() ) {
             throw new BadRequestException("No valid OP Entity Statement");
         }
-        if ( model.getInternalId() == null) {
-            OpenIdFederationUtils.convertEntityStatementToIdp(model, realm, statementResponse, new HashMap<>(federationConfig.getIdpConfiguration()));
-        } else {
-
-        }
+        return model.getInternalId() == null ? OpenIdFederationUtils.convertEntityStatementToIdp(model, realm, statementResponse, new HashMap<>(federationConfig.getIdpConfiguration())) : OpenIdFederationUtils.updateIdPFromEntityStatement(model, statementResponse);
     }
 
     private void metadataFromFederation(RPMetadata rPMetadata, Map<String, String> federationConfig){
