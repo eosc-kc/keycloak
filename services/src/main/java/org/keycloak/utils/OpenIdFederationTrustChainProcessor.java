@@ -26,6 +26,7 @@ import org.keycloak.broker.oidc.OIDCIdentityProviderConfig;
 import org.keycloak.broker.oidc.OIDCIdentityProviderFactory;
 import org.keycloak.broker.oidc.federation.OpenIdFederationIdentityProviderConfig;
 import org.keycloak.broker.provider.util.SimpleHttp;
+import org.keycloak.common.util.Time;
 import org.keycloak.crypto.KeyType;
 import org.keycloak.crypto.KeyUse;
 import org.keycloak.exceptions.MetadataPolicyCombinationException;
@@ -41,6 +42,7 @@ import org.keycloak.models.OpenIdFederationGeneralConfig;
 import org.keycloak.models.RealmModel;
 import org.keycloak.models.enums.ClientRegistrationTypeEnum;
 import org.keycloak.models.enums.EntityTypeEnum;
+import org.keycloak.protocol.oidc.OIDCConfigAttributes;
 import org.keycloak.protocol.oidc.OIDCLoginProtocol;
 import org.keycloak.protocol.oidc.OIDCLoginProtocolService;
 import org.keycloak.protocol.oidc.OIDCWellKnownProvider;
@@ -80,6 +82,9 @@ import com.nimbusds.jose.JOSEObjectType;
 import com.nimbusds.jose.proc.DefaultJOSEObjectTypeVerifier;
 import org.keycloak.services.Urls;
 import org.keycloak.services.resources.RealmsResource;
+import org.keycloak.services.scheduled.ClusterAwareScheduledTaskRunner;
+import org.keycloak.services.scheduled.OpenIdFederationIdPExpirationTask;
+import org.keycloak.timer.TimerProvider;
 import org.keycloak.urls.UrlType;
 import org.keycloak.util.JsonSerialization;
 import org.keycloak.util.TokenUtil;
@@ -325,6 +330,11 @@ public class OpenIdFederationTrustChainProcessor implements TrustChainProcessor 
     public void updateIdP(IdentityProviderModel model, RealmModel realm){
         try {
             model = rPexcplicitRegistration(model.getConfig().get(OIDCIdentityProviderConfig.ISSUER), model.getConfig().get(OpenIdFederationIdentityProviderConfig.TRUST_ANCHOR_ID), model, realm);
+            TimerProvider timer = session.getProvider(TimerProvider.class);
+            OpenIdFederationIdPExpirationTask task = new OpenIdFederationIdPExpirationTask(model.getAlias(), realm.getId());
+            long expiration = Long.valueOf(model.getConfig().get(OIDCConfigAttributes.EXPIRATION_TIME)) * 1000 - Time.currentTimeMillis();
+            ClusterAwareScheduledTaskRunner taskRunner = new ClusterAwareScheduledTaskRunner(session.getKeycloakSessionFactory(), task, expiration);
+            timer.scheduleOnce(taskRunner, expiration, "OpenIdFederationIdPExpirationTask_" + model.getAlias());
         } catch (Exception e) {
             model.setEnabled(false);
         }
