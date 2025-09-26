@@ -324,8 +324,7 @@ public class OpenIdFederationTrustChainProcessor implements TrustChainProcessor 
     @Override
     public void updateIdP(IdentityProviderModel model, RealmModel realm){
         try {
-            rPexcplicitRegistration(model.getConfig().get(OIDCIdentityProviderConfig.ISSUER), model.getConfig().get(OpenIdFederationIdentityProviderConfig.TRUST_ANCHOR_ID), model, realm);
-            model.setEnabled(true);
+            model = rPexcplicitRegistration(model.getConfig().get(OIDCIdentityProviderConfig.ISSUER), model.getConfig().get(OpenIdFederationIdentityProviderConfig.TRUST_ANCHOR_ID), model, realm);
         } catch (Exception e) {
             model.setEnabled(false);
         }
@@ -333,7 +332,7 @@ public class OpenIdFederationTrustChainProcessor implements TrustChainProcessor 
     }
 
     @Override
-    public void rPexcplicitRegistration(String opIssuer, String trustAnchor, IdentityProviderModel model, RealmModel realm) throws Exception {
+    public IdentityProviderModel rPexcplicitRegistration(String opIssuer, String trustAnchor, IdentityProviderModel model, RealmModel realm) throws Exception {
         OpenIdFederationGeneralConfig federationGeneralConfig = realm.getOpenIdFederationGeneralConfig();
         OpenIdFederationConfig federationConfig = federationGeneralConfig.getOpenIdFederationList().stream().filter(x -> trustAnchor.equals(x.getTrustAnchor())).findAny().orElseThrow(() -> new NotFoundException("Trust anchor does not exist"));
         EntityStatement opStatement = parseAndValidateSelfSigned(OpenIdFederationUtils.getSelfSignedToken(opIssuer, session));
@@ -373,11 +372,7 @@ public class OpenIdFederationTrustChainProcessor implements TrustChainProcessor 
         if (!validateEntityStatementFields(statementResponse, opIssuer, opIssuer) || statementResponse.getTrustAnchor() == null || LocalDateTime.now().toEpochSecond(ZoneOffset.UTC) > statementResponse.getExp() ) {
             throw new BadRequestException("No valid OP Entity Statement");
         }
-        if ( model.getInternalId() == null) {
-            OpenIdFederationUtils.convertEntityStatementToIdp(model, realm, statementResponse, new HashMap<>(federationConfig.getIdpConfiguration()));
-        } else {
-
-        }
+        return model.getInternalId() == null ? OpenIdFederationUtils.convertEntityStatementToIdp(model, realm, statementResponse, new HashMap<>(federationConfig.getIdpConfiguration())) : OpenIdFederationUtils.updateIdPFromEntityStatement(model, statementResponse);
     }
 
     private void metadataFromFederation(RPMetadata rPMetadata, Map<String, String> federationConfig){

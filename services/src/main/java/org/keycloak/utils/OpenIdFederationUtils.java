@@ -91,7 +91,7 @@ public class OpenIdFederationUtils {
         return rPMetadata;
     }
 
-    public static void convertEntityStatementToIdp(IdentityProviderModel model, RealmModel realm, EntityStatementExplicitResponse entityStatement, Map<String, String> federationIdPConfig) {
+    public static IdentityProviderModel convertEntityStatementToIdp(IdentityProviderModel model, RealmModel realm, EntityStatementExplicitResponse entityStatement, Map<String, String> federationIdPConfig) {
         RPMetadata rp = entityStatement.getMetadata().getRelyingPartyMetadata();
 
         model.setProviderId(OpenIdFederationWellKnownProviderFactory.PROVIDER_ID);
@@ -141,6 +141,27 @@ public class OpenIdFederationUtils {
         model.getConfig().put(OpenIdFederationIdentityProviderConfig.AUTHORITY_HINTS, entityStatement.getAuthorityHints().stream().collect(Collectors.joining("##")));
         model.getConfig().put(OIDCConfigAttributes.EXPIRATION_TIME, String.valueOf(entityStatement.getExp()));
         model.getConfig().putAll(federationIdPConfig);
+        return model;
+    }
+
+    public static IdentityProviderModel updateIdPFromEntityStatement(IdentityProviderModel model, EntityStatementExplicitResponse entityStatement) {
+        RPMetadata rp = entityStatement.getMetadata().getRelyingPartyMetadata();
+        model.setDisplayName(rp.getClientName());
+        model.setEnabled(true);
+        if (rp.getPostLogoutRedirectUris() != null && !rp.getPostLogoutRedirectUris().isEmpty()) {
+            model.getConfig().put(OIDCIdentityProviderConfig.LOGOUT_URL, rp.getPostLogoutRedirectUris().get(0));
+        } else {
+            model.getConfig().remove(OIDCIdentityProviderConfig.LOGOUT_URL);
+        }
+        model.getConfig().put(OAuth2IdentityProviderConfig.DEFAULT_SCOPE, rp.getScope());
+        model.getConfig().put(OAuth2IdentityProviderConfig.CLIENT_ID, rp.getClientId());
+        model.getConfig().put(OAuth2IdentityProviderConfig.CLIENT_SECRET, rp.getClientSecret());
+        model.getConfig().put(OAuth2IdentityProviderConfig.CLIENT_AUTH_METHOD, rp.getTokenEndpointAuthMethod());
+        model.getConfig().put(OAuth2IdentityProviderConfig.CLIENT_ASSERTION_SIGNING_ALG, rp.getTokenEndpointAuthSigningAlg());
+        model.getConfig().put(OpenIdFederationIdentityProviderConfig.TRUST_ANCHOR_ID, entityStatement.getTrustAnchor());
+        model.getConfig().put(OpenIdFederationIdentityProviderConfig.AUTHORITY_HINTS, entityStatement.getAuthorityHints().stream().collect(Collectors.joining("##")));
+        model.getConfig().put(OIDCConfigAttributes.EXPIRATION_TIME, String.valueOf(entityStatement.getExp()));
+        return model;
     }
 
     public static ClientModel createOrUpdateAutomaticClient(String clientId, KeycloakSession session, RealmModel realm) throws IOException, InvalidTrustChainException {
