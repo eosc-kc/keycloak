@@ -27,6 +27,7 @@ Our Keycloak version is working well with PostgreSQL database. For using other S
 - Correct error for null audience in JWTClientAuthenticator
 - Correct logout for OpenId Federation IdP
 - Being possible to add realm default scopes during Dynamic Client Registration/ OpenID Federation when scopes are including in client representation
+- Encoding basic auth in an OIDC Identity Provider based on [OAuth2.1](https://datatracker.ietf.org/doc/html/draft-ietf-oauth-v2-1-13#name-client-secret) [RCIAM-135](https://tts.grnet.gr/jira/browse/RCIAM-135)
 
 
 ## [22.0.13-1.22] - 2025-09-08
