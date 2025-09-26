@@ -41,6 +41,7 @@ import org.keycloak.crypto.KeyWrapper;
 import org.keycloak.crypto.MacSignatureSignerContext;
 import org.keycloak.crypto.ServerECDSASignatureSignerContext;
 import org.keycloak.crypto.SignatureSignerContext;
+import org.keycloak.http.HttpRequest;
 import org.keycloak.jose.jwe.JWEConstants;
 import org.keycloak.jose.jwk.JSONWebKeySet;
 import org.keycloak.jose.jwk.JWK;
@@ -114,14 +115,16 @@ public class TestingOIDCEndpointsApplicationResource {
     private final ConcurrentMap<String, TestAuthenticationChannelRequest> authenticationChannelRequests;
     private final ConcurrentMap<String, ClientNotificationEndpointRequest> cibaClientNotifications;
     private final ConcurrentMap<String, String> intentClientBindings;
+    private final HttpRequest request;
 
     public TestingOIDCEndpointsApplicationResource(TestApplicationResourceProviderFactory.OIDCClientData oidcClientData,
             ConcurrentMap<String, TestAuthenticationChannelRequest> authenticationChannelRequests, ConcurrentMap<String, ClientNotificationEndpointRequest> cibaClientNotifications,
-            ConcurrentMap<String, String> intentClientBindings) {
+            ConcurrentMap<String, String> intentClientBindings, HttpRequest request) {
         this.clientData = oidcClientData;
         this.authenticationChannelRequests = authenticationChannelRequests;
         this.cibaClientNotifications = cibaClientNotifications;
         this.intentClientBindings = intentClientBindings;
+        this.request = request;
     }
 
     @GET
@@ -780,7 +783,9 @@ public class TestingOIDCEndpointsApplicationResource {
     @GET
     @Path("/oidfed-rp/.well-known/openid-federation")
     public String oidfedRPWellKnownEndpoint() {
-        EntityStatement entityStatement = new EntityStatement(TestApplicationResourceUrls.oidfedRP, 86400, new ArrayList<>(openIdFederationConfig.getAuthorityHints()), trustChainProcessor.getKeySet());
+        String issuer = request.getUri().getPath().replace("/.well-known/openid-federation","");
+        String authorityHint = request.getUri().getPath().replace("oidfed-rp/.well-known/openid-federation","oidfed-ta");
+        EntityStatement entityStatement = new EntityStatement(issuer, 86400, new ArrayList<>(openIdFederationConfig.getAuthorityHints()), trustChainProcessor.getKeySet());
         RPMetadata rPMetadata = OpenIdFederationUtils.createRPMetadata(openIdFederationConfig, rpRegistrationTypes.stream(), null, RealmsResource.protocolUrl(backendUriInfo).clone().path(OIDCLoginProtocolService.class, "certs").build(realm.getName(),
                 OIDCLoginProtocol.LOGIN_PROTOCOL).toString(), frontendUriInfo, realm.getName());
         // For now, use default subject types since we removed the individual federation configs
@@ -803,9 +808,4 @@ public class TestingOIDCEndpointsApplicationResource {
 
     };
 
-    private UriBuilder oidcClientEndpoints() {
-        return UriBuilder.fromUri(OAuthClient.AUTH_SERVER_ROOT)
-                .path(TestApplicationResource.class)
-                .path(TestApplicationResource.class, "oidcClientEndpoints");
-    }
 }
