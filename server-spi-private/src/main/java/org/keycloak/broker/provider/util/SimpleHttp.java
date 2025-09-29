@@ -51,8 +51,10 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.StringWriter;
+import java.io.UnsupportedEncodingException;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.net.URLEncoder;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
@@ -246,7 +248,12 @@ public class SimpleHttp {
     }
 
     public SimpleHttp authBasic(final String username, final String password) {
-        final String basicCredentials = String.format("%s:%s", username, password);
+        String basicCredentials;
+        try {
+            basicCredentials = URLEncoder.encode(username, StandardCharsets.UTF_8.toString()) + ":" + URLEncoder.encode(password, StandardCharsets.UTF_8.toString());
+        } catch (UnsupportedEncodingException e) {
+            basicCredentials = URLEncoder.encode(username) + ":" + URLEncoder.encode(password);
+        }
         header("Authorization", "Basic " + Base64.encodeBytes(basicCredentials.getBytes()));
         return this;
     }
