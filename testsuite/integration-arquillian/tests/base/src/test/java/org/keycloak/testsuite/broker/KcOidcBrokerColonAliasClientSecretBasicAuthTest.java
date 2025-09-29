@@ -54,6 +54,11 @@ public class KcOidcBrokerColonAliasClientSecretBasicAuthTest extends AbstractBro
             config.put(OIDCIdentityProviderConfig.VALIDATE_SIGNATURE, "true");
         }
 
+        @Override
+        public String getIDPClientIdInProviderRealm() {
+            return CLIENT_ID_COLON;
+        }
+
     }
 }
 
