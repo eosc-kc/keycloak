@@ -24,10 +24,14 @@ import org.keycloak.models.KeycloakSession;
 import org.keycloak.protocol.oidc.representations.OIDCConfigurationRepresentation;
 import org.keycloak.util.JsonSerialization;
 
+import org.jboss.logging.Logger;
+
 /**
  * @author Pedro Igor
  */
 public class OIDCIdentityProviderFactory extends AbstractIdentityProviderFactory<OIDCIdentityProvider> {
+
+    private static final Logger logger = Logger.getLogger(OIDCIdentityProviderFactory.class);
 
     public static final String PROVIDER_ID = "oidc";
 
@@ -65,17 +69,20 @@ public class OIDCIdentityProviderFactory extends AbstractIdentityProviderFactory
         try {
             rep = JsonSerialization.readValue(configString, OIDCConfigurationRepresentation.class);
         } catch (IOException e) {
+            logger.error("failed to load openid connect metadata", e);
             throw new RuntimeException("failed to load openid connect metadata", e);
         }
         try {
             return parseOIDCConfig(rep, configClass, model);
         } catch (Exception e) {
+            logger.error("Failed to instantiate config", e);
             throw new RuntimeException("Failed to instantiate config", e);
         }
 
     }
 
     public static <P extends OIDCConfigurationRepresentation, T extends OIDCIdentityProviderConfig> T parseOIDCConfig( P rep,  Class<T> configClass, IdentityProviderModel model) throws Exception {
+        logger.debug("Parsing OIDC IdP values");
         T config = configClass.getConstructor(IdentityProviderModel.class).newInstance(model);
         config.setIssuer(rep.getIssuer());
         config.setLogoutUrl(rep.getLogoutEndpoint());
