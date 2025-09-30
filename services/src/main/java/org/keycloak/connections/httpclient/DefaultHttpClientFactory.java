@@ -123,6 +123,7 @@ public class DefaultHttpClientFactory implements HttpClientFactory {
                 HttpResponse response = httpClient.execute(request);
                 String body = stringResponseHandler.handleResponse(response);
                 if (body == null) {
+                    logger.error("Unexpected HTTP status code " + response.getStatusLine().getStatusCode() + " when expecting 2xx for uri "+uri);
                     throw new IOException("No content returned from HTTP call");
                 }
                 return body;

@@ -17,6 +17,7 @@
 
 package org.keycloak.protocol.oidc;
 
+import org.jboss.logging.Logger;
 import org.keycloak.OAuth2Constants;
 import org.keycloak.authentication.ClientAuthenticator;
 import org.keycloak.authentication.ClientAuthenticatorFactory;
@@ -72,6 +73,8 @@ import java.util.stream.Stream;
  */
 public class OIDCWellKnownProvider implements WellKnownProvider {
 
+    private static final Logger logger = Logger.getLogger(OIDCWellKnownProvider.class);
+
     public static final List<String> DEFAULT_RESPONSE_TYPES_SUPPORTED = list(OAuth2Constants.CODE, OIDCResponseType.NONE, OIDCResponseType.ID_TOKEN, OIDCResponseType.TOKEN, "id_token token", "code id_token", "code token", "code id_token token");
 
     public static final List<String> DEFAULT_SUBJECT_TYPES_SUPPORTED = list("public", "pairwise");
@@ -103,6 +106,7 @@ public class OIDCWellKnownProvider implements WellKnownProvider {
 
     @Override
     public Object getConfig() {
+        logger.debug("Creating .well-known/openid-configuration");
         UriInfo frontendUriInfo = session.getContext().getUri(UrlType.FRONTEND);
         UriInfo backendUriInfo = session.getContext().getUri(UrlType.BACKEND);
 
@@ -216,6 +220,7 @@ public class OIDCWellKnownProvider implements WellKnownProvider {
         config.setAuthorizationResponseIssParameterSupported(true);
 
         config = checkConfigOverride(config);
+        logger.debug("finish creating .well-known/openid-configuration");
         return config;
     }
 
