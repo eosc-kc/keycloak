@@ -18,10 +18,12 @@
 package org.keycloak.protocol.oidc;
 
 import com.google.common.collect.Streams;
+import org.jboss.logging.Logger;
 import org.keycloak.OAuth2Constants;
 import org.keycloak.authentication.ClientAuthenticator;
 import org.keycloak.authentication.ClientAuthenticatorFactory;
 import org.keycloak.authentication.authenticators.util.LoAUtil;
+import org.keycloak.broker.oidc.OIDCIdentityProviderFactory;
 import org.keycloak.common.Profile;
 import org.keycloak.crypto.CekManagementProvider;
 import org.keycloak.crypto.ClientSignatureVerifierProvider;
@@ -71,6 +73,8 @@ import java.util.stream.Stream;
  */
 public class OIDCWellKnownProvider implements WellKnownProvider {
 
+    private static final Logger logger = Logger.getLogger(OIDCWellKnownProvider.class);
+
     public final List<String> DEFAULT_GRANT_TYPES_SUPPORTED;
 
     public static final List<String> DEFAULT_RESPONSE_TYPES_SUPPORTED = list(OAuth2Constants.CODE, OIDCResponseType.NONE, OIDCResponseType.ID_TOKEN, OIDCResponseType.TOKEN, "id_token token", "code id_token", "code token", "code id_token token");
@@ -112,6 +116,7 @@ public class OIDCWellKnownProvider implements WellKnownProvider {
 
     @Override
     public Object getConfig() {
+        logger.debug("Creating .well-known/openid-configuration");
         UriInfo frontendUriInfo = session.getContext().getUri(UrlType.FRONTEND);
         UriInfo backendUriInfo = session.getContext().getUri(UrlType.BACKEND);
 
@@ -213,6 +218,7 @@ public class OIDCWellKnownProvider implements WellKnownProvider {
         config.setMtlsEndpointAliases(mtlsEndpointAliases);
 
         config = checkConfigOverride(config);
+        logger.debug("finish creating .well-known/openid-configuration");
         return config;
     }
 

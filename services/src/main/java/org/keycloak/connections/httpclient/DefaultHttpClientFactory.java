@@ -114,9 +114,11 @@ public class DefaultHttpClientFactory implements HttpClientFactory {
                 HttpEntity entity = response.getEntity();
                 if (statusCode < 200 || statusCode >= 300) {
                     EntityUtils.consumeQuietly(entity);
+                    logger.error("Unexpected HTTP status code " + response.getStatusLine().getStatusCode() + " when expecting 2xx for uri "+uri);
                     throw new IOException("Unexpected HTTP status code " + response.getStatusLine().getStatusCode() + " when expecting 2xx");
                 }
                 if (entity == null) {
+                    logger.error("No content returned from HTTP call for uri "+uri);
                     throw new IOException("No content returned from HTTP call");
                 }
                 return entity.getContent();

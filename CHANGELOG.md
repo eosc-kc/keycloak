@@ -10,25 +10,24 @@ Full Keycloak upstream jira issue can be shown if filtered by Fix version.
 
 Our Keycloak version is working well with PostgreSQL database. For using other SQL databases, text field in database need to be evaluated.
 
-## [Unreleased]
+## [22.0.13-1.23] - 2025-09-30
 
 ### Added
-- OpenID Federation Automatic Registration as OP 
-- OID-FED settings for OPs
-- Update Identity Provider in explicit registration (OpenId Federation as RP)
-- Support explicit registration with Trust Chains as OP
-- Refresh for OpenID Federation Identity Provider
+- Support for OpenID Federation automatic registration (Keycloak as OP)
+- OpenID Federation settings for Identity Providers
+- Support for explicit registration with Trust Chains (Keycloak as OP)
+- Ability to manually refresh an explicitly registered OpenID Federation Identity Provider (Keycloak as RP)
+- Automatic refresh of OpenID Federation Identity Providers (Keycloak as RP)
 
 ### Changed
-- Move entityType and ClientRegistrationType to OpenId Federation general settings
-- Common Metadata publish only to Federation Entity
+- Move `entityType` and `ClientRegistrationType` to OpenID Federation general settings
+- Publish common metadata only in `federation_entity`
 
 ### Fixed
-- Correct error for null audience in JWTClientAuthenticator
-- Correct logout for OpenId Federation IdP
-- Being possible to add realm default scopes during Dynamic Client Registration/ OpenID Federation when scopes are including in client representation
-- Encoding basic auth in an OIDC Identity Provider based on [OAuth2.1](https://datatracker.ietf.org/doc/html/draft-ietf-oauth-v2-1-13#name-client-secret) [RCIAM-135](https://tts.grnet.gr/jira/browse/RCIAM-135)
-
+- Fix null audience error in `JWTClientAuthenticator`
+- Fix logout issues for OpenID Federation IdPs
+- Allow adding realm default scopes during Dynamic Client Registration/OpenID Federation when scopes are included in client representation
+- Fix encoding of basic authentication in OIDC Identity Providers based on [OAuth 2.1](https://datatracker.ietf.org/doc/html/draft-ietf-oauth-v2-1-13#name-client-secret)
 
 ## [22.0.13-1.22] - 2025-09-08
 
