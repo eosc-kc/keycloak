@@ -44,6 +44,7 @@ import org.apache.http.message.BasicNameValuePair;
 import org.keycloak.common.util.Base64;
 import org.keycloak.connections.httpclient.HttpClientProvider;
 import org.keycloak.models.KeycloakSession;
+import org.keycloak.util.BasicAuthHelper;
 import org.keycloak.util.JsonSerialization;
 
 import java.io.IOException;
@@ -60,6 +61,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import java.util.zip.GZIPInputStream;
@@ -186,13 +188,7 @@ public class SimpleHttp {
     }
 
     public SimpleHttp authBasic(final String username, final String password) {
-        String basicCredentials;
-        try {
-            basicCredentials = URLEncoder.encode(username, StandardCharsets.UTF_8.toString()) + ":" + URLEncoder.encode(password, StandardCharsets.UTF_8.toString());
-        } catch (UnsupportedEncodingException e) {
-            basicCredentials = URLEncoder.encode(username) + ":" + URLEncoder.encode(password);
-        }
-        header("Authorization", "Basic " + Base64.encodeBytes(basicCredentials.getBytes()));
+        header("Authorization", Objects.requireNonNull(BasicAuthHelper.RFC6749.createHeader(username, password), "unable to encode header"));
         return this;
     }
 
