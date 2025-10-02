@@ -12,6 +12,9 @@ Our Keycloak version is working well with PostgreSQL database. For using other S
 
 ## [Unreleased]
 
+### Fixed
+- Return error and log appropriate error if OpenId Provider Identity Provider update failed
+
 ### Changed
 - Change encoding of basic authentication in OIDC Identity Providers based on upstream PR
 

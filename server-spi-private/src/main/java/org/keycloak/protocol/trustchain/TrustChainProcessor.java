@@ -20,7 +20,7 @@ public interface TrustChainProcessor  extends Provider {
     boolean validateEntityStatementFields(EntityStatement statement, String issuer, String subject);
     void validationRules(EntityStatement statement, boolean checkAudience);
     JSONWebKeySet getKeySet();
-    void updateIdP(IdentityProviderModel model, RealmModel realm);
+    void updateIdP(IdentityProviderModel model, RealmModel realm) throws Exception;
     IdentityProviderModel rPexcplicitRegistration(String opIssuer, String trustAnchor, IdentityProviderModel model, RealmModel realm) throws Exception;
 
 }
