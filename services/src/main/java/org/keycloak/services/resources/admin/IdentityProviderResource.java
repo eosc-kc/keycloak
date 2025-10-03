@@ -248,8 +248,8 @@ public class IdentityProviderResource {
 
         TrustChainProcessor trustChainProcessor = session.getProvider(TrustChainProcessor.class, OpenIdFederationTrustChainProcessorFactory.PROVIDER_ID);
         try {
-            trustChainProcessor.updateIdP(identityProviderModel, realm);
-            realm.updateIdentityProvider(identityProviderModel);
+            IdentityProviderModel model = trustChainProcessor.updateIdP(identityProviderModel, realm);
+            realm.updateIdentityProvider(model);
             return  Response.noContent().build();
         } catch (Exception e) {
             logger.warn("Error during updating OpenId Federation Identity Provider", e);

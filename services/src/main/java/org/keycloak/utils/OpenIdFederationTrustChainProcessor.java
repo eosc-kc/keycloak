@@ -91,10 +91,16 @@ import java.util.stream.Stream;
 public class OpenIdFederationTrustChainProcessor implements TrustChainProcessor {
 
     private static final Logger logger = Logger.getLogger(OpenIdFederationTrustChainProcessor.class);
-    private final KeycloakSession session;
+    private KeycloakSession session;
 
     public OpenIdFederationTrustChainProcessor(KeycloakSession session) {
         this.session = session;
+    }
+
+    @Override
+    public TrustChainProcessor session(KeycloakSession session) {
+        this.session = session;
+        return this;
     }
 
     /**
@@ -325,13 +331,14 @@ public class OpenIdFederationTrustChainProcessor implements TrustChainProcessor 
     }
 
     @Override
-    public void updateIdP(IdentityProviderModel model, RealmModel realm) throws Exception {
+    public IdentityProviderModel updateIdP(IdentityProviderModel model, RealmModel realm) throws Exception {
         model = rPexcplicitRegistration(model.getConfig().get(OIDCIdentityProviderConfig.ISSUER), model.getConfig().get(OpenIdFederationIdentityProviderConfig.TRUST_ANCHOR_ID), model, realm);
         TimerProvider timer = session.getProvider(TimerProvider.class);
         OpenIdFederationIdPExpirationTask task = new OpenIdFederationIdPExpirationTask(model.getAlias(), realm.getId());
         long expiration = Long.valueOf(model.getConfig().get(OIDCConfigAttributes.EXPIRATION_TIME)) * 1000 - Time.currentTimeMillis();
         ClusterAwareScheduledTaskRunner taskRunner = new ClusterAwareScheduledTaskRunner(session.getKeycloakSessionFactory(), task, expiration);
         timer.scheduleOnce(taskRunner, expiration, "OpenIdFederationIdPExpirationTask_" + model.getAlias());
+        return model;
     }
 
     @Override

@@ -34,9 +34,9 @@ public class OpenIdFederationIdPExpirationTask implements ScheduledTask {
             TimerProvider timer = session.getProvider(TimerProvider.class);
             timer.cancelTaskAndNotify("OpenIdFederationIdPExpirationTask_" + alias);
         } else {
-            TrustChainProcessor trustChainProcessor = session.getProvider(TrustChainProcessor.class, "openid-federation");
+            TrustChainProcessor trustChainProcessor = session.getProvider(TrustChainProcessor.class, "openid-federation").session(session);
             try {
-                trustChainProcessor.updateIdP(idp, realm);
+                idp = trustChainProcessor.updateIdP(idp, realm);
             } catch (Exception e) {
                 logger.warn("Error during updating OPenId Federation Identity Provider", e);
                 idp.setEnabled(false);
