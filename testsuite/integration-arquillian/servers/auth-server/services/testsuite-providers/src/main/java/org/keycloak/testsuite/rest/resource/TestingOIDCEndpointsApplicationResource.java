@@ -50,6 +50,10 @@ import org.keycloak.jose.jws.JWSBuilder;
 import org.keycloak.jose.jws.JWSInput;
 import org.keycloak.jose.jws.JWSInputException;
 import org.keycloak.models.Constants;
+import org.keycloak.models.KeycloakSession;
+import org.keycloak.models.OpenIdFederationGeneralConfig;
+import org.keycloak.models.RealmModel;
+import org.keycloak.models.enums.ClientRegistrationTypeEnum;
 import org.keycloak.protocol.oidc.OIDCLoginProtocolService;
 import org.keycloak.protocol.oidc.OIDCWellKnownProvider;
 import org.keycloak.protocol.oidc.grants.ciba.CibaGrantType;
@@ -57,9 +61,12 @@ import org.keycloak.protocol.oidc.grants.ciba.channel.AuthenticationChannelReque
 import org.keycloak.protocol.oidc.grants.ciba.channel.HttpAuthenticationChannelProvider;
 import org.keycloak.protocol.oidc.OIDCLoginProtocol;
 import org.keycloak.protocol.oidc.grants.ciba.endpoints.ClientNotificationEndpointRequest;
+import org.keycloak.protocol.trustchain.TrustChainProcessor;
 import org.keycloak.representations.AccessToken;
 import org.keycloak.representations.JsonWebToken;
 import org.keycloak.representations.openid_federation.EntityStatement;
+import org.keycloak.representations.openid_federation.Metadata;
+import org.keycloak.representations.openid_federation.OpenIdFederationEntity;
 import org.keycloak.representations.openid_federation.RPMetadata;
 import org.keycloak.services.ErrorResponseException;
 import org.keycloak.services.Urls;
@@ -68,6 +75,7 @@ import org.keycloak.services.managers.AppAuthManager;
 import org.keycloak.services.resources.RealmsResource;
 import org.keycloak.testsuite.rest.TestApplicationResourceProviderFactory;
 import org.keycloak.testsuite.rest.representation.TestAuthenticationChannelRequest;
+import org.keycloak.urls.UrlType;
 import org.keycloak.util.JsonSerialization;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -82,6 +90,7 @@ import jakarta.ws.rs.core.HttpHeaders;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.core.Response.Status;
+import org.keycloak.utils.OpenIdFederationTrustChainProcessorFactory;
 import org.keycloak.utils.OpenIdFederationUtils;
 
 import java.io.IOException;
@@ -101,6 +110,7 @@ import java.util.Set;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 /**
@@ -116,15 +126,17 @@ public class TestingOIDCEndpointsApplicationResource {
     private final ConcurrentMap<String, ClientNotificationEndpointRequest> cibaClientNotifications;
     private final ConcurrentMap<String, String> intentClientBindings;
     private final HttpRequest request;
+    private final KeycloakSession session;
 
     public TestingOIDCEndpointsApplicationResource(TestApplicationResourceProviderFactory.OIDCClientData oidcClientData,
             ConcurrentMap<String, TestAuthenticationChannelRequest> authenticationChannelRequests, ConcurrentMap<String, ClientNotificationEndpointRequest> cibaClientNotifications,
-            ConcurrentMap<String, String> intentClientBindings, HttpRequest request) {
+            ConcurrentMap<String, String> intentClientBindings, HttpRequest request, KeycloakSession session) {
         this.clientData = oidcClientData;
         this.authenticationChannelRequests = authenticationChannelRequests;
         this.cibaClientNotifications = cibaClientNotifications;
         this.intentClientBindings = intentClientBindings;
         this.request = request;
+        this.session = session;
     }
 
     @GET
@@ -784,6 +796,36 @@ public class TestingOIDCEndpointsApplicationResource {
     @Path("/oidfed-rp/.well-known/openid-federation")
     public String oidfedRPWellKnownEndpoint() {
         String issuer = request.getUri().getPath().replace("/.well-known/openid-federation","");
+        RealmModel realm = session.getContext().getRealm();
+        TrustChainProcessor trustChainProcessor = session.getProvider(TrustChainProcessor.class, OpenIdFederationTrustChainProcessorFactory.PROVIDER_ID);
+        EntityStatement entityStatement = new EntityStatement(issuer, Long.valueOf(86400), Stream.of(request.getUri().getPath().replace("oidfed-rp","oidfed-ta")).collect(Collectors.toList()), trustChainProcessor.getKeySet());
+        RPMetadata rPMetadata = OpenIdFederationUtils.createRPMetadata(new OpenIdFederationGeneralConfig(), Stream.of(ClientRegistrationTypeEnum.EXPLICIT), null, RealmsResource.protocolUrl(session.getContext().getUri(UrlType.BACKEND)).clone().path(OIDCLoginProtocolService.class, "certs").build(realm.getName(),
+                OIDCLoginProtocol.LOGIN_PROTOCOL).toString(), session.getContext().getUri(UrlType.FRONTEND), realm.getName());
+        rPMetadata.setSubjectTypesSupported(OIDCWellKnownProvider.DEFAULT_SUBJECT_TYPES_SUPPORTED);
+        Metadata metadata = new Metadata();
+        metadata.setRelyingPartyMetadata(rPMetadata);
+        entityStatement.setMetadata(metadata);
+        return session.tokens().encodeForOpenIdFederation(entityStatement);
+    };
+
+    @GET
+    @Path("/oidfed-ta/.well-known/openid-federation")
+    public String oidfedTAWellKnownEndpoint(){
+        String issuer = request.getUri().getPath().replace("/.well-known/openid-federation","");
+        TrustChainProcessor trustChainProcessor = session.getProvider(TrustChainProcessor.class, OpenIdFederationTrustChainProcessorFactory.PROVIDER_ID);
+        EntityStatement entityStatement = new EntityStatement(issuer, Long.valueOf(86400), null, trustChainProcessor.getKeySet());
+        Metadata metadata = new Metadata();
+        OpenIdFederationEntity op = new OpenIdFederationEntity();
+        op.setFederationFetchEndpoint(request.getUri().getPath().replace(".well-known/openid-federation","fetch"));
+        op.setFederationListEndpoint(request.getUri().getPath().replace(".well-known/openid-federation","list"));
+        metadata.setFederationEntity(op);
+        entityStatement.setMetadata(metadata);
+        return session.tokens().encodeForOpenIdFederation(entityStatement);
+    };
+    @GET
+    @Path("/oidfed-ta/fetch")
+    public String oidfedTAFetchEndpoint(@QueryParam("sub") String sub){
+        String issuer = request.getUri().getPath().replace("/.well-known/openid-federation","");
         String authorityHint = request.getUri().getPath().replace("oidfed-rp/.well-known/openid-federation","oidfed-ta");
         EntityStatement entityStatement = new EntityStatement(issuer, 86400, new ArrayList<>(openIdFederationConfig.getAuthorityHints()), trustChainProcessor.getKeySet());
         RPMetadata rPMetadata = OpenIdFederationUtils.createRPMetadata(openIdFederationConfig, rpRegistrationTypes.stream(), null, RealmsResource.protocolUrl(backendUriInfo).clone().path(OIDCLoginProtocolService.class, "certs").build(realm.getName(),
@@ -795,17 +837,6 @@ public class TestingOIDCEndpointsApplicationResource {
         entityStatement.setMetadata(metadata);
 
         return session.tokens().encodeForOpenIdFederation(entityStatement);
-    };
-
-    @GET
-    @Path("/oidfed-ta/.well-known/openid-federation")
-    public String oidfedTAWellKnownEndpoint(){
-
-    };
-    @GET
-    @Path("/oidfed-ta/fetch")
-    public String oidfedTAFetchEndpoint(@QueryParam("sub") String sub){
-
     };
 
 }
