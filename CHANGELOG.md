@@ -14,6 +14,8 @@ Our Keycloak version is working well with PostgreSQL database. For using other S
 
 ### Fixed
 - Return error and log appropriate error if OpenId Provider Identity Provider update failed
+- Fix problem with auto update OpenId Federation Identity Provider
+- JWKS could optionally icnlude non-standard claims
 
 ### Changed
 - Change encoding of basic authentication in OIDC Identity Providers based on upstream PR

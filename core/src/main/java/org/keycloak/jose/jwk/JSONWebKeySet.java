@@ -17,7 +17,12 @@
 
 package org.keycloak.jose.jwk;
 
+import com.fasterxml.jackson.annotation.JsonAnyGetter;
+import com.fasterxml.jackson.annotation.JsonAnySetter;
 import com.fasterxml.jackson.annotation.JsonProperty;
+
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * @author <a href="mailto:sthorger@redhat.com">Stian Thorgersen</a>
@@ -27,12 +32,24 @@ public class JSONWebKeySet {
     @JsonProperty("keys")
     private JWK[] keys;
 
+    protected Map<String, Object> otherClaims = new HashMap<String, Object>();
+
     public JWK[] getKeys() {
         return keys;
     }
 
     public void setKeys(JWK[] keys) {
         this.keys = keys;
+    }
+
+    @JsonAnyGetter
+    public Map<String, Object> getOtherClaims() {
+        return otherClaims;
+    }
+
+    @JsonAnySetter
+    public void setOtherClaims(String name, Object value) {
+        otherClaims.put(name, value);
     }
 
 }
