@@ -74,6 +74,7 @@ import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.QueryParam;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
+import org.keycloak.urls.UrlType;
 import org.keycloak.utils.OpenIdFederationTrustChainProcessorFactory;
 
 import java.io.IOException;
@@ -248,7 +249,7 @@ public class IdentityProviderResource {
 
         TrustChainProcessor trustChainProcessor = session.getProvider(TrustChainProcessor.class, OpenIdFederationTrustChainProcessorFactory.PROVIDER_ID);
         try {
-            IdentityProviderModel model = trustChainProcessor.updateIdP(identityProviderModel, realm);
+            IdentityProviderModel model = trustChainProcessor.updateIdP(identityProviderModel, realm, session.getContext().getUri(UrlType.FRONTEND), session.getContext().getUri(UrlType.BACKEND));
             realm.updateIdentityProvider(model);
             return  Response.noContent().build();
         } catch (Exception e) {

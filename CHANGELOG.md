@@ -12,6 +12,8 @@ Our Keycloak version is working well with PostgreSQL database. For using other S
 
 ## [Unreleased]
 
+_keycloakUrl_ realm attribute is needed to be configured for a realm being in OpenId Federation as RP
+
 ### Fixed
 - Return error and log appropriate error if OpenId Provider Identity Provider update failed
 - Fix problem with auto update OpenId Federation Identity Provider

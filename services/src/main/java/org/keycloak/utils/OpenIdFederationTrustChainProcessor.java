@@ -97,12 +97,6 @@ public class OpenIdFederationTrustChainProcessor implements TrustChainProcessor 
         this.session = session;
     }
 
-    @Override
-    public TrustChainProcessor session(KeycloakSession session) {
-        this.session = session;
-        return this;
-    }
-
     /**
      * This should construct all possible trust chains from a given leaf node self-signed and encoded JWT to a set of trust anchor urls
      *
@@ -331,8 +325,8 @@ public class OpenIdFederationTrustChainProcessor implements TrustChainProcessor 
     }
 
     @Override
-    public IdentityProviderModel updateIdP(IdentityProviderModel model, RealmModel realm) throws Exception {
-        model = rPexcplicitRegistration(model.getConfig().get(OIDCIdentityProviderConfig.ISSUER), model.getConfig().get(OpenIdFederationIdentityProviderConfig.TRUST_ANCHOR_ID), model, realm);
+    public IdentityProviderModel updateIdP(IdentityProviderModel model, RealmModel realm, UriInfo frontendUriInfo, UriInfo backendUriInfo) throws Exception {
+        model = rPexcplicitRegistration(model.getConfig().get(OIDCIdentityProviderConfig.ISSUER), model.getConfig().get(OpenIdFederationIdentityProviderConfig.TRUST_ANCHOR_ID), model, realm, frontendUriInfo, backendUriInfo);
         TimerProvider timer = session.getProvider(TimerProvider.class);
         OpenIdFederationIdPExpirationTask task = new OpenIdFederationIdPExpirationTask(model.getAlias(), realm.getId());
         long expiration = Long.valueOf(model.getConfig().get(OIDCConfigAttributes.EXPIRATION_TIME)) * 1000 - Time.currentTimeMillis();
@@ -342,7 +336,7 @@ public class OpenIdFederationTrustChainProcessor implements TrustChainProcessor 
     }
 
     @Override
-    public IdentityProviderModel rPexcplicitRegistration(String opIssuer, String trustAnchor, IdentityProviderModel model, RealmModel realm) throws Exception {
+    public IdentityProviderModel rPexcplicitRegistration(String opIssuer, String trustAnchor, IdentityProviderModel model, RealmModel realm, UriInfo frontendUriInfo, UriInfo backendUriInfo) throws Exception {
         OpenIdFederationGeneralConfig federationGeneralConfig = realm.getOpenIdFederationGeneralConfig();
         OpenIdFederationConfig federationConfig = federationGeneralConfig.getOpenIdFederationList().stream().filter(x -> trustAnchor.equals(x.getTrustAnchor())).findAny().orElseThrow(() -> new NotFoundException("Trust anchor does not exist"));
         EntityStatement opStatement = parseAndValidateSelfSigned(OpenIdFederationUtils.getSelfSignedToken(opIssuer, session));
@@ -356,8 +350,6 @@ public class OpenIdFederationTrustChainProcessor implements TrustChainProcessor 
         OPMetadata op = (OPMetadata) trustChainResolution.getMetadataAfterPolicies();
         model = OIDCIdentityProviderFactory.parseOIDCConfig(op, OpenIdFederationIdentityProviderConfig.class, model);
 
-        UriInfo frontendUriInfo = session.getContext().getUri(UrlType.FRONTEND);
-        UriInfo backendUriInfo = session.getContext().getUri(UrlType.BACKEND);
         JSONWebKeySet jwks = getKeySet();
         EntityStatement entityStatement = new EntityStatement(Urls.realmIssuer(frontendUriInfo.getBaseUri(), realm.getName()), Long.valueOf(federationGeneralConfig.getLifespan()), Stream.of(trustChainResolution.getLeafId()).collect(Collectors.toList()), jwks);
         entityStatement.addAudience(opIssuer);
