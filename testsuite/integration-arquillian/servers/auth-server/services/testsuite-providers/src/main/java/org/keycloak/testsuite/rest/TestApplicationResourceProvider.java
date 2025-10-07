@@ -67,7 +67,10 @@ public class TestApplicationResourceProvider implements RealmResourceProvider {
     private final ConcurrentMap<String, TestAuthenticationChannelRequest> authenticationChannelRequests;
     private final ConcurrentMap<String, ClientNotificationEndpointRequest> cibaClientNotifications;
     private final ConcurrentMap<String, String> intentClientBindings;
-
+    
+    private final TestApplicationResourceProviderFactory.OIDCIAData iaData;
+    private final TestApplicationResourceProviderFactory.OIDCTAData taData;
+    
     private final HttpRequest request;
 
     public TestApplicationResourceProvider(KeycloakSession session, BlockingQueue<LogoutAction> adminLogoutActions,
@@ -78,7 +81,9 @@ public class TestApplicationResourceProvider implements RealmResourceProvider {
             TestApplicationResourceProviderFactory.OIDCClientData oidcClientData,
             ConcurrentMap<String, TestAuthenticationChannelRequest> authenticationChannelRequests,
             ConcurrentMap<String, ClientNotificationEndpointRequest> cibaClientNotifications,
-            ConcurrentMap<String, String> intentClientBindings) {
+            ConcurrentMap<String, String> intentClientBindings,
+            TestApplicationResourceProviderFactory.OIDCIAData iaData,
+            TestApplicationResourceProviderFactory.OIDCTAData taData) {
         this.session = session;
         this.adminLogoutActions = adminLogoutActions;
         this.backChannelLogoutTokens = backChannelLogoutTokens;
@@ -90,6 +95,9 @@ public class TestApplicationResourceProvider implements RealmResourceProvider {
         this.cibaClientNotifications = cibaClientNotifications;
         this.intentClientBindings = intentClientBindings;
         this.request = session.getContext().getHttpRequest();
+
+        this.iaData = iaData;
+        this.taData = taData;
     }
 
     @POST
@@ -265,7 +273,7 @@ public class TestApplicationResourceProvider implements RealmResourceProvider {
 
     @Path("/oidc-client-endpoints")
     public TestingOIDCEndpointsApplicationResource getTestingOIDCClientEndpoints() {
-        return new TestingOIDCEndpointsApplicationResource(oidcClientData, authenticationChannelRequests, cibaClientNotifications, intentClientBindings);
+        return new TestingOIDCEndpointsApplicationResource(oidcClientData, authenticationChannelRequests, cibaClientNotifications, intentClientBindings, iaData, taData);
     }
 
     @Override

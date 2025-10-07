@@ -108,6 +108,17 @@ public interface TestOIDCEndpointsApplicationResource {
     void registerOIDCRequest(@QueryParam("requestObject") String encodedRequestObject, @QueryParam("jwaAlgorithm") String jwaAlgorithm);
 
     @GET
+    @Path("/sign-token-for-client-authentication")
+    @Produces(org.keycloak.utils.MediaType.APPLICATION_JWT)
+    @NoCache
+    String signTokenForClientAuth(@QueryParam("encodedRequestToken") String encodedRequestToken);
+
+    @GET
+    @Path("/register-oidc-request-for-oidfed")
+    @Produces(org.keycloak.utils.MediaType.APPLICATION_JWT)
+    void registerOIDCRequestForOIDFED(@QueryParam("requestObject") String encodedRequestObject, @QueryParam("jwaAlgorithm") String jwaAlgorithm);
+
+    @GET
     @Path("/register-oidc-request-symmetric-sig")
     @Produces(org.keycloak.utils.MediaType.APPLICATION_JWT)
     void registerOIDCRequestSymmetricSig(@QueryParam("requestObject") String encodedRequestObject, @QueryParam("jwaAlgorithm") String jwaAlgorithm, @QueryParam("clientSecret") String clientSecret);
@@ -177,4 +188,48 @@ public interface TestOIDCEndpointsApplicationResource {
     @Produces(MediaType.APPLICATION_JSON)
     @NoCache
     IntentClientBindCheckExecutor.IntentBindCheckResponse checkIntentClientBound(IntentClientBindCheckExecutor.IntentBindCheckRequest request);
+
+    @GET
+    @Path("/.well-known/openid-federation")
+    @Produces(org.keycloak.utils.MediaType.APPLICATION_JWT)
+    String oidfedClientWellKnownEndpoint();
+
+    @GET
+    @Path("/register-entity-configuration")
+    @Produces(org.keycloak.utils.MediaType.APPLICATION_JWT)
+    void registerEntityConfiguration(@QueryParam("entityConfiguration") String entityConfiguration);
+
+    @GET
+    @Path("/oidfed-ia/.well-known/openid-federation")
+    @Produces(org.keycloak.utils.MediaType.APPLICATION_JWT)
+    String oidfedIAWellKnownEndpoint();
+
+    @GET
+    @Path("/oidfed-ia/fedapi")
+    @Produces(org.keycloak.utils.MediaType.APPLICATION_JWT)
+    String oidfedIAFederationEndpoint() ;
+    
+    @GET
+    @Path("/oidfed-ia/register-entitystatements")
+    @Produces(org.keycloak.utils.MediaType.APPLICATION_JWT)
+    @NoCache
+    void registerEntityStatementsForIA(@QueryParam("entityConfiguration") String entityConfiguration, 
+        @QueryParam("encodedSubordinateStatement") String encodedSubordinateStatement, @QueryParam("jwaAlgorithm") String jwaAlgorithm);
+
+    @GET
+    @Path("/oidfed-ta/.well-known/openid-federation")
+    @Produces(org.keycloak.utils.MediaType.APPLICATION_JWT)
+    String oidfedTAWellKnownEndpoint();
+
+    @GET
+    @Path("/oidfed-ta/fedapi")
+    @Produces(org.keycloak.utils.MediaType.APPLICATION_JWT)
+    String oidfedTAFederationEndpoint();
+
+    @GET
+    @Path("/oidfed-ta/register-entitystatements")
+    @Produces(org.keycloak.utils.MediaType.APPLICATION_JWT)
+    @NoCache
+    void registerEntityStatementsForTA(@QueryParam("entityConfiguration") String entityConfiguration, 
+        @QueryParam("encodedSubordinateStatement") String encodedSubordinateStatement, @QueryParam("jwaAlgorithm") String jwaAlgorithm);
 }
