@@ -65,4 +65,39 @@ public class TestApplicationResourceUrls {
 
         return builder.build().toString();
     }
+
+    public static String oidfedClientWellKnownEndpointUri() {
+        UriBuilder builder = oidcClientEndpoints()
+                .path(TestOIDCEndpointsApplicationResource.class, "oidfedClientWellKnownEndpoint");
+
+        return builder.build().toString();
+    }
+
+    public static String oidfedIAWellKnownEndpointUri() {
+        UriBuilder builder = oidcClientEndpoints()
+                .path(TestOIDCEndpointsApplicationResource.class, "oidfedIAWellKnownEndpoint");
+
+        return builder.build().toString();
+    }
+
+    public static String oidfedIAFederationEndpoint() {
+        UriBuilder builder = oidcClientEndpoints()
+                .path(TestOIDCEndpointsApplicationResource.class, "oidfedIAFederationEndpoint");
+
+        return builder.build().toString();
+    }
+
+    public static String oidfedTAWellKnownEndpointUri() {
+        UriBuilder builder = oidcClientEndpoints()
+                .path(TestOIDCEndpointsApplicationResource.class, "oidfedTAWellKnownEndpoint");
+
+        return builder.build().toString();
+    }
+
+    public static String oidfedTAFederationEndpoint() {
+        UriBuilder builder = oidcClientEndpoints()
+                .path(TestOIDCEndpointsApplicationResource.class, "oidfedTAFederationEndpoint");
+
+        return builder.build().toString();
+    }
 }

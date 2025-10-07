@@ -41,6 +41,7 @@ import org.keycloak.services.clientpolicy.context.DynamicClientRegisterContext;
 import org.keycloak.services.clientpolicy.context.DynamicClientUnregisterContext;
 import org.keycloak.services.clientpolicy.context.DynamicClientUpdateContext;
 import org.keycloak.services.clientpolicy.context.DynamicClientViewContext;
+import org.keycloak.services.clientpolicy.executor.AutomaticClientRegistrationExecutor;
 import org.keycloak.services.clientregistration.openid_federation.OpenIdFederationClientRegistrationService;
 import org.keycloak.services.clientregistration.policy.ClientRegistrationPolicyException;
 import org.keycloak.services.clientregistration.policy.ClientRegistrationPolicyManager;
@@ -135,7 +136,7 @@ public class ClientRegistrationAuth {
         init();
 
         RegistrationAuth registrationAuth = RegistrationAuth.ANONYMOUS;
-        if (provider instanceof OpenIdFederationClientRegistrationService) {
+        if (provider instanceof OpenIdFederationClientRegistrationService || provider instanceof AutomaticClientRegistrationExecutor ) {
             registrationAuth = RegistrationAuth.OPENID_FEDERATION;
         } else {
 

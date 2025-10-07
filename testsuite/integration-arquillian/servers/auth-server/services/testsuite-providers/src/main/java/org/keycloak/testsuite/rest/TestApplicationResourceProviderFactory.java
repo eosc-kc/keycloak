@@ -55,10 +55,13 @@ public class TestApplicationResourceProviderFactory implements RealmResourceProv
     private ConcurrentMap<String, ClientNotificationEndpointRequest> cibaClientNotifications = new ConcurrentHashMap<>();
     private ConcurrentMap<String, String> intentClientBindings = new ConcurrentHashMap<>();
 
+    private final OIDCIAData iaData = new OIDCIAData();
+    private final OIDCTAData taData = new OIDCTAData();
+
     @Override
     public RealmResourceProvider create(KeycloakSession session) {
         return new TestApplicationResourceProvider(session, adminLogoutActions,
-                backChannelLogoutTokens, frontChannelLogoutTokens, pushNotBeforeActions, testAvailabilityActions, oidcClientData, authenticationChannelRequests, cibaClientNotifications, intentClientBindings);
+                backChannelLogoutTokens, frontChannelLogoutTokens, pushNotBeforeActions, testAvailabilityActions, oidcClientData, authenticationChannelRequests, cibaClientNotifications, intentClientBindings, iaData, taData);
     }
 
     @Override
@@ -85,6 +88,7 @@ public class TestApplicationResourceProviderFactory implements RealmResourceProv
 
         private String oidcRequest;
         private List<String> sectorIdentifierRedirectUris;
+        private String entityConfiguration;
 
         public List<OIDCKeyData> getKeys() {
             return keys;
@@ -115,6 +119,14 @@ public class TestApplicationResourceProviderFactory implements RealmResourceProv
 
         public void setSectorIdentifierRedirectUris(List<String> sectorIdentifierRedirectUris) {
             this.sectorIdentifierRedirectUris = sectorIdentifierRedirectUris;
+        }
+
+        public String getEntityConfiguration() {
+            return entityConfiguration;
+        }
+
+        public void setEntityConfiguration(String entityConfiguration) {
+            this.entityConfiguration = entityConfiguration;
         }
 
     }
@@ -202,5 +214,84 @@ public class TestApplicationResourceProviderFactory implements RealmResourceProv
         public void setCurve(String curve) {
             this.curve = curve;
         }
+    }
+    public static class OIDCIAData {
+
+        private List<OIDCKeyData> keys = new ArrayList<>();
+
+        private String subordinateStatemnent;
+        private String entityConfiguration;
+
+        public List<OIDCKeyData> getKeys() {
+            return keys;
+        }
+
+        public OIDCKeyData getFirstKey() {
+            return keys.isEmpty() ? null : keys.get(0);
+        }
+
+        public void addKey(OIDCKeyData key, boolean keepExistingKeys) {
+            if (!keepExistingKeys) {
+                this.keys = new ArrayList<>();
+            }
+            this.keys.add(0, key);
+        }
+
+        public String getSubordinateStatemnent() {
+            return subordinateStatemnent;
+        }
+
+        public void setSubordinateStatemnent(String subordinateStatemnent) {
+            this.subordinateStatemnent = subordinateStatemnent;
+        }
+
+        public String getEntityConfiguration() {
+            return entityConfiguration;
+        }
+
+        public void setEntityConfiguration(String entityConfiguration) {
+            this.entityConfiguration = entityConfiguration;
+        }
+
+    }
+
+    public static class OIDCTAData {
+
+        private List<OIDCKeyData> keys = new ArrayList<>();
+
+        private String subordinateStatemnent;
+        private String entityConfiguration;
+
+        public List<OIDCKeyData> getKeys() {
+            return keys;
+        }
+
+        public OIDCKeyData getFirstKey() {
+            return keys.isEmpty() ? null : keys.get(0);
+        }
+
+        public void addKey(OIDCKeyData key, boolean keepExistingKeys) {
+            if (!keepExistingKeys) {
+                this.keys = new ArrayList<>();
+            }
+            this.keys.add(0, key);
+        }
+
+        public String getSubordinateStatemnent() {
+            return subordinateStatemnent;
+        }
+
+        public void setSubordinateStatemnent(String subordinateStatemnent) {
+            this.subordinateStatemnent = subordinateStatemnent;
+        }
+
+        public String getEntityConfiguration() {
+            return entityConfiguration;
+        }
+
+        public void setEntityConfiguration(String entityConfiguration) {
+            this.entityConfiguration = entityConfiguration;
+        }
+
     }
 }

@@ -56,7 +56,9 @@ import org.keycloak.protocol.oidc.OIDCLoginProtocol;
 import org.keycloak.protocol.oidc.grants.ciba.endpoints.ClientNotificationEndpointRequest;
 import org.keycloak.representations.AccessToken;
 import org.keycloak.representations.JsonWebToken;
+import org.keycloak.representations.openid_federation.EntityStatement;
 import org.keycloak.services.ErrorResponseException;
+import org.keycloak.services.clientpolicy.executor.AutomaticClientRegistrationExecutor.AuthorizationEndpointRequestObjectForAutomaticClientRegistration;
 import org.keycloak.services.clientpolicy.executor.IntentClientBindCheckExecutor;
 import org.keycloak.services.managers.AppAuthManager;
 import org.keycloak.testsuite.rest.TestApplicationResourceProviderFactory;
@@ -105,13 +107,20 @@ public class TestingOIDCEndpointsApplicationResource {
     private final ConcurrentMap<String, ClientNotificationEndpointRequest> cibaClientNotifications;
     private final ConcurrentMap<String, String> intentClientBindings;
 
+    private final TestApplicationResourceProviderFactory.OIDCIAData iaData;
+    private final TestApplicationResourceProviderFactory.OIDCTAData taData;
+
     public TestingOIDCEndpointsApplicationResource(TestApplicationResourceProviderFactory.OIDCClientData oidcClientData,
             ConcurrentMap<String, TestAuthenticationChannelRequest> authenticationChannelRequests, ConcurrentMap<String, ClientNotificationEndpointRequest> cibaClientNotifications,
-            ConcurrentMap<String, String> intentClientBindings) {
+            ConcurrentMap<String, String> intentClientBindings,
+            TestApplicationResourceProviderFactory.OIDCIAData iaData, TestApplicationResourceProviderFactory.OIDCTAData taData) {
         this.clientData = oidcClientData;
         this.authenticationChannelRequests = authenticationChannelRequests;
         this.cibaClientNotifications = cibaClientNotifications;
         this.intentClientBindings = intentClientBindings;
+
+        this.iaData = iaData;
+        this.taData = taData;
     }
 
     @GET
@@ -296,6 +305,59 @@ public class TestingOIDCEndpointsApplicationResource {
     @NoCache
     public void registerOIDCRequest(@QueryParam("requestObject") String encodedRequestObject, @QueryParam("jwaAlgorithm") String jwaAlgorithm) {
         AuthorizationEndpointRequestObject oidcRequest = deserializeOidcRequest(encodedRequestObject);
+        setOidcRequest(oidcRequest, jwaAlgorithm);
+    }
+
+    @GET
+    @Path("/sign-token-for-client-authentication")
+    @Produces(org.keycloak.utils.MediaType.APPLICATION_JWT)
+    @NoCache
+    public String signTokenForClientAuth(@QueryParam("encodedRequestToken") String encodedRequestToken) {
+        byte[] serializedRequestToken = Base64Url.decode(encodedRequestToken);
+        JsonWebToken requestToken = null;
+        try {
+            requestToken = JsonSerialization.readValue(serializedRequestToken, JsonWebToken.class);
+        } catch (IOException e) {
+            throw new BadRequestException("deserialize request object failed : " + e.getMessage());
+        }
+
+        TestApplicationResourceProviderFactory.OIDCKeyData keyData = clientData.getFirstKey();
+        PrivateKey privateKey = keyData.getSigningKeyPair().getPrivate();
+        String kid = keyData.getKid() != null ? keyData.getKid() : KeyUtils.createKeyId(keyData.getSigningKeyPair().getPublic());
+        KeyWrapper keyWrapper = new KeyWrapper();
+        keyWrapper.setAlgorithm(keyData.getSigningKeyAlgorithm());
+        keyWrapper.setKid(kid);
+        keyWrapper.setPrivateKey(privateKey);
+        SignatureSignerContext signer;
+        switch (keyData.getSigningKeyAlgorithm()) {
+                case Algorithm.ES256:
+                case Algorithm.ES384:
+                case Algorithm.ES512:
+                    signer = new ServerECDSASignatureSignerContext(keyWrapper);
+                    break;
+                case Algorithm.EdDSA:
+                    keyWrapper.setCurve(keyData.getCurve());
+                    signer = new ServerEdDSASignatureSignerContext(keyWrapper);
+                    break;
+                default:
+                    signer = new AsymmetricSignatureSignerContext(keyWrapper);
+            }
+         return new JWSBuilder().kid(kid).jsonContent(requestToken).sign(signer);
+
+    }
+    
+    @GET
+    @Path("/register-oidc-request-for-oidfed")
+    @Produces(org.keycloak.utils.MediaType.APPLICATION_JWT)
+    @NoCache
+    public void registerOIDCRequestForOIDFED(@QueryParam("requestObject") String encodedRequestObject, @QueryParam("jwaAlgorithm") String jwaAlgorithm) {
+        byte[] serializedRequestObject = Base64Url.decode(encodedRequestObject);
+        AuthorizationEndpointRequestObjectForAutomaticClientRegistration oidcRequest = null;
+        try {
+            oidcRequest = JsonSerialization.readValue(serializedRequestObject, AuthorizationEndpointRequestObjectForAutomaticClientRegistration.class);
+        } catch (IOException e) {
+            throw new BadRequestException("deserialize request object for OIDFED failed : " + e.getMessage());
+        }
         setOidcRequest(oidcRequest, jwaAlgorithm);
     }
 
@@ -799,4 +861,289 @@ public class TestingOIDCEndpointsApplicationResource {
         }
         return response;
     }
+
+    @GET
+    @Path("/.well-known/openid-federation")
+    @Produces(org.keycloak.utils.MediaType.APPLICATION_JWT)
+    public String oidfedClientWellKnownEndpoint() {
+        return clientData.getEntityConfiguration();
+    }
+
+    @GET
+    @Path("/register-entity-configuration")
+    @Produces(org.keycloak.utils.MediaType.APPLICATION_JWT)
+    @NoCache
+    public void registerEntityConfiguration(@QueryParam("entityConfiguration") String entityConfiguration){
+        EntityStatement entityStatement = deserializeEntityStatement(entityConfiguration);
+
+        TestApplicationResourceProviderFactory.OIDCKeyData keyData = clientData.getFirstKey();
+        PrivateKey privateKey = keyData.getSigningKeyPair().getPrivate();
+        String kid = keyData.getKid() != null ? keyData.getKid() : KeyUtils.createKeyId(keyData.getSigningKeyPair().getPublic());
+        KeyWrapper keyWrapper = new KeyWrapper();
+        keyWrapper.setAlgorithm(keyData.getSigningKeyAlgorithm());
+        keyWrapper.setKid(kid);
+        keyWrapper.setPrivateKey(privateKey);
+        SignatureSignerContext signer;
+        switch (keyData.getSigningKeyAlgorithm()) {
+            case Algorithm.ES256:
+            case Algorithm.ES384:
+            case Algorithm.ES512:
+                signer = new ServerECDSASignatureSignerContext(keyWrapper);
+                break;
+            case Algorithm.EdDSA:
+                keyWrapper.setCurve(keyData.getCurve());
+                signer = new ServerEdDSASignatureSignerContext(keyWrapper);
+                break;
+            default:
+                signer = new AsymmetricSignatureSignerContext(keyWrapper);
+        }
+        clientData.setEntityConfiguration(new JWSBuilder().kid(kid).type("entity-statement+jwt").jsonContent(entityStatement).sign(signer));
+
+    }
+
+    private EntityStatement deserializeEntityStatement(String encodedEntityStatement) {
+        byte[] serializedEntityStatement = Base64Url.decode(encodedEntityStatement);
+        EntityStatement entityStatement = null;
+        try {
+            entityStatement = JsonSerialization.readValue(serializedEntityStatement, EntityStatement.class);
+        } catch (IOException e) {
+            throw new BadRequestException("deserialize request object failed : " + e.getMessage());
+        }
+        return entityStatement;
+    }
+
+    @GET
+    @Path("/oidfed-ia/.well-known/openid-federation")
+    @Produces(org.keycloak.utils.MediaType.APPLICATION_JWT)
+    public String oidfedIAWellKnownEndpoint() {
+        return iaData.getEntityConfiguration();
+    }
+
+    @GET
+    @Path("/oidfed-ia/fedapi")
+    @Produces(org.keycloak.utils.MediaType.APPLICATION_JWT)
+    public String oidfedIAFederationEndpoint() {
+        return iaData.getSubordinateStatemnent();
+    }
+
+    @GET
+    @Path("/oidfed-ia/register-entitystatements")
+    @Produces(org.keycloak.utils.MediaType.APPLICATION_JWT)
+    @NoCache
+    public void registerEntityStatementsForIA(@QueryParam("entityConfiguration") String entityConfiguration, 
+        @QueryParam("encodedSubordinateStatement") String encodedSubordinateStatement, @QueryParam("jwaAlgorithm") String jwaAlgorithm){
+
+        generateKeys(jwaAlgorithm, false);
+
+
+        EntityStatement entityStatement = deserializeEntityStatement(entityConfiguration);
+        EntityStatement subordinateStatement = deserializeEntityStatement(encodedSubordinateStatement);
+
+        TestApplicationResourceProviderFactory.OIDCKeyData keyData = iaData.getFirstKey();
+        PrivateKey privateKey = keyData.getSigningKeyPair().getPrivate();
+        String kid = keyData.getKid() != null ? keyData.getKid() : KeyUtils.createKeyId(keyData.getSigningKeyPair().getPublic());
+        KeyWrapper keyWrapper = new KeyWrapper();
+        keyWrapper.setAlgorithm(keyData.getSigningKeyAlgorithm());
+        keyWrapper.setKid(kid);
+        keyWrapper.setPrivateKey(privateKey);
+        SignatureSignerContext signer;
+        switch (keyData.getSigningKeyAlgorithm()) {
+            case Algorithm.ES256:
+            case Algorithm.ES384:
+            case Algorithm.ES512:
+                signer = new ServerECDSASignatureSignerContext(keyWrapper);
+                break;
+            case Algorithm.EdDSA:
+                keyWrapper.setCurve(keyData.getCurve());
+                signer = new ServerEdDSASignatureSignerContext(keyWrapper);
+                break;
+            default:
+                signer = new AsymmetricSignatureSignerContext(keyWrapper);
+        }
+        entityStatement.setJwks(getJwksOfIAorTA(false));
+        iaData.setEntityConfiguration(new JWSBuilder().kid(kid).type("entity-statement+jwt").jsonContent(entityStatement).sign(signer));
+        subordinateStatement.setJwks(getJwks());
+        iaData.setSubordinateStatemnent(new JWSBuilder().kid(kid).type("entity-statement+jwt").jsonContent(subordinateStatement).sign(signer));
+    }
+
+    @GET
+    @Path("/oidfed-ta/.well-known/openid-federation")
+    @Produces(org.keycloak.utils.MediaType.APPLICATION_JWT)
+    public String oidfedTAWellKnownEndpoint() {
+        return taData.getEntityConfiguration();
+    }
+
+    @GET
+    @Path("/oidfed-ta/fedapi")
+    @Produces(org.keycloak.utils.MediaType.APPLICATION_JWT)
+    public String oidfedTAFederationEndpoint() {
+        return taData.getSubordinateStatemnent();
+    }
+
+    @GET
+    @Path("/oidfed-ta/register-entitystatements")
+    @Produces(org.keycloak.utils.MediaType.APPLICATION_JWT)
+    @NoCache
+    public void registerEntityStatementsForTA(@QueryParam("entityConfiguration") String entityConfiguration, 
+        @QueryParam("encodedSubordinateStatement") String encodedSubordinateStatement, @QueryParam("jwaAlgorithm") String jwaAlgorithm){
+        
+        generateKeys(jwaAlgorithm, true);
+        EntityStatement entityStatement = deserializeEntityStatement(entityConfiguration);
+        EntityStatement subordinateStatement = deserializeEntityStatement(encodedSubordinateStatement);
+
+        TestApplicationResourceProviderFactory.OIDCKeyData keyData = taData.getFirstKey();
+        PrivateKey privateKey = keyData.getSigningKeyPair().getPrivate();
+        String kid = keyData.getKid() != null ? keyData.getKid() : KeyUtils.createKeyId(keyData.getSigningKeyPair().getPublic());
+        KeyWrapper keyWrapper = new KeyWrapper();
+        keyWrapper.setAlgorithm(keyData.getSigningKeyAlgorithm());
+        keyWrapper.setKid(kid);
+        keyWrapper.setPrivateKey(privateKey);
+        SignatureSignerContext signer;
+        switch (keyData.getSigningKeyAlgorithm()) {
+            case Algorithm.ES256:
+            case Algorithm.ES384:
+            case Algorithm.ES512:
+                signer = new ServerECDSASignatureSignerContext(keyWrapper);
+                break;
+            case Algorithm.EdDSA:
+                keyWrapper.setCurve(keyData.getCurve());
+                signer = new ServerEdDSASignatureSignerContext(keyWrapper);
+                break;
+            default:
+                signer = new AsymmetricSignatureSignerContext(keyWrapper);
+        }
+        entityStatement.setJwks(getJwksOfIAorTA(true));
+        taData.setEntityConfiguration(new JWSBuilder().kid(kid).type("entity-statement+jwt").jsonContent(entityStatement).sign(signer));
+        subordinateStatement.setJwks(getJwksOfIAorTA(false));
+        taData.setSubordinateStatemnent(new JWSBuilder().kid(kid).type("entity-statement+jwt").jsonContent(subordinateStatement).sign(signer));
+        
+    }
+
+    private void generateKeys(String jwaAlgorithm, Boolean isForTa) {
+        try {
+            String  curve = null;
+            String kid = null;
+            Boolean advertiseJWKAlgorithm = null;
+            Boolean keepExistingKeys = null;
+
+            KeyPair keyPair = null;
+            KeyUse keyUse = KeyUse.SIG;
+            if (jwaAlgorithm == null) jwaAlgorithm = Algorithm.RS256;
+            String keyType = null;
+
+            switch (jwaAlgorithm) {
+                case Algorithm.RS256:
+                case Algorithm.RS384:
+                case Algorithm.RS512:
+                case Algorithm.PS256:
+                case Algorithm.PS384:
+                case Algorithm.PS512:
+                    keyType = KeyType.RSA;
+                    keyPair = KeyUtils.generateRsaKeyPair(2048);
+                    break;
+                case Algorithm.ES256:
+                    keyType = KeyType.EC;
+                    keyPair = generateEcdsaKey("secp256r1");
+                    break;
+                case Algorithm.ES384:
+                    keyType = KeyType.EC;
+                    keyPair = generateEcdsaKey("secp384r1");
+                    break;
+                case Algorithm.ES512:
+                    keyType = KeyType.EC;
+                    keyPair = generateEcdsaKey("secp521r1");
+                    break;
+                case Algorithm.EdDSA:
+                    if (curve == null) {
+                        curve = Algorithm.Ed25519;
+                    }
+                    keyType = KeyType.OKP;
+                    keyPair = generateEddsaKey(curve);
+                    break;
+                case JWEConstants.RSA1_5:
+                case JWEConstants.RSA_OAEP:
+                case JWEConstants.RSA_OAEP_256:
+                    // for JWE KEK Key Encryption
+                    keyType = KeyType.RSA;
+                    keyUse = KeyUse.ENC;
+                    keyPair = KeyUtils.generateRsaKeyPair(2048);
+                    break;
+                default :
+                    throw new RuntimeException("Unsupported signature algorithm");
+            }
+            TestApplicationResourceProviderFactory.OIDCKeyData keyData = new TestApplicationResourceProviderFactory.OIDCKeyData();
+            keyData.setKid(kid); // Can be null. It will be generated in that case
+            keyData.setKeyPair(keyPair);
+            keyData.setKeyType(keyType);
+            keyData.setCurve(curve);
+            if (advertiseJWKAlgorithm == null || Boolean.TRUE.equals(advertiseJWKAlgorithm)) {
+                keyData.setKeyAlgorithm(jwaAlgorithm);
+            } else {
+                keyData.setKeyAlgorithm(null);
+            }
+            
+            keyData.setKeyUse(keyUse);
+            if(Boolean.TRUE.equals(isForTa)){
+                taData.addKey(keyData, keepExistingKeys != null && keepExistingKeys);
+            } else {
+                iaData.addKey(keyData, keepExistingKeys != null && keepExistingKeys);
+            }
+        } catch (Exception e) {
+            throw new BadRequestException("Error generating signing keypair", e);
+        }
+    }
+
+    private JSONWebKeySet getJwksOfIAorTA(Boolean isForTa) {
+        
+        Stream<JWK> keysStream;
+        if(isForTa){
+            keysStream = taData.getKeys().stream()
+                .map(keyData -> {
+                    KeyPair keyPair = keyData.getKeyPair();
+                    String keyAlgorithm = keyData.getKeyAlgorithm();
+                    String keyType = keyData.getKeyType();
+                    KeyUse keyUse = keyData.getKeyUse();
+                    String kid = keyData.getKid();
+
+                    JWKBuilder builder = JWKBuilder.create().algorithm(keyAlgorithm).kid(kid);
+
+                    if (KeyType.RSA.equals(keyType)) {
+                        return builder.rsa(keyPair.getPublic(), keyUse);
+                    } else if (KeyType.EC.equals(keyType)) {
+                        return builder.ec(keyPair.getPublic());
+                    } else if (KeyType.OKP.equals(keyType)) {
+                        return builder.okp(keyPair.getPublic());
+                    } else {
+                        throw new IllegalArgumentException("Unknown keyType: " + keyType);
+                    }
+                });
+        } else {
+            keysStream = iaData.getKeys().stream()
+                .map(keyData -> {
+                    KeyPair keyPair = keyData.getKeyPair();
+                    String keyAlgorithm = keyData.getKeyAlgorithm();
+                    String keyType = keyData.getKeyType();
+                    KeyUse keyUse = keyData.getKeyUse();
+                    String kid = keyData.getKid();
+
+                    JWKBuilder builder = JWKBuilder.create().algorithm(keyAlgorithm).kid(kid);
+
+                    if (KeyType.RSA.equals(keyType)) {
+                        return builder.rsa(keyPair.getPublic(), keyUse);
+                    } else if (KeyType.EC.equals(keyType)) {
+                        return builder.ec(keyPair.getPublic());
+                    } else if (KeyType.OKP.equals(keyType)) {
+                        return builder.okp(keyPair.getPublic());
+                    } else {
+                        throw new IllegalArgumentException("Unknown keyType: " + keyType);
+                    }
+                });
+        }
+
+        JSONWebKeySet keySet = new JSONWebKeySet();
+        keySet.setKeys(keysStream.toArray(JWK[]::new));
+        return keySet;
+        
+    }
+
 }
