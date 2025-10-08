@@ -304,6 +304,7 @@ public class OpenIdFederationTrustChainProcessor implements TrustChainProcessor 
 
     @Override
     public JSONWebKeySet getKeySet(RealmModel realm) {
+        session.getContext().setRealm(realm);
         List<JWK> keys = new LinkedList<>();
         session.keys().getKeysStream(realm)
                 .filter(k -> k.getStatus().isEnabled() && k.getUse().equals(KeyUse.SIG) && k.getPublicKey() != null && k.getAlgorithm().equals(session.tokens().signatureAlgorithm(TokenCategory.ENTITY_STATEMENT)))
