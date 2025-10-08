@@ -68,7 +68,7 @@ public class EnvKeycloakUriInfo implements UriInfo {
 
     @Override
     public UriBuilder getBaseUriBuilder() {
-        return null;
+        return UriBuilder.fromUri(getBaseUri());
     }
 
     @Override
@@ -108,7 +108,7 @@ public class EnvKeycloakUriInfo implements UriInfo {
 
     @Override
     public URI resolve(URI uri) {
-        return uri;
+        return getBaseUri().resolve(uri);
     }
 
     @Override
