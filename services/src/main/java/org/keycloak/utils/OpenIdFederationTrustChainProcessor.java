@@ -303,9 +303,9 @@ public class OpenIdFederationTrustChainProcessor implements TrustChainProcessor 
     }
 
     @Override
-    public JSONWebKeySet getKeySet() {
+    public JSONWebKeySet getKeySet(RealmModel realm) {
         List<JWK> keys = new LinkedList<>();
-        session.keys().getKeysStream(session.getContext().getRealm())
+        session.keys().getKeysStream(realm)
                 .filter(k -> k.getStatus().isEnabled() && k.getUse().equals(KeyUse.SIG) && k.getPublicKey() != null && k.getAlgorithm().equals(session.tokens().signatureAlgorithm(TokenCategory.ENTITY_STATEMENT)))
                 .forEach(k -> {
                     JWKBuilder b = JWKBuilder.create().kid(k.getKid()).algorithm(k.getAlgorithm());
@@ -350,7 +350,7 @@ public class OpenIdFederationTrustChainProcessor implements TrustChainProcessor 
         OPMetadata op = (OPMetadata) trustChainResolution.getMetadataAfterPolicies();
         model = OIDCIdentityProviderFactory.parseOIDCConfig(op, OpenIdFederationIdentityProviderConfig.class, model);
 
-        JSONWebKeySet jwks = getKeySet();
+        JSONWebKeySet jwks = getKeySet(realm);
         EntityStatement entityStatement = new EntityStatement(Urls.realmIssuer(frontendUriInfo.getBaseUri(), realm.getName()), Long.valueOf(federationGeneralConfig.getLifespan()), Stream.of(trustChainResolution.getLeafId()).collect(Collectors.toList()), jwks);
         entityStatement.addAudience(opIssuer);
         Metadata metadata = new Metadata();

@@ -21,7 +21,7 @@ public interface TrustChainProcessor  extends Provider {
     <T extends EntityStatement> T parseAndValidateSelfSigned(String token, Class<T> clazz, JSONWebKeySet jwks) throws InvalidTrustChainException;
     boolean validateEntityStatementFields(EntityStatement statement, String issuer, String subject);
     void validationRules(EntityStatement statement, boolean checkAudience);
-    JSONWebKeySet getKeySet();
+    JSONWebKeySet getKeySet(RealmModel realm);
     IdentityProviderModel updateIdP(IdentityProviderModel model, RealmModel realm, UriInfo frontendUriInfo, UriInfo backendUriInfo) throws Exception;
     IdentityProviderModel rPexcplicitRegistration(String opIssuer, String trustAnchor, IdentityProviderModel model, RealmModel realm, UriInfo frontendUriInfo, UriInfo backendUriInfo) throws Exception;
 
