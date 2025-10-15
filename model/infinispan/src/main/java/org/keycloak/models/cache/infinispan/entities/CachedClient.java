@@ -17,8 +17,10 @@
 
 package org.keycloak.models.cache.infinispan.entities;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
@@ -64,6 +66,7 @@ public class CachedClient extends AbstractCachedClientScope<ClientModel> {
     protected boolean serviceAccountsEnabled;
     protected int nodeReRegistrationTimeout;
     protected Map<String, Integer> registeredNodes;
+    protected List<String> federations = new ArrayList<>();
 
     public CachedClient(Long revision, RealmModel realm, ClientModel model) {
         super(revision, model);
@@ -96,6 +99,7 @@ public class CachedClient extends AbstractCachedClientScope<ClientModel> {
         implicitFlowEnabled = model.isImplicitFlowEnabled();
         directAccessGrantsEnabled = model.isDirectAccessGrantsEnabled();
         serviceAccountsEnabled = model.isServiceAccountsEnabled();
+        federations = model.getFederations();
 
         nodeReRegistrationTimeout = model.getNodeReRegistrationTimeout();
         registeredNodes = new TreeMap<>(model.getRegisteredNodes());
@@ -223,5 +227,9 @@ public class CachedClient extends AbstractCachedClientScope<ClientModel> {
 
     public Map<String, String> getAuthFlowBindings() {
         return authFlowBindings;
+    }
+
+    public List<String> getFederations() {
+        return federations;
     }
 }

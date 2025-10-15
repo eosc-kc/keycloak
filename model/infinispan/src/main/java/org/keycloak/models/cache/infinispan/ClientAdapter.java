@@ -131,6 +131,26 @@ public class ClientAdapter implements ClientModel, CachedObject {
         updated.removeWebOrigin(webOrigin);
     }
 
+    public List<String> getFederations() {
+        if (isUpdated()) return updated.getFederations();
+        return cached.getFederations();
+    }
+
+    public void setFederations(List<String> federations) {
+        getDelegateForUpdate();
+        updated.setFederations(federations);
+    }
+
+    public void addFederation(String federation) {
+        getDelegateForUpdate();
+        updated.addFederation(federation);
+    }
+
+    public void removeFederation(String federation) {
+        getDelegateForUpdate();
+        updated.removeFederation(federation);
+    }
+
     public Set<String> getRedirectUris() {
         if (isUpdated()) return updated.getRedirectUris();
         return cached.getRedirectUris();

@@ -31,6 +31,7 @@ import java.security.KeyPairGenerator;
 import java.security.NoSuchAlgorithmException;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Stream;
@@ -1020,6 +1021,61 @@ public class SamlProtocolTest {
         @Override
         public RequiredActionProviderModel getRequiredActionProviderByAlias(String alias) {
             return null;
+        }
+
+        @Override
+        public List<FederationModel> getSAMLFederations() {
+            return null;
+        }
+
+        @Override
+        public FederationModel getSAMLFederationById(String id) {
+            return null;
+        }
+
+        @Override
+        public FederationModel getSAMLFederationByAlias(String alias) {
+            return null;
+        }
+
+        @Override
+        public void addSAMLFederation(FederationModel federationModel) {
+
+        }
+
+        @Override
+        public void updateSAMLFederation(FederationModel federationModel) {
+
+        }
+
+        @Override
+        public void removeSAMLFederation(String internalId) {
+
+        }
+
+        @Override
+        public List<FederationMapperModel> getIdentityProviderFederationMappers(String federationId) {
+            return null;
+        }
+
+        @Override
+        public FederationMapperModel getIdentityProviderFederationMapper(String federationId, String id) {
+            return null;
+        }
+
+        @Override
+        public void addIdentityProvidersFederationMapper(FederationMapperModel federationMapperModel) {
+
+        }
+
+        @Override
+        public void updateIdentityProvidersFederationMapper(FederationMapperModel federationMapperModel) {
+
+        }
+
+        @Override
+        public void removeIdentityProvidersFederationMapper(String id, String federationId) {
+
         }
 
         @Override
@@ -2172,6 +2228,26 @@ public class SamlProtocolTest {
 
         @Override
         public void unregisterNode(String nodeHost) {
+
+        }
+
+        @Override
+        public List<String> getFederations() {
+            return null;
+        }
+
+        @Override
+        public void setFederations(List<String> federations) {
+
+        }
+
+        @Override
+        public void addFederation(String federation) {
+
+        }
+
+        @Override
+        public void removeFederation(String federation) {
 
         }
 
