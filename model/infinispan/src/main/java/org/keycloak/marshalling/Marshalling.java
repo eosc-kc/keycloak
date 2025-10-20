@@ -188,6 +188,8 @@ public final class Marshalling {
     public static final int REMOVE_KEY_BI_CONSUMER = 65618;
     public static final int VALUE_IDENTITY_BI_FUNCTION = 65619;
     public static final int LOGIN_FAILURES_LIFESPAN_UPDATE = 65620;
+    //org.keycloak.services.scheduled.TaskCancellationEvent
+    public static final int TASK_CANCELLATION = 65621;
 
     public static void configure(GlobalConfigurationBuilder builder) {
         getSchemas().forEach(builder.serialization()::addContextInitializer);

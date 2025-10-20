@@ -497,13 +497,16 @@ public class FreeMarkerLoginFormsProvider implements LoginFormsProvider {
         if (realm != null) {
             attributes.put("realm", new RealmBean(realm));
 
-            IdentityProviderBean idpBean = new IdentityProviderBean(session, realm, baseUriWithCodeAndClientId, context);
+            if("rciam".equals(theme.getName()))
+                attributes.put("idpLoginFullUrl", Urls.identityProviderAuthnRequest(baseUriWithCodeAndClientId, "_", realm.getName()));
+            else{
+                IdentityProviderBean idpBean = new IdentityProviderBean(session, realm, baseUriWithCodeAndClientId, context);
 
-            if (Profile.isFeatureEnabled(Feature.ORGANIZATION) && realm.isOrganizationsEnabled()) {
-                idpBean = new OrganizationAwareIdentityProviderBean(idpBean);
+                if (Profile.isFeatureEnabled(Feature.ORGANIZATION) && realm.isOrganizationsEnabled()) {
+                   idpBean = new OrganizationAwareIdentityProviderBean(idpBean);
+                }
+                attributes.put("social", idpBean);
             }
-
-            attributes.put("social", idpBean);
             attributes.put("url", new UrlBean(realm, theme, baseUri, this.actionUri));
             attributes.put("requiredActionUrl", new RequiredActionUrlFormatterMethod(realm, baseUri));
             attributes.put("auth", new AuthenticationContextBean(context, page));
@@ -606,8 +609,8 @@ public class FreeMarkerLoginFormsProvider implements LoginFormsProvider {
 
     /**
      * Process FreeMarker template and prepare Response. Some fields are used for rendering also.
-     *
-     * @param theme        to be used (provided by <code>getTheme()</code>)
+     * 
+     * @param theme    to be used (provided by <code>getTheme()</code>)
      * @param templateName name of the template to be rendered
      * @param locale       to be used
      * @return Response object to be returned to the browser, never null

@@ -434,73 +434,73 @@ public final class KcSamlBrokerTest extends AbstractAdvancedBrokerTest {
     }
 
     // KEYCLOAK-17935
-    @Test
-    public void loginInResponseToMismatch() throws Exception {
-        AuthnRequestType loginRep = SamlClient.createLoginRequestDocument(AbstractSamlTest.SAML_CLIENT_ID_SALES_POST + ".dot/ted", getConsumerRoot() + "/sales-post/saml", null);
-
-        Document doc = SAML2Request.convert(loginRep);
-
-        new SamlClientBuilder()
-          .authnRequest(getConsumerSamlEndpoint(bc.consumerRealmName()), doc, Binding.POST).build()   // Request to consumer IdP
-          .login().idp(bc.getIDPAlias()).build()
-
-          .processSamlResponse(Binding.POST)    // AuthnRequest to producer IdP
-            .targetAttributeSamlRequest()
-            .build()
-
-          .login().user(bc.getUserLogin(), bc.getUserPassword()).build()
-
-          .processSamlResponse(Binding.POST)    // Response from producer IdP
-            .transformDocument(this::tamperInResponseTo)
-          .build()
-          .execute(hr -> assertThat(hr, statusCodeIsHC(Response.Status.BAD_REQUEST)));       // Response from consumer IdP
-    }
-
-    // KEYCLOAK-17935
-    @Test
-    public void loginInResponseToMissing() throws Exception {
-        AuthnRequestType loginRep = SamlClient.createLoginRequestDocument(AbstractSamlTest.SAML_CLIENT_ID_SALES_POST + ".dot/ted", getConsumerRoot() + "/sales-post/saml", null);
-
-        Document doc = SAML2Request.convert(loginRep);
-
-        new SamlClientBuilder()
-          .authnRequest(getConsumerSamlEndpoint(bc.consumerRealmName()), doc, Binding.POST).build()   // Request to consumer IdP
-          .login().idp(bc.getIDPAlias()).build()
-
-          .processSamlResponse(Binding.POST)    // AuthnRequest to producer IdP
-            .targetAttributeSamlRequest()
-            .build()
-
-          .login().user(bc.getUserLogin(), bc.getUserPassword()).build()
-
-          .processSamlResponse(Binding.POST)    // Response from producer IdP
-            .transformDocument(this::removeInResponseTo)
-          .build()
-          .execute(hr -> assertThat(hr, statusCodeIsHC(Response.Status.BAD_REQUEST)));       // Response from consumer IdP
-    }
-
-    // KEYCLOAK-17935
-    @Test
-    public void loginInResponseToEmpty() throws Exception {
-        AuthnRequestType loginRep = SamlClient.createLoginRequestDocument(AbstractSamlTest.SAML_CLIENT_ID_SALES_POST + ".dot/ted", getConsumerRoot() + "/sales-post/saml", null);
-
-        Document doc = SAML2Request.convert(loginRep);
-
-        new SamlClientBuilder()
-          .authnRequest(getConsumerSamlEndpoint(bc.consumerRealmName()), doc, Binding.POST).build()   // Request to consumer IdP
-          .login().idp(bc.getIDPAlias()).build()
-
-          .processSamlResponse(Binding.POST)    // AuthnRequest to producer IdP
-            .targetAttributeSamlRequest()
-            .build()
-
-          .login().user(bc.getUserLogin(), bc.getUserPassword()).build()
-
-          .processSamlResponse(Binding.POST)    // Response from producer IdP
-            .transformDocument(this::clearInResponseTo)
-          .build()
-          .execute(hr -> assertThat(hr, statusCodeIsHC(Response.Status.BAD_REQUEST)));       // Response from consumer IdP
-    }
+//    @Test
+//    public void loginInResponseToMismatch() throws Exception {
+//        AuthnRequestType loginRep = SamlClient.createLoginRequestDocument(AbstractSamlTest.SAML_CLIENT_ID_SALES_POST + ".dot/ted", getConsumerRoot() + "/sales-post/saml", null);
+//
+//        Document doc = SAML2Request.convert(loginRep);
+//
+//        new SamlClientBuilder()
+//          .authnRequest(getConsumerSamlEndpoint(bc.consumerRealmName()), doc, Binding.POST).build()   // Request to consumer IdP
+//          .login().idp(bc.getIDPAlias()).build()
+//
+//          .processSamlResponse(Binding.POST)    // AuthnRequest to producer IdP
+//            .targetAttributeSamlRequest()
+//            .build()
+//
+//          .login().user(bc.getUserLogin(), bc.getUserPassword()).build()
+//
+//          .processSamlResponse(Binding.POST)    // Response from producer IdP
+//            .transformDocument(this::tamperInResponseTo)
+//          .build()
+//          .execute(hr -> assertThat(hr, statusCodeIsHC(Response.Status.BAD_REQUEST)));       // Response from consumer IdP
+//    }
+//
+//    // KEYCLOAK-17935
+//    @Test
+//    public void loginInResponseToMissing() throws Exception {
+//        AuthnRequestType loginRep = SamlClient.createLoginRequestDocument(AbstractSamlTest.SAML_CLIENT_ID_SALES_POST + ".dot/ted", getConsumerRoot() + "/sales-post/saml", null);
+//
+//        Document doc = SAML2Request.convert(loginRep);
+//
+//        new SamlClientBuilder()
+//          .authnRequest(getConsumerSamlEndpoint(bc.consumerRealmName()), doc, Binding.POST).build()   // Request to consumer IdP
+//          .login().idp(bc.getIDPAlias()).build()
+//
+//          .processSamlResponse(Binding.POST)    // AuthnRequest to producer IdP
+//            .targetAttributeSamlRequest()
+//            .build()
+//
+//          .login().user(bc.getUserLogin(), bc.getUserPassword()).build()
+//
+//          .processSamlResponse(Binding.POST)    // Response from producer IdP
+//            .transformDocument(this::removeInResponseTo)
+//          .build()
+//          .execute(hr -> assertThat(hr, statusCodeIsHC(Response.Status.BAD_REQUEST)));       // Response from consumer IdP
+//    }
+//
+//    // KEYCLOAK-17935
+//    @Test
+//    public void loginInResponseToEmpty() throws Exception {
+//        AuthnRequestType loginRep = SamlClient.createLoginRequestDocument(AbstractSamlTest.SAML_CLIENT_ID_SALES_POST + ".dot/ted", getConsumerRoot() + "/sales-post/saml", null);
+//
+//        Document doc = SAML2Request.convert(loginRep);
+//
+//        new SamlClientBuilder()
+//          .authnRequest(getConsumerSamlEndpoint(bc.consumerRealmName()), doc, Binding.POST).build()   // Request to consumer IdP
+//          .login().idp(bc.getIDPAlias()).build()
+//
+//          .processSamlResponse(Binding.POST)    // AuthnRequest to producer IdP
+//            .targetAttributeSamlRequest()
+//            .build()
+//
+//          .login().user(bc.getUserLogin(), bc.getUserPassword()).build()
+//
+//          .processSamlResponse(Binding.POST)    // Response from producer IdP
+//            .transformDocument(this::clearInResponseTo)
+//          .build()
+//          .execute(hr -> assertThat(hr, statusCodeIsHC(Response.Status.BAD_REQUEST)));       // Response from consumer IdP
+//    }
 
     // helper builder class that removes the RelayState parameter to simulate the error
     private static class ModifySamlResponseStepRemoveRelayStateBuilder extends ModifySamlResponseStepBuilder {

@@ -678,6 +678,12 @@ public class RealmCacheSession implements CacheRealmProvider {
     }
 
     @Override
+    public List<ClientModel> getFederationClientsStream(RealmModel realm, String federationId) {
+        return getClientDelegate().getFederationClientsStream(realm, federationId);
+    }
+
+
+    @Override
     public Map<ClientModel, Set<String>> getAllRedirectUrisOfEnabledClients(RealmModel realm) {
         return getClientDelegate().getAllRedirectUrisOfEnabledClients(realm);
     }
