@@ -45,6 +45,8 @@ public class ServerInfoRepresentation {
     private List<Map<String, String>> identityProviders;
     private List<Map<String, String>> clientImporters;
 
+    private List<Map<String, String>> identityProviderAggregations;
+    
     private Map<String, SpiInfoRepresentation> providers;
 
     private Map<String, List<ProtocolMapperTypeRepresentation>> protocolMapperTypes;
@@ -144,7 +146,15 @@ public class ServerInfoRepresentation {
         this.providers = providers;
     }
 
-    public Map<String, List<ProtocolMapperTypeRepresentation>> getProtocolMapperTypes() {
+    public List<Map<String, String>> getIdentityProviderAggregations() {
+		return identityProviderAggregations;
+	}
+
+	public void setIdentityProviderAggregations(List<Map<String, String>> identityProviderAggregations) {
+		this.identityProviderAggregations = identityProviderAggregations;
+	}
+
+	public Map<String, List<ProtocolMapperTypeRepresentation>> getProtocolMapperTypes() {
         return protocolMapperTypes;
     }
 
