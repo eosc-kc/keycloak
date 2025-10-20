@@ -64,6 +64,8 @@ import org.keycloak.models.ClientModel;
 import org.keycloak.models.ClientScopeModel;
 import org.keycloak.models.Constants;
 import org.keycloak.models.FederatedIdentityModel;
+import org.keycloak.models.FederationMapperModel;
+import org.keycloak.models.FederationModel;
 import org.keycloak.models.GroupModel;
 import org.keycloak.models.IdentityProviderMapperModel;
 import org.keycloak.models.IdentityProviderModel;
@@ -105,6 +107,7 @@ import org.keycloak.representations.idm.ConfigPropertyRepresentation;
 import org.keycloak.representations.idm.CredentialRepresentation;
 import org.keycloak.representations.idm.EventRepresentation;
 import org.keycloak.representations.idm.FederatedIdentityRepresentation;
+import org.keycloak.representations.idm.FederationMapperRepresentation;
 import org.keycloak.representations.idm.GroupRepresentation;
 import org.keycloak.representations.idm.IdentityProviderMapperRepresentation;
 import org.keycloak.representations.idm.IdentityProviderRepresentation;
@@ -116,6 +119,7 @@ import org.keycloak.representations.idm.RealmRepresentation;
 import org.keycloak.representations.idm.RequiredActionConfigRepresentation;
 import org.keycloak.representations.idm.RequiredActionProviderRepresentation;
 import org.keycloak.representations.idm.RoleRepresentation;
+import org.keycloak.representations.idm.SAMLFederationRepresentation;
 import org.keycloak.representations.idm.UserConsentRepresentation;
 import org.keycloak.representations.idm.UserRepresentation;
 import org.keycloak.representations.idm.UserSessionRepresentation;
@@ -635,6 +639,13 @@ public class ModelToRepresentation {
             rep.setIdentityProviderMappers(identityProviderMappers);
         }
 
+       rep.setSamlFederations(realm.getSAMLFederations().stream().map(obj -> {
+            SAMLFederationRepresentation representation = toRepresentation(obj);
+            representation.setFederationMappers(
+                obj.getFederationMapperModels().stream().map(mapper -> toRepresentation(mapper)).collect(Collectors.toList()));
+            return representation;
+        }).collect(Collectors.toList()));
+
         rep.setInternationalizationEnabled(realm.isInternationalizationEnabled());
         Set<String> supportedLocales = realm.getSupportedLocalesStream().collect(Collectors.toSet());
         if (!supportedLocales.isEmpty()) {
@@ -865,6 +876,7 @@ public class ModelToRepresentation {
         rep.setNotBefore(clientModel.getNotBefore());
         rep.setNodeReRegistrationTimeout(clientModel.getNodeReRegistrationTimeout());
         rep.setClientAuthenticatorType(clientModel.getClientAuthenticatorType());
+        rep.setFederations(clientModel.getFederations());
 
         rep.getAttributes().put(Constants.REALM_CLIENT, String.valueOf(isRealmClient(clientModel.getClientId(), clientModel.getRealm(), session)));
 
@@ -954,6 +966,7 @@ public class ModelToRepresentation {
         Map<String, String> config = new HashMap<>(identityProviderModel.getConfig());
         providerRep.setConfig(config);
         providerRep.setAddReadTokenRoleOnCreate(identityProviderModel.isAddReadTokenRoleOnCreate());
+        providerRep.setFederations(identityProviderModel.getFederations());
 
         String firstBrokerLoginFlowId = identityProviderModel.getFirstBrokerLoginFlowId();
         if (firstBrokerLoginFlowId != null) {
@@ -981,6 +994,38 @@ public class ModelToRepresentation {
         providerRep.setTypes(identityProviderTypes.stream().map(Enum::toString).collect(Collectors.toList()));
         return providerRep;
     }
+
+    public static SAMLFederationRepresentation toRepresentation(FederationModel model) {
+    	SAMLFederationRepresentation representation = new SAMLFederationRepresentation();
+    	representation.setInternalId(model.getInternalId());
+    	representation.setAlias(model.getAlias());
+    	representation.setDisplayName(model.getDisplayName());
+        representation.setCategory(model.getCategory());
+    	representation.setLastMetadataRefreshTimestamp(model.getLastMetadataRefreshTimestamp());
+    	representation.setProviderId(model.getProviderId());
+    	representation.setUpdateFrequencyInMins(model.getUpdateFrequencyInMins());
+    	representation.setEntityIdDenyList(model.getEntityIdDenyList());
+    	representation.setEntityIdAllowList(model.getEntityIdAllowList());
+    	representation.setRegistrationAuthorityDenyList(model.getRegistrationAuthorityDenyList());
+        representation.setRegistrationAuthorityAllowList(model.getRegistrationAuthorityAllowList());
+        representation.setCategoryDenyList(model.getCategoryDenyList());
+        representation.setCategoryAllowList(model.getCategoryAllowList());
+    	representation.setUrl(model.getUrl());
+    	representation.setValidUntilTimestamp(model.getValidUntilTimestamp());
+    	representation.setConfig(model.getConfig());
+        return representation;
+    }
+
+    public static FederationMapperRepresentation toRepresentation(FederationMapperModel model) {
+        FederationMapperRepresentation representation = new FederationMapperRepresentation();
+        representation.setId(model.getId());
+        representation.setIdentityProviderMapper(model.getIdentityProviderMapper());
+        representation.setName(model.getName());
+        representation.setConfig(model.getConfig());
+        representation.setFederationId(model.getFederationId());
+        return representation;
+    }
+
 
     public static ProtocolMapperRepresentation toRepresentation(ProtocolMapperModel model) {
         ProtocolMapperRepresentation rep = new ProtocolMapperRepresentation();

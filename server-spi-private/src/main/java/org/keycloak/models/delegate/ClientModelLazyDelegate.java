@@ -181,6 +181,26 @@ public class ClientModelLazyDelegate implements ClientModel {
     }
 
     @Override
+    public List<String> getFederations() {
+        return getDelegate().getFederations();
+    }
+
+    @Override
+    public void setFederations(List<String> federations) {
+        getDelegate().setFederations(federations);
+    }
+
+    @Override
+    public void addFederation(String federation) {
+        getDelegate().addFederation(federation);
+    }
+
+    @Override
+    public void removeFederation(String federation) {
+        getDelegate().removeFederation(federation);
+    }
+
+    @Override
     public Set<String> getRedirectUris() {
         return getDelegate().getRedirectUris();
     }

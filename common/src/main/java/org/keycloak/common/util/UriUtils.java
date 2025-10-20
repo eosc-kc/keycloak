@@ -127,4 +127,15 @@ public class UriUtils {
             throw new IllegalArgumentException("The url [" + name + "] requires secure connections");
         }
     }
+
+    public static void checkUri(String uri, String name) throws IllegalArgumentException {
+        if (uri == null) {
+            return;
+        }
+        try {
+            URI parsed = new URI(uri);
+        } catch (URISyntaxException e) {
+            throw new IllegalArgumentException("The uri [" + name + "] is malformed", e);
+        }
+    }
 }

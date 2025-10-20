@@ -19,6 +19,7 @@ package org.keycloak.testsuite.federation;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
@@ -276,6 +277,11 @@ public class HardcodedClientStorageProvider implements ClientStorageProvider, Cl
         @Override
         public int getNotBefore() {
             return 0;
+        }
+
+        @Override
+        public List<String> getFederations() {
+            return Collections.EMPTY_LIST;
         }
 
         @Override

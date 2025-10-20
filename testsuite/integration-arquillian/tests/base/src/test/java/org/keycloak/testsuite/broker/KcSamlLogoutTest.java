@@ -1,6 +1,7 @@
 package org.keycloak.testsuite.broker;
 
 import java.io.Closeable;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -25,6 +26,7 @@ import org.keycloak.testsuite.util.ClientBuilder;
 import org.keycloak.testsuite.util.SamlClient;
 import org.keycloak.testsuite.util.SamlClientBuilder;
 import org.keycloak.testsuite.util.saml.SamlMessageReceiver;
+import org.keycloak.util.JsonSerialization;
 
 import org.hamcrest.Matchers;
 import org.junit.Test;
@@ -175,14 +177,18 @@ public class KcSamlLogoutTest extends AbstractInitializedBaseBrokerTest {
 
     @Test // KEYCLOAK-17495
     public void testProviderInitiatedLogoutCorrectlyLogsOutConsumerClientsWhenPrincipalTypeAttribute() throws Exception {
+        SAMLIdentityProviderConfig.Principal pr = new SAMLIdentityProviderConfig.Principal();
+        pr.setPrincipalType(SamlPrincipalType.ATTRIBUTE);
+        pr.setPrincipalAttribute(ATTRIBUTE_TO_MAP_NAME);
+        LinkedList<SAMLIdentityProviderConfig.Principal> principals = new LinkedList<>();
+        principals.add(pr);
         try (Closeable idpUpdater = new IdentityProviderAttributeUpdater(identityProviderResource)
-            .setAttribute(SAMLIdentityProviderConfig.PRINCIPAL_TYPE, SamlPrincipalType.ATTRIBUTE.name())
-            .setAttribute(SAMLIdentityProviderConfig.PRINCIPAL_ATTRIBUTE, ATTRIBUTE_TO_MAP_NAME)
-            .update();
+                .setAttribute(SAMLIdentityProviderConfig.MULTIPLE_PRINCIPALS, JsonSerialization.writeValueAsString(principals))
+                .update();
 
              UserAttributeUpdater uau = UserAttributeUpdater.forUserByUsername(adminClient, bc.providerRealmName(), bc.getUserLogin())
-                .setAttribute(ATTRIBUTE_TO_MAP_NAME, "masked_principal_for_consumer_idp")
-                .update()
+                     .setAttribute(ATTRIBUTE_TO_MAP_NAME, "masked_principal_for_consumer_idp")
+                     .update()
         ) {
             testProviderInitiatedLogoutCorrectlyLogsOutConsumerClients();
         }

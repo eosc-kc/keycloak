@@ -132,7 +132,7 @@ public class EntityDescriptorDescriptionConverter implements ClientDescriptionCo
      * @param sp an SPSSO descriptor
      * @return the location of the artifact resolution service
      */
-    private static String getArtifactResolutionService(SPSSODescriptorType sp) {
+    public static String getArtifactResolutionService(SPSSODescriptorType sp) {
         List<IndexedEndpointType> endpoints = sp.getArtifactResolutionService();
         IndexedEndpointType firstEndpoint = null;
         for (IndexedEndpointType endpoint : endpoints) {
@@ -287,7 +287,7 @@ public class EntityDescriptorDescriptionConverter implements ClientDescriptionCo
         return app;
     }
     
-    private static String getSAMLNameFormat(String xmlValue) {
+    public static String getSAMLNameFormat(String xmlValue) {
         String value =null;
         if (JBossSAMLURIConstants.ATTRIBUTE_FORMAT_URI.getUri().toString().equals(xmlValue)) {
             value = AttributeStatementHelper.URI_REFERENCE;
@@ -301,7 +301,7 @@ public class EntityDescriptorDescriptionConverter implements ClientDescriptionCo
         
     }
 
-    private static String getLogoutLocation(SPSSODescriptorType idp, String bindingURI) {
+    public static String getLogoutLocation(SPSSODescriptorType idp, String bindingURI) {
         String logoutResponseLocation = null;
 
         List<EndpointType> endpoints = idp.getSingleLogoutService();

@@ -26,6 +26,8 @@ import org.keycloak.provider.Provider;
  */
 public interface TimerProvider extends Provider {
 
+	public void schedule(Runnable runnable,long delay, long intervalMillis, String taskName);
+	
     public void schedule(Runnable runnable, long intervalMillis, String taskName);
 
     default void schedule(TaskRunner runner, long intervalMillis) {
@@ -38,6 +40,12 @@ public interface TimerProvider extends Provider {
         scheduleTask(scheduledTask, intervalMillis, scheduledTask.getTaskName());
     }
 
+    default void scheduleOnce(TaskRunner runner, final long delay) {
+        scheduleOnce(runner, delay, runner.getTaskName());
+    }
+
+    public void scheduleOnce(Runnable runnable, final long delay, String taskName);
+
     /**
      * Cancel task and return the details about it, so it can be eventually restored later
      *
@@ -46,7 +54,16 @@ public interface TimerProvider extends Provider {
      */
     public TimerTaskContext cancelTask(String taskName);
 
-    public Map<String, TimerTaskContext> getTasks();
+     public Map<String, TimerTaskContext> getTasks();
+
+    /**
+     * Cancel task and notify other nodes
+     *
+     * @param taskName
+     * @return existing task or null if task under this name doesn't exist
+     */
+    public TimerTaskContext cancelTaskAndNotify(String taskName);
+
 
     interface TimerTaskContext {
 
