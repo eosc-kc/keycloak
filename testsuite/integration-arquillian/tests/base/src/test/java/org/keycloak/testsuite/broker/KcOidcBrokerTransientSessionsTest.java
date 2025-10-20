@@ -307,7 +307,7 @@ public final class KcOidcBrokerTransientSessionsTest extends AbstractAdvancedBro
 
         UserRepresentation user = getFederatedIdentity();
 
-        Assert.assertEquals(1, user.getAttributes().size());
+        Assert.assertEquals(2, user.getAttributes().size());
         Assert.assertEquals("hard-coded", user.getAttributes().get("hard-coded").get(0));
     }
 
