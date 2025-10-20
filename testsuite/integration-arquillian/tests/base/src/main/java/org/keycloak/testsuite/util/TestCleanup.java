@@ -37,6 +37,7 @@ import java.util.concurrent.ConcurrentLinkedDeque;
 public class TestCleanup {
 
     private static final String IDENTITY_PROVIDER_ALIASES = "IDENTITY_PROVIDER_ALIASES";
+    private static final String IDENTITY_PROVIDER_FEDERATION_IDS = "IDENTITY_PROVIDER_FEDERATION_IDS";
     private static final String USER_IDS = "USER_IDS";
     private static final String COMPONENT_IDS = "COMPONENT_IDS";
     private static final String CLIENT_UUIDS = "CLIENT_UUIDS";
@@ -81,7 +82,10 @@ public class TestCleanup {
     public void addIdentityProviderAlias(String identityProviderAlias) {
         entities.add(IDENTITY_PROVIDER_ALIASES, identityProviderAlias);
     }
-
+    
+    public void addIdentityProviderFederationId(String id) {
+        entities.add(IDENTITY_PROVIDER_FEDERATION_IDS, id);
+    }
 
     public void addComponentId(String componentId) {
         entities.add(COMPONENT_IDS, componentId);
@@ -146,6 +150,17 @@ public class TestCleanup {
                     realm.identityProviders().get(idpAlias).remove();
                 } catch (NotFoundException nfe) {
                     // Idp might be already deleted in the test
+                }
+            }
+        }
+        
+        List<String> identityProviderFederationIds = entities.get(IDENTITY_PROVIDER_FEDERATION_IDS);
+        if (identityProviderFederationIds != null) {
+            for (String idpFedId : identityProviderFederationIds) {
+                try {
+                    realm.samlFederation().delete(idpFedId);
+                } catch (NotFoundException nfe) {
+                    // Idp Federation might be already deleted in the test
                 }
             }
         }

@@ -100,14 +100,13 @@ public class IDPMetadataDescriptor {
 
         spIDPDescriptor.addSingleLogoutService(new EndpointType(SAML_HTTP_POST_BINDING.getUri(), logoutEndpoint));
         spIDPDescriptor.addSingleLogoutService(new EndpointType(SAML_HTTP_REDIRECT_BINDING.getUri(), logoutEndpoint));
-        spIDPDescriptor.addSingleLogoutService(new EndpointType(SAML_HTTP_ARTIFACT_BINDING.getUri(), logoutEndpoint));
-        spIDPDescriptor.addSingleLogoutService(new EndpointType(SAML_SOAP_BINDING.getUri(), logoutEndpoint));
+      //  spIDPDescriptor.addSingleLogoutService(new EndpointType(SAML_HTTP_ARTIFACT_BINDING.getUri(), logoutEndpoint));
         spIDPDescriptor.addSingleSignOnService(new EndpointType(SAML_HTTP_POST_BINDING.getUri(), loginPostEndpoint));
         spIDPDescriptor.addSingleSignOnService(new EndpointType(SAML_HTTP_REDIRECT_BINDING.getUri(), loginRedirectEndpoint));
-        spIDPDescriptor.addSingleSignOnService(new EndpointType(SAML_SOAP_BINDING.getUri(), loginPostEndpoint));
-        spIDPDescriptor.addSingleSignOnService(new EndpointType(SAML_HTTP_ARTIFACT_BINDING.getUri(), loginPostEndpoint));
+       // spIDPDescriptor.addSingleSignOnService(new EndpointType(SAML_SOAP_BINDING.getUri(), loginPostEndpoint));
+      //  spIDPDescriptor.addSingleSignOnService(new EndpointType(SAML_HTTP_ARTIFACT_BINDING.getUri(), loginPostEndpoint));
 
-        spIDPDescriptor.addArtifactResolutionService(new IndexedEndpointType(SAML_SOAP_BINDING.getUri(), artifactResolutionService));
+      //  spIDPDescriptor.addArtifactResolutionService(new IndexedEndpointType(SAML_SOAP_BINDING.getUri(), artifactResolutionService));
 
         if (wantAuthnRequestsSigned && signingCerts != null) {
             for (Element key: signingCerts)

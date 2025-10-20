@@ -45,6 +45,7 @@ public class PartialImportManager {
         // Do not change the order of these!!!
         partialImports.add(new ClientsPartialImport());
         partialImports.add(new RolesPartialImport());
+        partialImports.add(new IdentityProvidersFederationPartialImport());
         partialImports.add(new IdentityProvidersPartialImport());
         partialImports.add(new IdentityProviderMappersPartialImport());
         partialImports.add(new GroupsPartialImport());

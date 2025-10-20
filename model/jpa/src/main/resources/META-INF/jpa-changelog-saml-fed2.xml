@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.1.xsd">
+
+    <changeSet author="cgeorgilakis@grnet.gr" id="federation-rename">
+        <renameTable oldTableName="ENTITYID_WHITELIST" newTableName="ENTITYID_ALLOWLIST"/>
+        <renameTable oldTableName="ENTITYID_BLACKLIST" newTableName="ENTITYID_DENYLIST"/>
+        <renameTable oldTableName="REGISTRATION_AUTHORITY_WHITELIST" newTableName="REGISTRATION_AUTHORITY_ALLOWLIST"/>
+        <renameTable oldTableName="REGISTRATION_AUTHORITY_BLACKLIST" newTableName="REGISTRATION_AUTHORITY_DENYLIST"/>
+        <renameTable oldTableName="ENTITY_CATEGORY_WHITELIST" newTableName="ENTITY_CATEGORY_ALLOWLIST"/>
+        <renameTable oldTableName="ENTITY_CATEGORY_BLACKLIST" newTableName="ENTITY_CATEGORY_DENYLIST"/>
+
+<!--        rename constraint-->
+
+    </changeSet>
+</databaseChangeLog>

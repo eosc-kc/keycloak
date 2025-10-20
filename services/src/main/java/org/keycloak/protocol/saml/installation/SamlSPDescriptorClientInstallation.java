@@ -108,7 +108,7 @@ public class SamlSPDescriptorClientInstallation implements ClientInstallationPro
 
             EntityDescriptorType entityDescriptor = SPMetadataDescriptor.buildSPDescriptor(
                 loginBinding, logoutBinding, new URI(assertionUrl), new URI(logoutUrl), 
-                samlClient.requiresClientSignature(), samlClient.requiresAssertionSignature(), samlClient.requiresEncryption(), 
+                samlClient.requiresClientSignature(), samlClient.requiresClientSignature(), samlClient.requiresAssertionSignature(), samlClient.requiresEncryption(),
                 client.getClientId(), nameIdFormat, Collections.singletonList(spCertificate), Collections.singletonList(encCertificate));
             
             metadataWriter.writeEntityDescriptor(entityDescriptor);

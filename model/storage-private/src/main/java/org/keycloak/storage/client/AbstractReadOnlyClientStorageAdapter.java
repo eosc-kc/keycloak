@@ -23,6 +23,7 @@ import org.keycloak.models.RealmModel;
 import org.keycloak.models.RoleModel;
 import org.keycloak.storage.ReadOnlyException;
 
+import java.util.List;
 import java.util.Set;
 
 /**
@@ -271,6 +272,23 @@ public abstract class AbstractReadOnlyClientStorageAdapter extends AbstractClien
 
     @Override
     public void deleteScopeMapping(RoleModel role) {
+        throw new ReadOnlyException("client is read only for this update");
+
+    }
+
+    @Override
+    public void setFederations(List<String> webOrigins) {
+        throw new ReadOnlyException("client is read only for this update");
+
+    }
+
+    @Override
+    public void addFederation(String webOrigin) {
+        throw new ReadOnlyException("client is read only for this update");
+    }
+
+    @Override
+    public void removeFederation(String webOrigin) {
         throw new ReadOnlyException("client is read only for this update");
 
     }

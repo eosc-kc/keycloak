@@ -183,6 +183,8 @@ public final class Marshalling {
     public static final int RELOAD_CERTIFICATE_FUNCTION = 65615;
 
     public static final int EMBEDDED_CLIENT_SESSION_KEY = 65616;
+    //org.keycloak.services.scheduled.TaskCancellationEvent
+    public static final int TASK_CANCELLATION = 65618;
 
     public static void configure(GlobalConfigurationBuilder builder) {
         getSchemas().forEach(builder.serialization()::addContextInitializer);

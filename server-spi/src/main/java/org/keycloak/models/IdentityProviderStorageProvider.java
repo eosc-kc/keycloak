@@ -17,6 +17,7 @@
 package org.keycloak.models;
 
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.function.Predicate;
@@ -183,6 +184,10 @@ public interface IdentityProviderStorageProvider extends Provider {
         }
         return result;
     }
+
+    default Stream<IdentityProviderModel> getIdentityProvidersByFederation(String federationId){
+        return getAllStream(Map.of(IdentityProviderModel.FEDERATION_ID, federationId), null, null);
+    };
 
     /**
      * Returns the number of IDPs in the realm.

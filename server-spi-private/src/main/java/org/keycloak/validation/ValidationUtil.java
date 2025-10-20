@@ -18,6 +18,7 @@ package org.keycloak.validation;
 
 import org.keycloak.models.ClientModel;
 import org.keycloak.models.KeycloakSession;
+import org.keycloak.representations.idm.ClientRepresentation;
 import org.keycloak.representations.oidc.OIDCClientRepresentation;
 
 import jakarta.ws.rs.BadRequestException;
@@ -46,6 +47,16 @@ public class ValidationUtil {
             }
         }
     }
+
+    public static void validateClient(ClientValidationProvider provider, KeycloakSession session, ClientRepresentation clientRep, boolean create, ErrorHandler errorHandler) throws BadRequestException {
+        ValidationResult result = provider.validateRepresentation(new ClientValidationContext(create ? ValidationContext.Event.CREATE : ValidationContext.Event.UPDATE, session, null),clientRep);
+
+        if (!result.isValid()) {
+            errorHandler.onError(result);
+        }
+    }
+
+
 
     public interface ErrorHandler {
 
