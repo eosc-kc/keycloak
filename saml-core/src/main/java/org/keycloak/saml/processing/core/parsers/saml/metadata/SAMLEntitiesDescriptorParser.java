@@ -72,7 +72,7 @@ public class SAMLEntitiesDescriptorParser extends AbstractStaxSamlMetadataParser
                 break;
 
             case ENTITIES_DESCRIPTOR:
-                target.addEntityDescriptor(parse(xmlEventReader));
+                target.addEntityDescriptor(SAMLEntitiesDescriptorParser.getInstance().parse(xmlEventReader));
                 break;
 
             default:

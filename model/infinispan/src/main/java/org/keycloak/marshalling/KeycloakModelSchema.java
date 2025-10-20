@@ -104,6 +104,7 @@ import org.keycloak.models.sessions.infinispan.stream.SessionPredicate;
 import org.keycloak.models.sessions.infinispan.stream.SessionUnwrapMapper;
 import org.keycloak.models.sessions.infinispan.stream.SessionWrapperPredicate;
 import org.keycloak.models.sessions.infinispan.stream.UserSessionPredicate;
+import org.keycloak.services.scheduled.TaskCancellationEvent;
 import org.keycloak.sessions.CommonClientSessionModel;
 import org.keycloak.storage.UserStorageProviderModel;
 import org.keycloak.storage.managers.UserStorageSyncManager;
@@ -226,6 +227,8 @@ import org.keycloak.storage.managers.UserStorageSyncManager;
 
                 // infinispan.module.certificates
                 ReloadCertificateFunction.class,
+                // org.keycloak.services.scheduled.TaskCancellationEvent
+                TaskCancellationEvent.class,
         }
 )
 public interface KeycloakModelSchema extends GeneratedSchema {

@@ -69,7 +69,9 @@ public enum JBossSAMLURIConstants {
     METADATA_ENTITY_ATTRIBUTES_NSURI("urn:oasis:names:tc:SAML:metadata:attribute"),
     //http://docs.oasis-open.org/security/saml/Post2.0/sstc-saml-metadata-ui/v1.0/os/sstc-saml-metadata-ui-v1.0-os.pdf
     METADATA_UI("urn:oasis:names:tc:SAML:metadata:ui"),
-
+    //https://docs.oasis-open.org/security/saml/v2.0/saml-metadata-2.0-os.pdf
+    METADATA_RPI("urn:oasis:names:tc:SAML:metadata:rpi"),
+    SHIBBOLETH_METADATA_NSURI("urn:mace:shibboleth:metadata:1.0"),
     NAMEID_FORMAT_TRANSIENT("urn:oasis:names:tc:SAML:2.0:nameid-format:transient"),
     NAMEID_FORMAT_PERSISTENT("urn:oasis:names:tc:SAML:2.0:nameid-format:persistent"),
     NAMEID_FORMAT_UNSPECIFIED("urn:oasis:names:tc:SAML:1.1:nameid-format:unspecified"),
@@ -123,6 +125,7 @@ public enum JBossSAMLURIConstants {
 
     TRANSFORM_ENVELOPED_SIGNATURE("http://www.w3.org/2000/09/xmldsig#enveloped-signature"),
     TRANSFORM_C14N_EXCL_OMIT_COMMENTS("http://www.w3.org/2001/10/xml-exc-c14n#WithComments"),
+    TRANSFORM_C14N_EXCL("http://www.w3.org/2001/10/xml-exc-c14n#"),
 
     XSI_PREFIX("xsi"),
     X500_PREFIX("x500"),
