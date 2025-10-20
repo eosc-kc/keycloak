@@ -77,6 +77,8 @@ import org.keycloak.models.ClientModel;
 import org.keycloak.models.ClientScopeModel;
 import org.keycloak.models.Constants;
 import org.keycloak.models.FederatedIdentityModel;
+import org.keycloak.models.FederationMapperModel;
+import org.keycloak.models.FederationModel;
 import org.keycloak.models.GroupModel;
 import org.keycloak.models.IdentityProviderMapperModel;
 import org.keycloak.models.IdentityProviderModel;
@@ -107,6 +109,7 @@ import org.keycloak.representations.idm.ClientScopeRepresentation;
 import org.keycloak.representations.idm.ComponentRepresentation;
 import org.keycloak.representations.idm.CredentialRepresentation;
 import org.keycloak.representations.idm.FederatedIdentityRepresentation;
+import org.keycloak.representations.idm.FederationMapperRepresentation;
 import org.keycloak.representations.idm.GroupRepresentation;
 import org.keycloak.representations.idm.IdentityProviderMapperRepresentation;
 import org.keycloak.representations.idm.IdentityProviderRepresentation;
@@ -116,6 +119,7 @@ import org.keycloak.representations.idm.ProtocolMapperRepresentation;
 import org.keycloak.representations.idm.RealmRepresentation;
 import org.keycloak.representations.idm.RoleRepresentation;
 import org.keycloak.representations.idm.RolesRepresentation;
+import org.keycloak.representations.idm.SAMLFederationRepresentation;
 import org.keycloak.representations.idm.UserConsentRepresentation;
 import org.keycloak.representations.idm.UserRepresentation;
 import org.keycloak.representations.idm.authorization.AbstractPolicyRepresentation;
@@ -358,6 +362,8 @@ public class RepresentationToModel {
                 || !resourceRep.getAttributes().containsKey("saml.artifact.binding.identifier"))) {
             client.setAttribute("saml.artifact.binding.identifier", computeArtifactBindingIdentifierString(resourceRep.getClientId()));
         }
+
+        client.setFederations(resourceRep.getFederations());
 
         if (resourceRep.getAuthenticationFlowBindingOverrides() != null) {
             for (Map.Entry<String, String> entry : resourceRep.getAuthenticationFlowBindingOverrides().entrySet()) {
@@ -887,6 +893,7 @@ public class RepresentationToModel {
         identityProviderModel.setAddReadTokenRoleOnCreate(representation.isAddReadTokenRoleOnCreate());
         updateOrganizationBroker(representation, session);
         identityProviderModel.setOrganizationId(representation.getOrganizationId());
+        identityProviderModel.setFederations(representation.getFederations());
 
         // Merge config from the identity provider model in case the provider sets some default config
         Map<String, String> repConfig = removeEmptyString(representation.getConfig());
@@ -942,6 +949,38 @@ public class RepresentationToModel {
         model.setIdentityProviderMapper(rep.getIdentityProviderMapper());
         model.setConfig(removeEmptyString(rep.getConfig()));
         return model;
+    }
+
+    public static FederationModel toModel(SAMLFederationRepresentation representation ) {
+        FederationModel model = new FederationModel();
+        model.setInternalId(representation.getInternalId());
+        model.setAlias(representation.getAlias());
+        model.setCategory(representation.getCategory());
+        model.setDisplayName(representation.getDisplayName());
+        model.setLastMetadataRefreshTimestamp(representation.getLastMetadataRefreshTimestamp());
+        model.setProviderId(representation.getProviderId());
+        model.setUpdateFrequencyInMins(representation.getUpdateFrequencyInMins());
+        model.setEntityIdDenyList(representation.getEntityIdDenyList());
+        model.setEntityIdAllowList(representation.getEntityIdAllowList());
+        model.setRegistrationAuthorityDenyList(representation.getRegistrationAuthorityDenyList());
+        model.setRegistrationAuthorityAllowList(representation.getRegistrationAuthorityAllowList());
+        model.setCategoryDenyList(representation.getCategoryDenyList());
+        model.setCategoryAllowList(representation.getCategoryAllowList());
+        model.setUrl(representation.getUrl());
+        model.setValidUntilTimestamp(representation.getValidUntilTimestamp());
+        model.setConfig(representation.getConfig());
+        return model;
+    }
+
+    public static FederationMapperModel toModel(FederationMapperRepresentation representation ) {
+        FederationMapperModel model = new FederationMapperModel();
+        model.setId(representation.getId());
+        model.setIdentityProviderMapper(representation.getIdentityProviderMapper());
+        model.setName(representation.getName());
+        model.setFederationId(representation.getFederationId());
+        model.setConfig(representation.getConfig());
+        return model;
+
     }
 
     public static UserConsentModel toModel(RealmModel newRealm, UserConsentRepresentation consentRep) {

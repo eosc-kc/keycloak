@@ -17,6 +17,7 @@
 
 package org.keycloak.models.utils;
 
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Stream;
@@ -30,6 +31,8 @@ import org.keycloak.models.CibaConfig;
 import org.keycloak.models.ClientInitialAccessModel;
 import org.keycloak.models.ClientModel;
 import org.keycloak.models.ClientScopeModel;
+import org.keycloak.models.FederationMapperModel;
+import org.keycloak.models.FederationModel;
 import org.keycloak.models.GroupModel;
 import org.keycloak.models.IdentityProviderMapperModel;
 import org.keycloak.models.IdentityProviderModel;
@@ -779,6 +782,61 @@ public class RealmModelDelegate implements RealmModel {
 
     public RequiredActionProviderModel getRequiredActionProviderByAlias(String alias) {
         return delegate.getRequiredActionProviderByAlias(alias);
+    }
+
+    @Override
+    public List<FederationModel> getSAMLFederations() {
+        return delegate.getSAMLFederations();
+    }
+
+    @Override
+    public FederationModel getSAMLFederationById(String id) {
+        return delegate.getSAMLFederationById(id);
+    }
+
+    @Override
+    public FederationModel getSAMLFederationByAlias(String alias) {
+        return delegate.getSAMLFederationByAlias(alias);
+    }
+
+    @Override
+    public void addSAMLFederation(FederationModel federationModel) {
+        delegate.addSAMLFederation(federationModel);
+    }
+
+    @Override
+    public void updateSAMLFederation(FederationModel federationModel) {
+        delegate.updateSAMLFederation(federationModel);
+    }
+
+    @Override
+    public void removeSAMLFederation(String internalId) {
+        delegate.removeSAMLFederation(internalId);
+    }
+
+    @Override
+    public List<FederationMapperModel> getIdentityProviderFederationMappers(String federationId) {
+        return delegate.getIdentityProviderFederationMappers(federationId);
+    }
+
+    @Override
+    public FederationMapperModel getIdentityProviderFederationMapper(String federationId, String id) {
+        return delegate.getIdentityProviderFederationMapper(federationId, id);
+    }
+
+    @Override
+    public void addIdentityProvidersFederationMapper(FederationMapperModel federationMapperModel) {
+        delegate.addIdentityProvidersFederationMapper(federationMapperModel);
+    }
+
+    @Override
+    public void updateIdentityProvidersFederationMapper(FederationMapperModel federationMapperModel) {
+        delegate.updateIdentityProvidersFederationMapper(federationMapperModel);
+    }
+
+    @Override
+    public void removeIdentityProvidersFederationMapper(String id, String federationId) {
+        delegate.removeIdentityProvidersFederationMapper(id, federationId);
     }
 
     public Stream<IdentityProviderModel> getIdentityProvidersStream() {

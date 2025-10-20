@@ -16,6 +16,7 @@
  */
 package org.keycloak.broker.saml;
 
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -40,7 +41,6 @@ import org.keycloak.saml.validators.DestinationValidator;
 
 import org.w3c.dom.Element;
 
-import static org.keycloak.models.IdentityProviderModel.LEGACY_HIDE_ON_LOGIN_ATTR;
 
 /**
  * @author Pedro Igor
@@ -77,26 +77,29 @@ public class SAMLIdentityProviderFactory extends AbstractIdentityProviderFactory
 
             if (idpDescriptor != null) {
                 SAMLIdentityProviderConfig samlIdentityProviderConfig = new SAMLIdentityProviderConfig();
+                samlIdentityProviderConfig.setIdpEntityId(entityType.getEntityID());
                 String singleSignOnServiceUrl = null;
-                boolean postBindingResponse = false;
+                boolean postBindingRequest = false;
+                boolean postBindingLogout = false;
                 for (EndpointType endpoint : idpDescriptor.getSingleSignOnService()) {
                     if (endpoint.getBinding().toString().equals(JBossSAMLURIConstants.SAML_HTTP_POST_BINDING.get())) {
                         singleSignOnServiceUrl = endpoint.getLocation().toString();
-                        postBindingResponse = true;
-                        break;
+                        postBindingRequest = true;
                     } else if (endpoint.getBinding().toString().equals(JBossSAMLURIConstants.SAML_HTTP_REDIRECT_BINDING.get())) {
                         singleSignOnServiceUrl = endpoint.getLocation().toString();
+                        postBindingRequest = false;
+                        break;
                     }
                 }
                 String singleLogoutServiceUrl = null;
-                boolean postBindingLogout = false;
                 for (EndpointType endpoint : idpDescriptor.getSingleLogoutService()) {
                     if (endpoint.getBinding().toString().equals(JBossSAMLURIConstants.SAML_HTTP_POST_BINDING.get())) {
                         singleLogoutServiceUrl = endpoint.getLocation().toString();
                         postBindingLogout = true;
-                        break;
                     } else if (endpoint.getBinding().toString().equals(JBossSAMLURIConstants.SAML_HTTP_REDIRECT_BINDING.get())) {
                         singleLogoutServiceUrl = endpoint.getLocation().toString();
+                        postBindingLogout = false;
+                        break;
                     }
 
                 }
@@ -110,14 +113,13 @@ public class SAMLIdentityProviderFactory extends AbstractIdentityProviderFactory
                 }
                 samlIdentityProviderConfig.setIdpEntityId(entityType.getEntityID());
                 samlIdentityProviderConfig.setSingleLogoutServiceUrl(singleLogoutServiceUrl);
-                samlIdentityProviderConfig.setArtifactResolutionServiceUrl(artifactResolutionServiceUrl);
                 samlIdentityProviderConfig.setSingleSignOnServiceUrl(singleSignOnServiceUrl);
-                samlIdentityProviderConfig.setWantAuthnRequestsSigned(idpDescriptor.isWantAuthnRequestsSigned());
+                samlIdentityProviderConfig.setArtifactResolutionServiceUrl(artifactResolutionServiceUrl);
+                samlIdentityProviderConfig.setWantAuthnRequestsSigned(idpDescriptor.isWantAuthnRequestsSigned() != null ? idpDescriptor.isWantAuthnRequestsSigned() : false);
                 samlIdentityProviderConfig.setAddExtensionsElementWithKeyInfo(false);
-                samlIdentityProviderConfig.setValidateSignature(idpDescriptor.isWantAuthnRequestsSigned());
-                samlIdentityProviderConfig.setPostBindingResponse(postBindingResponse);
+                samlIdentityProviderConfig.setValidateSignature(idpDescriptor.isWantAuthnRequestsSigned() != null ? idpDescriptor.isWantAuthnRequestsSigned() : false);
                 samlIdentityProviderConfig.setArtifactBindingResponse(artifactBindingResponse);
-                samlIdentityProviderConfig.setPostBindingAuthnRequest(postBindingResponse);
+                samlIdentityProviderConfig.setPostBindingAuthnRequest(postBindingRequest);
                 samlIdentityProviderConfig.setPostBindingLogout(postBindingLogout);
                 samlIdentityProviderConfig.setLoginHint(false);
 
@@ -158,18 +160,27 @@ public class SAMLIdentityProviderFactory extends AbstractIdentityProviderFactory
                 samlIdentityProviderConfig.setEnabledFromMetadata(entityType.getValidUntil() == null
                         || entityType.getValidUntil().toGregorianCalendar().getTime().after(new Date(System.currentTimeMillis())));
 
-                // check for hide on login attribute
-                if (entityType.getExtensions() != null && entityType.getExtensions().getEntityAttributes() != null) {
-                    for (AttributeType attribute : entityType.getExtensions().getEntityAttributes().getAttribute()) {
-                        if (MACEDIR_ENTITY_CATEGORY.equals(attribute.getName())
-                                && attribute.getAttributeValue().contains(REFEDS_HIDE_FROM_DISCOVERY)) {
-                            samlIdentityProviderConfig.getConfig().put(LEGACY_HIDE_ON_LOGIN_ATTR, String.valueOf(true));
+                    // check for hide on login attribute
+                    boolean hideOnLogin = false;
+                    List<SAMLIdentityProviderConfig.EntityAttributes> entityAttributes = new ArrayList<>();
+                    if (entityType.getExtensions() != null && entityType.getExtensions().getEntityAttributes() != null) {
+                        for (AttributeType attribute : entityType.getExtensions().getEntityAttributes().getAttribute()) {
+                            SAMLIdentityProviderConfig.EntityAttributes entityAttr = new SAMLIdentityProviderConfig.EntityAttributes();
+                            entityAttr.setName(attribute.getName());
+                            entityAttr.setValues(attribute.getAttributeValue());
+                            entityAttributes.add(entityAttr);
+                            if (MACEDIR_ENTITY_CATEGORY.equals(attribute.getName())
+                                    && attribute.getAttributeValue().contains(REFEDS_HIDE_FROM_DISCOVERY)) {
+                                hideOnLogin = true;
+                                break;
+                            }
                         }
+                        samlIdentityProviderConfig.setEntityAttributes(entityAttributes);
+                    } else {
+                        samlIdentityProviderConfig.setEntityAttributes(null);
                     }
-
-                }
-
-                return samlIdentityProviderConfig.getConfig();
+                    samlIdentityProviderConfig.setHideOnLogin(hideOnLogin);
+                    return samlIdentityProviderConfig.getConfig();
             }
         } catch (ParsingException pe) {
             throw new RuntimeException("Could not parse IdP SAML Metadata", pe);
