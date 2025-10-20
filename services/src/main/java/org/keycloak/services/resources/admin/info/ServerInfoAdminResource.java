@@ -21,6 +21,8 @@ import org.eclipse.microprofile.openapi.annotations.Operation;
 import org.eclipse.microprofile.openapi.annotations.extensions.Extension;
 import org.eclipse.microprofile.openapi.annotations.tags.Tag;
 import org.jboss.resteasy.reactive.NoCache;
+import org.keycloak.broker.federation.FederationProvider;
+import org.keycloak.broker.federation.SAMLFederationProviderFactory;
 import org.keycloak.provider.ConfiguredPerClientProvider;
 import org.keycloak.broker.provider.IdentityProvider;
 import org.keycloak.broker.provider.IdentityProviderFactory;
@@ -148,6 +150,7 @@ public class ServerInfoAdminResource {
 
         setSocialProviders(info);
         setIdentityProviders(info);
+        setIdentityProviderAggeregations(info);
         setThemes(info);
         setProviders(info);
         setProtocolMapperTypes(info);
@@ -300,6 +303,21 @@ public class ServerInfoAdminResource {
 
         providers.addAll(providerMaps);
     }
+
+    public void setIdentityProviderAggeregations(ServerInfoRepresentation info) {
+    	List <Map<String,String>> idpFederationProviders = session.getKeycloakSessionFactory().getProviderFactoriesStream(FederationProvider.class)
+    			.map(pf -> (SAMLFederationProviderFactory)pf)
+    			.map(pf -> {
+		    		Map<String, String> data = new HashMap<>();
+		            data.put("name", pf.getName());
+		            data.put("id", pf.getId());
+		            return data;
+    			})
+    			.collect(Collectors.toList());
+
+    	info.setIdentityProviderAggregations(idpFederationProviders);
+    }
+
 
     private void setClientInstallations(ServerInfoRepresentation info) {
         HashMap<String, List<ClientInstallationRepresentation>> clientInstallations = session.getKeycloakSessionFactory()

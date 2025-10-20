@@ -177,6 +177,7 @@ public class ExportImportTest extends AbstractKeycloakTest {
         testingClient.testing().exportImport().setUsersPerFile(ExportImportConfig.DEFAULT_USERS_PER_FILE);
 
         testFullExportImport();
+        sleep(90000);
 
         RealmResource testRealmRealm = adminClient.realm(TEST_REALM);
         ExportImportUtil.assertDataImportedInRealm(adminClient, testingClient, testRealmRealm.toRepresentation());
@@ -249,6 +250,9 @@ public class ExportImportTest extends AbstractKeycloakTest {
         testingClient.testing().exportImport().setAction(ExportImportConfig.ACTION_IMPORT);
 
         testingClient.testing().exportImport().runImport();
+
+        //wait for trigger saml aggregate job
+        sleep(90000);
 
         RealmResource testRealmRealm = adminClient.realm(TEST_REALM);
 
@@ -634,5 +638,13 @@ public class ExportImportTest extends AbstractKeycloakTest {
         testingClient.testing().exportImport().setAction(ExportImportConfig.ACTION_IMPORT);
 
         testingClient.testing().exportImport().runImport();
+    }
+
+    private static void sleep(long ms) {
+        try {
+            Thread.sleep(ms);
+        } catch (InterruptedException ie) {
+            throw new RuntimeException(ie);
+        }
     }
 }

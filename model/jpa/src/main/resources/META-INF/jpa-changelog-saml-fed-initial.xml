@@ -1,0 +1,198 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.1.xsd">
+
+    <changeSet author="cgeorgilakis@grnet.gr" id="federation-initial">
+    	<createTable tableName="FEDERATION">
+             <column name="INTERNAL_ID" type="VARCHAR(36)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="URL" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="ALIAS" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="DISPLAY_NAME" type="VARCHAR(255)">
+            </column>
+            <column name="PROVIDER_ID" type="VARCHAR(36)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="UPDATE_FREQUENCY_IN_MINS" type="INT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="VALID_UNTIL_TIMESTAMP" type="BIGINT">
+            </column>
+            <column name="LAST_METADATA_REFRESH_TIMESTAMP" type="BIGINT">
+            </column>
+            <column name="REALM_ID" type="VARCHAR(36)">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+        
+        <createTable tableName="FEDERATION_IDPS">
+            <column name="FEDERATION_ID" type="VARCHAR(36)">
+                <constraints nullable="false" />
+            </column>
+            <column name="IDENTITYPROVIDER_ID" type="VARCHAR(36)">
+                <constraints nullable="false" />
+            </column>
+        </createTable>
+        
+         <createTable tableName="FEDERATION_CONFIG">
+            <column name="FEDERATION_ID" type="VARCHAR(36)">
+                <constraints nullable="false" />
+            </column>
+            <column name="VALUE" type="CLOB" />
+            <column name="NAME" type="VARCHAR(255)">
+                <constraints nullable="false" />
+            </column>
+        </createTable>
+
+        <addPrimaryKey columnNames="INTERNAL_ID" constraintName="FEDERATION_ID_CONSTRAINT" tableName="FEDERATION"/>
+        <addPrimaryKey columnNames="FEDERATION_ID, NAME" constraintName="CONSTRAINT_FEDERATION_CONFIG" tableName="FEDERATION_CONFIG" />
+        <addForeignKeyConstraint baseColumnNames="REALM_ID" baseTableName="FEDERATION" constraintName="REALM_FEDERATION_FOREIGN_KEY" referencedColumnNames="ID" referencedTableName="REALM" />
+		<addForeignKeyConstraint baseColumnNames="FEDERATION_ID" baseTableName="FEDERATION_IDPS" constraintName="IDENTITYPROVIDER_TO_FEDERATION_FOREIGN_KEY" referencedColumnNames="INTERNAL_ID" referencedTableName="FEDERATION" />
+		<addForeignKeyConstraint baseColumnNames="IDENTITYPROVIDER_ID" baseTableName="FEDERATION_IDPS" constraintName="FEDERATION_TO_IDENTITYPROVIDER_FOREIGN_KEY" referencedColumnNames="INTERNAL_ID" referencedTableName="IDENTITY_PROVIDER" />
+   		 <addForeignKeyConstraint baseColumnNames="FEDERATION_ID" baseTableName="FEDERATION_CONFIG" constraintName="UK_FEDERATION_FK" referencedColumnNames="INTERNAL_ID" referencedTableName="FEDERATION" />
+   		<addUniqueConstraint columnNames="ALIAS, REALM_ID" constraintName="UK_FEDERATION_UNIQUE_ALIAS" tableName="FEDERATION"/>
+        <addUniqueConstraint columnNames="URL,REALM_ID" constraintName="UK_FEDERATION_UNIQUE_URL" tableName="FEDERATION"/>
+    </changeSet>
+
+    <changeSet author="cgeorgilakis@grnet.gr"
+               id="federation-1.0.0">
+
+        <createTable tableName="ENTITYID_WHITELIST">
+            <column name="FEDERATION_ID" type="VARCHAR(36)">
+                <constraints nullable="false" />
+            </column>
+            <column name="VALUE" type="VARCHAR(255)">
+                <constraints nullable="false" />
+            </column>
+        </createTable>
+
+        <addForeignKeyConstraint
+                baseColumnNames="FEDERATION_ID" baseTableName="ENTITYID_WHITELIST"
+                constraintName="ENTITYID_WHITELIST_FOREIGN_KEY"
+                referencedColumnNames="INTERNAL_ID" referencedTableName="FEDERATION" />
+        <addPrimaryKey columnNames="FEDERATION_ID, VALUE"
+                       constraintName="ENTITYID_WHITELIST_PK" tableName="ENTITYID_WHITELIST" />
+
+        <createTable tableName="ENTITYID_BLACKLIST">
+            <column name="FEDERATION_ID" type="VARCHAR(36)">
+                <constraints nullable="false" />
+            </column>
+            <column name="VALUE" type="VARCHAR(255)">
+                <constraints nullable="false" />
+            </column>
+        </createTable>
+
+        <addForeignKeyConstraint
+                baseColumnNames="FEDERATION_ID" baseTableName="ENTITYID_BLACKLIST"
+                constraintName="ENTITYID_BLACKLIST_FOREIGN_KEY"
+                referencedColumnNames="INTERNAL_ID" referencedTableName="FEDERATION" />
+        <addPrimaryKey columnNames="FEDERATION_ID, VALUE"
+                       constraintName="ENTITYID_BLACKLIST_PK" tableName="ENTITYID_BLACKLIST" />
+
+        <createTable tableName="REGISTRATION_AUTHORITY_WHITELIST">
+            <column name="FEDERATION_ID" type="VARCHAR(36)">
+                <constraints nullable="false" />
+            </column>
+            <column name="VALUE" type="VARCHAR(255)">
+                <constraints nullable="false" />
+            </column>
+        </createTable>
+
+        <addForeignKeyConstraint
+                baseColumnNames="FEDERATION_ID"
+                baseTableName="REGISTRATION_AUTHORITY_WHITELIST"
+                constraintName="REGISTRATION_AUTHORITY_WHITELIST_FOREIGN_KEY"
+                referencedColumnNames="INTERNAL_ID" referencedTableName="FEDERATION" />
+        <addPrimaryKey columnNames="FEDERATION_ID, VALUE"
+                       constraintName="REGISTRATION_AUTHORITY_WHITELIST_PK"
+                       tableName="REGISTRATION_AUTHORITY_WHITELIST" />
+
+        <createTable tableName="REGISTRATION_AUTHORITY_BLACKLIST">
+            <column name="FEDERATION_ID" type="VARCHAR(36)">
+                <constraints nullable="false" />
+            </column>
+            <column name="VALUE" type="VARCHAR(255)">
+                <constraints nullable="false" />
+            </column>
+        </createTable>
+
+        <addForeignKeyConstraint
+                baseColumnNames="FEDERATION_ID"
+                baseTableName="REGISTRATION_AUTHORITY_BLACKLIST"
+                constraintName="REGISTRATION_AUTHORITY_FOREIGN_KEY"
+                referencedColumnNames="INTERNAL_ID" referencedTableName="FEDERATION" />
+        <addPrimaryKey columnNames="FEDERATION_ID, VALUE"
+                       constraintName="REGISTRATION_AUTHORITY_BLACKLIST_PK"
+                       tableName="REGISTRATION_AUTHORITY_BLACKLIST" />
+
+    </changeSet>
+
+    <changeSet author="cgeorgilakis@grnet.gr" id="federation-1.1.0">
+
+        <createTable tableName="ENTITY_CATEGORY_BLACKLIST">
+            <column name="FEDERATION_ID" type="VARCHAR(36)">
+                <constraints nullable="false" />
+            </column>
+            <column name="VALUE" type="CLOB" />
+            <column name="NAME" type="VARCHAR(255)">
+                <constraints nullable="false" />
+            </column>
+        </createTable>
+        <createTable tableName="ENTITY_CATEGORY_WHITELIST">
+            <column name="FEDERATION_ID" type="VARCHAR(36)">
+                <constraints nullable="false" />
+            </column>
+            <column name="VALUE" type="CLOB" />
+            <column name="NAME" type="VARCHAR(255)">
+                <constraints nullable="false" />
+            </column>
+        </createTable>
+        <createTable tableName="FEDERATION_MAPPER">
+            <column name="ID" type="VARCHAR(36)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="NAME" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="IDP_MAPPER_NAME" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="FEDERATION_ID" type="VARCHAR(36)">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+        <createTable tableName="FEDERATION_MAPPER_CONFIG">
+            <column name="FEDERATION_MAPPER_ID" type="VARCHAR(36)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="VALUE" type="CLOB"/>
+            <column name="NAME" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+        <addPrimaryKey columnNames="FEDERATION_ID, NAME" constraintName="CONSTRAINT_ENTITY_CATEGORY_BLACKLIST" tableName="ENTITY_CATEGORY_BLACKLIST" />
+        <addForeignKeyConstraint baseColumnNames="FEDERATION_ID" baseTableName="ENTITY_CATEGORY_BLACKLIST" constraintName="ENTITY_CATEGORY_BLACKLIST_FK" referencedColumnNames="INTERNAL_ID" referencedTableName="FEDERATION" />
+        <addPrimaryKey columnNames="FEDERATION_ID, NAME" constraintName="CONSTRAINT_ENTITY_CATEGORY_WHITELIST" tableName="ENTITY_CATEGORY_WHITELIST" />
+        <addForeignKeyConstraint baseColumnNames="FEDERATION_ID" baseTableName="ENTITY_CATEGORY_WHITELIST" constraintName="ENTITY_CATEGORY_WHITELIST_FK" referencedColumnNames="INTERNAL_ID" referencedTableName="FEDERATION" />
+        <addPrimaryKey columnNames="ID" constraintName="FEDERATION_MAPPER_PK" tableName="FEDERATION_MAPPER"/>
+        <addPrimaryKey columnNames="FEDERATION_MAPPER_ID, NAME" constraintName="FEDERATION_MAPPER_CONFIG_PK" tableName="FEDERATION_MAPPER_CONFIG"/>
+        <addForeignKeyConstraint baseColumnNames="FEDERATION_ID" baseTableName="FEDERATION_MAPPER" constraintName="FEDERATION_MAPPER_FK" referencedColumnNames="INTERNAL_ID" referencedTableName="FEDERATION"/>
+        <addForeignKeyConstraint baseColumnNames="FEDERATION_MAPPER_ID" baseTableName="FEDERATION_MAPPER_CONFIG" constraintName="FEDERATION_MAPPER_CONFIG_FK" referencedColumnNames="ID" referencedTableName="FEDERATION_MAPPER"/>
+    </changeSet>
+
+    <changeSet author="keycloak" id="idp-fed-index">
+        <createIndex indexName="IDX_IDP_FED" tableName="FEDERATION_IDPS">
+            <column name="IDENTITYPROVIDER_ID" type="VARCHAR(36)"/>
+        </createIndex>
+        <createIndex indexName="IDX_IDP_FED2" tableName="FEDERATION_IDPS">
+            <column name="FEDERATION_ID" type="VARCHAR(36)"/>
+        </createIndex>
+    </changeSet>
+
+
+</databaseChangeLog>

@@ -6,6 +6,7 @@ import org.keycloak.dom.saml.v2.protocol.AuthnRequestType;
 import org.keycloak.jose.jwe.JWEConstants;
 import org.keycloak.models.IdentityProviderSyncMode;
 import org.keycloak.protocol.saml.SamlConfigAttributes;
+import org.keycloak.protocol.saml.SamlPrincipalType;
 import org.keycloak.representations.idm.ClientRepresentation;
 import org.keycloak.representations.idm.IdentityProviderRepresentation;
 import org.keycloak.representations.idm.KeysMetadataRepresentation;
@@ -109,6 +110,7 @@ public class KcSamlSignedBrokerTest extends AbstractBrokerTest {
             .setAttribute(SAMLIdentityProviderConfig.WANT_ASSERTIONS_SIGNED, Boolean.toString(true))
             .setAttribute(SAMLIdentityProviderConfig.WANT_ASSERTIONS_ENCRYPTED, Boolean.toString(false))
             .setAttribute(SAMLIdentityProviderConfig.WANT_AUTHN_REQUESTS_SIGNED, "true")
+            .setAttribute(SAMLIdentityProviderConfig.WANT_LOGOUT_REQUESTS_SIGNED, "true")
             .setAttribute(SAMLIdentityProviderConfig.SIGNING_CERTIFICATE_KEY, AbstractSamlTest.SAML_CLIENT_SALES_POST_SIG_EXPIRED_CERTIFICATE)
             .update();
           Closeable clientUpdater = ClientAttributeUpdater.forClient(adminClient, bc.providerRealmName(), bc.getIDPClientIdInProviderRealm())
@@ -297,7 +299,9 @@ public class KcSamlSignedBrokerTest extends AbstractBrokerTest {
             config.put(SAMLIdentityProviderConfig.VALIDATE_SIGNATURE, "true");
             config.put(SAMLIdentityProviderConfig.WANT_ASSERTIONS_SIGNED, "true");
             config.put(SAMLIdentityProviderConfig.WANT_AUTHN_REQUESTS_SIGNED, "true");
+            config.put(SAMLIdentityProviderConfig.WANT_LOGOUT_REQUESTS_SIGNED, "true");
             config.put(SAMLIdentityProviderConfig.SIGNING_CERTIFICATE_KEY, providerCert);
+            config.put(SamlConfigAttributes.SAML_NAME_ID_FORMAT_ATTRIBUTE, "urn:oasis:names:tc:SAML:2.0:nameid-format:persistent");
 
             return result;
         }
@@ -454,6 +458,7 @@ public class KcSamlSignedBrokerTest extends AbstractBrokerTest {
             .setAttribute(SAMLIdentityProviderConfig.WANT_ASSERTIONS_SIGNED, Boolean.toString(true))
             .setAttribute(SAMLIdentityProviderConfig.WANT_ASSERTIONS_ENCRYPTED, Boolean.toString(false))
             .setAttribute(SAMLIdentityProviderConfig.WANT_AUTHN_REQUESTS_SIGNED, "true")
+            .setAttribute(SAMLIdentityProviderConfig.WANT_LOGOUT_REQUESTS_SIGNED, "true")
             .setAttribute(SAMLIdentityProviderConfig.SIGNING_CERTIFICATE_KEY, AbstractSamlTest.SAML_CLIENT_SALES_POST_SIG_EXPIRED_CERTIFICATE)
             .update();
           Closeable clientUpdater = ClientAttributeUpdater.forClient(adminClient, bc.providerRealmName(), bc.getIDPClientIdInProviderRealm())
@@ -515,6 +520,7 @@ public class KcSamlSignedBrokerTest extends AbstractBrokerTest {
                 .setAttribute(SAMLIdentityProviderConfig.WANT_ASSERTIONS_SIGNED, "false")
                 .setAttribute(SAMLIdentityProviderConfig.WANT_ASSERTIONS_ENCRYPTED, "false")
                 .setAttribute(SAMLIdentityProviderConfig.WANT_AUTHN_REQUESTS_SIGNED, "true")
+                .setAttribute(SAMLIdentityProviderConfig.WANT_LOGOUT_REQUESTS_SIGNED, "true")
                 .setAttribute(SAMLIdentityProviderConfig.SIGNING_CERTIFICATE_KEY, badCert + "," + goodCert)
                 .update();
           )
@@ -556,6 +562,7 @@ public class KcSamlSignedBrokerTest extends AbstractBrokerTest {
                 .setAttribute(SAMLIdentityProviderConfig.WANT_ASSERTIONS_SIGNED, "false")
                 .setAttribute(SAMLIdentityProviderConfig.WANT_ASSERTIONS_ENCRYPTED, "false")
                 .setAttribute(SAMLIdentityProviderConfig.WANT_AUTHN_REQUESTS_SIGNED, "true")
+                .setAttribute(SAMLIdentityProviderConfig.WANT_LOGOUT_REQUESTS_SIGNED, "true")
                 .setAttribute(SAMLIdentityProviderConfig.POST_BINDING_AUTHN_REQUEST, "false")
                  .setAttribute(SAMLIdentityProviderConfig.POST_BINDING_RESPONSE, "false")
                 .setAttribute(SAMLIdentityProviderConfig.SIGNING_CERTIFICATE_KEY, badCert + "," + goodCert)

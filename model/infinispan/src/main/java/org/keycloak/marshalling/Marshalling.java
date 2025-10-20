@@ -186,6 +186,8 @@ public final class Marshalling {
     public static final int EMBEDDED_CLIENT_SESSION_KEY = 65616;
     public static final int CLIENT_SESSION_USER_FILTER = 65617;
     public static final int REMOVE_KEY_BI_CONSUMER = 65618;
+    //org.keycloak.services.scheduled.TaskCancellationEvent
+    public static final int TASK_CANCELLATION = 65618;
 
     public static void configure(GlobalConfigurationBuilder builder) {
         getSchemas().forEach(builder.serialization()::addContextInitializer);
