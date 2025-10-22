@@ -24,7 +24,7 @@ public class SpiffeIdentityProviderFactory extends AbstractIdentityProviderFacto
     }
 
     @Override
-    public Map<String, String> parseConfig(KeycloakSession session, String configString) {
+    public IdentityProviderModel parseConfig(KeycloakSession session, String config, IdentityProviderModel model) {
         throw new UnsupportedOperationException();
     }
 
