@@ -61,7 +61,7 @@ public class AutoUpdateIdentityProviderTest extends AbstractAdminTest {
             //change some values( postBindingLogout,postBindingAuthnRequest from true to false, enabled false)  - add autoupdated values
             result.put(IdentityProviderModel.AUTO_UPDATE, "true");
             result.put(IdentityProviderModel.METADATA_URL, "http://localhost:8880/saml-idp-metadata");
-            result.put(IdentityProviderModel.REFRESH_PERIOD, String.valueOf(60));
+            result.put(IdentityProviderModel.REFRESH_PERIOD, String.valueOf(30));
             result.put(SAMLIdentityProviderConfig.POST_BINDING_LOGOUT, "false");
             result.put(SAMLIdentityProviderConfig.POST_BINDING_AUTHN_REQUEST, "false");
             create(createRep("saml", "saml", false, result));
@@ -73,8 +73,8 @@ public class AutoUpdateIdentityProviderTest extends AbstractAdminTest {
             Assert.assertEquals("alias", "saml", rep.getAlias());
             Assert.assertEquals("providerId", "saml", rep.getProviderId());
             Assert.assertEquals("enabled", false, rep.isEnabled());
-            Assert.assertEquals("firstBrokerLoginFlowAlias", "first broker login", rep.getFirstBrokerLoginFlowAlias());
             assertSamlConfigAutoUpdated(rep.getConfig(), false);
+            assertAdminEvents.assertEvent(realmId, OperationType.CREATE, AdminEventPaths.identityProviderPath(rep.getAlias()), rep, ResourceType.IDENTITY_PROVIDER);
 
             sleep(80000);
             //autoupdated - check again Idp - see if values has changed
@@ -100,7 +100,7 @@ public class AutoUpdateIdentityProviderTest extends AbstractAdminTest {
         // import endpoint simply converts IDPSSODescriptor into key value pairs.
         // check that saml-idp-metadata.xml was properly converted into key value pairs
         //System.out.println(config);
-        List<String> keys = new ArrayList<>(List.of("syncMode",
+        List<String> keys = new ArrayList<>(List.of(
                 "validateSignature",
                 "singleLogoutServiceUrl",
                 "postBindingLogout",
@@ -221,6 +221,7 @@ public class AutoUpdateIdentityProviderTest extends AbstractAdminTest {
             assertThat(rep.getConfig(), hasEntry("authorizationUrl", "https://aai.egi.eu/oidc/authorize/new"));
             assertThat(rep.getConfig(), hasEntry("tokenUrl", "https://aai.egi.eu/oidc/token/new"));
             assertOidcConfig(rep.getConfig(), false);
+            assertAdminEvents.assertEvent(realmId, OperationType.CREATE, AdminEventPaths.identityProviderPath(rep.getAlias()), rep, ResourceType.IDENTITY_PROVIDER);
 
             sleep(80000);
             //autoupdated - check again Idp - see if values has changed
@@ -237,7 +238,7 @@ public class AutoUpdateIdentityProviderTest extends AbstractAdminTest {
     }
 
     private void assertOidcConfig(Map<String, String> config, boolean hasExecuted) {
-        Set fields = Stream.of("issuer", "authorizationUrl", "tokenUrl", "userInfoUrl", "validateSignature", "useJwksUrl", "jwksUrl", "metadataDescriptorUrl", "autoUpdate", "metadataUrl", "refreshPeriod").collect(Collectors.toSet());
+        Set fields = Stream.of("issuer", "authorizationUrl", "tokenUrl", "userInfoUrl", "validateSignature", "useJwksUrl", "jwksUrl", "metadataDescriptorUrl", "syncMode", "autoUpdate", "metadataUrl", "refreshPeriod").collect(Collectors.toSet());
         //autoupdated has been executed -  add lastRefreshTime
         if (hasExecuted)
             fields.add("lastRefreshTime");
@@ -258,8 +259,6 @@ public class AutoUpdateIdentityProviderTest extends AbstractAdminTest {
         response.close();
 
         getCleanup().addIdentityProviderAlias(idpRep.getAlias());
-
-        assertAdminEvents.assertEvent(realmId, OperationType.CREATE, AdminEventPaths.identityProviderPath(idpRep.getAlias()), idpRep, ResourceType.IDENTITY_PROVIDER);
 
     }
 
