@@ -24,6 +24,9 @@ import org.keycloak.models.utils.KeycloakModelUtils;
 import org.keycloak.models.utils.RepresentationToModel;
 import org.keycloak.representations.idm.IdentityProviderRepresentation;
 import org.keycloak.representations.idm.PartialImportRepresentation;
+import org.keycloak.services.scheduled.AutoUpdateIdentityProviders;
+import org.keycloak.services.scheduled.ClusterAwareScheduledTaskRunner;
+import org.keycloak.timer.TimerProvider;
 
 import java.util.List;
 
@@ -67,12 +70,23 @@ public class IdentityProvidersPartialImport extends AbstractPartialImport<Identi
     @Override
     public void remove(RealmModel realm, KeycloakSession session, IdentityProviderRepresentation idpRep) {
         session.identityProviders().remove(getName(idpRep));
+        //case IdP is autoUpdated delete its schedule task
+        TimerProvider timer = session.getProvider(TimerProvider.class);
+        timer.cancelTask(realm.getId()+"_AutoUpdateIdP_" + idpRep.getAlias());
     }
 
     @Override
     public void create(RealmModel realm, KeycloakSession session, IdentityProviderRepresentation idpRep) {
         idpRep.setInternalId(KeycloakModelUtils.generateId());
-        session.identityProviders().create(RepresentationToModel.toModel(realm, idpRep, session));
+        IdentityProviderModel identityProvider = RepresentationToModel.toModel(realm, idpRep, session);
+        session.identityProviders().create(identityProvider);
+        if (Boolean.valueOf(identityProvider.getConfig().get(IdentityProviderModel.AUTO_UPDATE))) {
+            //case IdP is autoUpdated create its schedule task
+            TimerProvider timer = session.getProvider(TimerProvider.class);
+            AutoUpdateIdentityProviders autoUpdateProvider = new AutoUpdateIdentityProviders(identityProvider.getAlias(), realm.getId());
+            ClusterAwareScheduledTaskRunner taskRunner = new ClusterAwareScheduledTaskRunner(session.getKeycloakSessionFactory(), autoUpdateProvider, Long.parseLong(identityProvider.getConfig().get(IdentityProviderModel.REFRESH_PERIOD)) * 1000);
+            timer.schedule(taskRunner, Long.parseLong(identityProvider.getConfig().get(IdentityProviderModel.REFRESH_PERIOD)) * 1000, realm.getId()+"_AutoUpdateIdP_" + identityProvider.getAlias());
+        }
     }
 
 }
