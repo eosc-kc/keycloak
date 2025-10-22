@@ -16,6 +16,7 @@
  */
 package org.keycloak.services.resources.admin;
 
+import java.time.Instant;
 import java.util.Collections;
 import java.util.Map;
 import java.util.Objects;
@@ -65,6 +66,9 @@ import org.keycloak.services.resources.KeycloakOpenAPI;
 import org.keycloak.services.resources.admin.fgap.AdminPermissionEvaluator;
 import org.keycloak.services.resources.admin.fgap.AdminPermissionManagement;
 import org.keycloak.services.resources.admin.fgap.AdminPermissions;
+import org.keycloak.services.scheduled.AutoUpdateIdentityProviders;
+import org.keycloak.services.scheduled.ClusterAwareScheduledTaskRunner;
+import org.keycloak.timer.TimerProvider;
 import org.keycloak.utils.ProfileHelper;
 
 import org.eclipse.microprofile.openapi.annotations.Operation;
@@ -141,6 +145,9 @@ public class IdentityProviderResource {
         session.users().preRemove(realm, identityProviderModel);
         session.identityProviders().remove(alias);
 
+        TimerProvider timer = session.getProvider(TimerProvider.class);
+        timer.cancelTask(realm.getId()+"_AutoUpdateIdP_" + alias);
+
         realm.getIdentityProviderMappersByAliasStream(alias)
                 .collect(Collectors.toList()).forEach(realm::removeIdentityProviderMapper);
 
@@ -207,6 +214,22 @@ public class IdentityProviderResource {
         // update in case of legacy hide on login attr was used.
         providerRep.setHideOnLogin(updated.isHideOnLogin());
 
+        if (Boolean.valueOf(updated.getConfig().get(IdentityProviderModel.AUTO_UPDATE)) && ! Boolean.valueOf(identityProviderModel.getConfig().get(IdentityProviderModel.AUTO_UPDATE))) {
+            //change from simple to autoUpdated IdP
+            TimerProvider timer = session.getProvider(TimerProvider.class);
+            createScheduleTask(timer, updated.getAlias(), Long.parseLong(updated.getConfig().get(IdentityProviderModel.REFRESH_PERIOD)) * 1000, Long.parseLong(updated.getConfig().get(IdentityProviderModel.REFRESH_PERIOD)) * 1000);
+        } else if (! Boolean.valueOf(updated.getConfig().get(IdentityProviderModel.AUTO_UPDATE)) && Boolean.valueOf(identityProviderModel.getConfig().get(IdentityProviderModel.AUTO_UPDATE))) {
+            //change from autoUpdated to simple IdP
+            TimerProvider timer = session.getProvider(TimerProvider.class);
+            timer.cancelTaskAndNotify(realm.getId()+"_AutoUpdateIdP_" + identityProviderModel.getAlias());
+        } else if (Boolean.valueOf(updated.getConfig().get(IdentityProviderModel.AUTO_UPDATE)) && (!updated.getConfig().get(IdentityProviderModel.REFRESH_PERIOD).equals(identityProviderModel.getConfig().get(IdentityProviderModel.REFRESH_PERIOD)) || !identityProviderModel.getAlias().equals(updated.getAlias()))) {
+            //change refreshPeriod or alias
+            TimerProvider timer = session.getProvider(TimerProvider.class);
+            long delay = updated.getConfig().get(IdentityProviderModel.LAST_REFRESH_TIME) == null ? Long.parseLong(updated.getConfig().get(IdentityProviderModel.REFRESH_PERIOD)) * 1000 : Long.parseLong(updated.getConfig().get(IdentityProviderModel.LAST_REFRESH_TIME) )+ Long.parseLong(updated.getConfig().get(IdentityProviderModel.REFRESH_PERIOD)) * 1000 - Instant.now().toEpochMilli();
+            timer.cancelTaskAndNotify(realm.getId()+"_AutoUpdateIdP_" + identityProviderModel.getAlias());
+            createScheduleTask(timer, updated.getAlias(), delay, Long.parseLong(updated.getConfig().get(IdentityProviderModel.REFRESH_PERIOD)) * 1000);
+        }
+
         String newProviderAlias = providerRep.getAlias();
         String oldProviderAlias = identityProviderModel.getAlias();
         if (!oldProviderAlias.equals(newProviderAlias)) {
@@ -217,6 +240,12 @@ public class IdentityProviderResource {
             updateUsersAfterProviderAliasChange(session.users().searchForUserStream(realm, Collections.singletonMap(UserModel.INCLUDE_SERVICE_ACCOUNT, Boolean.FALSE.toString())),
                     oldProviderAlias, newProviderAlias, realm, session);
         }
+    }
+
+    private void createScheduleTask(TimerProvider timer, String alias, long delay, long interval) {
+        AutoUpdateIdentityProviders autoUpdateProvider = new AutoUpdateIdentityProviders(alias, realm.getId());
+        ClusterAwareScheduledTaskRunner taskRunner = new ClusterAwareScheduledTaskRunner(session.getKeycloakSessionFactory(), autoUpdateProvider, interval);
+        timer.schedule(taskRunner, delay < 0 ? 0 : delay, interval, realm.getId()+"_AutoUpdateIdP_" + alias);
     }
 
     private static void updateUsersAfterProviderAliasChange(Stream<UserModel> users, String oldProviderId, String newProviderId, RealmModel realm, KeycloakSession session) {

@@ -508,6 +508,38 @@ public class SAMLIdentityProviderConfig extends IdentityProviderModel {
         }
     }
 
+    public boolean isAutoUpdate() {
+        return Boolean.valueOf(getConfig().get(AUTO_UPDATE));
+    }
+
+    public void setAutoUpdate(boolean autoUpdate) {
+        getConfig().put(AUTO_UPDATE, String.valueOf(autoUpdate));
+    }
+
+    public String getMetadataUrl() {
+        return getConfig().get(METADATA_URL);
+    }
+
+    public void setMetadataUrl(String metadataUrl) {
+        getConfig().put(METADATA_URL, metadataUrl);
+    }
+
+    public Long getRefreshPeriod() {
+        return getConfig().get(REFRESH_PERIOD) != null ? Long.valueOf(getConfig().get(REFRESH_PERIOD)) : null;
+    }
+
+    public void setRefreshPeriod(long refreshPeriod) {
+        getConfig().put(REFRESH_PERIOD, String.valueOf(refreshPeriod));
+    }
+
+    public Long getLastRefreshTime() {
+        return getConfig().get(LAST_REFRESH_TIME) != null ? Long.valueOf(getConfig().get(LAST_REFRESH_TIME)) : null;
+    }
+
+    public void setLastRefreshTime(long lastRefreshTime) {
+        getConfig().put(LAST_REFRESH_TIME, String.valueOf(lastRefreshTime));
+    }
+
     @Override
     public void validate(RealmModel realm) {
         SslRequired sslRequired = realm.getSslRequired();
