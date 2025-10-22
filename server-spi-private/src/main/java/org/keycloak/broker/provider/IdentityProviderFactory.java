@@ -18,7 +18,6 @@ package org.keycloak.broker.provider;
 
 import java.util.Collections;
 import java.util.List;
-import java.util.Map;
 
 import org.keycloak.models.IdentityProviderModel;
 import org.keycloak.models.KeycloakSession;
@@ -48,15 +47,15 @@ public interface IdentityProviderFactory<T extends IdentityProvider> extends Pro
      */
     T create(KeycloakSession session, IdentityProviderModel model);
 
-    /**
+   /**
      * <p>Creates an {@link IdentityProvider} based on the configuration from
-     * <code>inputStream</code>.</p>
-     *
+     * <code>inputStream</code>.</p> and existing model
      * @param session
      * @param config The configuration for the provider
+     * @param model previous identity provider
      * @return
      */
-    Map<String, String> parseConfig(KeycloakSession session, String config);
+    IdentityProviderModel parseConfig(KeycloakSession session, String config, IdentityProviderModel model);
 
     /**
      * <p>Creates a provider specific {@link IdentityProviderModel} instance.

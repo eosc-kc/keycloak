@@ -64,7 +64,10 @@ import org.keycloak.services.ErrorResponse;
 import org.keycloak.services.ErrorResponseException;
 import org.keycloak.services.resources.KeycloakOpenAPI;
 import org.keycloak.services.resources.admin.fgap.AdminPermissionEvaluator;
+import org.keycloak.services.scheduled.AutoUpdateIdentityProviders;
+import org.keycloak.services.scheduled.ClusterAwareScheduledTaskRunner;
 import org.keycloak.services.util.CertificateInfoHelper;
+import org.keycloak.timer.TimerProvider;
 import org.keycloak.utils.ReservedCharValidator;
 import org.keycloak.utils.StringUtil;
 
@@ -136,7 +139,7 @@ public class IdentityProvidersResource {
         String providerId = formDataMap.getFirst("providerId").asString();
         String config = StreamUtil.readString(formDataMap.getFirst("file").asInputStream());
         IdentityProviderFactory<?> providerFactory = getProviderFactoryById(providerId);
-        return providerFactory.parseConfig(session, config);
+        return providerFactory.parseConfig(session, config, new IdentityProviderModel()).getConfig();
     }
 
     @POST
@@ -191,7 +194,7 @@ public class IdentityProvidersResource {
         String from = data.get("fromUrl").toString();
         String file = session.getProvider(HttpClientProvider.class).getString(from);
         IdentityProviderFactory providerFactory = getProviderFactoryById(providerId);
-        Map<String, String> config = providerFactory.parseConfig(session, file);
+        Map<String, String> config = providerFactory.parseConfig(session, file, new IdentityProviderModel()).getConfig();
         // add the URL just if needed by the identity provider
         config.put(IdentityProviderModel.METADATA_DESCRIPTOR_URL, from);
         return config;
@@ -278,6 +281,9 @@ public class IdentityProvidersResource {
 
             representation.setInternalId(identityProvider.getInternalId());
             representation.setHideOnLogin(identityProvider.isHideOnLogin()); // update in case of legacy hide on login attr was used.
+            //for autoupdated IdPs create schedule task
+            if (Boolean.valueOf(identityProvider.getConfig().get(IdentityProviderModel.AUTO_UPDATE)))
+                createScheduleTask(identityProvider.getAlias(), Long.parseLong(identityProvider.getConfig().get(IdentityProviderModel.REFRESH_PERIOD)) * 1000);
             adminEvent.operation(OperationType.CREATE).resourcePath(session.getContext().getUri(), identityProvider.getAlias())
                     .representation(StripSecretsUtils.stripSecrets(session, representation)).success();
 
@@ -293,6 +299,13 @@ public class IdentityProvidersResource {
         } catch (ModelDuplicateException e) {
             throw ErrorResponse.exists("Identity Provider " + representation.getAlias() + " already exists");
         }
+    }
+
+    private void createScheduleTask(String alias,long interval) {
+        TimerProvider timer = session.getProvider(TimerProvider.class);
+        AutoUpdateIdentityProviders autoUpdateProvider = new AutoUpdateIdentityProviders(alias, realm.getId());
+        ClusterAwareScheduledTaskRunner taskRunner = new ClusterAwareScheduledTaskRunner(session.getKeycloakSessionFactory(), autoUpdateProvider, interval);
+        timer.schedule(taskRunner, interval, realm.getId()+"_AutoUpdateIdP_" + alias);
     }
 
     @Path("instances/{alias}")
