@@ -138,7 +138,6 @@ export const PageNav = () => {
               <LeftNav title="events" path="/events" />
             </NavGroup>
           )}
-
           {showConfigure && (
             <NavGroup aria-label={t("configure")} title={t("configure")}>
               <LeftNav title="realmSettings" path="/realm-settings" />
@@ -148,6 +147,10 @@ export const PageNav = () => {
                   <LeftNav title="permissions" path="/permissions" />
                 )}
               <LeftNav title="identityProviders" path="/identity-providers" />
+              <LeftNav
+                title="identityFederations"
+                path="/identity-federations"
+              />
               <LeftNav title="userFederation" path="/user-federation" />
               {showWorkflows && <LeftNav title="workflows" path="/workflows" />}
               {isFeatureEnabled(Feature.DeclarativeUI) &&
