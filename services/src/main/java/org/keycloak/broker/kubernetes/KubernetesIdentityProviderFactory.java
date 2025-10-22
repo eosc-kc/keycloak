@@ -40,7 +40,7 @@ public class KubernetesIdentityProviderFactory extends AbstractIdentityProviderF
     }
 
     @Override
-    public Map<String, String> parseConfig(KeycloakSession session, String configString) {
+    public IdentityProviderModel parseConfig(KeycloakSession session, String config, IdentityProviderModel model) {
         throw new UnsupportedOperationException();
     }
 

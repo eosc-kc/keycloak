@@ -18,9 +18,7 @@ package org.keycloak.broker.saml;
 
 import java.util.ArrayList;
 import java.util.Date;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 import javax.xml.namespace.QName;
 
@@ -40,8 +38,6 @@ import org.keycloak.saml.common.util.DocumentUtil;
 import org.keycloak.saml.processing.core.saml.v2.util.SAMLMetadataUtil;
 import org.keycloak.saml.validators.DestinationValidator;
 import org.w3c.dom.Element;
-
-import static org.keycloak.models.IdentityProviderModel.LEGACY_HIDE_ON_LOGIN_ATTR;
 
 /**
  * @author Pedro Igor
@@ -69,15 +65,15 @@ public class SAMLIdentityProviderFactory extends AbstractIdentityProviderFactory
     public SAMLIdentityProviderConfig createConfig() {
         return new SAMLIdentityProviderConfig();
     }
-
+    
     @Override
-    public Map<String, String> parseConfig(KeycloakSession session, String config) {
+    public IdentityProviderModel parseConfig(KeycloakSession session, String config, IdentityProviderModel model) {
+        SAMLIdentityProviderConfig samlIdentityProviderConfig = new SAMLIdentityProviderConfig(model);
         try {
             EntityDescriptorType entityType = SAMLMetadataUtil.parseEntityDescriptorType(config);
             IDPSSODescriptorType idpDescriptor = SAMLMetadataUtil.locateIDPSSODescriptorType(entityType);
 
             if (idpDescriptor != null) {
-                SAMLIdentityProviderConfig samlIdentityProviderConfig = new SAMLIdentityProviderConfig();
                 samlIdentityProviderConfig.setIdpEntityId(entityType.getEntityID());
                 String singleSignOnServiceUrl = null;
                 boolean postBindingRequest = false;
@@ -125,12 +121,17 @@ public class SAMLIdentityProviderFactory extends AbstractIdentityProviderFactory
                 samlIdentityProviderConfig.setLoginHint(false);
 
                 List<String> nameIdFormatList = idpDescriptor.getNameIDFormat();
-                if (nameIdFormatList != null && !nameIdFormatList.isEmpty()) {
-                    samlIdentityProviderConfig.setNameIDPolicyFormat(nameIdFormatList.get(0));
-                }
+                //change NameIDPolicyFormat only for new IdP and for not existing previous NameIDPolicyFormat in nameIdFormatList
+                if (nameIdFormatList != null && !nameIdFormatList.isEmpty() && ( samlIdentityProviderConfig.getNameIDPolicyFormat() == null || !nameIdFormatList.contains(samlIdentityProviderConfig.getNameIDPolicyFormat())))
+                        samlIdentityProviderConfig.setNameIDPolicyFormat(nameIdFormatList.get(0));
+
 
                 List<KeyDescriptorType> keyDescriptor = idpDescriptor.getKeyDescriptor();
                 String defaultCertificate = null;
+
+                //in case of autoupdate reconfigure keys
+                    samlIdentityProviderConfig.getConfig().remove(SAMLIdentityProviderConfig.ENCRYPTION_PUBLIC_KEY);
+                    samlIdentityProviderConfig.getConfig().remove(SAMLIdentityProviderConfig.SIGNING_CERTIFICATE_KEY);
 
                 if (keyDescriptor != null) {
                     for (KeyDescriptorType keyDescriptorType : keyDescriptor) {
@@ -158,7 +159,7 @@ public class SAMLIdentityProviderFactory extends AbstractIdentityProviderFactory
                     }
                 }
 
-                samlIdentityProviderConfig.setEnabledFromMetadata(entityType.getValidUntil() == null
+                    samlIdentityProviderConfig.setEnabledFromMetadata(entityType.getValidUntil() == null
                         || entityType.getValidUntil().toGregorianCalendar().getTime().after(new Date(System.currentTimeMillis())));
 
                     // check for hide on login attribute
@@ -181,13 +182,14 @@ public class SAMLIdentityProviderFactory extends AbstractIdentityProviderFactory
                         samlIdentityProviderConfig.setEntityAttributes(null);
                     }
                     samlIdentityProviderConfig.setHideOnLogin(hideOnLogin);
-                    return samlIdentityProviderConfig.getConfig();
+                    samlIdentityProviderConfig.getConfig().put(IdentityProviderModel.LEGACY_HIDE_ON_LOGIN_ATTR, String.valueOf(hideOnLogin));
+                    return samlIdentityProviderConfig;
             }
         } catch (ParsingException pe) {
             throw new RuntimeException("Could not parse IdP SAML Metadata", pe);
         }
 
-        return new HashMap<>();
+        return samlIdentityProviderConfig;
     }
 
     @Override
