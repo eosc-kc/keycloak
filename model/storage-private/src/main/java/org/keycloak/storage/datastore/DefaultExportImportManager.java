@@ -125,6 +125,8 @@ import org.keycloak.representations.idm.UserConsentRepresentation;
 import org.keycloak.representations.idm.UserFederationMapperRepresentation;
 import org.keycloak.representations.idm.UserFederationProviderRepresentation;
 import org.keycloak.representations.idm.UserRepresentation;
+import org.keycloak.services.scheduled.AutoUpdateIdentityProviders;
+import org.keycloak.services.scheduled.ClusterAwareScheduledTaskRunner;
 import org.keycloak.storage.ExportImportManager;
 import org.keycloak.storage.ImportRealmFromRepresentationEvent;
 import org.keycloak.storage.PartialImportRealmFromRepresentationEvent;
@@ -133,6 +135,7 @@ import org.keycloak.storage.UserStorageProvider;
 import org.keycloak.storage.UserStorageProviderModel;
 import org.keycloak.storage.UserStorageUtil;
 import org.keycloak.storage.federated.UserFederatedStorageProvider;
+import org.keycloak.timer.TimerProvider;
 import org.keycloak.util.Booleans;
 import org.keycloak.util.JsonSerialization;
 import org.keycloak.utils.StringUtil;
@@ -673,8 +676,15 @@ public class DefaultExportImportManager implements ExportImportManager {
 
     private static void importIdentityProviders(RealmRepresentation rep, RealmModel newRealm, KeycloakSession session) {
         if (rep.getIdentityProviders() != null) {
+            TimerProvider timer = session.getProvider(TimerProvider.class);
             for (IdentityProviderRepresentation representation : rep.getIdentityProviders()) {
-                session.identityProviders().create(RepresentationToModel.toModel(newRealm, representation, session));
+                IdentityProviderModel identityProvider = RepresentationToModel.toModel(newRealm, representation, session);
+                session.identityProviders().create(identityProvider);
+                if (Boolean.valueOf(identityProvider.getConfig().get(IdentityProviderModel.AUTO_UPDATE))) {
+                    AutoUpdateIdentityProviders autoUpdateProvider = new AutoUpdateIdentityProviders(identityProvider.getAlias(), newRealm.getId());
+                    ClusterAwareScheduledTaskRunner taskRunner = new ClusterAwareScheduledTaskRunner(session.getKeycloakSessionFactory(), autoUpdateProvider, Long.parseLong(identityProvider.getConfig().get(IdentityProviderModel.REFRESH_PERIOD)) * 1000);
+                    timer.schedule(taskRunner, Long.parseLong(identityProvider.getConfig().get(IdentityProviderModel.REFRESH_PERIOD)) * 1000, newRealm.getId()+"_AutoUpdateIdP_" + identityProvider.getAlias());
+                }
             }
         }
     }
