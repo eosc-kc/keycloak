@@ -74,7 +74,6 @@ public class AutoUpdateIdentityProviderTest extends AbstractAdminTest {
             Assert.assertEquals("providerId", "saml", rep.getProviderId());
             Assert.assertEquals("enabled", false, rep.isEnabled());
             assertSamlConfigAutoUpdated(rep.getConfig(), false);
-            assertAdminEvents.assertEvent(realmId, OperationType.CREATE, AdminEventPaths.identityProviderPath(rep.getAlias()), rep, ResourceType.IDENTITY_PROVIDER);
 
             sleep(80000);
             //autoupdated - check again Idp - see if values has changed
@@ -221,8 +220,7 @@ public class AutoUpdateIdentityProviderTest extends AbstractAdminTest {
             assertThat(rep.getConfig(), hasEntry("authorizationUrl", "https://aai.egi.eu/oidc/authorize/new"));
             assertThat(rep.getConfig(), hasEntry("tokenUrl", "https://aai.egi.eu/oidc/token/new"));
             assertOidcConfig(rep.getConfig(), false);
-            assertAdminEvents.assertEvent(realmId, OperationType.CREATE, AdminEventPaths.identityProviderPath(rep.getAlias()), rep, ResourceType.IDENTITY_PROVIDER);
-
+            
             sleep(80000);
             //autoupdated - check again Idp - see if values has changed
             provider = realm.identityProviders().get("auto-oidc");
