@@ -18,3 +18,6 @@ Full Keycloak upstream jira issue can be shown if filtered by Fix version.
 
 ### Changed
 - Change emailVerified User field with UserAttributeMappers (conditional trust email). [EOSC-KC-70](https://github.com/eosc-kc/keycloak/issues/70)
+
+### Fixed
+- Changes in account console and account rest service [RCIAM-860](https://jira.argo.grnet.gr/browse/RCIAM-860)
