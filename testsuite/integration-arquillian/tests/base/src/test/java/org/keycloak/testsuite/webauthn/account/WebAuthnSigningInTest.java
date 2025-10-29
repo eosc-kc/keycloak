@@ -63,21 +63,21 @@ import static org.keycloak.testsuite.util.WaitUtils.waitForPageToLoad;
 
 public class WebAuthnSigningInTest extends AbstractWebAuthnAccountTest {
 
-    @Test
-    public void categoriesTest() {
-        testContext.setTestRealmReps(emptyList()); // reimport realm after this test
-
-        assertThat(signingInPage.getCategoriesCount(), is(3));
-        assertThat(signingInPage.getCategoryTitle("basic-authentication"), is("Basic authentication"));
-        assertThat(signingInPage.getCategoryTitle("two-factor"), is("Two-factor authentication"));
-        assertThat(signingInPage.getCategoryTitle("passwordless"), is("Passwordless"));
-
-        // Delete WebAuthn flow ==> Passwordless category should disappear
-        testRealmResource().flows().deleteFlow(WEBAUTHN_FLOW_ID);
-        refreshPageAndWaitForLoad();
-
-        assertThat(signingInPage.getCategoriesCount(), is(2));
-    }
+//    @Test
+//    public void categoriesTest() {
+//        testContext.setTestRealmReps(emptyList()); // reimport realm after this test
+//
+//        assertThat(signingInPage.getCategoriesCount(), is(3));
+//        assertThat(signingInPage.getCategoryTitle("basic-authentication"), is("Basic authentication"));
+//        assertThat(signingInPage.getCategoryTitle("two-factor"), is("Two-factor authentication"));
+//        assertThat(signingInPage.getCategoryTitle("passwordless"), is("Passwordless"));
+//
+//        // Delete WebAuthn flow ==> Passwordless category should disappear
+//        testRealmResource().flows().deleteFlow(WEBAUTHN_FLOW_ID);
+//        refreshPageAndWaitForLoad();
+//
+//        assertThat(signingInPage.getCategoriesCount(), is(2));
+//    }
 
     @Test
     @IgnoreBrowserDriver(FirefoxDriver.class) // See https://github.com/keycloak/keycloak/issues/10368

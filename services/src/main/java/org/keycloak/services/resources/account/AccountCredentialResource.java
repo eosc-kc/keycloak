@@ -174,7 +174,7 @@ public class AccountCredentialResource {
     @Produces(jakarta.ws.rs.core.MediaType.APPLICATION_JSON)
     public Stream<CredentialContainer> credentialTypes(@QueryParam(TYPE) String type,
                                                      @QueryParam(USER_CREDENTIALS) Boolean userCredentials) {
-        auth.requireOneOf(AccountRoles.MANAGE_ACCOUNT, AccountRoles.VIEW_PROFILE);
+        auth.requireOneOf(AccountRoles.MANAGE_ACCOUNT, AccountRoles.VIEW_PROFILE, AccountRoles.MANAGE_ACCOUNT_BASIC_AUTH, AccountRoles.MANAGE_ACCOUNT_2FA);
 
         boolean includeUserCredentials = userCredentials == null || userCredentials;
 
@@ -303,7 +303,7 @@ public class AccountCredentialResource {
     @NoCache
     @Deprecated
     public void removeCredential(final @PathParam("credentialId") String credentialId) {
-        auth.require(AccountRoles.MANAGE_ACCOUNT);
+        auth.requireOneOf(AccountRoles.MANAGE_ACCOUNT,AccountRoles.MANAGE_ACCOUNT_2FA );
         logger.warnf("Using deprecated endpoint of Account REST service for removing credential of user '%s' in the realm '%s'. It is recommended to use application initiated actions (AIA) for removing credentials",
                 user.getUsername(),
                 realm.getName());
@@ -333,7 +333,7 @@ public class AccountCredentialResource {
     @Path("{credentialId}/label")
     @NoCache
     public void setLabel(final @PathParam("credentialId") String credentialId, String userLabel) {
-        auth.require(AccountRoles.MANAGE_ACCOUNT);
+        auth.requireOneOf(AccountRoles.MANAGE_ACCOUNT,AccountRoles.MANAGE_ACCOUNT_2FA );
         CredentialModel credential = user.credentialManager().getStoredCredentialById(credentialId);
         if (credential == null) {
             throw new NotFoundException("Credential not found");
