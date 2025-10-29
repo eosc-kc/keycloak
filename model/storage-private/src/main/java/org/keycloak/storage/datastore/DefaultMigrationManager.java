@@ -45,6 +45,7 @@ import org.keycloak.migration.migrators.MigrateTo26_1_0;
 import org.keycloak.migration.migrators.MigrateTo26_2_0;
 import org.keycloak.migration.migrators.MigrateTo26_3_0;
 import org.keycloak.migration.migrators.MigrateTo26_4_0;
+import org.keycloak.migration.migrators.MigrateTo26_4_1_0_1;
 import org.keycloak.migration.migrators.MigrateTo2_0_0;
 import org.keycloak.migration.migrators.MigrateTo2_1_0;
 import org.keycloak.migration.migrators.MigrateTo2_2_0;
@@ -68,7 +69,6 @@ import org.keycloak.migration.migrators.Migration;
 import org.keycloak.models.Constants;
 import org.keycloak.models.DeploymentStateProvider;
 import org.keycloak.models.KeycloakSession;
-import org.keycloak.models.ModelException;
 import org.keycloak.models.RealmModel;
 import org.keycloak.representations.idm.RealmRepresentation;
 import org.keycloak.storage.MigrationManager;
@@ -129,6 +129,7 @@ public class DefaultMigrationManager implements MigrationManager {
             new MigrateTo26_2_0(),
             new MigrateTo26_3_0(),
             new MigrateTo26_4_0(),
+            new MigrateTo26_4_1_0_1(),
     };
 
     private final KeycloakSession session;

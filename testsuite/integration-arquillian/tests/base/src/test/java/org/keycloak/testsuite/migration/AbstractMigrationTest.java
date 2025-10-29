@@ -454,6 +454,12 @@ public abstract class AbstractMigrationTest extends AbstractKeycloakTest {
 
     protected void testMigrationTo26_4_0() {
         testSamlEncryptionAttributes(migrationRealm);
+        testMigrationTo26_4_1_0_1();
+    }
+
+    protected void testMigrationTo26_4_1_0_1() {
+        testNewAccountRoles(masterRealm);
+        testNewAccountRoles(migrationRealm);
     }
 
     private void testClientContainsExpectedClientScopes() {
@@ -664,7 +670,7 @@ public abstract class AbstractMigrationTest extends AbstractKeycloakTest {
         }
     }
 
-    protected void testViewGroups(RealmResource realm) {
+   protected void testViewGroups(RealmResource realm) {
         ClientRepresentation accountClient = realm.clients().findByClientId(ACCOUNT_MANAGEMENT_CLIENT_ID).get(0);
 
         ClientResource accountResource = realm.clients().get(accountClient.getId());
@@ -696,6 +702,18 @@ public abstract class AbstractMigrationTest extends AbstractKeycloakTest {
                             .collect(Collectors.toList()),
                     not(hasItem(legacyTermsAndConditionsAlias)));
         }
+    }
+
+     protected void testNewAccountRoles(RealmResource realm) {
+        ClientRepresentation accountClient = realm.clients().findByClientId(ACCOUNT_MANAGEMENT_CLIENT_ID).get(0);
+
+        ClientResource accountResource = realm.clients().get(accountClient.getId());
+
+        RoleRepresentation manageAccountBasicAuth = accountResource.roles().get(AccountRoles.MANAGE_ACCOUNT_BASIC_AUTH).toRepresentation();
+        assertNotNull(manageAccountBasicAuth);
+
+        RoleRepresentation manageAccount2fa = accountResource.roles().get(AccountRoles.MANAGE_ACCOUNT_2FA).toRepresentation();
+        assertNotNull(manageAccount2fa);
     }
 
     protected void testRoleManageAccountLinks(RealmResource... realms) {
