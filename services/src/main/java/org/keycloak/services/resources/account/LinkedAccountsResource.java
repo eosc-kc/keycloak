@@ -254,7 +254,7 @@ public class LinkedAccountsResource {
     @Deprecated
     public Response buildLinkedAccountURI(@PathParam("providerAlias") String providerAlias,
                                      @QueryParam("redirectUri") String redirectUri) {
-        auth.require(AccountRoles.MANAGE_ACCOUNT);
+        auth.requireOneOf(AccountRoles.MANAGE_ACCOUNT, AccountRoles.MANAGE_ACCOUNT_LINKS);
         logger.warnf("Using deprecated endpoint of Account REST service for linking user '%s' in the realm '%s' to identity provider '%s'. It is recommended to use application initiated actions (AIA) for linking identity provider with the user.",
                 user.getUsername(),
                 realm.getName(),
