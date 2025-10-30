@@ -1,9 +1,5 @@
 import type IdentityFederationRepresentation from "@keycloak/keycloak-admin-client/lib/defs/identityFederationRepresentation";
-import {
-  FormGroup,
-  NumberInput,
-} from "@patternfly/react-core";
-import { useState } from "react";
+import { FormGroup, NumberInput } from "@patternfly/react-core";
 import {
   HelpItem,
   SelectControl,
@@ -16,7 +12,7 @@ import { useRealm } from "../../context/realm-context/RealmContext";
 import { SwitchField } from "../../identity-providers/component/SwitchField";
 import { Environment } from "../../environment";
 import { DefaultSwitchControl } from "../../components/SwitchControl";
-import { PrincipalTable } from "../components/PrincipalTable";
+import { PrincipalTable } from "../../identity-providers/component/PrincipalTable";
 
 const assertionsEncryptedOptions = ["true", "false", "optional"];
 
@@ -27,21 +23,11 @@ type IdentityProviderFederationConfigProps = {
 
 const IdentityProviderFederationConfig = ({
   readOnly = false,
-  type,
 }: IdentityProviderFederationConfigProps) => {
-  const {
-    register,
-    control,
-    formState: { errors },
-  } = useFormContext<IdentityFederationRepresentation>();
+  const { control } = useFormContext<IdentityFederationRepresentation>();
   const { realm } = useRealm();
   const { t } = useTranslation();
   const SYNC_MODES = ["IMPORT", "FORCE"];
-  const syncModes = SYNC_MODES;
-  const [syncModeOpen, setSyncModeOpen] = useState(false);
-  const [namedPolicyDropdownOpen, setNamedPolicyDropdownOpen] = useState(false);
-  const [wantAssertionsEncryptedOpen, setWantAssertionsEncryptedOpen] =
-    useState(false);
   const { environment } = useEnvironment<Environment>();
   const principalType = useWatch({
     control,

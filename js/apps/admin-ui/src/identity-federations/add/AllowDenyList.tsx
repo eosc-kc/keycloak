@@ -11,14 +11,7 @@ import { HelpItem, useAlerts } from "@keycloak/keycloak-ui-shared";
 import { useTranslation } from "react-i18next";
 import { useFormContext, useWatch } from "react-hook-form";
 import { MultiLineInput } from "../../components/multi-line-input/MultiLineInput";
-import {
-  Table,
-  Tbody,
-  Td,
-  Th,
-  Thead,
-  Tr,
-} from "@patternfly/react-table";
+import { Table, Tbody, Td, Th, Thead, Tr } from "@patternfly/react-table";
 type AllowDenyListProps = {
   type: "Allow" | "Deny";
 };
@@ -27,11 +20,8 @@ type CategoryListType = {
 };
 
 const AllowDenyList = ({ type }: AllowDenyListProps) => {
-  const {
-    control,
-    setValue,
-    formState: { errors },
-  } = useFormContext<IdentityFederationRepresentation>();
+  const { control, setValue } =
+    useFormContext<IdentityFederationRepresentation>();
   const { t } = useTranslation();
   const [attributeName, setAttributeName] = useState("");
   const [attributeValue, setAttributeValue] = useState("");
@@ -117,7 +107,7 @@ const AllowDenyList = ({ type }: AllowDenyListProps) => {
                           <InputGroup key={index}>
                             <TextInput
                               value={value}
-                              onChange={(_event,value) => {
+                              onChange={(_event, value) => {
                                 categoryList[attributeName][index] = value;
                                 setValue(`category${type}List`, categoryList, {
                                   shouldDirty: true,
@@ -181,7 +171,7 @@ const AllowDenyList = ({ type }: AllowDenyListProps) => {
               <Td>
                 <TextInput
                   value={attributeName}
-                  onChange={(_event,value) => {
+                  onChange={(_event, value) => {
                     setAttributeName(value);
                   }}
                 />
@@ -192,7 +182,7 @@ const AllowDenyList = ({ type }: AllowDenyListProps) => {
                     <InputGroup key={index}>
                       <TextInput
                         value={value}
-                        onChange={(_event,value) => {
+                        onChange={(_event, value) => {
                           attributeValueArray[index] = value;
                           setAttributeValueArray([...attributeValueArray]);
                         }}
@@ -213,8 +203,8 @@ const AllowDenyList = ({ type }: AllowDenyListProps) => {
                 <InputGroup>
                   <TextInput
                     value={attributeValue}
-                    onChange={(_event,value) => {
-                       setAttributeValue(value);
+                    onChange={(_event, value) => {
+                      setAttributeValue(value);
                     }}
                   />
                   <Button
