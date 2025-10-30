@@ -126,7 +126,7 @@ export default function IdentityFederationForm({
     messageKey: t(`${mapperAction}MapperConfirm`, {
       mapper: selectedMapper?.name,
     }),
-    continueButtonLabel: `${mapperAction}`,
+    continueButtonLabel: mapperAction,
     continueButtonVariant:
       mapperAction === "update"
         ? ButtonVariant.warning
@@ -142,10 +142,7 @@ export default function IdentityFederationForm({
           mapperId: selectedMapper?.mapperId!,
         });
         setMapperLoading("");
-        addAlert(
-          t(`${mapperAction}MapperSuccess`),
-          AlertVariant.success,
-        );
+        addAlert(t(`${mapperAction}MapperSuccess`), AlertVariant.success);
         navigate(
           toIdentityFederation({
             providerId,

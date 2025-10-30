@@ -1,9 +1,6 @@
 import type IdentityFederationRepresentation from "@keycloak/keycloak-admin-client/lib/defs/identityFederationRepresentation";
-import {
-  FormGroup,
-  NumberInput,
-} from "@patternfly/react-core";
-import { useState, useEffect } from "react";
+import { FormGroup, NumberInput } from "@patternfly/react-core";
+import { useEffect } from "react";
 import {
   HelpItem,
   SelectControl,
@@ -23,19 +20,13 @@ type GeneralSettingsProps = {
 };
 
 const GeneralSettings = ({ type }: GeneralSettingsProps) => {
-  const {
-    register,
-    trigger,
-    control,
-    setValue,
-    formState: { errors },
-  } = useFormContext<IdentityFederationRepresentation>();
+  const { register, trigger, setValue } =
+    useFormContext<IdentityFederationRepresentation>();
   const { t } = useTranslation();
 
-  const [categoriesOpen, setCategoriesOpen] = useState(false);
   useEffect(() => {
     setValue("updateFrequencyInMins", 30);
-    trigger("updateFrequencyInMins");
+    void trigger("updateFrequencyInMins");
   }, []);
 
   return (
@@ -53,7 +44,6 @@ const GeneralSettings = ({ type }: GeneralSettingsProps) => {
         labelIcon={t("identityFederationAliasHelp")}
         rules={{ required: t("required") }}
       />
-
       <FormGroup
         label={t("updateFrequency")}
         labelIcon={
@@ -90,50 +80,17 @@ const GeneralSettings = ({ type }: GeneralSettingsProps) => {
           }}
         />
       </FormGroup>
-
-        <SelectControl
-          id="kc-type"
-          name="category"
-          label={t("category")}
-          labelIcon={t("scopeTypeHelp")}
-          controller={{ defaultValue: categories[0] }}
-          options={categories.map((key) => ({
-            key,
-            value: key,
-          }))}
-        />
-        {/* <Controller
-          name="category"
-          defaultValue={categories[0]}
-          control={control}
-          render={({ field }) => (
-            <Select
-              //   toggleId="categories"
-              required
-              direction="down"
-              onToggle={() => setCategoriesOpen(!categoriesOpen)}
-              onSelect={(_, value) => {
-                field.onChange(value?.toString());
-                setCategoriesOpen(false);
-              }}
-              selections={field.value}
-              variant={"default"}
-              aria-label={t("category")}
-              isOpen={categoriesOpen}
-            >
-              {categories.map((option) => (
-                <SelectOption
-                  selected={option === field.value}
-                  key={option}
-                  data-testid={option}
-                  value={option}
-                >
-                  {option}
-                </SelectOption>
-              ))}
-            </Select>
-          )}
-        /> */}
+      <SelectControl
+        id="kc-type"
+        name="category"
+        label={t("category")}
+        labelIcon={t("scopeTypeHelp")}
+        controller={{ defaultValue: categories[0] }}
+        options={categories.map((key) => ({
+          key,
+          value: key,
+        }))}
+      />
     </>
   );
 };

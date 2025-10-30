@@ -11,7 +11,7 @@ import {
   SelectOption,
 } from "@patternfly/react-core";
 import { useState } from "react";
-import { Controller, useFormContext } from "react-hook-form";
+import { Controller, useFormContext, useWatch } from "react-hook-form";
 import { useTranslation } from "react-i18next";
 import { FormGroupField } from "../component/FormGroupField";
 import { SwitchField } from "../component/SwitchField";
@@ -32,6 +32,10 @@ export const ExtendedNonDiscoverySettings = () => {
   const [isExpanded, setIsExpanded] = useState(false);
   const [promptOpen, setPromptOpen] = useState(false);
 
+  const providerId = useWatch({
+    control,
+    name: "providerId",
+  });
   return (
     <ExpandableSection
       toggleText={t("advanced")}
@@ -46,15 +50,19 @@ export const ExtendedNonDiscoverySettings = () => {
           field="config.backchannelSupported"
           label="backchannelLogout"
         />
-        <SwitchField
-          field="config.sendIdTokenOnLogout"
-          label="sendIdTokenOnLogout"
-          defaultValue={"true"}
-        />
-        <SwitchField
-          field="config.sendClientIdOnLogout"
-          label="sendClientIdOnLogout"
-        />
+        {providerId === "saml" && (
+          <>
+            <SwitchField
+              field="config.sendIdTokenOnLogout"
+              label="sendIdTokenOnLogout"
+              defaultValue={"true"}
+            />
+            <SwitchField
+              field="config.sendClientIdOnLogout"
+              label="sendClientIdOnLogout"
+            />
+          </>
+        )}
         <SwitchField field="config.disableUserInfo" label="disableUserInfo" />
         <SwitchField field="config.disableNonce" label="disableNonce" />
         <SwitchField
