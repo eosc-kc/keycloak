@@ -8,6 +8,7 @@ import { DefaultSwitchControl } from "../../components/SwitchControl";
 import { JwksSettings } from "./JwksSettings";
 
 import "./discovery-settings.css";
+import { AutoUpdateFields } from "../component/AutoUpdateFields";
 
 const PKCE_METHODS = ["plain", "S256"] as const;
 
@@ -19,7 +20,10 @@ type DiscoverySettingsProps = {
 const Fields = ({ readOnly, isOIDC }: DiscoverySettingsProps) => {
   const { t } = useTranslation();
   const { control } = useFormContext<IdentityProviderRepresentation>();
-
+  const providerId = useWatch({
+    control,
+    name: "providerId",
+  });
   const validateSignature = useWatch({
     control,
     name: "config.validateSignature",
@@ -39,6 +43,9 @@ const Fields = ({ readOnly, isOIDC }: DiscoverySettingsProps) => {
 
   return (
     <div className="pf-v5-c-form pf-m-horizontal">
+      {!readOnly && providerId !== "openid-federation" && (
+        <AutoUpdateFields protocol={"oidc"} />
+      )}
       <TextControl
         name="config.authorizationUrl"
         label={t("authorizationUrl")}

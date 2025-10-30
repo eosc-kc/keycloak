@@ -46,11 +46,7 @@ export default function AddMapper() {
   const form = useForm<IdPMapperRepresentationWithAttributes>({
     shouldUnregister: true,
   });
-  const {
-    handleSubmit,
-    register,
-    formState: { errors },
-  } = form;
+  const { handleSubmit } = form;
   const { addAlert, addError } = useAlerts();
   const navigate = useNavigate();
   const localeSort = useLocaleSort();

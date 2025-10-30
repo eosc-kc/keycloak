@@ -1,9 +1,6 @@
 import type IdentityProviderMapperRepresentation from "@keycloak/keycloak-admin-client/lib/defs/identityProviderMapperRepresentation";
 import type { IdentityProviderMapperTypeRepresentation } from "@keycloak/keycloak-admin-client/lib/defs/identityProviderMapperTypeRepresentation";
-import {
-  FormGroup,
-  SelectOption,
-} from "@patternfly/react-core";
+import { FormGroup, SelectOption } from "@patternfly/react-core";
 import { useState } from "react";
 import { Controller, UseFormReturn } from "react-hook-form";
 import { useTranslation } from "react-i18next";

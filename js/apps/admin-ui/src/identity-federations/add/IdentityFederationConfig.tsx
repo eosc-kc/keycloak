@@ -12,7 +12,7 @@ import { useRealm } from "../../context/realm-context/RealmContext";
 import { SwitchField } from "../../identity-providers/component/SwitchField";
 import { Environment } from "../../environment";
 import { DefaultSwitchControl } from "../../components/SwitchControl";
-import { PrincipalTable } from "../components/PrincipalTable";
+import { PrincipalTable } from "../../identity-providers/component/PrincipalTable";
 
 const assertionsEncryptedOptions = ["true", "false", "optional"];
 
@@ -23,7 +23,6 @@ type IdentityProviderFederationConfigProps = {
 
 const IdentityProviderFederationConfig = ({
   readOnly = false,
-  type,
 }: IdentityProviderFederationConfigProps) => {
   const { control } = useFormContext<IdentityFederationRepresentation>();
   const { realm } = useRealm();
