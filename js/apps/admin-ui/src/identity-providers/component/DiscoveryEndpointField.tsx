@@ -5,6 +5,7 @@ import { useFormContext } from "react-hook-form";
 import { useTranslation } from "react-i18next";
 import { HelpItem, TextControl } from "@keycloak/keycloak-ui-shared";
 import { useAdminClient } from "../../admin-client";
+import { AutoUpdateFields } from "./AutoUpdateFields";
 
 type DiscoveryEndpointFieldProps = {
   id: string;
@@ -126,6 +127,9 @@ export const DiscoveryEndpointField = ({
       )}
       {!discovery && fileUpload}
       {discovery && !errors.discoveryError && children(true)}
+      {discovery && (id === "saml" || id === "oidc") && (
+        <AutoUpdateFields hideMetadata protocol={id} />
+      )}
       {!discovery && children(false)}
     </>
   );
