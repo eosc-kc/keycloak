@@ -12,6 +12,8 @@ import {
 import { DefaultSwitchControl } from "../../components/SwitchControl";
 
 import "./discovery-settings.css";
+import { AutoUpdateFields } from "../component/AutoUpdateFields";
+import { PrincipalTable } from "../component/PrincipalTable";
 
 type DescriptorSettingsProps = {
   readOnly: boolean;
@@ -43,14 +45,10 @@ const Fields = ({ readOnly }: DescriptorSettingsProps) => {
     name: "config.useMetadataDescriptorUrl",
   });
 
-  const principalType = useWatch({
-    control,
-    name: "config.principalType",
-  });
-
   return (
     <div className="pf-v5-c-form pf-m-horizontal">
       <FormProvider {...form}>
+        {!readOnly && <AutoUpdateFields protocol={"saml"} />}
         <TextControl
           name="config.entityId"
           label={t("serviceProviderEntityId")}
@@ -144,29 +142,7 @@ const Fields = ({ readOnly }: DescriptorSettingsProps) => {
             },
           ]}
         />
-        <SelectControl
-          name="config.principalType"
-          label={t("principalType")}
-          labelIcon={t("principalTypeHelp")}
-          controller={{
-            defaultValue: "SUBJECT",
-          }}
-          isDisabled={readOnly}
-          options={[
-            { key: "SUBJECT", value: t("subjectNameId") },
-            { key: "ATTRIBUTE", value: t("attributeName") },
-            { key: "FRIENDLY_ATTRIBUTE", value: t("attributeFriendlyName") },
-          ]}
-        />
-
-        {principalType?.includes("ATTRIBUTE") && (
-          <TextControl
-            name="config.principalAttribute"
-            label={t("principalAttribute")}
-            labelIcon={t("principalAttributeHelp")}
-            readOnly={readOnly}
-          />
-        )}
+        <PrincipalTable readOnly={readOnly} />
         <DefaultSwitchControl
           name="config.allowCreate"
           label={t("allowCreate")}
@@ -198,6 +174,14 @@ const Fields = ({ readOnly }: DescriptorSettingsProps) => {
         <DefaultSwitchControl
           name="config.postBindingLogout"
           label={t("httpPostBindingLogout")}
+          isDisabled={readOnly}
+          stringify
+        />
+
+        <DefaultSwitchControl
+          name="config.postBindingLogoutReceivingRequest"
+          label={t("postBindingLogoutReceivingRequest")}
+          labelIcon={t("postBindingLogoutReceivingRequestHelp")}
           isDisabled={readOnly}
           stringify
         />
@@ -240,6 +224,13 @@ const Fields = ({ readOnly }: DescriptorSettingsProps) => {
             />
           </>
         )}
+        <DefaultSwitchControl
+          name="config.wantLogoutRequestsSigned"
+          label={t("wantLogoutRequestsSigned")}
+          labelIcon={t("wantLogoutRequestsSignedHelp")}
+          isDisabled={readOnly}
+          stringify
+        />
         <DefaultSwitchControl
           name="config.wantAssertionsSigned"
           label={t("wantAssertionsSigned")}
