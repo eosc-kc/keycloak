@@ -56,6 +56,8 @@ public final class OIDCConfigAttributes {
 
     public static final String ACCESS_TOKEN_SIGNED_RESPONSE_ALG = "access.token.signed.response.alg";
 
+    public static final String REVOKE_REFRESH_TOKEN = "revoke.refresh.token";
+    public static final String REFRESH_TOKEN_MAX_REUSE = "refresh.token.max.reuse";
     public static final String ACCESS_TOKEN_LIFESPAN = "access.token.lifespan";
     public static final String ID_TOKEN_LIFESPAN = "id.token.lifespan";
     public static final String CLIENT_SESSION_IDLE_TIMEOUT = "client.session.idle.timeout";
