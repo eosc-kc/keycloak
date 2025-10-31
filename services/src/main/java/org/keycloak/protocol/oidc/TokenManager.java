@@ -348,13 +348,15 @@ public class TokenManager {
 
         AccessTokenResponseBuilder responseBuilder = responseBuilder(realm, authorizedClient, event, session,
             validation.userSession, validation.clientSessionCtx).offlineToken( TokenUtil.TOKEN_TYPE_OFFLINE.equals(refreshToken.getType())).accessToken(validation.newToken);
-        if (clientConfig.isUseRefreshToken()) {
+        boolean generateRefreshToken = clientConfig.isUseRefreshToken() || (authorizedClient.getAttribute(OIDCConfigAttributes.REVOKE_REFRESH_TOKEN) == null && realm.isRevokeRefreshToken()) || Boolean.valueOf(authorizedClient.getAttribute(OIDCConfigAttributes.REVOKE_REFRESH_TOKEN));
+
+        if (generateRefreshToken) {
             //refresh token must have same scope as old refresh token (type, scope, expiration)
             responseBuilder.generateRefreshToken(refreshToken, clientSession);
         }
 
         if (validation.newToken.getAuthorization() != null
-            && clientConfig.isUseRefreshToken()) {
+            && generateRefreshToken) {
             responseBuilder.getRefreshToken().setAuthorization(validation.newToken.getAuthorization());
         }
 
@@ -395,8 +397,8 @@ public class TokenManager {
 
     private void validateTokenReuseForRefresh(KeycloakSession session, RealmModel realm, RefreshToken refreshToken,
         TokenValidation validation) throws OAuthErrorException {
-        if (realm.isRevokeRefreshToken()) {
-            AuthenticatedClientSessionModel clientSession = validation.clientSessionCtx.getClientSession();
+        AuthenticatedClientSessionModel clientSession = validation.clientSessionCtx.getClientSession();
+        if ((clientSession.getClient().getAttribute(OIDCConfigAttributes.REVOKE_REFRESH_TOKEN) == null && realm.isRevokeRefreshToken()) || Boolean.valueOf(clientSession.getClient().getAttribute(OIDCConfigAttributes.REVOKE_REFRESH_TOKEN))) {
             try {
                 validateTokenReuse(session, realm, refreshToken, clientSession, true);
                 String key = getReuseIdKey(refreshToken);
@@ -435,7 +437,8 @@ public class TokenManager {
         }
 
         int currentCount = clientSession.getRefreshTokenUseCount(key);
-        if (currentCount > realm.getRefreshTokenMaxReuse()) {
+        int maxReuse = clientSession.getClient().getAttribute(OIDCConfigAttributes.REFRESH_TOKEN_MAX_REUSE) != null ? Integer.valueOf(clientSession.getClient().getAttribute(OIDCConfigAttributes.REFRESH_TOKEN_MAX_REUSE)) : realm.getRefreshTokenMaxReuse();
+        if (currentCount > maxReuse) {
             throw new OAuthErrorException(OAuthErrorException.INVALID_GRANT, "Maximum allowed refresh token reuse exceeded",
                 "Maximum allowed refresh token reuse exceeded");
         }
@@ -1153,7 +1156,8 @@ public class TokenManager {
             boolean offlineTokenRequested = clientSessionCtx.isOfflineTokenRequested();
             generateRefreshToken(offlineTokenRequested);
             refreshToken.setScope(clientSessionCtx.getScopeString(true));
-            if (realm.isRevokeRefreshToken()) {
+            ClientModel clientModel = clientSessionCtx.getClientSession().getClient();
+            if ((clientModel.getAttribute(OIDCConfigAttributes.REVOKE_REFRESH_TOKEN) == null && realm.isRevokeRefreshToken()) || Boolean.valueOf(clientModel.getAttribute(OIDCConfigAttributes.REVOKE_REFRESH_TOKEN))) {
                 refreshToken.getOtherClaims().put(Constants.REUSE_ID, KeycloakModelUtils.generateId());
             }
             return this;
@@ -1174,7 +1178,7 @@ public class TokenManager {
                 }
             }
             generateRefreshToken(offlineTokenRequested);
-            if (realm.isRevokeRefreshToken()) {
+            if ((clientSession.getClient().getAttribute(OIDCConfigAttributes.REVOKE_REFRESH_TOKEN) == null && realm.isRevokeRefreshToken()) || Boolean.valueOf(clientSession.getClient().getAttribute(OIDCConfigAttributes.REVOKE_REFRESH_TOKEN))) {
                 refreshToken.getOtherClaims().put(Constants.REUSE_ID, reuseId);
                 clientSession.setRefreshTokenLastRefresh(getReuseIdKey(oldRefreshToken), refreshToken.getIat().intValue());
             }
