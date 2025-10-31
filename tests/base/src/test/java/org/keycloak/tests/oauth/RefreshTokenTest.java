@@ -1044,6 +1044,91 @@ public class RefreshTokenTest {
         conductTokenRefreshRequest(Constants.INTERNAL_SIGNATURE_ALGORITHM, Algorithm.PS512, Algorithm.PS256);
     }
 
+    @Test
+    public void refreshTokenReuseTokenWithClientRefreshTokensRevoked() throws Exception {
+        ClientRepresentation clientRep = managedClient.admin().toRepresentation();
+        String originalRevokeRefreshToken = clientRep.getAttributes().get("revoke.refresh.token");
+        String originalRefreshTokenMaxReuse = clientRep.getAttributes().get("refresh.token.max.reuse");
+        try {
+            clientRep.getAttributes().put("revoke.refresh.token","true");
+            clientRep.getAttributes().put("refresh.token.max.reuse","0");
+            managedClient.admin().update(clientRep);
+
+            oauth.doLogin("test-user@localhost", "password");
+
+            EventRepresentation loginEvent = events.poll();
+            EventAssertion.assertSuccess(loginEvent)
+                    .type(EventType.LOGIN)
+                    .clientId("test-app")
+                    .hasSessionId();
+
+            String sessionId = loginEvent.getSessionId();
+            String codeId = loginEvent.getDetails().get(Details.CODE_ID);
+
+            String code = oauth.parseLoginResponse().getCode();
+
+            AccessTokenResponse response1 = oauth.doAccessTokenRequest(code);
+            RefreshToken refreshToken1 = oauth.parseRefreshToken(response1.getRefreshToken());
+
+            EventRepresentation codeToTokenEvent = events.poll();
+            EventAssertion.assertSuccess(codeToTokenEvent)
+                    .type(EventType.CODE_TO_TOKEN)
+                    .clientId("test-app")
+                    .sessionId(sessionId)
+                    .details(Details.CODE_ID, codeId);
+
+            AccessTokenResponse response2 = oauth.doRefreshTokenRequest(response1.getRefreshToken());
+            RefreshToken refreshToken2 = oauth.parseRefreshToken(response2.getRefreshToken());
+
+            assertEquals(200, response2.getStatusCode());
+
+            EventRepresentation refreshEvent = events.poll();
+            EventAssertion.assertSuccess(refreshEvent)
+                    .type(EventType.REFRESH_TOKEN)
+                    .clientId("test-app")
+                    .sessionId(sessionId)
+                    .details(Details.REFRESH_TOKEN_ID, refreshToken1.getId());
+
+            AccessTokenResponse response3 = oauth.doRefreshTokenRequest(response1.getRefreshToken());
+
+            assertEquals(400, response3.getStatusCode());
+
+            EventRepresentation refreshErrorEvent = events.poll();
+            EventAssertion.assertError(refreshErrorEvent)
+                    .type(EventType.REFRESH_TOKEN_ERROR)
+                    .clientId("test-app")
+                    .sessionId(sessionId)
+                    .error(Errors.INVALID_TOKEN)
+                    .details(Details.REFRESH_TOKEN_ID, refreshToken1.getId());
+
+            // Client session invalidated hence old refresh token not valid anymore
+            AccessTokenResponse response4 = oauth.doRefreshTokenRequest(response2.getRefreshToken());
+            assertEquals(400, response4.getStatusCode());
+            EventRepresentation refreshErrorEvent2 = events.poll();
+            EventAssertion.assertError(refreshErrorEvent2)
+                    .type(EventType.REFRESH_TOKEN_ERROR)
+                    .clientId("test-app")
+                    .sessionId(sessionId)
+                    .error(Errors.INVALID_TOKEN)
+                    .details(Details.REFRESH_TOKEN_ID, refreshToken2.getId());
+        } finally {
+            timeOffSet.set(0);
+            if (originalRevokeRefreshToken != null) {
+                clientRep.getAttributes().put("revoke.refresh.token", originalRevokeRefreshToken);
+            } else {
+                clientRep.getAttributes().remove("revoke.refresh.token");
+            }
+            if (originalRefreshTokenMaxReuse != null) {
+                clientRep.getAttributes().put("refresh.token.max.reuse", originalRefreshTokenMaxReuse);
+            } else {
+                clientRep.getAttributes().remove("refresh.token.max.reuse");
+            }
+            managedClient.admin().update(clientRep);
+        }
+    }
+
+
+
     private void conductTokenRefreshRequest(String expectedRefreshAlg, String expectedAccessAlg, String expectedIdTokenAlg) throws Exception {
         try {
             // Realm setting is used for ID Token signature algorithm

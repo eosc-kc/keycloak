@@ -1,5 +1,8 @@
 package org.keycloak.migration.migrators;
 
+import java.util.List;
+import java.util.stream.Stream;
+
 import org.keycloak.migration.ModelVersion;
 import org.keycloak.models.ClientModel;
 import org.keycloak.models.Constants;
@@ -8,8 +11,7 @@ import org.keycloak.models.RealmModel;
 import org.keycloak.models.RoleModel;
 import org.keycloak.representations.IDToken;
 import org.keycloak.representations.idm.RealmRepresentation;
-import java.util.List;
-import java.util.stream.Stream;
+
 import static org.keycloak.models.AccountRoles.MANAGE_ACCOUNT_2FA;
 import static org.keycloak.models.AccountRoles.MANAGE_ACCOUNT_BASIC_AUTH;
 public class MigrateTo26_4_1_0_1 implements Migration {
