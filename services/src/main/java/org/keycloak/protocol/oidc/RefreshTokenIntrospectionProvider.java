@@ -53,7 +53,7 @@ public class RefreshTokenIntrospectionProvider extends AccessTokenIntrospectionP
     protected boolean verifyTokenReuse() {
 
         String tokenType = token.getType();
-        if (realm.isRevokeRefreshToken()
+        if (((client.getAttribute(OIDCConfigAttributes.REVOKE_REFRESH_TOKEN) == null && realm.isRevokeRefreshToken()) || Boolean.valueOf(client.getAttribute(OIDCConfigAttributes.REVOKE_REFRESH_TOKEN)))
                 && (tokenType.equals(TokenUtil.TOKEN_TYPE_REFRESH) || tokenType.equals(TokenUtil.TOKEN_TYPE_OFFLINE))
                 && !validateTokenReuse()) {
             logger.debugf("Introspection access token for %s client: failed to validate Token reuse for introspection", token.getIssuedFor());

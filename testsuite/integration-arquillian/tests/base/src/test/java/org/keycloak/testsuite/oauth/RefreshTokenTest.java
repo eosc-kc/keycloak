@@ -720,6 +720,55 @@ public class RefreshTokenTest extends AbstractKeycloakTest {
     }
 
     @Test
+    public void refreshTokenReuseTokenWithClientRefreshTokensRevoked() throws Exception {
+        try {
+
+            ClientRepresentation clientRep = ApiUtil.findClientByClientId(adminClient.realm("test"), "test-app").toRepresentation();
+            clientRep.getAttributes().put("revoke.refresh.token","true");
+            clientRep.getAttributes().put("refresh.token.max.reuse","0");
+            adminClient.realm("test").clients().get(clientRep.getId()).update(clientRep);
+
+            oauth.doLogin("test-user@localhost", "password");
+
+            EventRepresentation loginEvent = events.expectLogin().assertEvent();
+
+            String sessionId = loginEvent.getSessionId();
+            String codeId = loginEvent.getDetails().get(Details.CODE_ID);
+
+            String code = oauth.parseLoginResponse().getCode();
+
+            AccessTokenResponse response1 = oauth.doAccessTokenRequest(code);
+            RefreshToken refreshToken1 = oauth.parseRefreshToken(response1.getRefreshToken());
+
+            events.expectCodeToToken(codeId, sessionId).assertEvent();
+
+            AccessTokenResponse response2 = oauth.doRefreshTokenRequest(response1.getRefreshToken());
+            RefreshToken refreshToken2 = oauth.parseRefreshToken(response2.getRefreshToken());
+
+            assertEquals(200, response2.getStatusCode());
+
+            events.expectRefresh(refreshToken1.getId(), sessionId).assertEvent();
+
+            AccessTokenResponse response3 = oauth.doRefreshTokenRequest(response1.getRefreshToken());
+
+            assertEquals(400, response3.getStatusCode());
+
+            events.expectRefresh(refreshToken1.getId(), sessionId).user((String) null).removeDetail(Details.TOKEN_ID).removeDetail(Details.UPDATED_REFRESH_TOKEN_ID).error("invalid_token").assertEvent();
+
+            // Client session invalidated hence old refresh token not valid anymore
+            AccessTokenResponse response4 = oauth.doRefreshTokenRequest(response2.getRefreshToken());
+            assertEquals(400, response4.getStatusCode());
+            events.expectRefresh(refreshToken2.getId(), sessionId).user((String) null).removeDetail(Details.TOKEN_ID).removeDetail(Details.UPDATED_REFRESH_TOKEN_ID).error("invalid_token").assertEvent();
+        } finally {
+            setTimeOffset(0);
+            ClientRepresentation clientRep = ApiUtil.findClientByClientId(adminClient.realm("test"), "test-app").toRepresentation();
+            clientRep.getAttributes().remove("revoke.refresh.token");
+            clientRep.getAttributes().remove("refresh.token.max.reuse");
+            adminClient.realm("test").clients().get(clientRep.getId()).update(clientRep);
+        }
+    }
+
+    @Test
     public void refreshTokenReuseOnDifferentTab() {
         try {
 
