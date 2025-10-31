@@ -61,10 +61,7 @@ const IdentityProviderFederationConfig = ({
         label={t("nameIdPolicyFormat")}
         labelIcon={t("identityFederationNameIdPolicyFormatHelp")}
         controller={{
-          defaultValue:
-            type === "edit"
-              ? "isNull"
-              : "urn:oasis:names:tc:SAML:2.0:nameid-format:persistent",
+            defaultValue: "isNull",
         }}
         options={[
           {
