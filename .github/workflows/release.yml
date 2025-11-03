@@ -1,0 +1,81 @@
+name: Create Release
+
+on:
+  push:
+    tags:
+      - '*' # Push events to matching any tag *, i.e. 'v1.0', 'v20.15.10' or even 'mod1'
+
+env:
+  DEFAULT_JDK_VERSION: 21
+
+jobs:
+
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-java@v1
+        with:
+          java-version: ${{ env.DEFAULT_JDK_VERSION }}
+      - name: Cache Maven packages
+        id: cache
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.m2/repository
+          key: cache-1-${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
+          restore-keys: cache-1-${{ runner.os }}-m2
+
+      - name: Build Keycloak
+        run: |
+          ./mvnw -pl quarkus/deployment,quarkus/dist -am -DskipTests clean install
+
+      - name: Fetch tar.gz
+        run: cp quarkus/dist/target/keycloak*.tar.gz keycloak.tar.gz
+
+      - name: Compute sha1 hash
+        run: echo "sha1:" >> hashes.txt && sha1sum keycloak.tar.gz >> hashes.txt
+
+      - name: Compute sha256 hash
+        run: echo "sha256:" >> hashes.txt && sha256sum keycloak.tar.gz >> hashes.txt
+
+      - name: Compute md5 hash
+        run: echo "md5:" >> hashes.txt && md5sum keycloak.tar.gz >> hashes.txt
+
+      - name: Create Release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # This token is provided by Actions, you do not need to create your own token
+        with:
+          tag_name: ${{ github.ref }}
+          release_name: Release ${{ github.ref }}
+          draft: false
+          prerelease: false
+
+      - name: Upload keycloak archive
+        id: upload-keycloak-archive
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }} # This pulls from the CREATE RELEASE step above, referencing it's ID to get its outputs object, which include a `upload_url`. See this blog post for more info: https://jasonet.co/posts/new-features-of-github-actions/#passing-data-to-future-steps
+          asset_path: ./keycloak.tar.gz
+          asset_name: keycloak.tar.gz
+          asset_content_type: application/gzip
+
+      - name: Upload hash file
+        id: upload-hash-file
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }} # This pulls from the CREATE RELEASE step above, referencing it's ID to get its outputs object, which include a `upload_url`. See this blog post for more info: https://jasonet.co/posts/new-features-of-github-actions/#passing-data-to-future-steps
+          asset_path: ./hashes.txt
+          asset_name: hashes.txt
+          asset_content_type: text/plain
+
+      - name: Remove keycloak artifacts before caching
+        if: steps.cache.outputs.cache-hit != 'true'
+        run: rm -rf ~/.m2/repository/org/keycloak
