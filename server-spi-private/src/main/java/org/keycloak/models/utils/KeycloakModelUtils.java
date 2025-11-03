@@ -1287,8 +1287,12 @@ public final class KeycloakModelUtils {
                 .getProviderFactory(SocialIdentityProvider.class, provider.getProviderId());
         if (providerFactory != null) {
             return providerFactory.getName();
+        } else  if ("saml".equals(provider.getProviderId())) {
+            String entityId = provider.getConfig().get("idpEntityId");
+            return entityId != null ? entityId :  provider.getAlias();
         } else {
-            return provider.getAlias();
+            String issuer = provider.getConfig().get(IdentityProviderModel.ISSUER);
+            return issuer != null ? issuer :  provider.getAlias();
         }
     }
 
