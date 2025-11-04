@@ -21,6 +21,8 @@ import java.security.cert.X509Certificate;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
@@ -1442,4 +1444,15 @@ public class RealmAdminResource {
         return new ClientTypesResource(session.getProvider(ClientTypeManager.class), realm, auth);
     }
 
+    @GET
+    @Path("countries")
+    @Produces(MediaType.APPLICATION_JSON)
+    public Map<String,String> getCountries() {
+        auth.clients().requireList();
+        Locale locale = session.getContext().resolveLocale(auth.adminAuth().getUser());
+
+        return Arrays.stream(Locale.getISOCountries()).collect(Collectors.toMap(country-> country, country-> new Locale("", country).getDisplayCountry(locale))).entrySet().stream()
+                .sorted(Map.Entry.comparingByValue()).collect(Collectors.toMap(
+                        Map.Entry::getKey, Map.Entry::getValue, (e1, e2) -> e1, LinkedHashMap::new));
+    }
 }

@@ -313,8 +313,13 @@ public class FreeMarkerLoginFormsProvider implements LoginFormsProvider {
                 attributes.put("profile", rb);
                 break;
             case OAUTH_GRANT:
+                String contacts = client.getAttribute(ClientModel.CONTACTS);
+                if (contacts!= null) {
+                    contacts = contacts.replace(",",", ");
+                    client.setAttribute(ClientModel.CONTACTS, contacts);
+                }
                 attributes.put("oauth",
-                        new OAuthGrantBean(accessCode, client, clientScopesRequested));
+                        new OAuthGrantBean(accessCode, client, clientScopesRequested, uriInfo.getBaseUri().toString(), realm.getName(), locale));
                 break;
             case CODE:
                 attributes.remove("message"); // No need to include "message" attribute as error is included in separate field anyway
