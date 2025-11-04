@@ -264,6 +264,10 @@ public class AccountRestService {
             representation.setLogoUri(model.getAttribute(ClientModel.LOGO_URI));
             representation.setPolicyUri(model.getAttribute(ClientModel.POLICY_URI));
             representation.setTosUri(model.getAttribute(ClientModel.TOS_URI));
+            representation.setContacts(model.getAttribute(ClientModel.CONTACTS));
+            if (model.getAttribute(ClientModel.COUNTRY) != null) {
+                representation.setCountry(new Locale("", model.getAttribute(ClientModel.COUNTRY)).getDisplayCountry(locale));
+            }
         }
         return representation;
     }

@@ -39,6 +39,8 @@ import { usePromise } from "../utils/usePromise";
 
 type Application = ClientRepresentation & {
   open: boolean;
+  country?: string;
+  account?: string;
 };
 
 export const Applications = () => {
@@ -239,6 +241,26 @@ export const Applications = () => {
                         </DescriptionListTerm>
                         <DescriptionListDescription>
                           {application.policyUri}
+                        </DescriptionListDescription>
+                      </DescriptionListGroup>
+                    )}
+                    {application.account && (
+                      <DescriptionListGroup>
+                        <DescriptionListTerm>
+                          {t("privacyPolicy")}
+                        </DescriptionListTerm>
+                        <DescriptionListDescription>
+                          {application.account}
+                        </DescriptionListDescription>
+                      </DescriptionListGroup>
+                    )}
+                    {application.country && (
+                      <DescriptionListGroup>
+                        <DescriptionListTerm>
+                          {t("privacyPolicy")}
+                        </DescriptionListTerm>
+                        <DescriptionListDescription>
+                          {application.country}
                         </DescriptionListDescription>
                       </DescriptionListGroup>
                     )}

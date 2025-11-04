@@ -41,6 +41,8 @@ public interface ClientModel extends ClientScopeModel, RoleContainerModel,  Prot
     String POLICY_URI ="policyUri";
     String TOS_URI ="tosUri";
     String TYPE = "type";
+    String CONTACTS = "contacts";
+    String COUNTRY = "country";
 
     interface ClientCreationEvent extends ProviderEvent {
         ClientModel getCreatedClient();

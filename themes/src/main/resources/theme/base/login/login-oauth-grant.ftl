@@ -28,6 +28,11 @@
                     </#list>
                 </#if>
             </ul>
+            <#if client.attributes.country?has_content>
+                <h3>
+                    ${msg("consentCountry",oauth.countryName)}
+                </h3>
+            </#if>
             <#if client.attributes.policyUri?? || client.attributes.tosUri??>
                 <h3>
                     <#if client.name?has_content>
@@ -45,6 +50,26 @@
                     </#if>
                 </h3>
             </#if>
+            <#if client.description?has_content>
+                <h3>
+                    ${msg("consentDescription",advancedMsg(client.description))}
+                </h3>
+            </#if>
+            <#if client.baseUrl?has_content>
+                <h3>
+                    <a href="${client.baseUrl}" target="_blank">${msg("consentBaseUrl")}</a>
+                </h3>
+            </#if>
+            <#if client.attributes.contacts?has_content>
+                <h3>
+                    ${msg("consentContacts",client.attributes.contacts)}
+                </h3>
+            </#if>
+            <h3>
+                ${msg("revokeConsentMsg")}
+                <a href="${oauth.applicationConsoleUrl}" target="_blank">${msg("applicationConsoleMsg")}</a>
+            </h3>
+
 
             <form class="form-actions" action="${url.oauthAction}" method="POST">
                 <input type="hidden" name="code" value="${oauth.code}">
