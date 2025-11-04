@@ -297,7 +297,7 @@ public class SAMLFederationProvider implements FederationProvider {
                             config.put(IdentityProviderModel.SYNC_MODE, model.getConfig().get(IdentityProviderModel.SYNC_MODE));
                             config.put("loginHint", "false");
 
-                            config.put(SAMLIdentityProviderConfig.WANT_ASSERTIONS_ENCRYPTED, String.valueOf(model.isWantAssertionsEncrypted()));
+                            config.put(SAMLIdentityProviderConfig.WANT_ASSERTIONS_ENCRYPTED, model.getWantAssertionsEncrypted());
                             config.put(SAMLIdentityProviderConfig.WANT_ASSERTIONS_SIGNED, String.valueOf(model.isWantAssertionsSigned()));
                             config.put(SAMLIdentityProviderConfig.WANT_LOGOUT_REQUESTS_SIGNED, String.valueOf(model.isWantLogoutRequestsSigned()));
                             config.put(SAMLIdentityProviderConfig.ENTITY_ID, model.getConfig().get(SAMLIdentityProviderConfig.ENTITY_ID));
@@ -783,7 +783,7 @@ public class SAMLFederationProvider implements FederationProvider {
             boolean wantAuthnRequestsSigned = model.isWantAuthnRequestsSigned();
             boolean wantLogoutRequestsSigned = model.isWantLogoutRequestsSigned();
             boolean wantAssertionsSigned = model.isWantAssertionsSigned();
-            boolean wantAssertionsEncrypted = model.isWantAssertionsEncrypted();
+            String wantAssertionsEncrypted = model.getWantAssertionsEncrypted();
             String entityId = getEntityId(uriInfo, realm);
             String nameIDPolicyFormat = model.getNameIDPolicyFormat();
 
@@ -818,7 +818,8 @@ public class SAMLFederationProvider implements FederationProvider {
             XMLStreamWriter writer = StaxUtil.getXMLStreamWriter(sw);
             SAMLMetadataWriter metadataWriter = new SAMLMetadataWriter(writer);
 
-            EntityDescriptorType entityDescriptor = SPMetadataDescriptor.buildSPDescriptor(authnBinding, authnBindingLogout, endpoint, endpoint, wantAuthnRequestsSigned, wantLogoutRequestsSigned, wantAssertionsSigned, wantAssertionsEncrypted, entityId, nameIDPolicyFormat, signingKeys, encryptionKeys);
+			EntityDescriptorType entityDescriptor = SPMetadataDescriptor.buildSPDescriptor(authnBinding, authnBindingLogout, endpoint, endpoint, wantAuthnRequestsSigned, wantLogoutRequestsSigned,
+                wantAssertionsSigned,  !"false".equals(wantAssertionsEncrypted), entityId, nameIDPolicyFormat, signingKeys, encryptionKeys);
 
             // Create the AttributeConsumingService if at least one attribute importer mapper exists
             List<FederationMapperModel> mappers = model.getFederationMapperModels().stream().filter(mapper -> "saml-user-attribute-idp-mapper".equals(mapper.getIdentityProviderMapper())).collect(Collectors.toList());
