@@ -17,6 +17,8 @@ public class ClientRepresentation {
     private String logoUri;
     private String policyUri;
     private String tosUri;
+    private String contacts;
+    private String country;
 
 
     public String getClientId() {
@@ -121,5 +123,21 @@ public class ClientRepresentation {
 
     public void setTosUri(String tosUri) {
         this.tosUri = tosUri;
+    }
+
+    public String getContacts() {
+        return contacts;
+    }
+
+    public void setContacts(String contacts) {
+        this.contacts = contacts;
+    }
+
+    public String getCountry() {
+        return country;
+    }
+
+    public void setCountry(String country) {
+        this.country = country;
     }
 }
