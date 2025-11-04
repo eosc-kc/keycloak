@@ -46,8 +46,8 @@ public class SAMLFederationModel extends FederationModel {
         return Boolean.valueOf(getConfig().get(WANT_ASSERTIONS_SIGNED));
     }
 
-    public boolean isWantAssertionsEncrypted() {
-        return Boolean.valueOf(getConfig().get(WANT_ASSERTIONS_ENCRYPTED));
+    public String getWantAssertionsEncrypted() {
+        return getConfig().get(WANT_ASSERTIONS_ENCRYPTED);
     }
     
     public boolean isPostBindingResponse() {
