@@ -548,7 +548,7 @@ public abstract class SAMLFederationTest extends AbstractAdminTest {
             pr3.setPrincipalAttribute("subject-id");
             principals.add(pr3);
             config.put(SAMLIdentityProviderConfig.MULTIPLE_PRINCIPALS, JsonSerialization.writeValueAsString(principals));
-            config.put("wantAssertionsEncrypted", "true");
+            config.put("wantAssertionsEncrypted", "optional");
             config.put("wantAssertionsSigned", "true");
             config.put("postBindingResponse", "true");
             config.put("postBindingLogoutReceivingRequest", "true");
