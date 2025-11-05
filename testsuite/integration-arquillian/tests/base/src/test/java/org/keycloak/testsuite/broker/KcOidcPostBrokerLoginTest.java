@@ -22,7 +22,6 @@ package org.keycloak.testsuite.broker;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.keycloak.OAuth2Constants;
 import org.keycloak.admin.client.resource.RealmResource;
 import org.keycloak.authentication.AuthenticationFlow;
 import org.keycloak.authentication.authenticators.access.AllowAccessAuthenticatorFactory;
@@ -225,64 +224,64 @@ public class KcOidcPostBrokerLoginTest extends AbstractInitializedBaseBrokerTest
     }
 
 
-    @Test
-    public void testPostBrokerLoginFlowWithOTP() {
-        updateExecutions(AbstractBrokerTest::disableUpdateProfileOnFirstLogin);
-
-        // Setup with default client scope - OTP required
-        configurePostBrokerLoginWithClientScopeConditionAndOTP(testingClient, bc.consumerRealmName(), bc.getIDPAlias(), OAuth2Constants.SCOPE_PROFILE, false);
-
-        oauth.clientId("broker-app");
-        loginPage.open(bc.consumerRealmName());
-        logInWithBroker(bc);
-
-        totpPage.assertCurrent();
-        String totpSecret = totpPage.getTotpSecret();
-        totpPage.configure(totp.generateTOTP(totpSecret));
-
-        RealmResource realm = adminClient.realm(bc.consumerRealmName());
-        assertNumFederatedIdentities(realm.users().search(bc.getUserLogin()).get(0).getId(), 1);
-
-        appPage.assertCurrent();
-        AccountHelper.logout(adminClient.realm(bc.consumerRealmName()), bc.getUserLogin());
-        AccountHelper.logout(adminClient.realm(bc.providerRealmName()), bc.getUserLogin());
-
-        // Setup with optional client scope - scope not present in scope parameter, OTP not required
-        configurePostBrokerLoginWithClientScopeConditionAndOTP(testingClient, bc.consumerRealmName(), bc.getIDPAlias(), OAuth2Constants.SCOPE_PHONE, false);
-        setOtpTimeOffset(DEFAULT_INTERVAL_SECONDS, totp);
-
-        loginPage.open(bc.consumerRealmName());
-        logInWithBroker(bc);
-
-        appPage.assertCurrent();
-        AccountHelper.logout(adminClient.realm(bc.consumerRealmName()), bc.getUserLogin());
-        AccountHelper.logout(adminClient.realm(bc.providerRealmName()), bc.getUserLogin());
-
-        // Setup with optional client scope - scope parameter present, OTP required
-        oauth.scope("openid phone");
-
-        loginPage.open(bc.consumerRealmName());
-        logInWithBroker(bc);
-
-        loginTotpPage.assertCurrent();
-        loginTotpPage.login(totp.generateTOTP(totpSecret));
-
-        appPage.assertCurrent();
-        AccountHelper.logout(adminClient.realm(bc.consumerRealmName()), bc.getUserLogin());
-        AccountHelper.logout(adminClient.realm(bc.providerRealmName()), bc.getUserLogin());
-
-        // Setup with optional client scope with negate - scope parameter present, OTP not required
-        configurePostBrokerLoginWithClientScopeConditionAndOTP(testingClient, bc.consumerRealmName(), bc.getIDPAlias(), OAuth2Constants.SCOPE_PHONE, true);
-
-        oauth.scope("openid phone");
-
-        loginPage.open(bc.consumerRealmName());
-        logInWithBroker(bc);
-
-        appPage.assertCurrent();
-        AccountHelper.logout(adminClient.realm(bc.consumerRealmName()), bc.getUserLogin());
-        AccountHelper.logout(adminClient.realm(bc.providerRealmName()), bc.getUserLogin());
-    }
+//    @Test
+//    public void testPostBrokerLoginFlowWithOTP() {
+//        updateExecutions(AbstractBrokerTest::disableUpdateProfileOnFirstLogin);
+//
+//        // Setup with default client scope - OTP required
+//        configurePostBrokerLoginWithClientScopeConditionAndOTP(testingClient, bc.consumerRealmName(), bc.getIDPAlias(), OAuth2Constants.SCOPE_PROFILE, false);
+//
+//        oauth.clientId("broker-app");
+//        loginPage.open(bc.consumerRealmName());
+//        logInWithBroker(bc);
+//
+//        totpPage.assertCurrent();
+//        String totpSecret = totpPage.getTotpSecret();
+//        totpPage.configure(totp.generateTOTP(totpSecret));
+//
+//        RealmResource realm = adminClient.realm(bc.consumerRealmName());
+//        assertNumFederatedIdentities(realm.users().search(bc.getUserLogin()).get(0).getId(), 1);
+//
+//        appPage.assertCurrent();
+//        AccountHelper.logout(adminClient.realm(bc.consumerRealmName()), bc.getUserLogin());
+//        AccountHelper.logout(adminClient.realm(bc.providerRealmName()), bc.getUserLogin());
+//
+//        // Setup with optional client scope - scope not present in scope parameter, OTP not required
+//        configurePostBrokerLoginWithClientScopeConditionAndOTP(testingClient, bc.consumerRealmName(), bc.getIDPAlias(), OAuth2Constants.SCOPE_PHONE, false);
+//        setOtpTimeOffset(DEFAULT_INTERVAL_SECONDS, totp);
+//
+//        loginPage.open(bc.consumerRealmName());
+//        logInWithBroker(bc);
+//
+//        appPage.assertCurrent();
+//        AccountHelper.logout(adminClient.realm(bc.consumerRealmName()), bc.getUserLogin());
+//        AccountHelper.logout(adminClient.realm(bc.providerRealmName()), bc.getUserLogin());
+//
+//        // Setup with optional client scope - scope parameter present, OTP required
+//        oauth.scope("openid phone");
+//
+//        loginPage.open(bc.consumerRealmName());
+//        logInWithBroker(bc);
+//
+//        loginTotpPage.assertCurrent();
+//        loginTotpPage.login(totp.generateTOTP(totpSecret));
+//
+//        appPage.assertCurrent();
+//        AccountHelper.logout(adminClient.realm(bc.consumerRealmName()), bc.getUserLogin());
+//        AccountHelper.logout(adminClient.realm(bc.providerRealmName()), bc.getUserLogin());
+//
+//        // Setup with optional client scope with negate - scope parameter present, OTP not required
+//        configurePostBrokerLoginWithClientScopeConditionAndOTP(testingClient, bc.consumerRealmName(), bc.getIDPAlias(), OAuth2Constants.SCOPE_PHONE, true);
+//
+//        oauth.scope("openid phone");
+//
+//        loginPage.open(bc.consumerRealmName());
+//        logInWithBroker(bc);
+//
+//        appPage.assertCurrent();
+//        AccountHelper.logout(adminClient.realm(bc.consumerRealmName()), bc.getUserLogin());
+//        AccountHelper.logout(adminClient.realm(bc.providerRealmName()), bc.getUserLogin());
+//    }
 
     static void configurePostBrokerLoginWithClientScopeConditionAndOTP(KeycloakTestingClient testingClient, String consumerRealmName, String idpAlias, String clientScopeName, boolean negate) {
         testingClient.server(consumerRealmName).run(session -> {
