@@ -1,5 +1,13 @@
 package org.keycloak.models.cache.infinispan.tokenrelay;
 
+import java.lang.reflect.Field;
+import java.util.concurrent.TimeUnit;
+
+import org.keycloak.connections.infinispan.DefaultInfinispanConnectionProvider;
+import org.keycloak.connections.infinispan.InfinispanConnectionProvider;
+import org.keycloak.models.KeycloakSession;
+import org.keycloak.models.customcache.CustomCacheProvider;
+
 import org.infinispan.Cache;
 import org.infinispan.commons.api.CacheContainerAdmin;
 import org.infinispan.commons.dataconversion.MediaType;
@@ -11,15 +19,6 @@ import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.jboss.logging.Logger;
-import org.keycloak.connections.infinispan.DefaultInfinispanConnectionProvider;
-import org.keycloak.connections.infinispan.InfinispanConnectionProvider;
-import org.keycloak.models.KeycloakSession;
-import org.keycloak.models.customcache.CustomCacheProvider;
-
-
-
-import java.lang.reflect.Field;
-import java.util.concurrent.TimeUnit;
 
 public class TokenRelayCacheProvider implements CustomCacheProvider {
 
