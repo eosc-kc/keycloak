@@ -17,9 +17,8 @@
  */
 package org.keycloak.protocol.oidc;
 
-import com.fasterxml.jackson.databind.JsonNode;
-
-import com.fasterxml.jackson.databind.ObjectMapper;
+import java.io.IOException;
+import java.util.Base64;
 
 import jakarta.ws.rs.NotFoundException;
 import jakarta.ws.rs.core.HttpHeaders;
@@ -60,11 +59,10 @@ import org.keycloak.tracing.TracingAttributes;
 import org.keycloak.tracing.TracingProvider;
 import org.keycloak.util.JsonSerialization;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.jboss.logging.Logger;
-
-import java.io.IOException;
-import java.util.Base64;
 
 /**
  * @author <a href="mailto:psilva@redhat.com">Pedro Igor</a>

@@ -1,7 +1,5 @@
 package org.keycloak.models.customcache;
 
-import org.keycloak.models.customcache.CustomCacheProvider;
-import org.keycloak.models.customcache.CustomCacheProviderFactory;
 import org.keycloak.provider.Provider;
 import org.keycloak.provider.ProviderFactory;
 import org.keycloak.provider.Spi;

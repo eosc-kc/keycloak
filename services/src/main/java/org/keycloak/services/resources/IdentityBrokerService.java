@@ -55,6 +55,8 @@ import jakarta.ws.rs.core.Response.Status;
 import jakarta.ws.rs.core.UriBuilder;
 
 import org.keycloak.OAuthErrorException;
+import org.keycloak.authentication.AuthenticationFlow;
+import org.keycloak.authentication.AuthenticationFlowException;
 import org.keycloak.authentication.AuthenticationProcessor;
 import org.keycloak.authentication.RequiredActionContext;
 import org.keycloak.authentication.authenticators.broker.AbstractIdpAuthenticator;
@@ -95,6 +97,7 @@ import org.keycloak.http.HttpRequest;
 import org.keycloak.locale.LocaleSelectorProvider;
 import org.keycloak.models.AccountRoles;
 import org.keycloak.models.AuthenticatedClientSessionModel;
+import org.keycloak.models.AuthenticationExecutionModel;
 import org.keycloak.models.AuthenticationFlowModel;
 import org.keycloak.models.ClientModel;
 import org.keycloak.models.ClientSessionContext;
@@ -1053,6 +1056,41 @@ public class IdentityBrokerService implements UserAuthenticationIdentityProvider
 
         if (isDebugEnabled()) {
             logger.debugf("Performing local authentication for user [%s].", federatedUser);
+        }
+
+        //code for returning to client browser flow
+        String execution = authSession.getAuthNote(AuthenticationProcessor.CLIENT_AUTHENTICATION_EXECUTION);
+        String flowId =  authSession.getAuthNote(AuthenticationProcessor.CLIENT_FLOW_ID);
+
+        if (execution != null && flowId !=null) {
+            AuthenticationExecutionModel model = realmModel.getAuthenticationExecutionById(execution);
+            //remove the CLIENT_AUTHENTICATION_EXECUTION and CLIENT_FLOW_ID from session
+            authSession.removeAuthNote(AuthenticationProcessor.CLIENT_AUTHENTICATION_EXECUTION);
+            authSession.removeAuthNote(AuthenticationProcessor.CLIENT_FLOW_ID);
+
+            AuthenticationProcessor processor = new AuthenticationProcessor();
+            processor.setAuthenticationSession(authSession)
+                    .setFlowPath(LoginActionsService.AUTHENTICATE_PATH)
+                    .setBrowserFlow(true)
+                    .setFlowId(flowId)
+                    .setConnection(clientConnection)
+                    .setEventBuilder(event)
+                    .setRealm(realmModel)
+                    .setSession(session)
+                    .setUriInfo(session.getContext().getUri())
+                    .setRequest(request);
+            processor.setAutheticatedUser(federatedUser);
+            AuthenticationFlow authenticationFlow = processor.createFlowExecution(flowId, model);
+            //maybe find next flow
+            Response challenge = authenticationFlow.continueClientAuthAfterIdPLogin(model);
+            if (challenge != null) {
+                return challenge;
+            }
+            if (!authenticationFlow.isSuccessful()) {
+                throw new AuthenticationFlowException(authenticationFlow.getFlowExceptions());
+            }
+        } else {
+            logger.warn("CLIENT_AUTHENTICATION_EXECUTION and CLIENT_FLOW_ID are not included in the authenticationSession");
         }
 
         AuthenticationManager.setClientScopesInSession(session, authSession);
