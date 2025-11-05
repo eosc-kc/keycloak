@@ -59,11 +59,12 @@ public class RealmAttributesTest extends AbstractRealmTest {
 
         Set<String> attributesKeys = rep2.getAttributes().keySet();
 
-        int expectedAttributesCount = 3;
+        int expectedAttributesCount = 4;
         final Set<String> expectedAttributes = Sets.newHashSet(
                 OAuth2DeviceConfig.OAUTH2_DEVICE_CODE_LIFESPAN,
                 OAuth2DeviceConfig.OAUTH2_DEVICE_POLLING_INTERVAL,
-                ParConfig.PAR_REQUEST_URI_LIFESPAN
+                ParConfig.PAR_REQUEST_URI_LIFESPAN,
+                RealmAttributes.CLAIMS_SUPPORTED
         );
 
         // This attribute is represented in Legacy store as attribute and for Map store as a field
