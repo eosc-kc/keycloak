@@ -52,6 +52,7 @@ import { ClientPoliciesTab, toClientPolicies } from "./routes/ClientPolicies";
 import { RealmSettingsTab, toRealmSettings } from "./routes/RealmSettings";
 import { SecurityDefenses } from "./security-defences/SecurityDefenses";
 import { UserProfileTab } from "./user-profile/UserProfileTab";
+import { OpenIdEndpointConfigurationTab } from "./OpenIdEndpointConfigurationTab";
 
 export interface UIRealmRepresentation extends RealmRepresentation {
   upConfig?: UserProfileConfig;
@@ -287,6 +288,10 @@ export const RealmSettingsTabs = () => {
   const clientPoliciesTab = useTab("client-policies");
   const userProfileTab = useTab("user-profile");
   const userRegistrationTab = useTab("user-registration");
+  const openIdEndpointConfigurationTab = useTab(
+    "openid-endpoint-configuration",
+  );
+
   const { hasAccess, hasSomeAccess } = useAccess();
   const canViewOrManageEvents =
     hasAccess("view-realm") && hasSomeAccess("view-events", "manage-events");
@@ -399,6 +404,15 @@ export const RealmSettingsTabs = () => {
             {...sessionsTab}
           >
             <RealmSettingsSessionsTab key={key} realm={realm!} save={save} />
+          </Tab>
+          <Tab
+            title={
+              <TabTitleText>{t("openIdEndpointConfiguration")}</TabTitleText>
+            }
+            data-testid="rs-openid-tab"
+            {...openIdEndpointConfigurationTab}
+          >
+            <OpenIdEndpointConfigurationTab realm={realm!} save={save} />
           </Tab>
           <Tab
             title={<TabTitleText>{t("tokens")}</TabTitleText>}
