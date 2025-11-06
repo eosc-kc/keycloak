@@ -197,7 +197,8 @@ public class SamlProtocolFactory extends AbstractLoginProtocolFactory {
             newClient.setFrontchannelLogout(true);
         }
 
-        client.setArtifactBindingIdentifierFrom(clientRep.getClientId());
+        if (clientRep.getClientId() != null)
+            client.setArtifactBindingIdentifierFrom(clientRep.getClientId());
     }
 
     /**
