@@ -357,9 +357,9 @@ public class RepresentationToModel {
             client.setDirectAccessGrantsEnabled(resourceRep.isDirectGrantsOnly());
         }
 
-        if ("saml".equals(resourceRep.getProtocol())
+        if ("saml".equals(resourceRep.getProtocol()) && resourceRep.getClientId() != null
                 && (resourceRep.getAttributes() == null
-                || !resourceRep.getAttributes().containsKey("saml.artifact.binding.identifier"))) {
+                    || !resourceRep.getAttributes().containsKey("saml.artifact.binding.identifier"))) {
             client.setAttribute("saml.artifact.binding.identifier", computeArtifactBindingIdentifierString(resourceRep.getClientId()));
         }
 
