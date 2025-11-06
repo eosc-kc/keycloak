@@ -1,5 +1,13 @@
 import { HelpItem, TextControl } from "@keycloak/keycloak-ui-shared";
-import { ActionGroup, Button, FormGroup } from "@patternfly/react-core";
+import {
+  ActionGroup,
+  Button,
+  FormGroup,
+  MenuToggle,
+  Select,
+  SelectList,
+  SelectOption,
+} from "@patternfly/react-core";
 import { Controller, useFormContext } from "react-hook-form";
 import { useTranslation } from "react-i18next";
 import { DefaultSwitchControl } from "../../components/SwitchControl";
@@ -11,6 +19,7 @@ import { useRealm } from "../../context/realm-context/RealmContext";
 import { convertAttributeNameToForm } from "../../util";
 import { FormFields } from "../ClientDetails";
 import { TokenLifespan } from "./TokenLifespan";
+import { useState } from "react";
 
 type AdvancedSettingsProps = {
   save: () => void;
@@ -28,7 +37,7 @@ export const AdvancedSettings = ({
   const { t } = useTranslation();
 
   const { realmRepresentation: realm } = useRealm();
-
+  const [open, setOpen] = useState<boolean>(false);
   const { control } = useFormContext();
   return (
     <FormAccess
@@ -65,12 +74,67 @@ export const AdvancedSettings = ({
       )}
       {protocol === "openid-connect" && (
         <>
+          <FormGroup
+            id={"revokeRefreshToken"}
+            label={t(`revokeRefreshToken`)}
+            fieldId={"revokeRefreshToken"}
+            labelIcon={
+              <HelpItem
+                helpText={t(`revokeRefreshTokenHelp`)}
+                fieldLabelId={`revokeRefreshToken`}
+              />
+            }
+          >
+            <Controller
+              name={convertAttributeNameToForm<FormFields>(
+                "attributes.revoke.refresh.token",
+              )}
+              defaultValue={undefined}
+              control={control}
+              render={({ field }) => (
+                <Select
+                  toggle={(ref) => (
+                    <MenuToggle
+                      ref={ref}
+                      onClick={() => setOpen(!open)}
+                      isExpanded={open}
+                    >
+                      {field.value ? field.value : t("inherited")}
+                    </MenuToggle>
+                  )}
+                  isOpen={open}
+                  onOpenChange={(isOpen) => setOpen(isOpen)}
+                  onSelect={(_, value) => {
+                    field.onChange(value);
+                    setOpen(false);
+                  }}
+                  selected={[field.value || t("inherited")]}
+                >
+                  <SelectList>
+                    {[undefined, "True", "False"].map((v, index) => {
+                      return (
+                        <SelectOption key={index} value={v}>
+                          {v || t("inherited")}
+                        </SelectOption>
+                      );
+                    })}
+                  </SelectList>
+                </Select>
+              )}
+            />
+          </FormGroup>
           <TokenLifespan
             id="accessTokenLifespan"
             name={convertAttributeNameToForm(
               "attributes.access.token.lifespan",
             )}
             defaultValue={realm?.accessTokenLifespan}
+            units={["minute", "day", "hour"]}
+          />
+          <TokenLifespan
+            id="idTokenLifespan"
+            name={convertAttributeNameToForm("attributes.id.token.lifespan")}
+            defaultValue={realm?.idTokenLifespan}
             units={["minute", "day", "hour"]}
           />
           <TokenLifespan
