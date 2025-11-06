@@ -93,6 +93,7 @@ import org.keycloak.protocol.saml.SamlService;
 import org.keycloak.protocol.saml.mappers.AttributeStatementHelper;
 import org.keycloak.protocol.saml.mappers.SamlMetadataDescriptorUpdater;
 import org.keycloak.protocol.saml.mappers.UserAttributeStatementMapper;
+import org.keycloak.protocol.saml.util.ArtifactBindingUtils;
 import org.keycloak.representations.idm.ClientRepresentation;
 import org.keycloak.representations.idm.ProtocolMapperRepresentation;
 import org.keycloak.saml.SPMetadataDescriptor;
@@ -450,6 +451,9 @@ public class SAMLFederationProvider implements FederationProvider {
         if (artifactResolutionService != null) {
             app.getAttributes().put(SamlProtocol.SAML_ARTIFACT_RESOLUTION_SERVICE_URL_ATTRIBUTE, artifactResolutionService);
         }
+        if ( !app.getAttributes().containsKey("saml.artifact.binding.identifier")) {
+	    app.getAttributes().put("saml.artifact.binding.identifier", ArtifactBindingUtils.computeArtifactBindingIdentifierString(app.getClientId()));
+	}
 
         if (spDescriptorType.getNameIDFormat() != null) {
             for (String format : spDescriptorType.getNameIDFormat()) {
@@ -503,6 +507,7 @@ public class SAMLFederationProvider implements FederationProvider {
 
         Boolean signing = Boolean.FALSE;
         Boolean encrypt = Boolean.FALSE;
+        String certFullUse = null;
         for (KeyDescriptorType keyDescriptor : spDescriptorType.getKeyDescriptor()) {
             X509Certificate cert = null;
             try {
@@ -515,12 +520,24 @@ public class SAMLFederationProvider implements FederationProvider {
             String certPem = KeycloakModelUtils.getPemFromCertificate(cert);
             if (keyDescriptor.getUse() == KeyTypes.SIGNING) {
                 app.getAttributes().put(SamlConfigAttributes.SAML_SIGNING_CERTIFICATE_ATTRIBUTE, certPem);
-                signing = Boolean.TRUE;
+                signing = spDescriptorType.isAuthnRequestsSigned() ? Boolean.TRUE : Boolean.FALSE;
             } else if (keyDescriptor.getUse() == KeyTypes.ENCRYPTION) {
                 app.getAttributes().put(SamlConfigAttributes.SAML_ENCRYPTION_CERTIFICATE_ATTRIBUTE, certPem);
                 encrypt = Boolean.TRUE;
-            }
+            } else {
+		certFullUse = certPem;
+	    }
         }
+        //use key for both uses if exists and no signing or encryption specific key exists
+	if (certFullUse != null && !signing){
+	    app.getAttributes().put(SamlConfigAttributes.SAML_SIGNING_CERTIFICATE_ATTRIBUTE, certFullUse);
+	    signing = spDescriptorType.isAuthnRequestsSigned() ? Boolean.TRUE : Boolean.FALSE;
+	}
+	if (certFullUse != null && !encrypt){
+	    app.getAttributes().put(SamlConfigAttributes.SAML_ENCRYPTION_CERTIFICATE_ATTRIBUTE, certFullUse);
+	    encrypt = true;
+	}
+
         app.getAttributes().put(SamlConfigAttributes.SAML_ENCRYPT, encrypt.toString());
         app.getAttributes().put(SamlConfigAttributes.SAML_CLIENT_SIGNATURE_ATTRIBUTE, signing.toString());
 
