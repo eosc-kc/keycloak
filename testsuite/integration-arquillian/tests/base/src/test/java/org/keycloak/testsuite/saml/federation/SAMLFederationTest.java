@@ -664,7 +664,7 @@ public class SAMLFederationTest extends AbstractAdminTest {
         assertEquals("false", client.getAttributes().get(SamlConfigAttributes.SAML_ASSERTION_SIGNATURE));
         assertEquals("persistent", client.getAttributes().get(SamlConfigAttributes.SAML_NAME_ID_FORMAT_ATTRIBUTE));
         assertEquals("true", client.getAttributes().get(SamlConfigAttributes.SAML_ENCRYPT));
-        assertEquals("true", client.getAttributes().get(SamlConfigAttributes.SAML_CLIENT_SIGNATURE_ATTRIBUTE));
+        assertEquals("false", client.getAttributes().get(SamlConfigAttributes.SAML_CLIENT_SIGNATURE_ATTRIBUTE));
         assertEquals(artifactUrl, client.getAttributes().get(SamlProtocol.SAML_ASSERTION_CONSUMER_URL_ARTIFACT_ATTRIBUTE));
         assertEquals(logoutPostUrl, client.getAttributes().get(SamlProtocol.SAML_SINGLE_LOGOUT_SERVICE_URL_REDIRECT_ATTRIBUTE));
     }
