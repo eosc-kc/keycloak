@@ -3,6 +3,7 @@ import { TextControl, TextAreaControl } from "@keycloak/keycloak-ui-shared";
 
 import { FormAccess } from "../components/form/FormAccess";
 import { DefaultSwitchControl } from "../components/SwitchControl";
+import { Countries } from "./add/Countries";
 
 type ClientDescriptionProps = {
   protocol?: string;
@@ -36,6 +37,17 @@ export const ClientDescription = ({
             message: t("maxLength", { length: 255 }),
           },
         }}
+      />
+      <TextControl
+        name="attributes.contacts"
+        label={t("contacts")}
+        labelIcon={t("contactsHelp")}
+      />
+      <Countries />
+      <TextControl
+        name="name"
+        label={t("name")}
+        labelIcon={t("clientNameHelp")}
       />
       <DefaultSwitchControl
         name="alwaysDisplayInConsole"
