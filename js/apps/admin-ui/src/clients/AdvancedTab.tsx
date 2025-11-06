@@ -201,6 +201,8 @@ export const AdvancedTab = ({ save, client }: AdvancedProps) => {
                       "acr.loa.map",
                       "default.acr.values",
                       "minimum.acr.value",
+                      "revoke.refresh.token",
+                      "id.token.lifespan",
                     ]);
                   }}
                 />

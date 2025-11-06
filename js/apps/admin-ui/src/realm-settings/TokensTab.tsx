@@ -263,6 +263,30 @@ export const RealmSettingsTokensTab = ({
                   )}
                 />
               </FormGroup>
+              <FormGroup
+                label={t("idTokenLifespan")}
+                fieldId="idTokenLifespan"
+                labelIcon={
+                  <HelpItem
+                    helpText={t("idTokenLifespanHelp")}
+                    fieldLabelId="idTokenLifespan"
+                  />
+                }
+              >
+                <Controller
+                  name="idTokenLifespan"
+                  control={control}
+                  render={({ field }) => (
+                    <TimeSelector
+                      className="id-token-lifespan"
+                      data-testid="id-token-lifespan-input"
+                      aria-label="id-token-lifespan"
+                      value={field.value}
+                      onChange={field.onChange}
+                    />
+                  )}
+                />
+              </FormGroup>
             </>
           )}
         </FormAccess>

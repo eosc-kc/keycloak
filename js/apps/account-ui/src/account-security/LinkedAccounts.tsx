@@ -9,11 +9,11 @@ import { Page } from "../components/page/Page";
 import { usePromise } from "../utils/usePromise";
 import { AccountRow } from "./AccountRow";
 import { LinkedAccountsToolbar } from "./LinkedAccountsToolbar";
-import { Environment } from "../environment";
+import { AccountEnvironment } from "..";
 
 export const LinkedAccounts = () => {
   const { t } = useTranslation();
-  const context = useEnvironment<Environment>();
+  const context = useEnvironment<AccountEnvironment>();
   const [linkedAccounts, setLinkedAccounts] = useState<
     LinkedAccountRepresentation[]
   >([]);
