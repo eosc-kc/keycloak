@@ -18,6 +18,7 @@ export default interface RealmRepresentation {
   accessCodeLifespanLogin?: number;
   accessCodeLifespanUserAction?: number;
   accessTokenLifespan?: number;
+  idTokenLifespan?: number;
   accessTokenLifespanForImplicitFlow?: number;
   accountTheme?: string;
   actionTokenGeneratedByAdminLifespan?: number;
