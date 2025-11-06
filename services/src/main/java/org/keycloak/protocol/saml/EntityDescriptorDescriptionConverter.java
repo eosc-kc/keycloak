@@ -54,6 +54,8 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
+import static org.keycloak.protocol.saml.util.ArtifactBindingUtils.computeArtifactBindingIdentifierString;
+
 /**
  * @author <a href="mailto:bill@burkecentral.com">Bill Burke</a>
  * @version $Revision: 1 $
@@ -225,6 +227,10 @@ public class EntityDescriptorDescriptionConverter implements ClientDescriptionCo
             attributes.put(SamlProtocol.SAML_ARTIFACT_RESOLUTION_SERVICE_URL_ATTRIBUTE, artifactResolutionService);
         }
 
+        if ( !attributes.containsKey("saml.artifact.binding.identifier")) {
+            attributes.put("saml.artifact.binding.identifier", computeArtifactBindingIdentifierString(entityId));
+        }
+
         if (spDescriptorType.getNameIDFormat() != null) {
             for (String format : spDescriptorType.getNameIDFormat()) {
                 String attribute = SamlClient.samlNameIDFormatToClientAttribute(format);
@@ -260,6 +266,9 @@ public class EntityDescriptorDescriptionConverter implements ClientDescriptionCo
                 return mapper;
             }).collect(Collectors.toList()));
 
+        attributes.put(SamlConfigAttributes.SAML_CLIENT_SIGNATURE_ATTRIBUTE, SamlProtocol.ATTRIBUTE_FALSE_VALUE);
+        attributes.put(SamlConfigAttributes.SAML_ENCRYPT, SamlProtocol.ATTRIBUTE_FALSE_VALUE);
+        String certFullUse = null;
         for (KeyDescriptorType keyDescriptor : spDescriptorType.getKeyDescriptor()) {
             X509Certificate cert = null;
             try {
@@ -271,12 +280,23 @@ public class EntityDescriptorDescriptionConverter implements ClientDescriptionCo
             }
             String certPem = KeycloakModelUtils.getPemFromCertificate(cert);
             if (keyDescriptor.getUse() == KeyTypes.SIGNING) {
-                attributes.put(SamlConfigAttributes.SAML_CLIENT_SIGNATURE_ATTRIBUTE, SamlProtocol.ATTRIBUTE_TRUE_VALUE);
+                attributes.put(SamlConfigAttributes.SAML_CLIENT_SIGNATURE_ATTRIBUTE, spDescriptorType.isAuthnRequestsSigned() ? SamlProtocol.ATTRIBUTE_TRUE_VALUE : SamlProtocol.ATTRIBUTE_FALSE_VALUE);
                 attributes.put(SamlConfigAttributes.SAML_SIGNING_CERTIFICATE_ATTRIBUTE, certPem);
             } else if (keyDescriptor.getUse() == KeyTypes.ENCRYPTION) {
                 attributes.put(SamlConfigAttributes.SAML_ENCRYPT, SamlProtocol.ATTRIBUTE_TRUE_VALUE);
                 attributes.put(SamlConfigAttributes.SAML_ENCRYPTION_CERTIFICATE_ATTRIBUTE, certPem);
+            } else {
+                certFullUse = certPem;
             }
+        }
+        //use key for both uses if exists and no signing or encryption specific key exists
+        if (certFullUse != null && SamlProtocol.ATTRIBUTE_FALSE_VALUE.equals(attributes.get(SamlConfigAttributes.SAML_CLIENT_SIGNATURE_ATTRIBUTE))){
+            attributes.put(SamlConfigAttributes.SAML_CLIENT_SIGNATURE_ATTRIBUTE, SamlProtocol.ATTRIBUTE_TRUE_VALUE);
+            attributes.put(SamlConfigAttributes.SAML_SIGNING_CERTIFICATE_ATTRIBUTE, certFullUse);
+        }
+        if (certFullUse != null && SamlProtocol.ATTRIBUTE_FALSE_VALUE.equals(attributes.get(SamlConfigAttributes.SAML_ENCRYPT))){
+            attributes.put(SamlConfigAttributes.SAML_ENCRYPT, SamlProtocol.ATTRIBUTE_TRUE_VALUE);
+            attributes.put(SamlConfigAttributes.SAML_ENCRYPTION_CERTIFICATE_ATTRIBUTE, certFullUse);
         }
 
         return app;
