@@ -223,121 +223,132 @@ export const SigningIn = () => {
 
   return (
     <Page title={t("signingIn")} description={t("signingInDescription")}>
-      {credentialUniqueCategories.map((category) => (
-        <PageSection key={category} variant="light" className="pf-v5-u-px-0">
-          <Title headingLevel="h2" size="xl" id={`${category}-categ-title`}>
-            {t(category as TFuncKey)}
-          </Title>
-          {credentials
-            .filter((cred) => cred.category == category)
-            .map((container) => (
-              <Fragment key={container.type}>
-                <Split className="pf-v5-u-mt-lg pf-v5-u-mb-lg">
-                  <SplitItem>
-                    <Title
-                      headingLevel="h3"
-                      size="md"
-                      className="pf-v5-u-mb-md"
-                      data-testid={`${container.type}/help`}
-                    >
-                      <span
-                        className="cred-title pf-v5-u-display-block"
-                        data-testid={`${container.type}/title`}
+      {credentialUniqueCategories.map((category) => {
+        const isDisabled =
+          (category === "basic-authentication" &&
+            !context.environment.features["manageAccountBasicAuthAllowed"]) ||
+          (category === "two-factor" &&
+            !context.environment.features["manageAccount2faAllowed"]);
+
+        if (isDisabled) {
+          return null;
+        }
+        return (
+          <PageSection key={category} variant="light" className="pf-v5-u-px-0">
+            <Title headingLevel="h2" size="xl" id={`${category}-categ-title`}>
+              {t(category as TFuncKey)}
+            </Title>
+            {credentials
+              .filter((cred) => cred.category == category)
+              .map((container) => (
+                <Fragment key={container.type}>
+                  <Split className="pf-v5-u-mt-lg pf-v5-u-mb-lg">
+                    <SplitItem>
+                      <Title
+                        headingLevel="h3"
+                        size="md"
+                        className="pf-v5-u-mb-md"
+                        data-testid={`${container.type}/help`}
                       >
-                        {t(container.displayName as TFuncKey)}
+                        <span
+                          className="cred-title pf-v5-u-display-block"
+                          data-testid={`${container.type}/title`}
+                        >
+                          {t(container.displayName as TFuncKey)}
+                        </span>
+                      </Title>
+                      <span data-testid={`${container.type}/help-text`}>
+                        {t(container.helptext as TFuncKey)}
                       </span>
-                    </Title>
-                    <span data-testid={`${container.type}/help-text`}>
-                      {t(container.helptext as TFuncKey)}
-                    </span>
-                  </SplitItem>
-                  {container.createAction && (
-                    <SplitItem isFilled>
-                      <div className="pf-v5-u-float-right">
-                        <MobileLink
-                          onClick={() =>
-                            login({
-                              action: container.createAction,
-                            })
-                          }
-                          title={t("setUpNew", {
-                            name: t(
-                              `${container.type}-display-name` as TFuncKey,
-                            ),
-                          })}
-                          testid={`${container.type}/create`}
-                        />
-                      </div>
                     </SplitItem>
-                  )}
-                </Split>
+                    {container.createAction && (
+                      <SplitItem isFilled>
+                        <div className="pf-v5-u-float-right">
+                          <MobileLink
+                            onClick={() =>
+                              login({
+                                action: container.createAction,
+                              })
+                            }
+                            title={t("setUpNew", {
+                              name: t(
+                                `${container.type}-display-name` as TFuncKey,
+                              ),
+                            })}
+                            testid={`${container.type}/create`}
+                          />
+                        </div>
+                      </SplitItem>
+                    )}
+                  </Split>
 
-                <DataList
-                  aria-label="credential list"
-                  className="pf-v5-u-mb-xl"
-                  data-testid={`${container.type}/credential-list`}
-                >
-                  {container.userCredentialMetadatas.length === 0 && (
-                    <EmptyRow
-                      message={t("notSetUp", {
-                        name: t(container.displayName as TFuncKey),
-                      })}
-                      data-testid={`${container.type}/not-set-up`}
-                    />
-                  )}
+                  <DataList
+                    aria-label="credential list"
+                    className="pf-v5-u-mb-xl"
+                    data-testid={`${container.type}/credential-list`}
+                  >
+                    {container.userCredentialMetadatas.length === 0 && (
+                      <EmptyRow
+                        message={t("notSetUp", {
+                          name: t(container.displayName as TFuncKey),
+                        })}
+                        data-testid={`${container.type}/not-set-up`}
+                      />
+                    )}
 
-                  {container.userCredentialMetadatas.map((meta) => (
-                    <DataListItem key={meta.credential.id}>
-                      <DataListItemRow id={`cred-${meta.credential.id}`}>
-                        <DataListItemCells
-                          className="pf-v5-u-py-0"
-                          dataListCells={[
-                            ...credentialRowCells(meta),
-                            <DataListAction
-                              key="action"
-                              id={`action-${meta.credential.id}`}
-                              aria-label={t("updateCredAriaLabel")}
-                              aria-labelledby={`cred-${meta.credential.id}`}
-                            >
-                              {container.removeable && (
-                                <Button
-                                  variant="danger"
-                                  data-testrole="remove"
-                                  onClick={async () => {
-                                    await login({
-                                      action:
-                                        "delete_credential:" +
-                                        meta.credential.id,
-                                    });
-                                  }}
-                                >
-                                  {t("delete")}
-                                </Button>
-                              )}
-                              {container.updateAction && (
-                                <Button
-                                  variant="secondary"
-                                  onClick={async () => {
-                                    await login({
-                                      action: container.updateAction,
-                                    });
-                                  }}
-                                  data-testrole="update"
-                                >
-                                  {t("update")}
-                                </Button>
-                              )}
-                            </DataListAction>,
-                          ]}
-                        />
-                      </DataListItemRow>
-                    </DataListItem>
-                  ))}
-                </DataList>
-              </Fragment>
-            ))}
-        </PageSection>
-      ))}
+                    {container.userCredentialMetadatas.map((meta) => (
+                      <DataListItem key={meta.credential.id}>
+                        <DataListItemRow id={`cred-${meta.credential.id}`}>
+                          <DataListItemCells
+                            className="pf-v5-u-py-0"
+                            dataListCells={[
+                              ...credentialRowCells(meta),
+                              <DataListAction
+                                key="action"
+                                id={`action-${meta.credential.id}`}
+                                aria-label={t("updateCredAriaLabel")}
+                                aria-labelledby={`cred-${meta.credential.id}`}
+                              >
+                                {container.removeable && (
+                                  <Button
+                                    variant="danger"
+                                    data-testrole="remove"
+                                    onClick={async () => {
+                                      await login({
+                                        action:
+                                          "delete_credential:" +
+                                          meta.credential.id,
+                                      });
+                                    }}
+                                  >
+                                    {t("delete")}
+                                  </Button>
+                                )}
+                                {container.updateAction && (
+                                  <Button
+                                    variant="secondary"
+                                    onClick={async () => {
+                                      await login({
+                                        action: container.updateAction,
+                                      });
+                                    }}
+                                    data-testrole="update"
+                                  >
+                                    {t("update")}
+                                  </Button>
+                                )}
+                              </DataListAction>,
+                            ]}
+                          />
+                        </DataListItemRow>
+                      </DataListItem>
+                    ))}
+                  </DataList>
+                </Fragment>
+              ))}
+          </PageSection>
+        );
+      })}
     </Page>
   );
 };

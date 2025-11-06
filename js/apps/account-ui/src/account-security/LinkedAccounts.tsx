@@ -9,10 +9,11 @@ import { Page } from "../components/page/Page";
 import { usePromise } from "../utils/usePromise";
 import { AccountRow } from "./AccountRow";
 import { LinkedAccountsToolbar } from "./LinkedAccountsToolbar";
+import { Environment } from "../environment";
 
 export const LinkedAccounts = () => {
   const { t } = useTranslation();
-  const context = useEnvironment();
+  const context = useEnvironment<Environment>();
   const [linkedAccounts, setLinkedAccounts] = useState<
     LinkedAccountRepresentation[]
   >([]);
@@ -102,59 +103,64 @@ export const LinkedAccounts = () => {
             )}
           </DataList>
         </StackItem>
-        <StackItem>
-          <Title
-            headingLevel="h2"
-            className="pf-v5-u-mt-xl pf-v5-u-mb-lg"
-            size="xl"
-          >
-            {t("unlinkedLoginProviders")}
-          </Title>
-          <LinkedAccountsToolbar
-            onFilter={(search) =>
-              setParamsUnlinked({ ...paramsUnlinked, first: 0, search })
-            }
-            count={unlinkedAccounts.length}
-            first={paramsUnlinked["first"]}
-            max={paramsUnlinked["max"]}
-            onNextClick={() => {
-              setParamsUnlinked({
-                ...paramsUnlinked,
-                first: paramsUnlinked.first + paramsUnlinked.max - 1,
-              });
-            }}
-            onPreviousClick={() =>
-              setParamsUnlinked({
-                ...paramsUnlinked,
-                first: paramsUnlinked.first - paramsUnlinked.max + 1,
-              })
-            }
-            onPerPageSelect={(first, max) =>
-              setParamsUnlinked({
-                ...paramsUnlinked,
-                first,
-                max,
-              })
-            }
-            hasNext={unlinkedAccounts.length > paramsUnlinked.max - 1}
-          />
-          <DataList id="unlinked-idps" aria-label={t("unlinkedLoginProviders")}>
-            {unlinkedAccounts.length > 0 ? (
-              unlinkedAccounts.map(
-                (account, index) =>
-                  index !== paramsUnlinked.max - 1 && (
-                    <AccountRow
-                      key={account.providerName}
-                      account={account}
-                      refresh={refresh}
-                    />
-                  ),
-              )
-            ) : (
-              <EmptyRow message={t("unlinkedEmpty")} />
-            )}
-          </DataList>
-        </StackItem>
+        {context.environment.features["manageAccountAllowed"] && (
+          <StackItem>
+            <Title
+              headingLevel="h2"
+              className="pf-v5-u-mt-xl pf-v5-u-mb-lg"
+              size="xl"
+            >
+              {t("unlinkedLoginProviders")}
+            </Title>
+            <LinkedAccountsToolbar
+              onFilter={(search) =>
+                setParamsUnlinked({ ...paramsUnlinked, first: 0, search })
+              }
+              count={unlinkedAccounts.length}
+              first={paramsUnlinked["first"]}
+              max={paramsUnlinked["max"]}
+              onNextClick={() => {
+                setParamsUnlinked({
+                  ...paramsUnlinked,
+                  first: paramsUnlinked.first + paramsUnlinked.max - 1,
+                });
+              }}
+              onPreviousClick={() =>
+                setParamsUnlinked({
+                  ...paramsUnlinked,
+                  first: paramsUnlinked.first - paramsUnlinked.max + 1,
+                })
+              }
+              onPerPageSelect={(first, max) =>
+                setParamsUnlinked({
+                  ...paramsUnlinked,
+                  first,
+                  max,
+                })
+              }
+              hasNext={unlinkedAccounts.length > paramsUnlinked.max - 1}
+            />
+            <DataList
+              id="unlinked-idps"
+              aria-label={t("unlinkedLoginProviders")}
+            >
+              {unlinkedAccounts.length > 0 ? (
+                unlinkedAccounts.map(
+                  (account, index) =>
+                    index !== paramsUnlinked.max - 1 && (
+                      <AccountRow
+                        key={account.providerName}
+                        account={account}
+                        refresh={refresh}
+                      />
+                    ),
+                )
+              ) : (
+                <EmptyRow message={t("unlinkedEmpty")} />
+              )}
+            </DataList>
+          </StackItem>
+        )}
       </Stack>
     </Page>
   );
