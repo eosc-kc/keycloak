@@ -17,6 +17,8 @@
 
 package org.keycloak.protocol.saml;
 
+import jakarta.ws.rs.BadRequestException;
+import org.jboss.logging.Logger;
 import org.keycloak.Config;
 import org.keycloak.dom.saml.v2.metadata.EndpointType;
 import org.keycloak.dom.saml.v2.metadata.EntitiesDescriptorType;
@@ -32,6 +34,7 @@ import org.keycloak.models.ClientModel;
 import org.keycloak.models.KeycloakSession;
 import org.keycloak.models.KeycloakSessionFactory;
 import org.keycloak.models.utils.KeycloakModelUtils;
+import org.keycloak.protocol.ProtocolMapperUtils;
 import org.keycloak.protocol.saml.mappers.AttributeStatementHelper;
 import org.keycloak.protocol.saml.mappers.UserAttributeStatementMapper;
 import org.keycloak.representations.idm.ClientRepresentation;
@@ -43,6 +46,7 @@ import org.keycloak.saml.common.exceptions.ParsingException;
 import org.keycloak.saml.common.exceptions.ProcessingException;
 import org.keycloak.saml.processing.core.parsers.saml.SAMLParser;
 import org.keycloak.saml.processing.core.saml.v2.util.SAMLMetadataUtil;
+import org.keycloak.services.resources.admin.ClientsResource;
 
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
@@ -62,6 +66,7 @@ import static org.keycloak.protocol.saml.util.ArtifactBindingUtils.computeArtifa
  */
 public class EntityDescriptorDescriptionConverter implements ClientDescriptionConverter, ClientDescriptionConverterFactory {
 
+    protected static final Logger logger = Logger.getLogger(EntityDescriptorDescriptionConverter.class);
     public static final String ID = "saml2-entity-descriptor";
 
     @Override
@@ -72,7 +77,7 @@ public class EntityDescriptorDescriptionConverter implements ClientDescriptionCo
 
     @Override
     public ClientRepresentation convertToInternal(String description) {
-        return loadEntityDescriptors(new ByteArrayInputStream(description.getBytes()));
+        return loadEntityDescriptors(new ByteArrayInputStream(description.getBytes()), new ClientRepresentation());
     }
 
     /**
@@ -150,153 +155,166 @@ public class EntityDescriptorDescriptionConverter implements ClientDescriptionCo
         return null;
     }
 
-    private static ClientRepresentation loadEntityDescriptors(InputStream is) {
+    public static ClientRepresentation loadEntityDescriptors(InputStream is, ClientRepresentation app) {
         Object metadata;
         try {
             metadata = SAMLParser.getInstance().parse(is);
-        } catch (ParsingException e) {
-            throw new RuntimeException(e);
+        } catch (Exception e) {
+            logger.warn("Invalid xml metadata url");
+            throw new BadRequestException("Invalid xml metadata url");
         }
         EntitiesDescriptorType entities;
 
-        if (EntitiesDescriptorType.class.isInstance(metadata)) {
-            entities = (EntitiesDescriptorType) metadata;
-        } else {
-            entities = new EntitiesDescriptorType();
-            entities.addEntityDescriptor(metadata);
-        }
+        try {
+            if (EntitiesDescriptorType.class.isInstance(metadata)) {
+                entities = (EntitiesDescriptorType) metadata;
+            } else {
+                entities = new EntitiesDescriptorType();
+                entities.addEntityDescriptor(metadata);
+            }
 
-        if (entities.getEntityDescriptor().size() != 1) {
-            throw new RuntimeException("Expected one entity descriptor");
-        }
+            if (entities.getEntityDescriptor().size() != 1) {
+                logger.warn("Expected one entity descriptor");
+                throw new RuntimeException("Expected one entity descriptor");
+            }
 
-        EntityDescriptorType entity = (EntityDescriptorType) entities.getEntityDescriptor().get(0);
-        String entityId = entity.getEntityID();
+            EntityDescriptorType entity = (EntityDescriptorType) entities.getEntityDescriptor().get(0);
+            String entityId = entity.getEntityID();
 
-        ClientRepresentation app = new ClientRepresentation();
-        app.setClientId(entityId);
+            if (app.getClientId() == null)
+                app.setClientId(entityId);
 
-        Map<String, String> attributes = new HashMap<>();
-        app.setAttributes(attributes);
+            Map<String, String> attributes = app.getAttributes() == null ? new HashMap<>() : app.getAttributes();
+            app.setAttributes(attributes);
 
-        List<String> redirectUris = new LinkedList<>();
-        app.setRedirectUris(redirectUris);
+            List<String> redirectUris = new LinkedList<>();
+            app.setRedirectUris(redirectUris);
 
-        app.setFullScopeAllowed(true);
-        app.setProtocol(SamlProtocol.LOGIN_PROTOCOL);
-        attributes.put(SamlConfigAttributes.SAML_SERVER_SIGNATURE, SamlProtocol.ATTRIBUTE_TRUE_VALUE); // default to true
-        attributes.put(SamlConfigAttributes.SAML_SERVER_SIGNATURE_KEYINFO_EXT, SamlProtocol.ATTRIBUTE_FALSE_VALUE); // default to false
-        attributes.put(SamlConfigAttributes.SAML_SIGNATURE_ALGORITHM, SignatureAlgorithm.RSA_SHA256.toString());
-        attributes.put(SamlConfigAttributes.SAML_AUTHNSTATEMENT, SamlProtocol.ATTRIBUTE_TRUE_VALUE);
-        SPSSODescriptorType spDescriptorType = getSPDescriptor(entity);
-        if (spDescriptorType.isWantAssertionsSigned()) {
-            attributes.put(SamlConfigAttributes.SAML_ASSERTION_SIGNATURE, SamlProtocol.ATTRIBUTE_TRUE_VALUE);
-        }
-        String logoutPost = getLogoutLocation(spDescriptorType, JBossSAMLURIConstants.SAML_HTTP_POST_BINDING.get());
-        if (logoutPost != null) attributes.put(SamlProtocol.SAML_SINGLE_LOGOUT_SERVICE_URL_POST_ATTRIBUTE, logoutPost);
-        String logoutRedirect = getLogoutLocation(spDescriptorType, JBossSAMLURIConstants.SAML_HTTP_REDIRECT_BINDING.get());
-        if (logoutRedirect != null) attributes.put(SamlProtocol.SAML_SINGLE_LOGOUT_SERVICE_URL_REDIRECT_ATTRIBUTE, logoutRedirect);
-        String logoutSoap = getLogoutLocation(spDescriptorType, JBossSAMLURIConstants.SAML_SOAP_BINDING.get());
-        if (logoutSoap != null) attributes.put(SamlProtocol.SAML_SINGLE_LOGOUT_SERVICE_URL_SOAP_ATTRIBUTE, logoutSoap);
+            if (app.getId() == null) {
+                //only during creation
+                app.setFullScopeAllowed(true);
+                app.setProtocol(SamlProtocol.LOGIN_PROTOCOL);
+                attributes.put(SamlConfigAttributes.SAML_SERVER_SIGNATURE, SamlProtocol.ATTRIBUTE_TRUE_VALUE); // default to true
+                attributes.put(SamlConfigAttributes.SAML_SERVER_SIGNATURE_KEYINFO_EXT, SamlProtocol.ATTRIBUTE_FALSE_VALUE); // default to false
+                attributes.put(SamlConfigAttributes.SAML_SIGNATURE_ALGORITHM, SignatureAlgorithm.RSA_SHA256.toString());
+                attributes.put(SamlConfigAttributes.SAML_AUTHNSTATEMENT, SamlProtocol.ATTRIBUTE_TRUE_VALUE);
+            }
 
-        String assertionConsumerServicePostBinding = getServiceURL(spDescriptorType, JBossSAMLURIConstants.SAML_HTTP_POST_BINDING.get());
-        if (assertionConsumerServicePostBinding != null) {
-            attributes.put(SamlProtocol.SAML_ASSERTION_CONSUMER_URL_POST_ATTRIBUTE, assertionConsumerServicePostBinding);
-            redirectUris.add(assertionConsumerServicePostBinding);
-        }
-        String assertionConsumerServiceRedirectBinding = getServiceURL(spDescriptorType, JBossSAMLURIConstants.SAML_HTTP_REDIRECT_BINDING.get());
-        if (assertionConsumerServiceRedirectBinding != null) {
-            attributes.put(SamlProtocol.SAML_ASSERTION_CONSUMER_URL_REDIRECT_ATTRIBUTE, assertionConsumerServiceRedirectBinding);
-            redirectUris.add(assertionConsumerServiceRedirectBinding);
-        }
-        String assertionConsumerServiceSoapBinding = getServiceURL(spDescriptorType, JBossSAMLURIConstants.SAML_SOAP_BINDING.get());
-        if (assertionConsumerServiceSoapBinding != null) {
-            redirectUris.add(assertionConsumerServiceSoapBinding);
-        }
-        String assertionConsumerServicePaosBinding = getServiceURL(spDescriptorType, JBossSAMLURIConstants.SAML_PAOS_BINDING.get());
-        if (assertionConsumerServicePaosBinding != null) {
-            redirectUris.add(assertionConsumerServicePaosBinding);
-        }
-        String assertionConsumerServiceArtifactBinding = getServiceURL(spDescriptorType, JBossSAMLURIConstants.SAML_HTTP_ARTIFACT_BINDING.get());
-        if (assertionConsumerServiceArtifactBinding != null) {
-            attributes.put(SamlProtocol.SAML_ASSERTION_CONSUMER_URL_ARTIFACT_ATTRIBUTE, assertionConsumerServiceArtifactBinding);
-            redirectUris.add(assertionConsumerServiceArtifactBinding);
-        }
-        String artifactResolutionService = getArtifactResolutionService(spDescriptorType);
-        if (artifactResolutionService != null) {
-            attributes.put(SamlProtocol.SAML_ARTIFACT_RESOLUTION_SERVICE_URL_ATTRIBUTE, artifactResolutionService);
-        }
+            SPSSODescriptorType spDescriptorType = getSPDescriptor(entity);
+            if (spDescriptorType.isWantAssertionsSigned()) {
+                attributes.put(SamlConfigAttributes.SAML_ASSERTION_SIGNATURE, SamlProtocol.ATTRIBUTE_TRUE_VALUE);
+            } else {
+                attributes.put(SamlConfigAttributes.SAML_ASSERTION_SIGNATURE, SamlProtocol.ATTRIBUTE_FALSE_VALUE);
+            }
+            String logoutPost = getLogoutLocation(spDescriptorType, JBossSAMLURIConstants.SAML_HTTP_POST_BINDING.get());
+            if (logoutPost != null)
+                attributes.put(SamlProtocol.SAML_SINGLE_LOGOUT_SERVICE_URL_POST_ATTRIBUTE, logoutPost);
+            String logoutRedirect = getLogoutLocation(spDescriptorType, JBossSAMLURIConstants.SAML_HTTP_REDIRECT_BINDING.get());
+            if (logoutRedirect != null)
+                attributes.put(SamlProtocol.SAML_SINGLE_LOGOUT_SERVICE_URL_REDIRECT_ATTRIBUTE, logoutRedirect);
+            String logoutSoap = getLogoutLocation(spDescriptorType, JBossSAMLURIConstants.SAML_SOAP_BINDING.get());
+            if (logoutSoap != null)
+                attributes.put(SamlProtocol.SAML_SINGLE_LOGOUT_SERVICE_URL_SOAP_ATTRIBUTE, logoutSoap);
 
-        if ( !attributes.containsKey("saml.artifact.binding.identifier")) {
-            attributes.put("saml.artifact.binding.identifier", computeArtifactBindingIdentifierString(entityId));
-        }
+            String assertionConsumerServicePostBinding = getServiceURL(spDescriptorType, JBossSAMLURIConstants.SAML_HTTP_POST_BINDING.get());
+            if (assertionConsumerServicePostBinding != null) {
+                attributes.put(SamlProtocol.SAML_ASSERTION_CONSUMER_URL_POST_ATTRIBUTE, assertionConsumerServicePostBinding);
+                redirectUris.add(assertionConsumerServicePostBinding);
+            }
+            String assertionConsumerServiceRedirectBinding = getServiceURL(spDescriptorType, JBossSAMLURIConstants.SAML_HTTP_REDIRECT_BINDING.get());
+            if (assertionConsumerServiceRedirectBinding != null) {
+                attributes.put(SamlProtocol.SAML_ASSERTION_CONSUMER_URL_REDIRECT_ATTRIBUTE, assertionConsumerServiceRedirectBinding);
+                redirectUris.add(assertionConsumerServiceRedirectBinding);
+            }
+            String assertionConsumerServiceSoapBinding = getServiceURL(spDescriptorType, JBossSAMLURIConstants.SAML_SOAP_BINDING.get());
+            if (assertionConsumerServiceSoapBinding != null) {
+                redirectUris.add(assertionConsumerServiceSoapBinding);
+            }
+            String assertionConsumerServicePaosBinding = getServiceURL(spDescriptorType, JBossSAMLURIConstants.SAML_PAOS_BINDING.get());
+            if (assertionConsumerServicePaosBinding != null) {
+                redirectUris.add(assertionConsumerServicePaosBinding);
+            }
+            String assertionConsumerServiceArtifactBinding = getServiceURL(spDescriptorType, JBossSAMLURIConstants.SAML_HTTP_ARTIFACT_BINDING.get());
+            if (assertionConsumerServiceArtifactBinding != null) {
+                attributes.put(SamlProtocol.SAML_ASSERTION_CONSUMER_URL_ARTIFACT_ATTRIBUTE, assertionConsumerServiceArtifactBinding);
+                redirectUris.add(assertionConsumerServiceArtifactBinding);
+            }
+            String artifactResolutionService = getArtifactResolutionService(spDescriptorType);
+            if (artifactResolutionService != null) {
+                attributes.put(SamlProtocol.SAML_ARTIFACT_RESOLUTION_SERVICE_URL_ATTRIBUTE, artifactResolutionService);
+            }
 
-        if (spDescriptorType.getNameIDFormat() != null) {
-            for (String format : spDescriptorType.getNameIDFormat()) {
-                String attribute = SamlClient.samlNameIDFormatToClientAttribute(format);
-                if (attribute != null) {
-                    attributes.put(SamlConfigAttributes.SAML_NAME_ID_FORMAT_ATTRIBUTE, attribute);
-                    break;
+            if (!attributes.containsKey("saml.artifact.binding.identifier")) {
+                attributes.put("saml.artifact.binding.identifier", computeArtifactBindingIdentifierString(entityId));
+            }
+
+            if (spDescriptorType.getNameIDFormat() != null) {
+                for (String format : spDescriptorType.getNameIDFormat()) {
+                    String attribute = SamlClient.samlNameIDFormatToClientAttribute(format);
+                    if (attribute != null) {
+                        attributes.put(SamlConfigAttributes.SAML_NAME_ID_FORMAT_ATTRIBUTE, attribute);
+                        break;
+                    }
                 }
             }
-        }
 
-        if (spDescriptorType.getExtensions() != null && spDescriptorType.getExtensions().getUIInfo() != null) {
-            if (!spDescriptorType.getExtensions().getUIInfo().getLogo().isEmpty()) {
-                attributes.put(ClientModel.LOGO_URI, spDescriptorType.getExtensions().getUIInfo().getLogo().get(0).getValue().toString());
+            if (spDescriptorType.getExtensions() != null && spDescriptorType.getExtensions().getUIInfo() != null) {
+                if (!spDescriptorType.getExtensions().getUIInfo().getLogo().isEmpty()) {
+                    attributes.put(ClientModel.LOGO_URI, spDescriptorType.getExtensions().getUIInfo().getLogo().get(0).getValue().toString());
+                }
+                if (!spDescriptorType.getExtensions().getUIInfo().getPrivacyStatementURL().isEmpty()) {
+                    attributes.put(ClientModel.POLICY_URI, spDescriptorType.getExtensions().getUIInfo().getPrivacyStatementURL().stream().filter(dn -> "en".equals(dn.getLang())).findFirst().orElse(spDescriptorType.getExtensions().getUIInfo().getPrivacyStatementURL().get(0)).getValue().toString());
+                }
             }
-            if (!spDescriptorType.getExtensions().getUIInfo().getPrivacyStatementURL().isEmpty()) {
-                attributes.put(ClientModel.POLICY_URI, spDescriptorType.getExtensions().getUIInfo().getPrivacyStatementURL().stream().filter(dn -> "en".equals(dn.getLang())).findFirst().orElse(spDescriptorType.getExtensions().getUIInfo().getPrivacyStatementURL().get(0)).getValue().toString());
-            }
-        }
-        
-        app.setProtocolMappers(spDescriptorType.getAttributeConsumingService().stream().flatMap(att -> att.getRequestedAttribute().stream())
-            .map(attr -> {
-                ProtocolMapperRepresentation mapper = new ProtocolMapperRepresentation();
-                mapper.setName(attr.getName());
-                mapper.setProtocol("saml");
-                mapper.setProtocolMapper(UserAttributeStatementMapper.PROVIDER_ID);
-                Map<String, String> config = new HashMap<>();
-                config.put(AttributeStatementHelper.SAML_ATTRIBUTE_NAME, attr.getName());
-                if (attr.getFriendlyName() != null)
-                    config.put(AttributeStatementHelper.FRIENDLY_NAME, attr.getFriendlyName());
-                if (attr.getNameFormat() != null)
-                    config.put(AttributeStatementHelper.SAML_ATTRIBUTE_NAMEFORMAT, getSAMLNameFormat(attr.getNameFormat()));
-                mapper.setConfig(config);
-                return mapper;
-            }).collect(Collectors.toList()));
 
-        attributes.put(SamlConfigAttributes.SAML_CLIENT_SIGNATURE_ATTRIBUTE, SamlProtocol.ATTRIBUTE_FALSE_VALUE);
-        attributes.put(SamlConfigAttributes.SAML_ENCRYPT, SamlProtocol.ATTRIBUTE_FALSE_VALUE);
-        String certFullUse = null;
-        for (KeyDescriptorType keyDescriptor : spDescriptorType.getKeyDescriptor()) {
-            X509Certificate cert = null;
-            try {
-                cert = SAMLMetadataUtil.getCertificate(keyDescriptor);
-            } catch (ConfigurationException e) {
-                throw new RuntimeException(e);
-            } catch (ProcessingException e) {
-                throw new RuntimeException(e);
+            if (!"true".equals(app.getAttributes().get(SamlConfigAttributes.SAML_SKIP_REQUESTED_ATTRIBUTES)))
+                app.setProtocolMappers(spDescriptorType.getAttributeConsumingService().stream().flatMap(att -> att.getRequestedAttribute().stream())
+                        .map(attr -> {
+                            ProtocolMapperRepresentation mapper = new ProtocolMapperRepresentation();
+                            mapper.setName(attr.getName());
+                            mapper.setProtocol("saml");
+                            mapper.setProtocolMapper(UserAttributeStatementMapper.PROVIDER_ID);
+                            Map<String, String> config = new HashMap<>();
+                            config.put(AttributeStatementHelper.SAML_ATTRIBUTE_NAME, attr.getName());
+                            if (attr.getFriendlyName() != null)
+                                config.put(AttributeStatementHelper.FRIENDLY_NAME, attr.getFriendlyName());
+                            if (attr.getNameFormat() != null)
+                                config.put(AttributeStatementHelper.SAML_ATTRIBUTE_NAMEFORMAT, getSAMLNameFormat(attr.getNameFormat()));
+                            config.put(ProtocolMapperUtils.USER_ATTRIBUTE, attr.getFriendlyName() != null ? attr.getFriendlyName() : attr.getName());
+                            mapper.setConfig(config);
+                            return mapper;
+                        }).collect(Collectors.toList()));
+
+            attributes.put(SamlConfigAttributes.SAML_CLIENT_SIGNATURE_ATTRIBUTE, SamlProtocol.ATTRIBUTE_FALSE_VALUE);
+            attributes.put(SamlConfigAttributes.SAML_ENCRYPT, SamlProtocol.ATTRIBUTE_FALSE_VALUE);
+            String certFullUse = null;
+            for (KeyDescriptorType keyDescriptor : spDescriptorType.getKeyDescriptor()) {
+                X509Certificate cert = null;
+                 cert = SAMLMetadataUtil.getCertificate(keyDescriptor);
+
+                String certPem = KeycloakModelUtils.getPemFromCertificate(cert);
+                if (keyDescriptor.getUse() == KeyTypes.SIGNING) {
+                    attributes.put(SamlConfigAttributes.SAML_CLIENT_SIGNATURE_ATTRIBUTE, spDescriptorType.isAuthnRequestsSigned() ? SamlProtocol.ATTRIBUTE_TRUE_VALUE : SamlProtocol.ATTRIBUTE_FALSE_VALUE);
+                    attributes.put(SamlConfigAttributes.SAML_SIGNING_CERTIFICATE_ATTRIBUTE, certPem);
+                } else if (keyDescriptor.getUse() == KeyTypes.ENCRYPTION) {
+                    attributes.put(SamlConfigAttributes.SAML_ENCRYPT, SamlProtocol.ATTRIBUTE_TRUE_VALUE);
+                    attributes.put(SamlConfigAttributes.SAML_ENCRYPTION_CERTIFICATE_ATTRIBUTE, certPem);
+                } else {
+                    certFullUse = certPem;
+                }
             }
-            String certPem = KeycloakModelUtils.getPemFromCertificate(cert);
-            if (keyDescriptor.getUse() == KeyTypes.SIGNING) {
-                attributes.put(SamlConfigAttributes.SAML_CLIENT_SIGNATURE_ATTRIBUTE, spDescriptorType.isAuthnRequestsSigned() ? SamlProtocol.ATTRIBUTE_TRUE_VALUE : SamlProtocol.ATTRIBUTE_FALSE_VALUE);
-                attributes.put(SamlConfigAttributes.SAML_SIGNING_CERTIFICATE_ATTRIBUTE, certPem);
-            } else if (keyDescriptor.getUse() == KeyTypes.ENCRYPTION) {
+            //use key for both uses if exists and no signing or encryption specific key exists
+            if (certFullUse != null && SamlProtocol.ATTRIBUTE_FALSE_VALUE.equals(attributes.get(SamlConfigAttributes.SAML_CLIENT_SIGNATURE_ATTRIBUTE))) {
+                attributes.put(SamlConfigAttributes.SAML_CLIENT_SIGNATURE_ATTRIBUTE, SamlProtocol.ATTRIBUTE_TRUE_VALUE);
+                attributes.put(SamlConfigAttributes.SAML_SIGNING_CERTIFICATE_ATTRIBUTE, certFullUse);
+            }
+            if (certFullUse != null && SamlProtocol.ATTRIBUTE_FALSE_VALUE.equals(attributes.get(SamlConfigAttributes.SAML_ENCRYPT))) {
                 attributes.put(SamlConfigAttributes.SAML_ENCRYPT, SamlProtocol.ATTRIBUTE_TRUE_VALUE);
-                attributes.put(SamlConfigAttributes.SAML_ENCRYPTION_CERTIFICATE_ATTRIBUTE, certPem);
-            } else {
-                certFullUse = certPem;
+                attributes.put(SamlConfigAttributes.SAML_ENCRYPTION_CERTIFICATE_ATTRIBUTE, certFullUse);
             }
-        }
-        //use key for both uses if exists and no signing or encryption specific key exists
-        if (certFullUse != null && SamlProtocol.ATTRIBUTE_FALSE_VALUE.equals(attributes.get(SamlConfigAttributes.SAML_CLIENT_SIGNATURE_ATTRIBUTE))){
-            attributes.put(SamlConfigAttributes.SAML_CLIENT_SIGNATURE_ATTRIBUTE, SamlProtocol.ATTRIBUTE_TRUE_VALUE);
-            attributes.put(SamlConfigAttributes.SAML_SIGNING_CERTIFICATE_ATTRIBUTE, certFullUse);
-        }
-        if (certFullUse != null && SamlProtocol.ATTRIBUTE_FALSE_VALUE.equals(attributes.get(SamlConfigAttributes.SAML_ENCRYPT))){
-            attributes.put(SamlConfigAttributes.SAML_ENCRYPT, SamlProtocol.ATTRIBUTE_TRUE_VALUE);
-            attributes.put(SamlConfigAttributes.SAML_ENCRYPTION_CERTIFICATE_ATTRIBUTE, certFullUse);
+        } catch (Exception e) {
+            logger.warn("No valid SP metadata was found at this URL");
+            throw new BadRequestException("No valid SP metadata was found at this URL");
         }
 
         return app;

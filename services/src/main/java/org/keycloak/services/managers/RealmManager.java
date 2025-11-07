@@ -56,6 +56,8 @@ import org.keycloak.protocol.oidc.OIDCLoginProtocol;
 import org.keycloak.protocol.oidc.OIDCLoginProtocolFactory;
 import org.keycloak.protocol.oidc.OIDCWellKnownProvider;
 import org.keycloak.protocol.oidc.mappers.AudienceResolveProtocolMapper;
+import org.keycloak.protocol.saml.ConfigureAutoUpdateSAMLClient;
+import org.keycloak.protocol.saml.SamlConfigAttributes;
 import org.keycloak.representations.idm.ApplicationRepresentation;
 import org.keycloak.representations.idm.ClientRepresentation;
 import org.keycloak.representations.idm.ClientScopeRepresentation;
@@ -72,6 +74,7 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
+import org.keycloak.timer.TimerProvider;
 import org.keycloak.email.EmailException;
 import org.keycloak.utils.ReservedCharValidator;
 import org.keycloak.utils.SMTPUtil;
@@ -636,6 +639,11 @@ public class RealmManager {
             }
 
             RepresentationToModel.importRealm(session, rep, realm, userImport);
+            if (rep.getClients()!= null){
+            	//saml autoupdated schedule task
+            	ConfigureAutoUpdateSAMLClient conf = session.getProvider(ConfigureAutoUpdateSAMLClient.class);
+            	rep.getClients().stream().filter(clientRep ->"saml".equals(clientRep.getProtocol()) && clientRep.getAttributes() != null && Boolean.valueOf(clientRep.getAttributes().get(SamlConfigAttributes.SAML_AUTO_UPDATED))).forEach(clientRep -> conf.configure(realm.getClientById(clientRep.getId()), realm));
+            }
 
             setupClientServiceAccountsAndAuthorizationOnImport(rep, skipUserDependent);
 
