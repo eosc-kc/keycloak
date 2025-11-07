@@ -51,6 +51,7 @@ import org.keycloak.models.utils.ModelToRepresentation;
 import org.keycloak.models.utils.RepresentationToModel;
 import org.keycloak.protocol.ClientInstallationProvider;
 import org.keycloak.protocol.oidc.OIDCClientSecretConfigWrapper;
+import org.keycloak.protocol.saml.SamlConfigAttributes;
 import org.keycloak.representations.adapters.action.GlobalRequestResult;
 import org.keycloak.representations.idm.ClientRepresentation;
 import org.keycloak.representations.idm.ClientScopeRepresentation;
@@ -75,6 +76,9 @@ import org.keycloak.services.resources.KeycloakOpenAPI;
 import org.keycloak.services.resources.admin.fgap.AdminPermissionEvaluator;
 import org.keycloak.services.resources.admin.fgap.AdminPermissionManagement;
 import org.keycloak.services.resources.admin.fgap.AdminPermissions;
+import org.keycloak.services.scheduled.AutoUpdateSAMLClient;
+import org.keycloak.services.scheduled.ClusterAwareScheduledTaskRunner;
+import org.keycloak.timer.TimerProvider;
 import org.keycloak.utils.ProfileHelper;
 import org.keycloak.utils.ReservedCharValidator;
 import org.keycloak.validation.ValidationUtil;
@@ -93,6 +97,8 @@ import jakarta.ws.rs.QueryParam;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.core.Response.Status;
+
+import java.time.Instant;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
@@ -163,6 +169,22 @@ public class ClientResource {
                         r.getAllLocalizedErrorsAsString(AdminRoot.getMessages(session, realm, auth.adminAuth().getToken().getLocale())),
                         Response.Status.BAD_REQUEST);
             });
+
+
+            if ("saml".equals(rep.getProtocol()) && rep.getAttributes() != null && Boolean.valueOf(rep.getAttributes().get(SamlConfigAttributes.SAML_AUTO_UPDATED)) && !rep.getAttributes().get(SamlConfigAttributes.SAML_REFRESH_PERIOD).equals(client.getAttributes().get(SamlConfigAttributes.SAML_REFRESH_PERIOD))) {
+                //saml autoupdated schedule task ( autoupdate with different refresh period)
+                TimerProvider timer = session.getProvider(TimerProvider.class);
+                timer.cancelTask("AutoUpdateSAMLClient_" + client.getId());
+                AutoUpdateSAMLClient autoUpdateProvider = new AutoUpdateSAMLClient(client.getId(), realm.getId());
+                Long interval = Long.parseLong(rep.getAttributes().get(SamlConfigAttributes.SAML_REFRESH_PERIOD))* 1000;
+                Long delay = client.getAttributes().get(SamlConfigAttributes.SAML_LAST_REFRESH_TIME) == null ? 1 : Long.parseLong(client.getAttributes().get(SamlConfigAttributes.SAML_LAST_REFRESH_TIME) )+ Long.parseLong(rep.getAttributes().get(SamlConfigAttributes.SAML_REFRESH_PERIOD)) * 1000 - Instant.now().toEpochMilli();
+                ClusterAwareScheduledTaskRunner taskRunner = new ClusterAwareScheduledTaskRunner(session.getKeycloakSessionFactory(), autoUpdateProvider, interval);
+                timer.schedule(taskRunner, delay > 1000 ? delay : 1000, interval, "AutoUpdateSAMLClient_" + client.getId());
+            } else  if ("saml".equals(rep.getProtocol()) && rep.getAttributes() != null && ! Boolean.valueOf(rep.getAttributes().get(SamlConfigAttributes.SAML_AUTO_UPDATED)) && Boolean.valueOf(client.getAttributes().get(SamlConfigAttributes.SAML_AUTO_UPDATED))) {
+                //saml remove autoupdate
+                TimerProvider timer = session.getProvider(TimerProvider.class);
+                timer.cancelTask("AutoUpdateSAMLClient_" + client.getId());
+            }
 
             session.clientPolicy().triggerOnEvent(new AdminClientUpdatedContext(rep, client, auth.adminAuth()));
 
