@@ -114,3 +114,4 @@ org.keycloak.cache.LocalCacheSPI
 org.keycloak.models.workflow.WorkflowStateSpi
 org.keycloak.broker.federation.SAMLFederationSpi
 org.keycloak.models.customcache.CustomCacheSpi
+org.keycloak.protocol.saml.ConfigureAutoUpdateSAMLClientSpi
