@@ -149,6 +149,41 @@ public class SamlClient extends ClientConfigResolver {
         client.setAttribute(SamlConfigAttributes.SAML_SERVER_SIGNATURE, Boolean.toString(val));
     }
 
+    public boolean isAutoUpdated() {
+        return "true".equals(resolveAttribute(SamlConfigAttributes.SAML_AUTO_UPDATED));
+    }
+
+    public void setAutoUpdated(boolean val) {
+        client.setAttribute(SamlConfigAttributes.SAML_AUTO_UPDATED, Boolean.toString(val));
+    }
+
+    public String getMetadataUrl() {
+        return resolveAttribute(SamlConfigAttributes.SAML_METADATA_URL);
+    }
+
+    public void setMetadataUrl(String value) {
+        client.setAttribute(SamlConfigAttributes.SAML_METADATA_URL, value);
+    }
+
+    public Long getRefreshPeriod() {
+        String val = resolveAttribute(SamlConfigAttributes.SAML_REFRESH_PERIOD);
+        return val == null ? null : Long.parseLong(val);
+    }
+
+    public void setRefreshPeriod(Long val) {
+        client.setAttribute(SamlConfigAttributes.SAML_REFRESH_PERIOD,val == null ? null : val.toString());
+    }
+
+    public Long getLastRefreshTime() {
+        String val = resolveAttribute(SamlConfigAttributes.SAML_LAST_REFRESH_TIME);
+        return val == null ? null : Long.parseLong(val);
+    }
+
+    public void setLastRefreshTime(Long val) {
+        client.setAttribute(SamlConfigAttributes.SAML_LAST_REFRESH_TIME,val == null ? null : val.toString());
+    }
+
+
     public boolean addExtensionsElementWithKeyInfo() {
         return "true".equals(resolveAttribute(SamlConfigAttributes.SAML_SERVER_SIGNATURE_KEYINFO_EXT));
     }
