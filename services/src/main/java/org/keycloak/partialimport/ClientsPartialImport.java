@@ -31,6 +31,8 @@ import org.keycloak.models.UserModel;
 import org.keycloak.models.utils.KeycloakModelUtils;
 import org.keycloak.models.utils.RepresentationToModel;
 import org.keycloak.protocol.oidc.OIDCAdvancedConfigWrapper;
+import org.keycloak.protocol.saml.ConfigureAutoUpdateSAMLClient;
+import org.keycloak.protocol.saml.SamlConfigAttributes;
 import org.keycloak.representations.idm.ClientRepresentation;
 import org.keycloak.representations.idm.PartialImportRepresentation;
 import org.keycloak.representations.idm.ProtocolMapperRepresentation;
@@ -124,6 +126,12 @@ public class ClientsPartialImport extends AbstractPartialImport<ClientRepresenta
             OIDCAdvancedConfigWrapper.fromClientModel(client).setPostLogoutRedirectUris(Collections.singletonList("+"));
         }
         RepresentationToModel.importAuthorizationSettings(clientRep, client, session);
+
+        if ("saml".equals(client.getProtocol()) && client.getAttributes() != null && Boolean.valueOf(client.getAttributes().get(SamlConfigAttributes.SAML_AUTO_UPDATED))) {
+            ConfigureAutoUpdateSAMLClient conf = session.getProvider(ConfigureAutoUpdateSAMLClient.class);
+            conf.configure(client, realm);
+        }
+
     }
 
     public static boolean isInternalClient(String clientId) {

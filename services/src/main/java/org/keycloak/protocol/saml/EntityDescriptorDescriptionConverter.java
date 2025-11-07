@@ -44,6 +44,7 @@ import org.keycloak.models.ClientModel;
 import org.keycloak.models.KeycloakSession;
 import org.keycloak.models.KeycloakSessionFactory;
 import org.keycloak.models.utils.KeycloakModelUtils;
+import org.keycloak.protocol.ProtocolMapperUtils;
 import org.keycloak.protocol.saml.mappers.AttributeStatementHelper;
 import org.keycloak.protocol.saml.mappers.UserAttributeStatementMapper;
 import org.keycloak.representations.idm.ClientRepresentation;
@@ -56,6 +57,8 @@ import org.keycloak.saml.common.exceptions.ProcessingException;
 import org.keycloak.saml.processing.core.parsers.saml.SAMLParser;
 import org.keycloak.saml.processing.core.saml.v2.util.SAMLMetadataUtil;
 
+import org.jboss.logging.Logger;
+
 import static org.keycloak.protocol.saml.util.ArtifactBindingUtils.computeArtifactBindingIdentifierString;
 
 /**
@@ -64,6 +67,7 @@ import static org.keycloak.protocol.saml.util.ArtifactBindingUtils.computeArtifa
  */
 public class EntityDescriptorDescriptionConverter implements ClientDescriptionConverter, ClientDescriptionConverterFactory {
 
+    protected static final Logger logger = Logger.getLogger(EntityDescriptorDescriptionConverter.class);
     public static final String ID = "saml2-entity-descriptor";
 
     @Override
@@ -74,7 +78,7 @@ public class EntityDescriptorDescriptionConverter implements ClientDescriptionCo
 
     @Override
     public ClientRepresentation convertToInternal(String description) {
-        return loadEntityDescriptors(new ByteArrayInputStream(description.getBytes()));
+        return loadEntityDescriptors(new ByteArrayInputStream(description.getBytes()), new ClientRepresentation());
     }
 
     /**
@@ -152,11 +156,12 @@ public class EntityDescriptorDescriptionConverter implements ClientDescriptionCo
         return null;
     }
 
-    private static ClientRepresentation loadEntityDescriptors(InputStream is) {
+    public static ClientRepresentation loadEntityDescriptors(InputStream is, ClientRepresentation app) {
         Object metadata;
         try {
             metadata = SAMLParser.getInstance().parse(is);
         } catch (ParsingException e) {
+            logger.warn("Parsing exception:", e);
             throw new BadRequestException(e);
         }
         EntitiesDescriptorType entities;
@@ -175,34 +180,44 @@ public class EntityDescriptorDescriptionConverter implements ClientDescriptionCo
         EntityDescriptorType entity = (EntityDescriptorType) entities.getEntityDescriptor().get(0);
         String entityId = entity.getEntityID();
 
-        ClientRepresentation app = new ClientRepresentation();
-        app.setClientId(entityId);
+        if (app.getClientId() == null)
+            app.setClientId(entityId);
 
-        Map<String, String> attributes = new HashMap<>();
+        Map<String, String> attributes = app.getAttributes() == null ? new HashMap<>() : app.getAttributes();
         app.setAttributes(attributes);
 
         List<String> redirectUris = new LinkedList<>();
         app.setRedirectUris(redirectUris);
 
-        app.setFullScopeAllowed(true);
-        app.setProtocol(SamlProtocol.LOGIN_PROTOCOL);
-        attributes.put(SamlConfigAttributes.SAML_SERVER_SIGNATURE, SamlProtocol.ATTRIBUTE_TRUE_VALUE); // default to true
-        attributes.put(SamlConfigAttributes.SAML_SERVER_SIGNATURE_KEYINFO_EXT, SamlProtocol.ATTRIBUTE_FALSE_VALUE); // default to false
-        attributes.put(SamlConfigAttributes.SAML_SIGNATURE_ALGORITHM, SignatureAlgorithm.RSA_SHA256.toString());
-        attributes.put(SamlConfigAttributes.SAML_AUTHNSTATEMENT, SamlProtocol.ATTRIBUTE_TRUE_VALUE);
+        if (app.getId() == null) {
+            //only during creation
+            app.setFullScopeAllowed(true);
+            app.setProtocol(SamlProtocol.LOGIN_PROTOCOL);
+            attributes.put(SamlConfigAttributes.SAML_SERVER_SIGNATURE, SamlProtocol.ATTRIBUTE_TRUE_VALUE); // default to true
+            attributes.put(SamlConfigAttributes.SAML_SERVER_SIGNATURE_KEYINFO_EXT, SamlProtocol.ATTRIBUTE_FALSE_VALUE); // default to false
+            attributes.put(SamlConfigAttributes.SAML_SIGNATURE_ALGORITHM, SignatureAlgorithm.RSA_SHA256.toString());
+            attributes.put(SamlConfigAttributes.SAML_AUTHNSTATEMENT, SamlProtocol.ATTRIBUTE_TRUE_VALUE);
+        }
+
         SPSSODescriptorType spDescriptorType = getSPDescriptor(entity);
+
         if (spDescriptorType == null) {
             throw new BadRequestException("No SPSSODescriptorType defined in the entity descriptor file");
         }
         if (spDescriptorType.isWantAssertionsSigned()) {
             attributes.put(SamlConfigAttributes.SAML_ASSERTION_SIGNATURE, SamlProtocol.ATTRIBUTE_TRUE_VALUE);
+        } else {
+            attributes.put(SamlConfigAttributes.SAML_ASSERTION_SIGNATURE, SamlProtocol.ATTRIBUTE_FALSE_VALUE);
         }
         String logoutPost = getLogoutLocation(spDescriptorType, JBossSAMLURIConstants.SAML_HTTP_POST_BINDING.get());
-        if (logoutPost != null) attributes.put(SamlProtocol.SAML_SINGLE_LOGOUT_SERVICE_URL_POST_ATTRIBUTE, logoutPost);
+        if (logoutPost != null)
+            attributes.put(SamlProtocol.SAML_SINGLE_LOGOUT_SERVICE_URL_POST_ATTRIBUTE, logoutPost);
         String logoutRedirect = getLogoutLocation(spDescriptorType, JBossSAMLURIConstants.SAML_HTTP_REDIRECT_BINDING.get());
-        if (logoutRedirect != null) attributes.put(SamlProtocol.SAML_SINGLE_LOGOUT_SERVICE_URL_REDIRECT_ATTRIBUTE, logoutRedirect);
+        if (logoutRedirect != null)
+            attributes.put(SamlProtocol.SAML_SINGLE_LOGOUT_SERVICE_URL_REDIRECT_ATTRIBUTE, logoutRedirect);
         String logoutSoap = getLogoutLocation(spDescriptorType, JBossSAMLURIConstants.SAML_SOAP_BINDING.get());
-        if (logoutSoap != null) attributes.put(SamlProtocol.SAML_SINGLE_LOGOUT_SERVICE_URL_SOAP_ATTRIBUTE, logoutSoap);
+        if (logoutSoap != null)
+            attributes.put(SamlProtocol.SAML_SINGLE_LOGOUT_SERVICE_URL_SOAP_ATTRIBUTE, logoutSoap);
 
         String assertionConsumerServicePostBinding = getServiceURL(spDescriptorType, JBossSAMLURIConstants.SAML_HTTP_POST_BINDING.get());
         if (assertionConsumerServicePostBinding != null) {
@@ -232,7 +247,7 @@ public class EntityDescriptorDescriptionConverter implements ClientDescriptionCo
             attributes.put(SamlProtocol.SAML_ARTIFACT_RESOLUTION_SERVICE_URL_ATTRIBUTE, artifactResolutionService);
         }
 
-        if ( !attributes.containsKey("saml.artifact.binding.identifier")) {
+        if (!attributes.containsKey("saml.artifact.binding.identifier")) {
             attributes.put("saml.artifact.binding.identifier", computeArtifactBindingIdentifierString(entityId));
         }
 
@@ -254,22 +269,24 @@ public class EntityDescriptorDescriptionConverter implements ClientDescriptionCo
                 attributes.put(ClientModel.POLICY_URI, spDescriptorType.getExtensions().getUIInfo().getPrivacyStatementURL().stream().filter(dn -> "en".equals(dn.getLang())).findFirst().orElse(spDescriptorType.getExtensions().getUIInfo().getPrivacyStatementURL().get(0)).getValue().toString());
             }
         }
-        
-        app.setProtocolMappers(spDescriptorType.getAttributeConsumingService().stream().flatMap(att -> att.getRequestedAttribute().stream())
-            .map(attr -> {
-                ProtocolMapperRepresentation mapper = new ProtocolMapperRepresentation();
-                mapper.setName(attr.getName());
-                mapper.setProtocol("saml");
-                mapper.setProtocolMapper(UserAttributeStatementMapper.PROVIDER_ID);
-                Map<String, String> config = new HashMap<>();
-                config.put(AttributeStatementHelper.SAML_ATTRIBUTE_NAME, attr.getName());
-                if (attr.getFriendlyName() != null)
-                    config.put(AttributeStatementHelper.FRIENDLY_NAME, attr.getFriendlyName());
-                if (attr.getNameFormat() != null)
-                    config.put(AttributeStatementHelper.SAML_ATTRIBUTE_NAMEFORMAT, getSAMLNameFormat(attr.getNameFormat()));
-                mapper.setConfig(config);
-                return mapper;
-            }).collect(Collectors.toList()));
+
+        if (!"true".equals(app.getAttributes().get(SamlConfigAttributes.SAML_SKIP_REQUESTED_ATTRIBUTES)))
+            app.setProtocolMappers(spDescriptorType.getAttributeConsumingService().stream().flatMap(att -> att.getRequestedAttribute().stream())
+                    .map(attr -> {
+                        ProtocolMapperRepresentation mapper = new ProtocolMapperRepresentation();
+                        mapper.setName(attr.getName());
+                        mapper.setProtocol("saml");
+                        mapper.setProtocolMapper(UserAttributeStatementMapper.PROVIDER_ID);
+                        Map<String, String> config = new HashMap<>();
+                        config.put(AttributeStatementHelper.SAML_ATTRIBUTE_NAME, attr.getName());
+                        if (attr.getFriendlyName() != null)
+                            config.put(AttributeStatementHelper.FRIENDLY_NAME, attr.getFriendlyName());
+                        if (attr.getNameFormat() != null)
+                            config.put(AttributeStatementHelper.SAML_ATTRIBUTE_NAMEFORMAT, getSAMLNameFormat(attr.getNameFormat()));
+                        config.put(ProtocolMapperUtils.USER_ATTRIBUTE, attr.getFriendlyName() != null ? attr.getFriendlyName() : attr.getName());
+                        mapper.setConfig(config);
+                        return mapper;
+                    }).collect(Collectors.toList()));
 
         attributes.put(SamlConfigAttributes.SAML_CLIENT_SIGNATURE_ATTRIBUTE, SamlProtocol.ATTRIBUTE_FALSE_VALUE);
         attributes.put(SamlConfigAttributes.SAML_ENCRYPT, SamlProtocol.ATTRIBUTE_FALSE_VALUE);
@@ -295,11 +312,11 @@ public class EntityDescriptorDescriptionConverter implements ClientDescriptionCo
             }
         }
         //use key for both uses if exists and no signing or encryption specific key exists
-        if (certFullUse != null && SamlProtocol.ATTRIBUTE_FALSE_VALUE.equals(attributes.get(SamlConfigAttributes.SAML_CLIENT_SIGNATURE_ATTRIBUTE))){
+        if (certFullUse != null && SamlProtocol.ATTRIBUTE_FALSE_VALUE.equals(attributes.get(SamlConfigAttributes.SAML_CLIENT_SIGNATURE_ATTRIBUTE))) {
             attributes.put(SamlConfigAttributes.SAML_CLIENT_SIGNATURE_ATTRIBUTE, SamlProtocol.ATTRIBUTE_TRUE_VALUE);
             attributes.put(SamlConfigAttributes.SAML_SIGNING_CERTIFICATE_ATTRIBUTE, certFullUse);
         }
-        if (certFullUse != null && SamlProtocol.ATTRIBUTE_FALSE_VALUE.equals(attributes.get(SamlConfigAttributes.SAML_ENCRYPT))){
+        if (certFullUse != null && SamlProtocol.ATTRIBUTE_FALSE_VALUE.equals(attributes.get(SamlConfigAttributes.SAML_ENCRYPT))) {
             attributes.put(SamlConfigAttributes.SAML_ENCRYPT, SamlProtocol.ATTRIBUTE_TRUE_VALUE);
             attributes.put(SamlConfigAttributes.SAML_ENCRYPTION_CERTIFICATE_ATTRIBUTE, certFullUse);
         }
