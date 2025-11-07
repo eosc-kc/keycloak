@@ -17,6 +17,7 @@
 
 package org.keycloak.services.clientregistration;
 
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -44,6 +45,7 @@ import org.keycloak.models.RoleModel;
 import org.keycloak.models.utils.ModelToRepresentation;
 import org.keycloak.models.utils.RepresentationToModel;
 import org.keycloak.protocol.oidc.OIDCLoginProtocolFactory;
+import org.keycloak.protocol.saml.SamlConfigAttributes;
 import org.keycloak.representations.AccessToken;
 import org.keycloak.representations.idm.ClientRepresentation;
 import org.keycloak.representations.oidc.OIDCClientRepresentation;
@@ -56,6 +58,9 @@ import org.keycloak.services.clientregistration.policy.RegistrationAuth;
 import org.keycloak.services.managers.ClientManager;
 import org.keycloak.services.managers.RealmManager;
 import org.keycloak.services.resources.admin.ClientResource;
+import org.keycloak.services.scheduled.AutoUpdateSAMLClient;
+import org.keycloak.services.scheduled.ClusterAwareScheduledTaskRunner;
+import org.keycloak.timer.TimerProvider;
 import org.keycloak.validation.ValidationUtil;
 
 /**
@@ -120,6 +125,14 @@ public abstract class AbstractClientRegistrationProvider implements ClientRegist
             Stream<String> defaultRolesNames = getDefaultRolesStream(clientModel);
             if (defaultRolesNames != null) {
                 client.setDefaultRoles(defaultRolesNames.toArray(String[]::new));
+            }
+
+            //saml autoupdated schedule task
+            if ("saml".equals(clientModel.getProtocol()) && clientModel.getAttributes() != null && Boolean.valueOf(clientModel.getAttributes().get(SamlConfigAttributes.SAML_AUTO_UPDATED))) {
+                AutoUpdateSAMLClient autoUpdateProvider = new AutoUpdateSAMLClient(clientModel.getId(), realm.getId());
+                Long interval = Long.parseLong(clientModel.getAttributes().get(SamlConfigAttributes.SAML_REFRESH_PERIOD))* 1000;
+                ClusterAwareScheduledTaskRunner taskRunner = new ClusterAwareScheduledTaskRunner(session.getKeycloakSessionFactory(), autoUpdateProvider, interval);
+                session.getProvider(TimerProvider.class).schedule(taskRunner, interval, "AutoUpdateSAMLClient_" + clientModel.getId());
             }
 
             event.client(client.getClientId()).success();
@@ -212,6 +225,21 @@ public abstract class AbstractClientRegistrationProvider implements ClientRegist
             throw new ErrorResponseException(cpe.getError(), cpe.getErrorDetail(), Response.Status.BAD_REQUEST);
         }
         ClientRegistrationPolicyManager.triggerAfterUpdate(context, registrationAuth, client);
+
+        if ("saml".equals(rep.getProtocol()) && rep.getAttributes() != null && Boolean.valueOf(rep.getAttributes().get(SamlConfigAttributes.SAML_AUTO_UPDATED)) && !rep.getAttributes().get(SamlConfigAttributes.SAML_REFRESH_PERIOD).equals(client.getAttributes().get(SamlConfigAttributes.SAML_REFRESH_PERIOD))) {
+            //saml autoupdated schedule task ( autoupdate with different refresh period)
+            TimerProvider timer = session.getProvider(TimerProvider.class);
+            timer.cancelTask("AutoUpdateSAMLClient_" + client.getId());
+            AutoUpdateSAMLClient autoUpdateProvider = new AutoUpdateSAMLClient(client.getId(), session.getContext().getRealm().getId());
+            Long interval = Long.parseLong(rep.getAttributes().get(SamlConfigAttributes.SAML_REFRESH_PERIOD))* 1000;
+            Long delay = client.getAttributes().get(SamlConfigAttributes.SAML_LAST_REFRESH_TIME) == null ? 1 : Long.parseLong(client.getAttributes().get(SamlConfigAttributes.SAML_LAST_REFRESH_TIME) )+ Long.parseLong(rep.getAttributes().get(SamlConfigAttributes.SAML_REFRESH_PERIOD)) * 1000 - Instant.now().toEpochMilli();
+            ClusterAwareScheduledTaskRunner taskRunner = new ClusterAwareScheduledTaskRunner(session.getKeycloakSessionFactory(), autoUpdateProvider, interval);
+            timer.schedule(taskRunner, delay > 1000 ? delay : 1000, interval, "AutoUpdateSAMLClient_" + client.getId());
+        } else  if ("saml".equals(rep.getProtocol()) && rep.getAttributes() != null && ! Boolean.valueOf(rep.getAttributes().get(SamlConfigAttributes.SAML_AUTO_UPDATED)) && Boolean.valueOf(client.getAttributes().get(SamlConfigAttributes.SAML_AUTO_UPDATED))) {
+            //saml remove autoupdate
+            TimerProvider timer = session.getProvider(TimerProvider.class);
+            timer.cancelTask("AutoUpdateSAMLClient_" + client.getId());
+        }
 
         event.client(client.getClientId()).success();
         return rep;

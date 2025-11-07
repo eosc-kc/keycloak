@@ -17,7 +17,9 @@
 
 package org.keycloak.services.clientregistration;
 
+import java.io.IOException;
 import java.net.URI;
+import java.time.Instant;
 
 import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.DELETE;
@@ -30,9 +32,12 @@ import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 
+import org.keycloak.connections.httpclient.HttpClientProvider;
 import org.keycloak.models.ClientModel;
 import org.keycloak.models.KeycloakSession;
 import org.keycloak.models.utils.RepresentationToModel;
+import org.keycloak.protocol.saml.EntityDescriptorDescriptionConverter;
+import org.keycloak.protocol.saml.SamlConfigAttributes;
 import org.keycloak.representations.idm.ClientRepresentation;
 import org.keycloak.representations.idm.authorization.ResourceServerRepresentation;
 
@@ -50,6 +55,16 @@ public class DefaultClientRegistrationProvider extends AbstractClientRegistratio
     @Produces(MediaType.APPLICATION_JSON)
     public Response createDefault(ClientRepresentation client) {
         DefaultClientRegistrationContext context = new DefaultClientRegistrationContext(session, client, this);
+        //check for saml autoupdated client
+        if ("saml".equals(client.getProtocol()) && client.getAttributes() != null && Boolean.valueOf(client.getAttributes().get(SamlConfigAttributes.SAML_AUTO_UPDATED))){
+            try {
+                EntityDescriptorDescriptionConverter.loadEntityDescriptors(session.getProvider(HttpClientProvider.class).get(client.getAttributes().get(SamlConfigAttributes.SAML_METADATA_URL)), client);
+                client.getAttributes().put(SamlConfigAttributes.SAML_LAST_REFRESH_TIME, String.valueOf(Instant.now().toEpochMilli()));
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        }
+
         client = create(context);
         validateClient(client, true);
         URI uri = session.getContext().getUri().getAbsolutePathBuilder().path(client.getClientId()).build();
