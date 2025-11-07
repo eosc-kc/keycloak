@@ -16,6 +16,8 @@
  */
 package org.keycloak.services.resources.admin;
 
+import java.io.IOException;
+import java.time.Instant;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -39,6 +41,7 @@ import org.keycloak.authorization.admin.AuthorizationService;
 import org.keycloak.authorization.fgap.AdminPermissionsSchema;
 import org.keycloak.client.clienttype.ClientTypeException;
 import org.keycloak.common.Profile;
+import org.keycloak.connections.httpclient.HttpClientProvider;
 import org.keycloak.events.Errors;
 import org.keycloak.events.admin.OperationType;
 import org.keycloak.events.admin.ResourceType;
@@ -49,6 +52,8 @@ import org.keycloak.models.ModelException;
 import org.keycloak.models.ModelValidationException;
 import org.keycloak.models.RealmModel;
 import org.keycloak.models.utils.ModelToRepresentation;
+import org.keycloak.protocol.saml.EntityDescriptorDescriptionConverter;
+import org.keycloak.protocol.saml.SamlConfigAttributes;
 import org.keycloak.representations.idm.ClientRepresentation;
 import org.keycloak.representations.idm.ProtocolMapperRepresentation;
 import org.keycloak.representations.idm.authorization.ResourceServerRepresentation;
@@ -63,6 +68,9 @@ import org.keycloak.services.managers.ClientManager;
 import org.keycloak.services.managers.RealmManager;
 import org.keycloak.services.resources.KeycloakOpenAPI;
 import org.keycloak.services.resources.admin.fgap.AdminPermissionEvaluator;
+import org.keycloak.services.scheduled.AutoUpdateSAMLClient;
+import org.keycloak.services.scheduled.ClusterAwareScheduledTaskRunner;
+import org.keycloak.timer.TimerProvider;
 import org.keycloak.utils.SearchQueryUtils;
 import org.keycloak.validation.ValidationUtil;
 
@@ -228,6 +236,12 @@ public class ClientsResource {
                                 List.copyOf(rep.getRegisteredNodes().keySet()),
                                 ClientPolicyEvent.REGISTER_NODE));
             }
+
+            //check for saml autoupdated client
+            if ("saml".equals(rep.getProtocol()) && rep.getAttributes() != null && Boolean.valueOf(rep.getAttributes().get(SamlConfigAttributes.SAML_AUTO_UPDATED))){
+                EntityDescriptorDescriptionConverter.loadEntityDescriptors(session.getProvider(HttpClientProvider.class).get(rep.getAttributes().get(SamlConfigAttributes.SAML_METADATA_URL)), rep);
+                rep.getAttributes().put(SamlConfigAttributes.SAML_LAST_REFRESH_TIME, String.valueOf(Instant.now().toEpochMilli()));
+            }
             ClientModel clientModel = ClientManager.createClient(session, realm, rep);
 
             if (TRUE.equals(rep.isServiceAccountsEnabled())) {
@@ -259,6 +273,14 @@ public class ClientsResource {
             session.getContext().setClient(clientModel);
             session.clientPolicy().triggerOnEvent(new AdminClientRegisteredContext(clientModel, auth.adminAuth()));
 
+            //saml autoupdated schedule task
+            if ("saml".equals(clientModel.getProtocol()) && clientModel.getAttributes() != null && Boolean.valueOf(clientModel.getAttributes().get(SamlConfigAttributes.SAML_AUTO_UPDATED))) {
+                AutoUpdateSAMLClient autoUpdateProvider = new AutoUpdateSAMLClient(clientModel.getId(), realm.getId());
+                Long interval = Long.parseLong(clientModel.getAttributes().get(SamlConfigAttributes.SAML_REFRESH_PERIOD))* 1000;
+                ClusterAwareScheduledTaskRunner taskRunner = new ClusterAwareScheduledTaskRunner(session.getKeycloakSessionFactory(), autoUpdateProvider, interval);
+                session.getProvider(TimerProvider.class).schedule(taskRunner, interval, "AutoUpdateSAMLClient_" + clientModel.getId());
+            }
+
             return clientModel;
         } catch (ModelDuplicateException e) {
             throw ErrorResponse.exists("Client " + rep.getClientId() + " already exists");
@@ -269,6 +291,8 @@ public class ClientsResource {
         }
         catch (ClientTypeException cte) {
             throw ErrorResponse.error(cte.getMessage(), cte.getParameters(), Response.Status.BAD_REQUEST);
+         } catch (IOException e) {
+            throw new ErrorResponseException("Problem parsing SAML client metadata url", e.getMessage(), Response.Status.BAD_REQUEST);
         }
     }
 

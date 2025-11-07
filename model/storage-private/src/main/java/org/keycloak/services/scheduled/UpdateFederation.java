@@ -28,6 +28,7 @@ public class UpdateFederation implements ScheduledTask {
 		logger.info(" Updating identity providers of federation with id " + federationId + " and realm id " + realmId);
 		RealmModel realm = session.realms().getRealm(realmId);
 		if ( realm != null) {
+            session.getContext().setRealm(realm);
 			FederationModel federationModel = realm.getSAMLFederationById(federationId);
 			SAMLFederationProviderFactory samlFederationProviderFactory = SAMLFederationProviderFactory.getSAMLFederationProviderFactoryById(session, federationModel.getProviderId());
 			FederationProvider federationProvider = samlFederationProviderFactory.create(session, federationModel, realmId);
