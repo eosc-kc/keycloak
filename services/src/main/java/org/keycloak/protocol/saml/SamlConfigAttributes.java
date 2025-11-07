@@ -52,4 +52,9 @@ public interface SamlConfigAttributes {
     String SAML_USE_METADATA_DESCRIPTOR_URL = "saml.useMetadataDescriptorUrl";
     String SAML_METADATA_DESCRIPTOR_URL = "saml.metadataDescriptorUrl";
     String SAML_DESCRIPTOR_CACHE_SECONDS = "saml.descriptor.cache.seconds";
+    String SAML_AUTO_UPDATED = "saml.auto.updated";
+    String SAML_METADATA_URL = "saml.metadata.url";
+    String SAML_REFRESH_PERIOD = "saml.refresh.period";
+    String SAML_LAST_REFRESH_TIME = "saml.last.refresh.time";
+    String SAML_SKIP_REQUESTED_ATTRIBUTES = "saml.skip.requested.attributes";
 }
