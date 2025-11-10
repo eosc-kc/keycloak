@@ -43,6 +43,7 @@ public class AutoUpdateSAMLClient implements ScheduledTask {
             timer.cancelTask("AutoUpdateSAMLClient_" + id);
             return;
         }
+        session.getContext().setRealm(realm);
         ClientModel client = session.clients().getClientById(realm, id);
         if (client == null || !"saml".equals(client.getProtocol()) || client.getAttribute(SamlConfigAttributes.SAML_METADATA_URL) == null ) {
             TimerProvider timer = session.getProvider(TimerProvider.class);

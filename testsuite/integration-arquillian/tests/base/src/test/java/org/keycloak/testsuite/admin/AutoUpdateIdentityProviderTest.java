@@ -164,7 +164,7 @@ public class AutoUpdateIdentityProviderTest extends AbstractAdminTest {
         assertThat(config, hasEntry("singleLogoutServiceUrl", "http://localhost:8080/auth/realms/master/protocol/saml"));
         assertThat(config, hasEntry("artifactResolutionServiceUrl", "http://localhost:8080/auth/realms/master/protocol/saml/resolve"));
         assertThat(config, hasEntry("artifactBindingResponse", "false"));
-        assertThat(config, hasEntry("postBindingAuthnRequest", "true"));
+        assertThat(config, hasEntry("postBindingAuthnRequest", "false"));
         assertThat(config, hasEntry("singleSignOnServiceUrl", "http://localhost:8080/auth/realms/master/protocol/saml"));
         assertThat(config, hasEntry("wantAuthnRequestsSigned", "true"));
         assertThat(config, hasEntry("addExtensionsElementWithKeyInfo", "false"));
@@ -173,7 +173,7 @@ public class AutoUpdateIdentityProviderTest extends AbstractAdminTest {
         assertThat(config, hasEntry(is("signingCertificate"), notNullValue()));
         assertThat(config, hasEntry("autoUpdate", "true"));
         assertThat(config, hasEntry("metadataUrl", "http://localhost:8880/saml-idp-metadata"));
-        assertThat(config, hasEntry("refreshPeriod", String.valueOf(60)));
+        assertThat(config, hasEntry("refreshPeriod", String.valueOf(30)));
     }
 
 
