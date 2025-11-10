@@ -14,7 +14,10 @@ import { useAlerts } from "@keycloak/keycloak-ui-shared";
 import { FormAccess } from "../../components/form/FormAccess";
 import { ViewHeader } from "../../components/view-header/ViewHeader";
 import { useRealm } from "../../context/realm-context/RealmContext";
-import { convertFormValuesToObject } from "../../util";
+import {
+  convertAttributeNameToForm,
+  convertFormValuesToObject,
+} from "../../util";
 import { FormFields } from "../ClientDetails";
 import { toClient } from "../routes/Client";
 import { toClients } from "../routes/Clients";
@@ -78,6 +81,9 @@ export default function NewClientForm() {
   });
   const { getValues, watch } = form;
   const protocol = watch("protocol");
+  const autoUpdated = watch(
+    convertAttributeNameToForm("attributes.saml.auto.updated"),
+  ) as unknown as string;
 
   const save = async () => {
     if (saving) return;
@@ -129,6 +135,7 @@ export default function NewClientForm() {
               name={t("loginSettings")}
               id="loginSettings"
               key="loginSettings"
+              isHidden={autoUpdated === "trueσ"}
               footer={{
                 backButtonText: t("back"),
                 nextButtonText: t("save"),
