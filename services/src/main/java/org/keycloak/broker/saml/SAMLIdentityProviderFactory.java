@@ -72,6 +72,16 @@ public class SAMLIdentityProviderFactory extends AbstractIdentityProviderFactory
         SAMLIdentityProviderConfig samlIdentityProviderConfig = new SAMLIdentityProviderConfig(model);
         try {
             EntityDescriptorType entityType = SAMLMetadataUtil.parseEntityDescriptorType(config);
+            Date validUntil = null;
+            if (entityType.getValidUntil() != null) {
+                validUntil = entityType.getValidUntil().toGregorianCalendar().getTime();
+            }
+            if (validUntil != null && validUntil.before(new Date())) {
+                samlIdentityProviderConfig.setEnabled(false);
+            } else {
+                samlIdentityProviderConfig.setEnabled(true);
+            }
+
             IDPSSODescriptorType idpDescriptor = SAMLMetadataUtil.locateIDPSSODescriptorType(entityType);
 
             if (idpDescriptor != null) {
