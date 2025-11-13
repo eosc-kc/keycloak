@@ -17,6 +17,8 @@
 
 package org.keycloak.models;
 
+import java.util.Arrays;
+import java.util.List;
 import java.util.Map;
 
 import org.keycloak.common.util.ObjectUtil;
@@ -73,6 +75,8 @@ public interface ClientScopeModel extends ProtocolMapperContainerModel, ScopeCon
     String INCLUDE_IN_TOKEN_SCOPE = "include.in.token.scope";
     String IS_DYNAMIC_SCOPE = "is.dynamic.scope";
     String DYNAMIC_SCOPE_REGEXP = "dynamic.scope.regexp";
+    String DYNAMIC_SCOPE_USER_ATTRIBUTE = "dynamic.scope.user.attribute";
+    String FILTERED_CLAIM="filtered_claim";
     String INCLUDE_IN_OPENID_PROVIDER_METADATA = "include.in.openid.provider.metadata";
 
     default boolean isDisplayOnConsentScreen() {
@@ -127,6 +131,18 @@ public interface ClientScopeModel extends ProtocolMapperContainerModel, ScopeCon
         return getAttribute(DYNAMIC_SCOPE_REGEXP);
     }
 
+    default List<String> getDynamicScopeUserAttribute() {
+        return getAttribute(DYNAMIC_SCOPE_USER_ATTRIBUTE) == null ? null : Arrays.asList(getAttribute(DYNAMIC_SCOPE_USER_ATTRIBUTE).split("##"));
+    }
+
+    default String getFilteredClaim() {
+        return getAttribute(FILTERED_CLAIM);
+    }
+
+    default void setFilteredClaim(String filteredClaim) {
+        setAttribute(FILTERED_CLAIM, filteredClaim);
+    }
+
     default boolean isIncludeInOpenIDProviderMetadata() {
         String includeInOpenIDProviderMetadata = getAttribute(INCLUDE_IN_OPENID_PROVIDER_METADATA);
         return includeInOpenIDProviderMetadata == null ? true : Boolean.parseBoolean(includeInOpenIDProviderMetadata);
@@ -135,4 +151,5 @@ public interface ClientScopeModel extends ProtocolMapperContainerModel, ScopeCon
     default void setIncludeInOpenIDProviderMetadata(boolean includeInOpenIDProviderMetadata) {
         setAttribute(INCLUDE_IN_OPENID_PROVIDER_METADATA, String.valueOf(includeInOpenIDProviderMetadata));
     }
+
 }

@@ -135,6 +135,8 @@ public class ClientScopeAuthorizationRequestParser implements AuthorizationReque
                 Matcher m = p.matcher(requestScope);
                 if (m.matches()) {
                     return Optional.of(new IntermediaryScopeRepresentation(clientScopeModel, m.group(1), requestScope));
+                } else  if (requestScope.equalsIgnoreCase(clientScopeModel.getName())) {
+                    return Optional.of(new IntermediaryScopeRepresentation(clientScopeModel));
                 }
             } else {
                 if (requestScope.equalsIgnoreCase(clientScopeModel.getName())) {
