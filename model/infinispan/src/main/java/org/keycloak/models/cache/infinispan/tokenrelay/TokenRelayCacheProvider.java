@@ -44,7 +44,7 @@ public class TokenRelayCacheProvider implements CustomCacheProvider {
             logger.error("Could not locate keycloak's cacheManager. Will initiate a local TokenRelayCache");
             Configuration c = new ConfigurationBuilder().simpleCache(true).expiration().lifespan(LIFESPAN_SEC, TimeUnit.SECONDS).maxIdle(MAXIDLE_SEC, TimeUnit.SECONDS).build();
             cacheManager = new DefaultCacheManager();
-            cache = cacheManager.createCache(tokenRelayCacheName, c);
+            cache = cacheManager.cacheExists(tokenRelayCacheName) ? cacheManager.getCache(tokenRelayCacheName) : cacheManager.createCache(tokenRelayCacheName, c);
             return;
         }
 
@@ -53,25 +53,25 @@ public class TokenRelayCacheProvider implements CustomCacheProvider {
         logger.info("Keycloak is clustered? -> " + globalConfiguration.isClustered());
 
         Configuration config;
-        if(globalConfiguration.isClustered()) {
-            logger.info("Initiating a cluster-aware TokenRelayCache");
-            config = new ConfigurationBuilder()
-                    .expiration().lifespan(LIFESPAN_SEC, TimeUnit.SECONDS).maxIdle(MAXIDLE_SEC, TimeUnit.SECONDS)
-                    .clustering()
-                    .cacheMode(CacheMode.REPL_SYNC)
-                    .memory().storage(StorageType.HEAP)
-                    .encoding().mediaType(MediaType.APPLICATION_SERIALIZED_OBJECT_TYPE)
-                    .build();
-            cache = cacheManager.administration()
-                    .withFlags(CacheContainerAdmin.AdminFlag.VOLATILE)
-                    .createCache(tokenRelayCacheName, config);
-        }
-        else {
+        /* DISABLING THIS TEMPORARILY. SHOULD TEST IT FIRST BEFORE ENABLING  (please make sure you use .getOrCreateCache() ) */
+//        if(globalConfiguration.isClustered()) {
+//            logger.info("Initiating a cluster-aware TokenRelayCache");
+//            config = new ConfigurationBuilder()
+//                    .expiration().lifespan(LIFESPAN_SEC, TimeUnit.SECONDS).maxIdle(MAXIDLE_SEC, TimeUnit.SECONDS)
+//                    .clustering()
+//                    .cacheMode(CacheMode.REPL_SYNC)
+//                    .memory().storage(StorageType.HEAP)
+//                    .encoding().mediaType(MediaType.APPLICATION_SERIALIZED_OBJECT_TYPE)
+//                    .build();
+//            CACHE = cacheManager.administration()
+//                    .withFlags(CacheContainerAdmin.AdminFlag.VOLATILE)
+//                    .getOrCreateCache(tokenRelayCacheName, config);
+//        }
+//        else {
             logger.info("Initiating a local TokenRelayCache");
             config = new ConfigurationBuilder().simpleCache(true).expiration().lifespan(LIFESPAN_SEC, TimeUnit.SECONDS).maxIdle(MAXIDLE_SEC, TimeUnit.SECONDS).build();
-            EmbeddedCacheManager ecm = new DefaultCacheManager();
-            cache = ecm.createCache(tokenRelayCacheName, config);
-        }
+            cache = cacheManager.cacheExists(tokenRelayCacheName) ? cacheManager.getCache(tokenRelayCacheName) : cacheManager.createCache(tokenRelayCacheName, config);
+//        }
 
     }
 
