@@ -29,6 +29,7 @@ Full Keycloak upstream jira issue can be shown if filtered by Fix version.
 - SAML entityID/OIDC issuer showing in user if IdP display name does not exist [RCIAM-887](https://jira.argo.grnet.gr/browse/RCIAM-887)
 - Consent extension [RCIAM-791](https://jira.argo.grnet.gr/browse/RCIAM-791)
 - Make optional the use of PKCE for Clients configured with PKCE only for Device Code Flow [RCIAM-1069](https://jira.argo.grnet.gr/browse/RCIAM-1069)
+- Protocol mapper that can combine multiple user attributes [RCIAM-1267](https://jira.argo.grnet.gr/browse/RCIAM-1267)
 
 
 ### Fixed
