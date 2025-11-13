@@ -3062,6 +3062,8 @@ public class CIBATest extends AbstractClientPoliciesTest {
     }
 
     private AccessTokenResponse doRefreshTokenRequest(String oldRefreshToken, String username, String sessionId, boolean isOfflineAccess) {
+        if (isOfflineAccess)
+            oauth.scope("openid offline_access");
         AccessTokenResponse tokenRes = oauth.doRefreshTokenRequest(oldRefreshToken);
         assertThat(tokenRes.getStatusCode(), is(equalTo(200)));
 

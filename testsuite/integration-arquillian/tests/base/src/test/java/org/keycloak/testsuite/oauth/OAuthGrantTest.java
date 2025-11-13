@@ -17,15 +17,20 @@
 package org.keycloak.testsuite.oauth;
 
 import java.io.IOException;
+import java.util.AbstractMap;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import jakarta.ws.rs.core.Response;
 
 import org.keycloak.admin.client.resource.ClientResource;
 import org.keycloak.admin.client.resource.ClientScopeResource;
 import org.keycloak.admin.client.resource.RealmResource;
+import org.keycloak.admin.client.resource.UserProfileResource;
 import org.keycloak.admin.client.resource.UserResource;
 import org.keycloak.common.Profile;
 import org.keycloak.events.Details;
@@ -37,6 +42,7 @@ import org.keycloak.representations.idm.ClientScopeRepresentation;
 import org.keycloak.representations.idm.EventRepresentation;
 import org.keycloak.representations.idm.ProtocolMapperRepresentation;
 import org.keycloak.representations.idm.RealmRepresentation;
+import org.keycloak.representations.idm.UserRepresentation;
 import org.keycloak.testsuite.AbstractKeycloakTest;
 import org.keycloak.testsuite.AssertEvents;
 import org.keycloak.testsuite.admin.ApiUtil;
@@ -48,6 +54,7 @@ import org.keycloak.testsuite.pages.OAuthGrantPage;
 import org.keycloak.testsuite.util.AccountHelper;
 import org.keycloak.testsuite.util.ProtocolMapperUtil;
 import org.keycloak.testsuite.util.oauth.AccessTokenResponse;
+import org.keycloak.testsuite.util.userprofile.UserProfileUtil;
 
 import org.hamcrest.Matchers;
 import org.jboss.arquillian.graphene.page.Page;
@@ -59,6 +66,7 @@ import org.openqa.selenium.By;
 import static org.keycloak.testsuite.AbstractAdminTest.loadJson;
 import static org.keycloak.testsuite.admin.ApiUtil.findClientByClientId;
 import static org.keycloak.testsuite.auth.page.AuthRealm.TEST;
+import static org.keycloak.testsuite.util.ProtocolMapperUtil.createClaimMapper;
 
 import static org.junit.Assert.assertEquals;
 
@@ -328,6 +336,11 @@ public class OAuthGrantTest extends AbstractKeycloakTest {
             put(ClientScopeModel.IS_DYNAMIC_SCOPE, "true");
             put(ClientScopeModel.DYNAMIC_SCOPE_REGEXP, "foo-dynamic-scope:*");
         }});
+
+        List<ProtocolMapperRepresentation> mappers = new ArrayList<>();
+        mappers.add(createClaimMapper("foo-dynamic-scope-mapper", "foo-dynamic", "foo-dynamic-scope", "String", true, true,true, true));
+        scope.setProtocolMappers(mappers);
+
         Response response = appRealm.clientScopes().create(scope);
         String dynamicFooScopeId = ApiUtil.getCreatedId(response);
         response.close();
@@ -335,6 +348,14 @@ public class OAuthGrantTest extends AbstractKeycloakTest {
 
         // Add clientScope as optional to client
         thirdParty.addOptionalClientScope(dynamicFooScopeId);
+
+        UserProfileResource userProfileRes = appRealm.users().userProfile();
+        UserProfileUtil.enableUnmanagedAttributes(userProfileRes);
+
+        UserRepresentation userRep = appRealm.users().search(DEFAULT_USERNAME).get(0);
+        List<String> attributeValues = Stream.of("withparam","param").collect(Collectors.toList());
+        userRep.setAttributes(Stream.of(new AbstractMap.SimpleEntry<>("foo-dynamic",attributeValues)).collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue)));
+        appRealm.users().get(userRep.getId()).update(userRep);
 
         // Assert clientScope not on grant screen when not requested
         oauth.clientId(THIRD_PARTY_APP);
@@ -352,6 +373,13 @@ public class OAuthGrantTest extends AbstractKeycloakTest {
 
         String code = oauth.parseLoginResponse().getCode();
         AccessTokenResponse res = oauth.doAccessTokenRequest(code);
+        Assert.assertNotNull(res.getAccessToken());
+        AccessToken token = oauth.verifyToken(res.getAccessToken());
+        Assert.assertNotNull(token);
+        //foo-dynamic-scope must contain only withparam
+        List<String> claimValue =(List) token.getOtherClaims().get("foo-dynamic-scope");
+        assertEquals(claimValue.size(),1);
+        assertEquals(claimValue.get(0),"withparam");
 
         events.expectCodeToToken(loginEvent.getDetails().get(Details.CODE_ID), loginEvent.getSessionId())
                 .client(THIRD_PARTY_APP)
@@ -364,15 +392,11 @@ public class OAuthGrantTest extends AbstractKeycloakTest {
         // login again to check whether the Dynamic scope and only the dynamic scope is requested again
         oauth.scope("foo-dynamic-scope:withparam");
         oauth.doLogin(DEFAULT_USERNAME, DEFAULT_PASSWORD);
-        grantPage.assertCurrent();
-        grants = grantPage.getDisplayedGrants();
-        Assert.assertEquals(1, grants.size());
-        Assert.assertTrue(grants.contains("foo-dynamic-scope: withparam"));
-        grantPage.accept();
+        
 
         events.expectLogin()
                 .client(THIRD_PARTY_APP)
-                .detail(Details.CONSENT, Details.CONSENT_VALUE_CONSENT_GRANTED)
+                .detail(Details.CONSENT, Details.CONSENT_VALUE_PERSISTED_CONSENT)
                 .assertEvent();
 
         // Revoke
@@ -383,6 +407,8 @@ public class OAuthGrantTest extends AbstractKeycloakTest {
 
         // cleanup
         oauth.scope(null);
+        userRep.getAttributes().remove("foo-dynamic");
+        appRealm.users().get(userRep.getId()).update(userRep);
         thirdParty.removeOptionalClientScope(dynamicFooScopeId);
     }
 
