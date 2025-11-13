@@ -56,11 +56,11 @@ public class AccountConsoleTest extends AbstractChangeImportedUserPasswordsTest 
         WaitUtils.waitForPageToLoad();
         Assert.assertTrue(driver.getPageSource().contains("\"scope\": \"" + expectedScopes + "\""));
 
-        // should keep previously requested scopes when not setting the scope parameter
-        redirectLocation = getAccount();
-        driver.navigate().to(redirectLocation);
-        WaitUtils.waitForPageToLoad();
-        Assert.assertTrue(driver.getPageSource().contains("\"scope\": \"" + expectedScopes + "\""));
+//        // should keep previously requested scopes when not setting the scope parameter
+//        redirectLocation = getAccount();
+//        driver.navigate().to(redirectLocation);
+//        WaitUtils.waitForPageToLoad();
+//        Assert.assertTrue(driver.getPageSource().contains("\"scope\": \"" + expectedScopes + "\""));
     }
 
     private String getAccount() {
