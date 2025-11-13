@@ -5,7 +5,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 This fork is based on Keycloak upstream version is 26.4.1 .
-For Keycloak upstream changelog please see [Keycloak release note 26.4.0](https://www.keycloak.org/docs/latest/release_notes/index.html#keycloak-26-4-0) and latest minor and patch releases announcements.
+For Keycloak upstream changelog please see [Keycloak release note 26.5.0](https://www.keycloak.org/2026/01/keycloak-2650-released) and latest minor and patch releases announcements.
 Full Keycloak upstream jira issue can be shown if filtered by Fix version.
 
 ## [Unreleased]
@@ -29,6 +29,7 @@ Full Keycloak upstream jira issue can be shown if filtered by Fix version.
 - SAML entityID/OIDC issuer showing in user if IdP display name does not exist [RCIAM-887](https://jira.argo.grnet.gr/browse/RCIAM-887)
 - Consent extension [RCIAM-791](https://jira.argo.grnet.gr/browse/RCIAM-791)
 - Make optional the use of PKCE for Clients configured with PKCE only for Device Code Flow [RCIAM-1069](https://jira.argo.grnet.gr/browse/RCIAM-1069)
+- Protocol mapper that can combine multiple user attributes [RCIAM-1267](https://jira.argo.grnet.gr/browse/RCIAM-1267)
 
 
 ### Fixed
