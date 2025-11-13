@@ -690,10 +690,13 @@ public final class KeycloakModelUtils {
         });
     }
 
-    public static Collection<String> resolveAttribute(GroupModel group, String name, boolean aggregateAttrs) {
-        Set<String> values = group.getAttributeStream(name).collect(Collectors.toSet());
+
+
+    public static Set<String>  resolveAttribute(GroupModel group, List<String> names, boolean aggregateAttrs) {
+        Set<String> values = new HashSet<>();
+        values.addAll(names.stream().flatMap(name -> group.getAttributeStream(name)).collect(Collectors.toList()));
         if ((values.isEmpty() || aggregateAttrs) && group.getParentId() != null) {
-            values.addAll(resolveAttribute(group.getParent(), name, aggregateAttrs));
+            values.addAll(resolveAttribute(group.getParent(), names, aggregateAttrs));
         }
         return values;
     }
@@ -713,6 +716,39 @@ public final class KeycloakModelUtils {
 
         if (!aggregateAttrs) {
             Optional<Collection<String>> first = attributes.findFirst();
+            if (first.isPresent()) return first.get();
+        } else {
+            aggrValues.addAll(attributes.flatMap(Collection::stream).collect(Collectors.toSet()));
+        }
+
+        return aggrValues;
+    }
+
+    private static Collection<String> resolveAttribute(GroupModel group, String name, boolean aggregateAttrs) {
+        Set<String> values = group.getAttributeStream(name).collect(Collectors.toSet());
+        if ((values.isEmpty() || aggregateAttrs) && group.getParentId() != null) {
+            values.addAll(resolveAttribute(group.getParent(), name, aggregateAttrs));
+        }
+        return values;
+    }
+
+
+    public static Collection<String> resolveAttribute(UserModel user, List<String> names, boolean aggregateAttrs) {
+        Set<String> values = new HashSet<>();
+        values.addAll(names.stream().flatMap(name -> user.getAttributeStream(name)).collect(Collectors.toList()));
+        Set<String> aggrValues = new HashSet<String>();
+        if (!values.isEmpty()) {
+            if (!aggregateAttrs) {
+                return values;
+            }
+            aggrValues.addAll(values);
+        }
+        Stream<Set<String>> attributes = user.getGroupsStream()
+                .map(group -> resolveAttribute(group, names, aggregateAttrs))
+                .filter(attr -> !attr.isEmpty());
+
+        if (!aggregateAttrs) {
+            Optional<Set<String>> first = attributes.findFirst();
             if (first.isPresent()) return first.get();
         } else {
             aggrValues.addAll(attributes.flatMap(Collection::stream).collect(Collectors.toSet()));
