@@ -393,14 +393,6 @@ public class SAMLIdentityProviderConfig extends IdentityProviderModel {
         }
     }
 
-    public boolean isEnabledFromMetadata() {
-        return Boolean.valueOf(getConfig().get(ENABLED_FROM_METADATA ));
-    }
-
-    public void setEnabledFromMetadata(boolean enabled) {
-        getConfig().put(ENABLED_FROM_METADATA , String.valueOf(enabled));
-    }
-
     public AuthnContextComparisonType getAuthnContextComparisonType() {
         return AuthnContextComparisonType.fromValue(getConfig().getOrDefault(AUTHN_CONTEXT_COMPARISON_TYPE, AuthnContextComparisonType.EXACT.value()));
     }
