@@ -1,20 +1,28 @@
 package org.keycloak.testsuite.broker;
 
+import jakarta.ws.rs.core.Response;
+
 import org.keycloak.admin.client.resource.AuthenticationManagementResource;
 import org.keycloak.admin.client.resource.IdentityProviderResource;
 import org.keycloak.admin.client.resource.RealmResource;
 import org.keycloak.authentication.authenticators.broker.IdpAutoLinkAuthenticatorFactory;
 import org.keycloak.authentication.authenticators.broker.IdpDetectExistingBrokerUserAuthenticatorFactory;
+import org.keycloak.broker.oidc.mappers.UserAttributeMapper;
 import org.keycloak.models.AuthenticationExecutionModel;
+import org.keycloak.models.IdentityProviderMapperModel;
+import org.keycloak.models.IdentityProviderMapperSyncMode;
 import org.keycloak.models.IdentityProviderModel;
 import org.keycloak.models.IdentityProviderSyncMode;
 import org.keycloak.representations.idm.AuthenticationExecutionRepresentation;
 import org.keycloak.representations.idm.AuthenticationFlowRepresentation;
+import org.keycloak.representations.idm.IdentityProviderMapperRepresentation;
 import org.keycloak.representations.idm.IdentityProviderRepresentation;
 import org.keycloak.representations.idm.UserRepresentation;
+import org.keycloak.testsuite.admin.ApiUtil;
 import org.keycloak.testsuite.util.AccountHelper;
 import org.keycloak.testsuite.util.ExecutionBuilder;
 
+import com.google.common.collect.ImmutableMap;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -197,6 +205,20 @@ public class KcOidcFirstBrokerLoginDetectExistingUserTest extends AbstractInitia
         IdentityProviderRepresentation idpRep = identityProviderResource.toRepresentation();
         idpRep.setTrustEmail(true);
         identityProviderResource.update(idpRep);
+
+        IdentityProviderMapperRepresentation mapper = new IdentityProviderMapperRepresentation();
+        mapper.setName("email-verified-mapper");
+        mapper.setIdentityProviderAlias(bc.getIDPAlias());
+        mapper.setIdentityProviderMapper(UserAttributeMapper.PROVIDER_ID);
+        mapper.setConfig(ImmutableMap.<String, String>builder()
+                .put(IdentityProviderMapperModel.SYNC_MODE, IdentityProviderMapperSyncMode.INHERIT.toString())
+                .put(UserAttributeMapper.CLAIM, "email_verified")
+                .put(UserAttributeMapper.USER_ATTRIBUTE, "email_verified")
+                .build());
+
+        try (Response response = identityProviderResource.addMapper(mapper)) {
+            getCleanup().addCleanup(() -> identityProviderResource.delete(ApiUtil.getCreatedId(response)));
+        }
 
         oauth.clientId("broker-app");
         loginPage.open(bc.consumerRealmName());

@@ -208,6 +208,7 @@ public class StandardTokenExchangeProvider extends AbstractTokenExchangeProvider
 
         boolean validScopes;
         if (Profile.isFeatureEnabled(Profile.Feature.DYNAMIC_SCOPES)) {
+            session.getContext().setClient(client);
             AuthorizationRequestContext authorizationRequestContext = AuthorizationContextUtil.getAuthorizationRequestContextFromScopes(session, client, scope);
             validScopes = TokenManager.isValidScope(session, scope, authorizationRequestContext, client, null);
         } else {
