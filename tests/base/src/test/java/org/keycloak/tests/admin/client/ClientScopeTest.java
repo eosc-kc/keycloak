@@ -707,7 +707,7 @@ public class ClientScopeTest extends AbstractClientScopeTest {
             put(ClientScopeModel.IS_DYNAMIC_SCOPE, "true");
             put(ClientScopeModel.DYNAMIC_SCOPE_REGEXP, "");
         }});
-        handleExpectedCreateFailure(scopeRep, 400, "Unexpected value \"true\" for attribute is.dynamic.scope in ClientScope");
+        handleExpectedCreateFailure(scopeRep, 400, "Dynamic scope regexp must not be null or empty");
     }
 
     @Test
@@ -719,7 +719,7 @@ public class ClientScopeTest extends AbstractClientScopeTest {
             put(ClientScopeModel.IS_DYNAMIC_SCOPE, "false");
             put(ClientScopeModel.DYNAMIC_SCOPE_REGEXP, "not-empty");
         }});
-        handleExpectedCreateFailure(scopeRep, 400, "Unexpected value \"not-empty\" for attribute dynamic.scope.regexp in ClientScope");
+        handleExpectedCreateFailure(scopeRep, 400, "Invalid format for the Dynamic Scope regexp not-empty");
     }
 
     @Test

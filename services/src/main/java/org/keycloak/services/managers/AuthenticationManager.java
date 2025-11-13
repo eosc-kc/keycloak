@@ -1245,8 +1245,7 @@ public class AuthenticationManager {
                 continue;
             }
 
-            // we need to add dynamic scopes with params to the scopes to consent every time for now
-            if (grantedConsent == null || !grantedConsent.isClientScopeGranted(clientScope) || isDynamicScopeWithParam(authDetails)) {
+            if (grantedConsent == null || !grantedConsent.isClientScopeGranted(clientScope) ) {
                 clientScopesToDisplay.add(authDetails);
             }
         }
