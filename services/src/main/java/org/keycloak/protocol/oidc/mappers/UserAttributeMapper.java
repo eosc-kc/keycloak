@@ -17,6 +17,7 @@
 
 package org.keycloak.protocol.oidc.mappers;
 
+import org.keycloak.models.Constants;
 import org.keycloak.models.ProtocolMapperModel;
 import org.keycloak.models.UserModel;
 import org.keycloak.models.UserSessionModel;
@@ -26,6 +27,7 @@ import org.keycloak.provider.ProviderConfigProperty;
 import org.keycloak.representations.IDToken;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 
@@ -96,9 +98,9 @@ public class UserAttributeMapper extends AbstractOIDCProtocolMapper implements O
     protected void setClaim(IDToken token, ProtocolMapperModel mappingModel, UserSessionModel userSession) {
 
         UserModel user = userSession.getUser();
-        String attributeName = mappingModel.getConfig().get(ProtocolMapperUtils.USER_ATTRIBUTE);
+        List<String> attributeNames = Arrays.asList(mappingModel.getConfig().get(ProtocolMapperUtils.USER_ATTRIBUTE).split(Constants.CFG_DELIMITER));
         boolean aggregateAttrs = Boolean.valueOf(mappingModel.getConfig().get(ProtocolMapperUtils.AGGREGATE_ATTRS));
-        Collection<String> attributeValue = KeycloakModelUtils.resolveAttribute(user, attributeName, aggregateAttrs);
+        Collection<String> attributeValue = KeycloakModelUtils.resolveAttribute(user, attributeNames, aggregateAttrs);
         if (attributeValue == null) return;
         OIDCAttributeMapperHelper.mapClaim(token, mappingModel, attributeValue);
     }
