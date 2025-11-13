@@ -18,11 +18,13 @@
 package org.keycloak.protocol.saml.mappers;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 
 import org.keycloak.dom.saml.v2.assertion.AttributeStatementType;
 import org.keycloak.models.AuthenticatedClientSessionModel;
+import org.keycloak.models.Constants;
 import org.keycloak.models.KeycloakSession;
 import org.keycloak.models.ProtocolMapperModel;
 import org.keycloak.models.UserModel;
@@ -88,9 +90,9 @@ public class UserAttributeStatementMapper extends AbstractSAMLProtocolMapper imp
     @Override
     public void transformAttributeStatement(AttributeStatementType attributeStatement, ProtocolMapperModel mappingModel, KeycloakSession session, UserSessionModel userSession, AuthenticatedClientSessionModel clientSession) {
         UserModel user = userSession.getUser();
-        String attributeName = mappingModel.getConfig().get(ProtocolMapperUtils.USER_ATTRIBUTE);
+        List<String> attributeNames = Arrays.asList(mappingModel.getConfig().get(ProtocolMapperUtils.USER_ATTRIBUTE).split(Constants.CFG_DELIMITER));
         boolean aggregateAttrs = Boolean.valueOf(mappingModel.getConfig().get(ProtocolMapperUtils.AGGREGATE_ATTRS));
-        Collection<String> attributeValues = KeycloakModelUtils.resolveAttribute(user, attributeName, aggregateAttrs);
+        Collection<String> attributeValues = KeycloakModelUtils.resolveAttribute(user, attributeNames, aggregateAttrs);
         if (attributeValues.isEmpty()) return;
         AttributeStatementHelper.addAttributes(attributeStatement, mappingModel, attributeValues);
     }
