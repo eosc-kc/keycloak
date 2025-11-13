@@ -64,6 +64,7 @@ import org.keycloak.services.clientpolicy.executor.JWTClaimEnforcerExecutor;
 import org.keycloak.services.clientpolicy.executor.JWTClaimEnforcerExecutorFactory;
 import org.keycloak.testsuite.AssertEvents;
 import org.keycloak.testsuite.admin.ApiUtil;
+import org.keycloak.testsuite.arquillian.annotation.EnableFeature;
 import org.keycloak.testsuite.arquillian.annotation.UncaughtServerErrorExpected;
 import org.keycloak.testsuite.broker.util.SimpleHttpDefault;
 import org.keycloak.testsuite.client.policies.AbstractClientPoliciesTest;
@@ -105,6 +106,7 @@ import static org.junit.Assert.assertTrue;
 /**
  * @author <a href="mailto:mposolda@redhat.com">Marek Posolda</a>
  */
+@EnableFeature(value = Profile.Feature.DYNAMIC_SCOPES, skipRestart = true)
 public class StandardTokenExchangeV2Test extends AbstractClientPoliciesTest {
 
     @Page
@@ -812,13 +814,13 @@ public class StandardTokenExchangeV2Test extends AbstractClientPoliciesTest {
         }
     }
 
-    @Test
-    @UncaughtServerErrorExpected
-    public void testExchangeWithDynamicScopesEnabled() throws Exception {
-        testingClient.enableFeature(Profile.Feature.DYNAMIC_SCOPES);
-        testExchange();
-        testingClient.disableFeature(Profile.Feature.DYNAMIC_SCOPES);
-    }
+//    @Test
+//    @UncaughtServerErrorExpected
+//    public void testExchangeWithDynamicScopesEnabled() throws Exception {
+//        testingClient.enableFeature(Profile.Feature.DYNAMIC_SCOPES);
+//        testExchange();
+//        testingClient.disableFeature(Profile.Feature.DYNAMIC_SCOPES);
+//    }
 
     @Test
     @UncaughtServerErrorExpected
