@@ -1,12 +1,13 @@
 import type ClientScopeRepresentation from "@keycloak/keycloak-admin-client/lib/defs/clientScopeRepresentation";
 import type { KeyMetadataRepresentation } from "@keycloak/keycloak-admin-client/lib/defs/keyMetadataRepresentation";
-import { ActionGroup, Button } from "@patternfly/react-core";
+import { ActionGroup, Button, FormGroup } from "@patternfly/react-core";
 import { useEffect, useMemo, useState } from "react";
 import { FormProvider, useForm, useWatch } from "react-hook-form";
 import { useTranslation } from "react-i18next";
 import { Link } from "react-router-dom";
 import {
   FormSubmitButton,
+  HelpItem,
   SelectControl,
   TextAreaControl,
   TextControl,
@@ -29,6 +30,7 @@ import {
 import { convertAttributeNameToForm, convertToFormValues } from "../../util";
 import useIsFeatureEnabled, { Feature } from "../../utils/useIsFeatureEnabled";
 import { toClientScopes } from "../routes/ClientScopes";
+import { MultiLineInput } from "../../components/multi-line-input/MultiLineInput";
 
 const OID4VC_PROTOCOL = "oid4vc";
 const VC_FORMAT_JWT_VC = "jwt_vc";
@@ -192,14 +194,41 @@ export const ScopeForm = ({ clientScope, save }: ScopeFormProps) => {
               stringify
             />
             {dynamicScope === "true" && (
-              <TextControl
-                name={convertAttributeNameToForm<ClientScopeDefaultOptionalType>(
-                  "attributes.dynamic.scope.regexp",
-                )}
-                label={t("dynamicScopeFormat")}
-                labelIcon={t("dynamicScopeFormatHelp")}
-                isDisabled
-              />
+              <>
+                <TextControl
+                  name={convertAttributeNameToForm<ClientScopeDefaultOptionalType>(
+                    "attributes.dynamic.scope.regexp",
+                  )}
+                  label={t("dynamicScopeFormat")}
+                  labelIcon={t("dynamicScopeFormatHelp")}
+                  isDisabled
+                />
+                <TextControl
+                  name={convertAttributeNameToForm<ClientScopeDefaultOptionalType>(
+                    "attributes.filtered_claim",
+                  )}
+                  label={t("dynamicScopeFilteringClaim")}
+                  labelIcon={t("dynamicScopeFilteringClaimHelp")}
+                />
+                <FormGroup
+                  label={t("userAttributeField")}
+                  fieldId="kc-userAttributeField"
+                  labelIcon={
+                    <HelpItem
+                      helpText={t("userAttributeFieldHelp")}
+                      fieldLabelId="userAttributeField"
+                    />
+                  }
+                >
+                  <MultiLineInput
+                    name={convertAttributeNameToForm<ClientScopeDefaultOptionalType>(
+                      "attributes.dynamic.scope.user.attribute",
+                    )}
+                    addButtonLabel={t("addUserAttribute")}
+                    stringify={true}
+                  />
+                </FormGroup>
+              </>
             )}
           </>
         )}
