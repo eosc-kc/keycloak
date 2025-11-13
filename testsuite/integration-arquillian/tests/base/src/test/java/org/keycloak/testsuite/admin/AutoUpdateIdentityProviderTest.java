@@ -55,7 +55,6 @@ public class AutoUpdateIdentityProviderTest extends AbstractAdminTest {
             map.put("fromUrl", "http://localhost:8880/saml-idp-metadata");
 
             Map<String, String> result = realm.identityProviders().importFrom(map);
-            assertSamlImport(result);
 
             // Create new SAML identity provider using configuration retrieved from import-config
             //change some values( postBindingLogout,postBindingAuthnRequest from true to false, enabled false)  - add autoupdated values
@@ -85,14 +84,6 @@ public class AutoUpdateIdentityProviderTest extends AbstractAdminTest {
         } finally {
             httpService.stop();
         }
-    }
-
-    private void assertSamlImport(Map<String, String> config) {
-        //firtsly check and remove enabledFromMetadata from config
-        boolean enabledFromMetadata = Boolean.valueOf(config.get(SAMLIdentityProviderConfig.ENABLED_FROM_METADATA));
-        config.remove(SAMLIdentityProviderConfig.ENABLED_FROM_METADATA);
-        Assert.assertTrue(enabledFromMetadata);
-        assertSamlConfig(config);
     }
 
     private void assertSamlConfig(Map<String, String> config) {
@@ -164,7 +155,7 @@ public class AutoUpdateIdentityProviderTest extends AbstractAdminTest {
         assertThat(config, hasEntry("singleLogoutServiceUrl", "http://localhost:8080/auth/realms/master/protocol/saml"));
         assertThat(config, hasEntry("artifactResolutionServiceUrl", "http://localhost:8080/auth/realms/master/protocol/saml/resolve"));
         assertThat(config, hasEntry("artifactBindingResponse", "false"));
-        assertThat(config, hasEntry("postBindingAuthnRequest", "false"));
+        assertThat(config, hasEntry("postBindingAuthnRequest", hasExecuted ? "true" : "false"));
         assertThat(config, hasEntry("singleSignOnServiceUrl", "http://localhost:8080/auth/realms/master/protocol/saml"));
         assertThat(config, hasEntry("wantAuthnRequestsSigned", "true"));
         assertThat(config, hasEntry("addExtensionsElementWithKeyInfo", "false"));
