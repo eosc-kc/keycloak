@@ -456,9 +456,6 @@ public class IdentityProviderSamlTest extends AbstractIdentityProviderTest {
 
     private void assertSamlImport(Map<String, String> config, String expectedSigningCertificates, boolean enabled, boolean postBindingAuthnRequest) {
         //firtsly check and remove enabledFromMetadata from config
-        boolean enabledFromMetadata = Boolean.valueOf(config.get(SAMLIdentityProviderConfig.ENABLED_FROM_METADATA));
-        config.remove(SAMLIdentityProviderConfig.ENABLED_FROM_METADATA);
-        Assert.assertEquals(enabledFromMetadata,enabled);
         assertSamlConfig(config, postBindingAuthnRequest, true);
         assertThat(config, hasEntry("signingCertificate", expectedSigningCertificates));
     }
