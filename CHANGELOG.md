@@ -10,6 +10,11 @@ Full Keycloak upstream jira issue can be shown if filtered by Fix version.
 
 Our Keycloak version is working well with PostgreSQL database. For using other SQL databases, text field in database need to be evaluated.
 
+## [22.0.13-1.25] - 2025-11-13
+
+### Fixed
+- Fix QuarkusKeycloakSession kept in memory for each timer [keycloak-43761](https://github.com/keycloak/keycloak/issues/43761)
+
 ## [22.0.13-1.24] - 2025-10-09
 
 _keycloakUrl_ realm attribute is needed to be configured for a realm being in OpenId Federation as RP
