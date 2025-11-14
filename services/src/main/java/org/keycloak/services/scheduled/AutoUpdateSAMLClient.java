@@ -52,8 +52,9 @@ public class AutoUpdateSAMLClient implements ScheduledTask {
             timer.cancelTask("AutoUpdateSAMLClient_" + id);
             return;
         }
+        InputStream inputStream = null;
         try {
-            InputStream inputStream = session.getProvider(HttpClientProvider.class).get(client.getAttribute(SamlConfigAttributes.SAML_METADATA_URL));
+            inputStream = session.getProvider(HttpClientProvider.class).get(client.getAttribute(SamlConfigAttributes.SAML_METADATA_URL));
             ClientRepresentation rep = ModelToRepresentation.toRepresentation(client, session);
             EntityDescriptorDescriptionConverter.loadEntityDescriptors(inputStream, rep);
             rep.getAttributes().put(SamlConfigAttributes.SAML_LAST_REFRESH_TIME, String.valueOf(Instant.now().toEpochMilli()));
@@ -69,8 +70,14 @@ public class AutoUpdateSAMLClient implements ScheduledTask {
             });
 
             inputStream.close();
-        } catch (IOException | ErrorResponseException e) {
+        } catch (Exception e) {
             e.printStackTrace();
+            if (inputStream != null) {
+                try {
+                    inputStream.close();
+                } catch (IOException ex) {
+                }
+            }
         }
     }
 }
