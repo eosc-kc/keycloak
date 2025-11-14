@@ -189,6 +189,10 @@ public enum EventType implements EnumWithStableIndex {
 
     USER_SESSION_DELETED(61, false),
     USER_SESSION_DELETED_ERROR(0x10000 + USER_SESSION_DELETED.getStableIndex(), false),
+    GROUP_MEMBERSHIP_CREATE(62, true),
+    GROUP_MEMBERSHIP_UPDATE(63, true),
+    GROUP_MEMBERSHIP_DELETE(64, true),
+    GROUP_MEMBERSHIP_SUSPEND(65, true)
     ;
 
     private final int stableIndex;
