@@ -203,6 +203,10 @@ public enum EventType implements EnumWithStableIndex {
 
     JWT_AUTHORIZATION_GRANT(70, true),
     JWT_AUTHORIZATION_GRANT_ERROR(0x10000 + JWT_AUTHORIZATION_GRANT.getStableIndex(), true),
+    GROUP_MEMBERSHIP_CREATE(72, true),
+    GROUP_MEMBERSHIP_UPDATE(73, true),
+    GROUP_MEMBERSHIP_DELETE(74, true),
+    GROUP_MEMBERSHIP_SUSPEND(75, true)
     ;
 
     private final int stableIndex;
