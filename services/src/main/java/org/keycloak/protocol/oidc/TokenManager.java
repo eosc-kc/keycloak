@@ -279,11 +279,11 @@ public class TokenManager {
 
     public static boolean isUserValid(KeycloakSession session, RealmModel realm, AccessToken token, UserModel user) {
         if (user == null) {
-            logger.debugf("User does not exists");
+            logger.warnf("User does not exists");
             return false;
         }
         if (!user.isEnabled()) {
-            logger.debugf("User '%s' is disabled", user.getUsername());
+            logger.warnf("User '%s' is disabled", user.getUsername());
             return false;
         }
         return validateUserNotBefore(session, realm, token, user);
@@ -295,7 +295,7 @@ public class TokenManager {
                     .withChecks(NotBeforeCheck.forModel(session ,realm, user))
                     .verify();
         } catch (VerificationException e) {
-            logger.debugf("JWT check failed: %s", e.getMessage());
+            logger.warnf("JWT check failed: %s", e.getMessage());
             return false;
         }
         return true;
