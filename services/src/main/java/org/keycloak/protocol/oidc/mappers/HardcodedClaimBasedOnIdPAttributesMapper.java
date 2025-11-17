@@ -9,7 +9,6 @@ import org.keycloak.models.IdentityProviderModel;
 import org.keycloak.models.ProtocolMapperModel;
 import org.keycloak.models.UserSessionModel;
 import org.keycloak.protocol.ProtocolMapperUtils;
-import org.keycloak.protocol.oidc.DefaultTokenExchangeProvider;
 import org.keycloak.protocol.oidc.OIDCLoginProtocol;
 import org.keycloak.provider.ProviderConfigProperty;
 import org.keycloak.representations.IDToken;
@@ -28,12 +27,7 @@ public class HardcodedClaimBasedOnIdPAttributesMapper extends AbstractOIDCProtoc
     private static final List<ProviderConfigProperty> configProperties = new ArrayList<ProviderConfigProperty>();
 
     static {
-        ProviderConfigProperty property = new ProviderConfigProperty();
-        property.setName(ProtocolMapperUtils.CLAIM_VALUE);
-        property.setLabel(ProtocolMapperUtils.CLAIM_VALUE_LABEL);
-        property.setHelpText(ProtocolMapperUtils.CONDITIONAL_CLAIM_VALUE_HELP_TEXT);
-        property.setType(ProviderConfigProperty.STRING_TYPE);
-        configProperties.add(property);
+        ProviderConfigProperty property;
 
         property = new ProviderConfigProperty();
         property.setName(ProtocolMapperUtils.IDP_ATTRIBUTE_NAME);
@@ -46,7 +40,18 @@ public class HardcodedClaimBasedOnIdPAttributesMapper extends AbstractOIDCProtoc
         property.setName(ProtocolMapperUtils.IDP_ATTRIBUTE_VALUES);
         property.setLabel(ProtocolMapperUtils.IDP_ATTRIBUTE_VALUES_LABEL);
         property.setHelpText(ProtocolMapperUtils.IDP_ATTRIBUTE_VALUES_HELP_TEXT);
-        property.setType(ProviderConfigProperty.STRING_TYPE);
+        property.setType(ProviderConfigProperty.MULTIVALUED_STRING_TYPE);
+        property.setStringify(Boolean.TRUE);
+        property.setDefaultValue("");
+        configProperties.add(property);
+
+        property = new ProviderConfigProperty();
+        property.setName(ProtocolMapperUtils.CLAIM_VALUE);
+        property.setLabel(ProtocolMapperUtils.CLAIM_VALUE_LABEL);
+        property.setHelpText(ProtocolMapperUtils.CONDITIONAL_CLAIM_VALUE_HELP_TEXT);
+        property.setType(ProviderConfigProperty.MULTIVALUED_STRING_TYPE);
+        property.setStringify(Boolean.TRUE);
+        property.setDefaultValue("");
         configProperties.add(property);
 
         OIDCAttributeMapperHelper.addAttributeConfig(configProperties, HardcodedClaimBasedOnAttributeMapper.class);
@@ -96,7 +101,7 @@ public class HardcodedClaimBasedOnIdPAttributesMapper extends AbstractOIDCProtoc
                     OIDCAttributeMapperHelper.mapClaim(token, mappingModel, attributeValues.size() == 1 ? attributeValues.get(0) : attributeValues);
                 }
             } catch (IOException e) {
-                logger.warn("problem executing HardcodedClaimBasedOnIdPAttributesMapper");
+                logger.warn("problem executing HardcodedAttributeBasedOnIdPAttributesMapper");
                 e.printStackTrace();
             }
         }

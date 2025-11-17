@@ -20,18 +20,15 @@ public class HardcodedClaimBasedOnIdPMapper extends AbstractOIDCProtocolMapper i
     private static final List<ProviderConfigProperty> configProperties = new ArrayList<ProviderConfigProperty>();
 
     static {
-        ProviderConfigProperty property = new ProviderConfigProperty();
-        property.setName(ProtocolMapperUtils.CLAIM_VALUE);
-        property.setLabel(ProtocolMapperUtils.CLAIM_VALUE_LABEL);
-        property.setType(ProviderConfigProperty.STRING_TYPE);
-        property.setHelpText(ProtocolMapperUtils.CONDITIONAL_CLAIM_VALUE_HELP_TEXT);
-        configProperties.add(property);
+        ProviderConfigProperty property;
 
         property = new ProviderConfigProperty();
         property.setName(ProtocolMapperUtils.IDP_ALIAS);
         property.setLabel(ProtocolMapperUtils.IDP_ALIAS_LABEL);
         property.setHelpText(ProtocolMapperUtils.IDP_ALIAS_HELP_TEXT);
-        property.setType(ProviderConfigProperty.STRING_TYPE);
+        property.setType(ProviderConfigProperty.MULTIVALUED_STRING_TYPE);
+        property.setStringify(Boolean.TRUE);
+        property.setDefaultValue("");
         configProperties.add(property);
 
         property = new ProviderConfigProperty();
@@ -40,6 +37,16 @@ public class HardcodedClaimBasedOnIdPMapper extends AbstractOIDCProtocolMapper i
         property.setHelpText(ProtocolMapperUtils.MULTIVALUED_HELP_TEXT);
         property.setType(ProviderConfigProperty.BOOLEAN_TYPE);
         configProperties.add(property);
+
+        property = new ProviderConfigProperty();
+        property.setName(ProtocolMapperUtils.CLAIM_VALUE);
+        property.setLabel(ProtocolMapperUtils.CLAIM_VALUE_LABEL);
+        property.setHelpText(ProtocolMapperUtils.CONDITIONAL_CLAIM_VALUE_HELP_TEXT);
+        property.setType(ProviderConfigProperty.MULTIVALUED_STRING_TYPE);
+        property.setStringify(Boolean.TRUE);
+        property.setDefaultValue("");
+        configProperties.add(property);
+
         OIDCAttributeMapperHelper.addAttributeConfig(configProperties, HardcodedClaimBasedOnIdPMapper.class);
 
     }
