@@ -90,6 +90,8 @@ public class RPTIntrospectionProvider extends AccessTokenIntrospectionProvider<A
                 eventBuilder.success();
             } else {
                 tokenMetadata = JsonSerialization.createObjectNode();
+                eventBuilder.detail(Details.REASON, "Requesting party token verification failed");
+                eventBuilder.error(Errors.TOKEN_INTROSPECTION_FAILED);
                 tokenMetadata.put("active", false);
             }
 

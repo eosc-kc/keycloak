@@ -21,6 +21,7 @@ Full Keycloak upstream jira issue can be shown if filtered by Fix version.
 - Client scope policy [RCIAM-1241](https://jira.argo.grnet.gr/browse/RCIAM-1241)
 - Add authnAuthority and voPersonID user attribute to event details
 - Login events type for add, remove, suspend user from a group [RCIAM-1292](https://jira.argo.grnet.gr/browse/RCIAM-1292)
+- Enhanced TokenIntrospection and UserInfo events and logs
 
 ### Changed
 - Change emailVerified User field with UserAttributeMappers (conditional trust email). [EOSC-KC-70](https://github.com/eosc-kc/keycloak/issues/70)
