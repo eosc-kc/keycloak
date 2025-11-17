@@ -106,6 +106,7 @@ public class AccessTokenIntrospectionProvider<T extends AccessToken> implements 
 
     @Override
     public Response introspect(String tokenStr, EventBuilder eventBuilder) {
+        this.eventBuilder = eventBuilder;
         try {
             String[] splitToken = tokenStr.split("\\.");
             String accessTokenStr = new String(Base64.getUrlDecoder().decode(splitToken[1]));
@@ -113,11 +114,17 @@ public class AccessTokenIntrospectionProvider<T extends AccessToken> implements 
             String issuer = tokenJson.get("iss").asText();
             String realmUrl = Urls.realmIssuer(session.getContext().getUri().getBaseUri(), realm.getName());
             if (realmUrl.equals(issuer)) {
-                return introspectKeycloak(tokenStr, eventBuilder);
+                return introspectKeycloak(tokenStr);
             } else {
-                if (isExpired(tokenJson.get("exp").asLong())) {
+                long exp = tokenJson.get("exp").asLong();
+                if (isExpired(exp)) {
+                    String clientId = tokenJson.get("azp").asText();
+                    String description = String.format("Token introspection for %s client has expired  token. Token expiration = %d. Current time = %d", clientId, exp, Time.currentTime());
+                    logger.warn(description);
+                    eventBuilder.detail("Expired token", description);
                     ObjectNode tokenMetadata = JsonSerialization.createObjectNode();
                     tokenMetadata.put("active", false);
+                    eventBuilder.error(Errors.INVALID_TOKEN);
                     return Response.ok(JsonSerialization.writeValueAsBytes(tokenMetadata)).type(MediaType.APPLICATION_JSON_TYPE).build();
                 } else {
                     return introspectWithExternal(tokenStr, issuer, realm);
@@ -127,6 +134,8 @@ public class AccessTokenIntrospectionProvider<T extends AccessToken> implements 
         } catch (Exception e) {
             ObjectNode tokenMetadata = JsonSerialization.createObjectNode();
             tokenMetadata.put("active", false);
+            eventBuilder.detail("Failure reason", e.getMessage());
+            eventBuilder.error(Errors.TOKEN_INTROSPECTION_FAILED);
             try {
                 return Response.ok(JsonSerialization.writeValueAsBytes(tokenMetadata)).type(MediaType.APPLICATION_JSON_TYPE).build();
             } catch (IOException ioException) {
@@ -135,9 +144,8 @@ public class AccessTokenIntrospectionProvider<T extends AccessToken> implements 
         }
     }
 
-  protected Response introspectKeycloak (String tokenStr, EventBuilder eventBuilder) {
-        this.eventBuilder = eventBuilder;
-
+  protected Response introspectKeycloak (String tokenStr) {
+      
         try {
             ClientModel authenticatedClient = session.getContext().getClient();
 
@@ -412,6 +420,8 @@ public class AccessTokenIntrospectionProvider<T extends AccessToken> implements 
                 if (oidcIssuerIdp.getTokenIntrospectionUrl() != null) {
                     SimpleHttpResponse response = oidcIssuerProvider.authenticateTokenRequest(SimpleHttp.create(session).doPost(oidcIssuerIdp.getTokenIntrospectionUrl()).param(PARAM_TOKEN, token)).asResponse();
                     if (response.getStatus() > 300) {
+                        logger.warn("Remote introspection Idp return http status " + response.getStatus() + " with body :");
+                        logger.warn(response.asString());
                         ObjectNode tokenMetadata = JsonSerialization.createObjectNode();
                         tokenMetadata.put("active", false);
                         return Response.ok(JsonSerialization.writeValueAsBytes(tokenMetadata)).type(MediaType.APPLICATION_JSON_TYPE).build();
@@ -421,10 +431,17 @@ public class AccessTokenIntrospectionProvider<T extends AccessToken> implements 
                 }
             }
             //if failed to find issuer in IdPs or IntrospectionEndpoint does not exist for specific Idp return false
+            String problem = issuerIdp != null ? "Remote introspection: problem getting remote Idp with issuer " + issuer + "introspection endpoint" : "Remote introspection: Idp with issuer " + issuer + " does not exist";
+            logger.warn(problem);
+            eventBuilder.detail("Remote introspection problem", problem);
+            eventBuilder.error(Errors.TOKEN_INTROSPECTION_FAILED);
             ObjectNode tokenMetadata = JsonSerialization.createObjectNode();
             tokenMetadata.put("active", false);
             return Response.ok(JsonSerialization.writeValueAsBytes(tokenMetadata)).type(MediaType.APPLICATION_JSON_TYPE).build();
         } catch (Exception e) {
+            eventBuilder.detail("Remote introspection exception", e.getMessage());
+            eventBuilder.error(Errors.TOKEN_INTROSPECTION_FAILED);
+            logger.warn("Error during remote introspection", e);
             throw new RuntimeException("Error creating token introspection response.", e);
         }
     }
