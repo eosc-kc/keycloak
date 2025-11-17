@@ -24,38 +24,38 @@ public class HardcodedAttributeBasedOnAttributeMapper extends AbstractSAMLProtoc
     private static final List<ProviderConfigProperty> configProperties = new ArrayList<ProviderConfigProperty>();
 
     static {
-        ProviderConfigProperty property = new ProviderConfigProperty();
-        property.setName(ProtocolMapperUtils.ATTRIBUTE_VALUE);
-        property.setLabel(ProtocolMapperUtils.ATTRIBUTE_CONDITIONAL_VALUES_LABEL);
-        property.setHelpText(ProtocolMapperUtils.ATTRIBUTE_CONDITIONAL_VALUES_HELP_TEXT);
-        property.setType(ProviderConfigProperty.STRING_TYPE);
-        configProperties.add(property);
+        ProviderConfigProperty property;
 
         property = new ProviderConfigProperty();
         property.setName(ProtocolMapperUtils.USER_ATTRIBUTE);
         property.setLabel(ProtocolMapperUtils.USER_MODEL_ATTRIBUTE_LABEL);
         property.setHelpText(ProtocolMapperUtils.USER_MODEL_CONDITIONAL_ATTRIBUTE_HELP_TEXT);
-        property.setType(ProviderConfigProperty.STRING_TYPE);
+        property.setType(ProviderConfigProperty.USER_PROFILE_ATTRIBUTE_LIST_TYPE);
         configProperties.add(property);
 
         property = new ProviderConfigProperty();
         property.setName(ProtocolMapperUtils.USER_ATTRIBUTE_VALUES);
         property.setLabel(ProtocolMapperUtils.USER_MODEL_CONDITIONAL_VALUES_LABEL);
         property.setHelpText(ProtocolMapperUtils.USER_MODEL_CONDITIONAL_VALUES_HELP_TEXT);
-        property.setType(ProviderConfigProperty.STRING_TYPE);
+        property.setType(ProviderConfigProperty.MULTIVALUED_STRING_TYPE);
+        property.setStringify(Boolean.TRUE);
+        property.setDefaultValue("");
         configProperties.add(property);
 
         property = new ProviderConfigProperty();
-        property.setName(ProtocolMapperUtils.MULTIVALUED);
-        property.setLabel(ProtocolMapperUtils.MULTIVALUED_LABEL);
-        property.setHelpText(ProtocolMapperUtils.MULTIVALUED_HELP_TEXT);
-        property.setType(ProviderConfigProperty.BOOLEAN_TYPE);
+        property.setName(ProtocolMapperUtils.ATTRIBUTE_VALUE);
+        property.setLabel(ProtocolMapperUtils.ATTRIBUTE_CONDITIONAL_VALUES_LABEL);
+        property.setHelpText(ProtocolMapperUtils.ATTRIBUTE_CONDITIONAL_VALUES_HELP_TEXT);
+        property.setType(ProviderConfigProperty.MULTIVALUED_STRING_TYPE);
+        property.setStringify(Boolean.TRUE);
+        property.setDefaultValue("");
         configProperties.add(property);
+
         AttributeStatementHelper.setConfigProperties(configProperties);
 
     }
 
-    public static final String PROVIDER_ID = "saml-hardcoded-claim-based-attribute-mapper";
+    public static final String PROVIDER_ID = "saml-hardcoded-attribute-based-attribute-mapper";
 
     public List<ProviderConfigProperty> getConfigProperties() {
         return configProperties;
