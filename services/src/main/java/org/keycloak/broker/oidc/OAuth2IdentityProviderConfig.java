@@ -41,6 +41,7 @@ public class OAuth2IdentityProviderConfig extends IdentityProviderModel {
 
     public static final String REQUIRES_SHORT_STATE_PARAMETER = "requiresShortStateParameter";
     public static final String PASS_SCOPE = "passScope";
+    public static final String OPTIONAL_SCOPE = "optionalScope";
 
     public OAuth2IdentityProviderConfig(IdentityProviderModel model) {
         super(model);
@@ -234,6 +235,15 @@ public class OAuth2IdentityProviderConfig extends IdentityProviderModel {
     public void setPassScope(boolean passScope) {
         getConfig().put(PASS_SCOPE, String.valueOf(passScope));
     }
+
+    public String getOptionalScope() {
+        return getConfig().get(OPTIONAL_SCOPE);
+    }
+
+    public void setOptionalScope(String optionalcope) {
+        getConfig().put(OPTIONAL_SCOPE, optionalcope);
+    }
+
 
     @Override
     public void validate(RealmModel realm) {
