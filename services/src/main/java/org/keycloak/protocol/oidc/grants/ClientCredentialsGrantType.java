@@ -97,7 +97,7 @@ public class ClientCredentialsGrantType extends OAuth2GrantTypeBase {
             throw new CorsErrorResponseException(cors, OAuthErrorException.INVALID_REQUEST, "User '" + clientUsername + "' disabled", Response.Status.UNAUTHORIZED);
         }
 
-        String scope = TokenManager.clientScopePolicy(getRequestedScopes(), clientUser, realm.getClientScopesStream().collect(Collectors.toList()));
+        String scope = TokenManager.clientScopePolicy(getRequestedScopes(), clientUser, realm.getClientScopesStream().toList());
 
         RootAuthenticationSessionModel rootAuthSession = new AuthenticationSessionManager(session).createAuthenticationSession(realm, false);
         AuthenticationSessionModel authSession = rootAuthSession.createAuthenticationSession(client);

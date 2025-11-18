@@ -362,7 +362,7 @@ public class DeviceGrantType extends OAuth2GrantTypeBase {
             throw new CorsErrorResponseException(cors, OAuthErrorException.INVALID_SCOPE,
                     errorMessage, Response.Status.BAD_REQUEST);
         }
-        scopeParam = TokenManager.clientScopePolicy(scopeParam, user, realm.getClientScopesStream().collect(Collectors.toList()));
+        scopeParam = TokenManager.clientScopePolicy(scopeParam, user, realm.getClientScopesStream().toList());
 
         ClientSessionContext clientSessionCtx = DefaultClientSessionContext.fromClientSessionAndScopeParameter(clientSession,
                 scopeParam, session);

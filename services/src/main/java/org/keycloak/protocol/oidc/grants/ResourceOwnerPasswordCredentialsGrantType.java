@@ -129,7 +129,7 @@ public class ResourceOwnerPasswordCredentialsGrantType extends OAuth2GrantTypeBa
             throw new CorsErrorResponseException(cors, OAuthErrorException.INVALID_GRANT, errorMessage, Response.Status.BAD_REQUEST);
 
         }
-        String scope = TokenManager.clientScopePolicy(getRequestedScopes(), user, realm.getClientScopesStream().collect(Collectors.toList()));
+        String scope = TokenManager.clientScopePolicy(getRequestedScopes(), user, realm.getClientScopesStream().toList());
         authSession.setClientNote(OIDCLoginProtocol.SCOPE_PARAM, scope);
 
         AuthenticationManager.setClientScopesInSession(session, authSession);
