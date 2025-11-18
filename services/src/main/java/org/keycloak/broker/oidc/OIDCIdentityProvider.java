@@ -96,6 +96,7 @@ import org.keycloak.util.TokenUtil;
 import org.keycloak.vault.VaultStringSecret;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.jboss.logging.Logger;
 
 /**
@@ -103,6 +104,8 @@ import org.jboss.logging.Logger;
  */
 public class OIDCIdentityProvider extends AbstractOAuth2IdentityProvider<OIDCIdentityProviderConfig> implements ExchangeExternalToken, ClientAssertionIdentityProvider<OIDCIdentityProviderConfig>, JWTAuthorizationGrantProvider<OIDCIdentityProviderConfig> {
     protected static final Logger logger = Logger.getLogger(OIDCIdentityProvider.class);
+
+    public static final ObjectMapper objectMapper = new ObjectMapper();
 
     public static final String SCOPE_OPENID = "openid";
     public static final String FEDERATED_ID_TOKEN = "FEDERATED_ID_TOKEN";
@@ -122,6 +125,9 @@ public class OIDCIdentityProvider extends AbstractOAuth2IdentityProvider<OIDCIde
         if (!defaultScope.contains(SCOPE_OPENID)) {
             config.setDefaultScope((SCOPE_OPENID + " " + defaultScope).trim());
         }
+
+        if (config.isPassScope() && (config.getOptionalScope() == null || config.getOptionalScope().isEmpty()))
+            config.setOptionalScope(SCOPE_OPENID);
     }
 
     @Override
@@ -550,6 +556,9 @@ public class OIDCIdentityProvider extends AbstractOAuth2IdentityProvider<OIDCIde
 
     protected BrokeredIdentityContext extractIdentity(AccessTokenResponse tokenResponse, String accessToken, JsonWebToken idToken) throws IOException {
         String id = idToken.getSubject();
+        logger.debugf("User with %s username (sub claim) login from idp with alias %s", id, getConfig().getAlias());
+        logger.debugf("id token: %s", objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(idToken));
+        logger.tracef("access token: %s", accessToken);
         BrokeredIdentityContext identity = new BrokeredIdentityContext(id, getConfig());
         String name = (String) idToken.getOtherClaims().get(IDToken.NAME);
         String givenName = (String)idToken.getOtherClaims().get(IDToken.GIVEN_NAME);
@@ -583,6 +592,7 @@ public class OIDCIdentityProvider extends AbstractOAuth2IdentityProvider<OIDCIde
                         throw new RuntimeException("Unsupported content-type [" + contentType + "] in response from [" + userInfoUrl + "].");
                     }
 
+                    logger.debugf("Userinfo: %s",userInfo.toPrettyString());
                     id = getJsonProperty(userInfo, "sub");
                     name = getJsonProperty(userInfo, "name");
                     givenName = getJsonProperty(userInfo, IDToken.GIVEN_NAME);
