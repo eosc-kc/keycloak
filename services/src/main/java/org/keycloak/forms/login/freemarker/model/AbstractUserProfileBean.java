@@ -14,6 +14,7 @@ import java.util.stream.Stream;
 
 import jakarta.ws.rs.core.MultivaluedMap;
 
+import org.keycloak.authentication.requiredactions.util.UpdateProfileContext;
 import org.keycloak.models.KeycloakSession;
 import org.keycloak.userprofile.AttributeGroupMetadata;
 import org.keycloak.userprofile.AttributeMetadata;
@@ -65,6 +66,14 @@ public abstract class AbstractUserProfileBean {
         this.attributes = toAttributes(profile.getAttributes().getReadable(), writeableOnly);
         if(this.attributes != null)
             this.attributesByName = attributes.stream().collect(Collectors.toMap((a) -> a.getName(), (a) -> a));        
+    }
+
+    protected void init(KeycloakSession session) {
+        UserProfileProvider provider = session.getProvider(UserProfileProvider.class);
+        this.profile = createUserProfile(provider);
+        this.attributes = toAttributes(profile.getAttributes().getReadable());
+        if(this.attributes != null)
+            this.attributesByName = attributes.stream().collect(Collectors.toMap((a) -> a.getName(), (a) -> a));
     }
 
     /**
@@ -127,6 +136,20 @@ public abstract class AbstractUserProfileBean {
                 .sorted(ATTRIBUTE_COMPARATOR)
                 .collect(Collectors.toList());
     }
+
+    private List<Attribute> toAttributes(Map<String, List<String>> attributes) {
+        if(attributes == null)
+            return null;
+        Attributes profileAttributes = profile.getAttributes();
+        return attributes.keySet().stream().map(profileAttributes::getMetadata)
+                .filter(Objects::nonNull)
+                .filter((am) -> profileAttributes.isRequired(am.getName()))
+                .filter((am) -> !profileAttributes.getUnmanagedAttributes().containsKey(am.getName()))
+                .map(Attribute::new)
+                .sorted(ATTRIBUTE_COMPARATOR)
+                .collect(Collectors.toList());
+    }
+
 
     /**
      * Info about user profile attribute available in Freemarker template. 

@@ -1,6 +1,6 @@
 <#macro userProfileFormFields>
 	<#assign currentGroup="">
-	
+
 	<#list profile.attributes as attribute>
 
 		<#if attribute.name=='locale' && realm.internationalizationEnabled && locale.currentLanguageTag?has_content>
@@ -16,7 +16,7 @@
 						data-${key}="${value}"
 					</#list>
 					>
-	
+
 						<#assign groupDisplayHeader=group.displayHeader!"">
 						<#if groupDisplayHeader != "">
 							<#assign groupHeaderText=advancedMsg(groupDisplayHeader)!group>
@@ -26,7 +26,7 @@
 						<div class="${properties.kcContentWrapperClass!}">
 							<label id="header-${attribute.group.name}" class="${kcFormGroupHeader!}">${groupHeaderText}</label>
 						</div>
-	
+
 						<#assign groupDisplayDescription=group.displayDescription!"">
 						<#if groupDisplayDescription != "">
 							<#assign groupDescriptionText=advancedMsg(groupDisplayDescription)!"">
