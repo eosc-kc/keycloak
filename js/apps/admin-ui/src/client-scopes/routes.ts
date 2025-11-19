@@ -1,4 +1,6 @@
 import type { AppRouteObject } from "../routes";
+import { EditPolicyRoute } from "./routes/EditPolicy";
+import { AddPolicyRoute } from "./routes/AddPolicy";
 import { ClientScopeRoute } from "./routes/ClientScope";
 import { ClientScopesRoute } from "./routes/ClientScopes";
 import { MapperRoute } from "./routes/Mapper";
@@ -9,6 +11,8 @@ const routes: AppRouteObject[] = [
   MapperRoute,
   ClientScopeRoute,
   ClientScopesRoute,
+  AddPolicyRoute,
+  EditPolicyRoute
 ];
 
 export default routes;
