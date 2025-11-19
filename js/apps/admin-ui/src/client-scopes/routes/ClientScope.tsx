@@ -3,7 +3,12 @@ import type { Path } from "react-router-dom";
 import { generateEncodedPath } from "../../utils/generateEncodedPath";
 import type { AppRouteObject } from "../../routes";
 
-export type ClientScopeTab = "settings" | "mappers" | "scope" | "events";
+export type ClientScopeTab =
+  | "settings"
+  | "mappers"
+  | "scope"
+  | "events"
+  | "policies";
 
 export type ClientScopeParams = {
   realm: string;
