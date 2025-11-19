@@ -28,14 +28,17 @@ import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 import org.keycloak.broker.oidc.KeycloakOIDCIdentityProviderFactory;
+import org.keycloak.broker.oidc.OAuth2IdentityProviderConfig;
 import org.keycloak.broker.oidc.OIDCIdentityProviderFactory;
 import org.keycloak.broker.provider.BrokeredIdentityContext;
 import org.keycloak.common.util.CollectionUtil;
+import org.keycloak.models.Constants;
 import org.keycloak.models.IdentityProviderMapperModel;
 import org.keycloak.models.IdentityProviderSyncMode;
 import org.keycloak.models.KeycloakSession;
 import org.keycloak.models.RealmModel;
 import org.keycloak.models.UserModel;
+import org.keycloak.protocol.oidc.OIDCLoginProtocol;
 import org.keycloak.provider.ProviderConfigProperty;
 import org.keycloak.saml.common.util.StringUtil;
 
@@ -54,6 +57,7 @@ public class UserAttributeMapper extends AbstractClaimMapper {
     public static final String EMAIL_VERIFIED = "emailVerified";
     public static final String FIRST_NAME = "firstName";
     public static final String LAST_NAME = "lastName";
+    public static final String RELATED_SCOPES = "related.scopes";
     private static final Set<IdentityProviderSyncMode> IDENTITY_PROVIDER_SYNC_MODES = new HashSet<>(Arrays.asList(IdentityProviderSyncMode.values()));
 
     static {
@@ -65,6 +69,14 @@ public class UserAttributeMapper extends AbstractClaimMapper {
         property1.setHelpText("Name of claim to search for in token. You can reference nested claims using a '.', i.e. 'address.locality'. To use dot (.) literally, escape it with backslash (\\.)");
         property1.setType(ProviderConfigProperty.STRING_TYPE);
         configProperties.add(property1);
+        ProviderConfigProperty relatedScopesProperty = new ProviderConfigProperty();
+        relatedScopesProperty.setName(RELATED_SCOPES);
+        relatedScopesProperty.setLabel("Related scopes");
+        relatedScopesProperty.setHelpText("Specify the scopes that can be used for requesting the claim when the 'Pass Scope' option is enabled. If none of the listed scopes are either set as default client scopes or present in the scope parameter from the initial application request, the user attribute will be preserved even if sync mode is set to 'FORCE'. If 'Pass Scope' is not enabled, any existing user attribute values will be removed if the corresponding claim is missing from the Identity Provider response.");
+        relatedScopesProperty.setType(ProviderConfigProperty.MULTIVALUED_STRING_TYPE);
+        relatedScopesProperty.setStringify(Boolean.TRUE);
+        relatedScopesProperty.setDefaultValue("");
+        configProperties.add(relatedScopesProperty);
         property = new ProviderConfigProperty();
         property.setName(USER_ATTRIBUTE);
         property.setLabel("User Attribute Name");
@@ -171,9 +183,26 @@ public class UserAttributeMapper extends AbstractClaimMapper {
                 user.setEmailVerified(Boolean.valueOf(values.get(0)));
         } else {
             List<String> current = user.getAttributeStream(attribute).collect(Collectors.toList());
-            if (!CollectionUtil.collectionEquals(values, current)) {
-                user.setAttribute(attribute, values);
-            } else if (values.isEmpty()) {
+            if (!CollectionUtil.collectionEquals(values, current) ) {
+                if (values.isEmpty()) {
+                    Boolean passScope = Boolean.valueOf(context.getIdpConfig().getConfig().get(OAuth2IdentityProviderConfig.PASS_SCOPE));
+                    String relatedScopesStr = mapperModel.getConfig().get(RELATED_SCOPES);
+                    if (passScope && relatedScopesStr != null) {
+                        List<String> relatedScopes = Arrays.asList(relatedScopesStr.split(Constants.CFG_DELIMITER));
+                        Set<String> scopeSet =  new HashSet(context.getAuthenticationSession().getClient().getClientScopes(true).keySet());
+                        String scopeParameter = context.getAuthenticationSession().getClientNote(OIDCLoginProtocol.SCOPE_PARAM);
+                        if (scopeParameter != null && !scopeParameter.isEmpty())
+                            scopeSet.addAll(Arrays.stream(scopeParameter.split(" ")).map(x -> x.split(":")[0]).collect(Collectors.toSet()));
+                        //remove attribute only if at least one related scopes is either default client scope either exist in request parameter (taking into account dynamic scopes)
+                       if (relatedScopes.stream().anyMatch(x -> scopeSet.contains(x)))
+                           user.removeAttribute(attribute);
+                    } else {
+                        user.removeAttribute(attribute);
+                    }
+                } else {
+                    user.setAttribute(attribute, values);
+                }
+            } else if (values.isEmpty() ) {
                 user.removeAttribute(attribute);
             }
         }
