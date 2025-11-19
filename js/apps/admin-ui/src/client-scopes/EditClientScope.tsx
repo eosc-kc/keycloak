@@ -44,6 +44,7 @@ import { toClientScopes } from "./routes/ClientScopes";
 import { toMapper } from "./routes/Mapper";
 import { useAccess } from "../context/access/Access";
 import { AdminEvents } from "../events/AdminEvents";
+import { PoliciesList } from "./details/PoliciesList";
 
 export default function EditClientScope() {
   const { adminClient } = useAdminClient();
@@ -107,6 +108,7 @@ export default function EditClientScope() {
   );
   const scopeTab = useRoutableTab(toClientScope({ realm, id, tab: "scope" }));
   const eventsTab = useRoutableTab(toClientScope({ realm, id, tab: "events" }));
+  const policiesTab = useRoutableTab(toClientScope({ realm, id, tab: "policies" }));
 
   const onSubmit = async (formData: ClientScopeDefaultOptionalType) => {
     const clientScope = convertFormValuesToObject({
@@ -120,7 +122,7 @@ export default function EditClientScope() {
 
       addAlert(t("updateSuccessClientScope"), AlertVariant.success);
     } catch (error) {
-      addError("updateErrorClientScope", error);
+      addError(t("updateErrorClientScope"), error);
     }
   };
 
@@ -298,6 +300,14 @@ export default function EditClientScope() {
                 <AdminEvents resourcePath={`*client-scopes/${id}`} />
               </Tab>
             )}
+          <Tab
+            id="policies"
+            data-testid="policies"
+            title={<TabTitleText>{t("scopePolicies")}</TabTitleText>}
+            {...policiesTab}
+          >
+            <PoliciesList />
+          </Tab>
         </RoutableTabs>
       </PageSection>
     </>
