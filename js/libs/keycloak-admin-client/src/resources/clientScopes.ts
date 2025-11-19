@@ -4,6 +4,7 @@ import type { KeycloakAdminClient } from "../client.js";
 import type ProtocolMapperRepresentation from "../defs/protocolMapperRepresentation.js";
 import type MappingsRepresentation from "../defs/mappingsRepresentation.js";
 import type RoleRepresentation from "../defs/roleRepresentation.js";
+import ClientScopePolicyRepresentation from "../defs/clientScopePolicyRepresentation.js";
 
 export class ClientScopes extends Resource<{ realm?: string }> {
   public find = this.makeRequest<{}, ClientScopeRepresentation[]>({
@@ -333,4 +334,48 @@ export class ClientScopes extends Resource<{ realm?: string }> {
     });
     return allProtocolMappers.find((mapper) => mapper.name === payload.name);
   }
+
+    public createPolicy = this.makeUpdateRequest<
+    { id: string },
+    ClientScopePolicyRepresentation
+  >({
+    method: "POST",
+    path: "/client-scopes/{id}/policies",
+    urlParamKeys: ["id"],
+    returnResourceIdInLocationHeader: { field: "id" },
+  });
+
+  public listPolicies = this.makeRequest<
+    { id: string },
+    ClientScopePolicyRepresentation[]
+  >({
+    method: "GET",
+    path: "/client-scopes/{id}/policies",
+    urlParamKeys: ["id"],
+  });
+
+  public findPolicy = this.makeRequest<
+    { id: string; policyId: string },
+    ClientScopePolicyRepresentation | undefined
+  >({
+    method: "GET",
+    path: "/client-scopes/{id}/policies/{policyId}",
+    urlParamKeys: ["id", "policyId"],
+  });
+
+  public updatePolicy = this.makeUpdateRequest<
+    { id: string; policyId: string },
+    ClientScopePolicyRepresentation,
+    void
+  >({
+    method: "PUT",
+    path: "/client-scopes/{id}/policies/{policyId}",
+    urlParamKeys: ["id", "policyId"],
+  });
+
+  public delPolicy = this.makeRequest<{ id: string; policyId: string }, void>({
+    method: "DELETE",
+    path: "/client-scopes/{id}/policies/{policyId}",
+    urlParamKeys: ["id", "policyId"],
+  });
 }
