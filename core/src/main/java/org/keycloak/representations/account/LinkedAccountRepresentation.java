@@ -29,7 +29,8 @@ public class LinkedAccountRepresentation implements Comparable<LinkedAccountRepr
     private String providerName;
     private String displayName;
     private String linkedUsername;
-
+    private String linkedUserId;
+    
     @JsonIgnore
     private String guiOrder;
 
@@ -87,6 +88,14 @@ public class LinkedAccountRepresentation implements Comparable<LinkedAccountRepr
 
     public void setDisplayName(String displayName) {
         this.displayName = displayName;
+    }
+
+    public String getLinkedUserId() {
+        return linkedUserId;
+    }
+
+    public void setLinkedUserId(String linkedUserId) {
+        this.linkedUserId = linkedUserId;
     }
 
     @Override
