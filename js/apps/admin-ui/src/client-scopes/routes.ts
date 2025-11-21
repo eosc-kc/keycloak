@@ -12,7 +12,7 @@ const routes: AppRouteObject[] = [
   ClientScopeRoute,
   ClientScopesRoute,
   AddPolicyRoute,
-  EditPolicyRoute
+  EditPolicyRoute,
 ];
 
 export default routes;

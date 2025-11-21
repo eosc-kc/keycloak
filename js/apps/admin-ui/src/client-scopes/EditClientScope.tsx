@@ -108,7 +108,9 @@ export default function EditClientScope() {
   );
   const scopeTab = useRoutableTab(toClientScope({ realm, id, tab: "scope" }));
   const eventsTab = useRoutableTab(toClientScope({ realm, id, tab: "events" }));
-  const policiesTab = useRoutableTab(toClientScope({ realm, id, tab: "policies" }));
+  const policiesTab = useRoutableTab(
+    toClientScope({ realm, id, tab: "policies" }),
+  );
 
   const onSubmit = async (formData: ClientScopeDefaultOptionalType) => {
     const clientScope = convertFormValuesToObject({
