@@ -141,7 +141,7 @@ public class LinkedAccountsResource {
             // we want only linked accounts, fetch those from the federated identities.
 			Set<IdentityProviderShowInAccountConsole> includedShowInAccountConsoleValues = Set.of(IdentityProviderShowInAccountConsole.ALWAYS, IdentityProviderShowInAccountConsole.WHEN_LINKED);
             linkedAccounts = StreamsUtil.paginatedStream(session.users().getFederatedIdentitiesStream(realm, user)
-                    .map(fedIdentity -> this.toLinkedAccount(session.identityProviders().getByAlias(fedIdentity.getIdentityProvider()), fedIdentity.getUserName(), includedShowInAccountConsoleValues))
+                    .map(fedIdentity -> this.toLinkedAccount(session.identityProviders().getByAlias(fedIdentity.getIdentityProvider()), fedIdentity.getUserId(), includedShowInAccountConsoleValues))
                     .filter(account -> account != null && this.matchesLinkedProvider(account, search))
                     .sorted(), firstResult, maxResults)
                     .toList();
@@ -178,7 +178,7 @@ public class LinkedAccountsResource {
         rep.setDisplayName(KeycloakModelUtils.getIdentityProviderDisplayName(session, provider));
         rep.setGuiOrder(provider.getConfig() != null ? provider.getConfig().get("guiOrder") : null);
         rep.setProviderName(provider.getAlias());
-        rep.setLinkedUsername(fedIdentity);
+        rep.setLinkedUserId(fedIdentity);
         return rep;
     }
 
@@ -235,6 +235,7 @@ public class LinkedAccountsResource {
         rep.setProviderName(provider.getAlias());
         if (identity != null) {
             rep.setLinkedUsername(identity.getUserName());
+            rep.setLinkedUserId(identity.getUserId());
         }
         return rep;
     }
