@@ -65,6 +65,7 @@ export interface LinkedAccountRepresentation {
   providerAlias: string;
   providerName: string;
   displayName: string;
+  linkedUserId: string;
   linkedUsername: string;
   social: boolean;
 }

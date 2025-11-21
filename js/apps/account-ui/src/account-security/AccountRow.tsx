@@ -11,7 +11,6 @@ import {
   DataListItemCells,
   DataListItemRow,
   Icon,
-  Label,
   Split,
   SplitItem,
 } from "@patternfly/react-core";
@@ -72,22 +71,11 @@ export const AccountRow = ({
                 </SplitItem>
               </Split>
             </DataListCell>,
-            <DataListCell key="label">
-              <Split>
-                <SplitItem className="pf-v5-u-my-xs" isFilled>
-                  <span id={`${account.providerAlias}-idp-label`}>
-                    <Label color={account.social ? "blue" : "green"}>
-                      {t(account.social ? "socialLogin" : "systemDefined")}
-                    </Label>
-                  </span>
-                </SplitItem>
-              </Split>
-            </DataListCell>,
             <DataListCell key="username" width={5}>
               <Split>
                 <SplitItem className="pf-v5-u-my-xs" isFilled>
                   <span id={`${account.providerAlias}-idp-username`}>
-                    {account.linkedUsername}
+                    {account.linkedUserId}
                   </span>
                 </SplitItem>
               </Split>
