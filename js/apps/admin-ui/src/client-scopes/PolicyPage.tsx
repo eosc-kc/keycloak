@@ -16,7 +16,12 @@ import {
 } from "@patternfly/react-core";
 import { Controller, useForm, useWatch } from "react-hook-form";
 import { useTranslation } from "react-i18next";
-import { FormErrorText, HelpItem, useAlerts, useFetch } from "@keycloak/keycloak-ui-shared";
+import {
+  FormErrorText,
+  HelpItem,
+  useAlerts,
+  useFetch,
+} from "@keycloak/keycloak-ui-shared";
 import { ViewHeader } from "../components/view-header/ViewHeader";
 import { FormAccess } from "../components/form/FormAccess";
 import { MinusCircleIcon, PlusCircleIcon } from "@patternfly/react-icons";
@@ -147,7 +152,9 @@ const PolicyPage = () => {
     <>
       <DeletePolicyConfirm />
       <ViewHeader
-        titleKey={policyId ? t("editScopePolicy") : t("createClientScopePolicy")}
+        titleKey={
+          policyId ? t("editScopePolicy") : t("createClientScopePolicy")
+        }
         divider={true}
         dropdownItems={
           policyId
@@ -188,9 +195,7 @@ const PolicyPage = () => {
               }
               {...register("userAttribute", { required: true })}
             />
-            {errors.userAttribute && (
-              <FormErrorText message={t("required")} />
-            )}
+            {errors.userAttribute && <FormErrorText message={t("required")} />}
           </FormGroup>
           <FormGroup
             label={t("clientScopePoliciesValues")}
@@ -201,7 +206,6 @@ const PolicyPage = () => {
                 fieldLabelId={"clientScopePoliciesValues"}
               />
             }
-            fieldId={name!}
           >
             <Table aria-label="Simple table">
               <Thead>
