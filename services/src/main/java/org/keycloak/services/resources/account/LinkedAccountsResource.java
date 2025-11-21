@@ -23,7 +23,6 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
-import java.util.UUID;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -35,13 +34,11 @@ import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.QueryParam;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
-import jakarta.ws.rs.core.UriBuilder;
 import org.jboss.logging.Logger;
 import org.keycloak.common.Profile;
 import org.keycloak.common.Profile.Feature;
 import org.keycloak.http.HttpRequest;
 import org.keycloak.broker.social.SocialIdentityProvider;
-import org.keycloak.common.util.Base64Url;
 import org.keycloak.events.Details;
 import org.keycloak.events.EventBuilder;
 import org.keycloak.events.EventType;
@@ -59,7 +56,6 @@ import org.keycloak.provider.ProviderFactory;
 import org.keycloak.representations.account.AccountLinkUriRepresentation;
 import org.keycloak.representations.account.LinkedAccountRepresentation;
 import org.keycloak.services.ErrorResponse;
-import org.keycloak.services.Urls;
 import org.keycloak.services.cors.Cors;
 import org.keycloak.services.managers.Auth;
 import org.keycloak.services.messages.Messages;
@@ -139,7 +135,7 @@ public class LinkedAccountsResource {
             // we want only linked accounts, fetch those from the federated identities.
 			Set<IdentityProviderShowInAccountConsole> includedShowInAccountConsoleValues = Set.of(IdentityProviderShowInAccountConsole.ALWAYS, IdentityProviderShowInAccountConsole.WHEN_LINKED);
             linkedAccounts = StreamsUtil.paginatedStream(session.users().getFederatedIdentitiesStream(realm, user)
-                    .map(fedIdentity -> this.toLinkedAccount(session.identityProviders().getByAlias(fedIdentity.getIdentityProvider()), fedIdentity.getUserName(), includedShowInAccountConsoleValues))
+                    .map(fedIdentity -> this.toLinkedAccount(session.identityProviders().getByAlias(fedIdentity.getIdentityProvider()), fedIdentity.getUserId(), includedShowInAccountConsoleValues))
                     .filter(account -> account != null && this.matchesLinkedProvider(account, search))
                     .sorted(), firstResult, maxResults)
                     .toList();
@@ -176,7 +172,7 @@ public class LinkedAccountsResource {
         rep.setDisplayName(KeycloakModelUtils.getIdentityProviderDisplayName(session, provider));
         rep.setGuiOrder(provider.getConfig() != null ? provider.getConfig().get("guiOrder") : null);
         rep.setProviderName(provider.getAlias());
-        rep.setLinkedUsername(fedIdentity);
+        rep.setLinkedUserId(fedIdentity);
         return rep;
     }
 
@@ -233,6 +229,7 @@ public class LinkedAccountsResource {
         rep.setProviderName(provider.getAlias());
         if (identity != null) {
             rep.setLinkedUsername(identity.getUserName());
+            rep.setLinkedUserId(identity.getUserId());
         }
         return rep;
     }
