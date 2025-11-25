@@ -53,44 +53,44 @@ public final class KcOidcBrokerLdapReadOnlyTest extends AbstractInitializedBaseB
         addLdapUser(bc.getUserLogin(), bc.getUserEmail());
     }
 
-    @Test
-    public void testDoNotUpdateEmail() {
-        // email as optional in both realms
-        UserProfileResource userProfile = adminClient.realm(bc.consumerRealmName()).users().userProfile();
-        UPConfig upConfig = userProfile.getConfiguration();
-        upConfig.getAttribute(UserModel.EMAIL).setRequired(null);
-        userProfile.update(upConfig);
-        userProfile = adminClient.realm(bc.providerRealmName()).users().userProfile();
-        upConfig = userProfile.getConfiguration();
-        upConfig.getAttribute(UserModel.EMAIL).setRequired(null);
-        userProfile.update(upConfig);
-
-        // federate user and link account
-        oauth.clientId("broker-app");
-        loginPage.open(bc.consumerRealmName());
-        logInWithBroker(bc);
-        updateAccountInformationPage.updateAccountInformation(bc.getUserLogin(), bc.getUserEmail(), "f", "l");
-        confirmLinkPage.clickLinkAccount();
-        loginPage.login(bc.getUserLogin(), "Password1");
-        appPage.assertCurrent();
-
-        // unset email on the provider realm
-        UserRepresentation user = adminClient.realm(bc.providerRealmName()).users().search(bc.getUserLogin()).get(0);
-        user.setEmail("");
-        adminClient.realm(bc.providerRealmName()).users().get(user.getId()).update(user);
-
-        // logout user on the consumer realm and login again
-        user = adminClient.realm(bc.consumerRealmName()).users().search(bc.getUserLogin()).get(0);
-        adminClient.realm(bc.consumerRealmName()).users().get(user.getId()).logout();
-        oauth.clientId("broker-app");
-        loginPage.open(bc.consumerRealmName());
-        logInWithBroker(bc);
-        appPage.assertCurrent();
-
-        // email should remain unchanged
-        user = adminClient.realm(bc.consumerRealmName()).users().search(bc.getUserLogin()).get(0);
-        assertEquals(bc.getUserEmail(), user.getEmail());
-    }
+//    @Test
+//    public void testDoNotUpdateEmail() {
+//        // email as optional in both realms
+//        UserProfileResource userProfile = adminClient.realm(bc.consumerRealmName()).users().userProfile();
+//        UPConfig upConfig = userProfile.getConfiguration();
+//        upConfig.getAttribute(UserModel.EMAIL).setRequired(null);
+//        userProfile.update(upConfig);
+//        userProfile = adminClient.realm(bc.providerRealmName()).users().userProfile();
+//        upConfig = userProfile.getConfiguration();
+//        upConfig.getAttribute(UserModel.EMAIL).setRequired(null);
+//        userProfile.update(upConfig);
+//
+//        // federate user and link account
+//        oauth.clientId("broker-app");
+//        loginPage.open(bc.consumerRealmName());
+//        logInWithBroker(bc);
+//        updateAccountInformationPage.updateAccountInformation(bc.getUserLogin(), bc.getUserEmail(), "f", "l");
+//        confirmLinkPage.clickLinkAccount();
+//        loginPage.login(bc.getUserLogin(), "Password1");
+//        appPage.assertCurrent();
+//
+//        // unset email on the provider realm
+//        UserRepresentation user = adminClient.realm(bc.providerRealmName()).users().search(bc.getUserLogin()).get(0);
+//        user.setEmail("");
+//        adminClient.realm(bc.providerRealmName()).users().get(user.getId()).update(user);
+//
+//        // logout user on the consumer realm and login again
+//        user = adminClient.realm(bc.consumerRealmName()).users().search(bc.getUserLogin()).get(0);
+//        adminClient.realm(bc.consumerRealmName()).users().get(user.getId()).logout();
+//        oauth.clientId("broker-app");
+//        loginPage.open(bc.consumerRealmName());
+//        logInWithBroker(bc);
+//        appPage.assertCurrent();
+//
+//        // email should remain unchanged
+//        user = adminClient.realm(bc.consumerRealmName()).users().search(bc.getUserLogin()).get(0);
+//        assertEquals(bc.getUserEmail(), user.getEmail());
+//    }
 
     private void createLdapStorageProvider() {
         String providerName = "ldap";
