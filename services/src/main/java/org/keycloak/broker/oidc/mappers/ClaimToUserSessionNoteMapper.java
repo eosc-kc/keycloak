@@ -26,6 +26,8 @@ public class ClaimToUserSessionNoteMapper extends AbstractClaimMapper {
 
     private static final String CLAIMS_PROPERTY_NAME = "claims";
     private static final String ARE_CLAIM_VALUES_REGEX_PROPERTY_NAME = "are.claim.values.regex";
+    private static final String USER_SESSION_NAME = "user.session.name";
+    private static final String USER_SESSION_NAME_LABEL = "User session name";
     private static final String[] COMPATIBLE_PROVIDERS = {KeycloakOIDCIdentityProviderFactory.PROVIDER_ID,
             OIDCIdentityProviderFactory.PROVIDER_ID};
 
@@ -43,6 +45,12 @@ public class ClaimToUserSessionNoteMapper extends AbstractClaimMapper {
                         "You can reference nested claims using a '.', i.e. 'address.locality'. " +
                         "To use dot (.) literally, escape it with backslash (\\.)");
         claimsProperty.setType(ProviderConfigProperty.MAP_TYPE);
+        CONFIG_PROPERTIES.add(claimsProperty);
+        claimsProperty = new ProviderConfigProperty();
+        claimsProperty.setName(USER_SESSION_NAME);
+        claimsProperty.setLabel(USER_SESSION_NAME_LABEL);
+        claimsProperty.setHelpText("User session name to store claim.  If not configured, user session name will be equal to claim name.");
+        claimsProperty.setType(ProviderConfigProperty.STRING_TYPE);
         CONFIG_PROPERTIES.add(claimsProperty);
         ProviderConfigProperty isClaimValueRegexProperty = new ProviderConfigProperty();
         isClaimValueRegexProperty.setName(ARE_CLAIM_VALUES_REGEX_PROPERTY_NAME);
@@ -105,6 +113,7 @@ public class ClaimToUserSessionNoteMapper extends AbstractClaimMapper {
 
     private void addClaimsToSessionNote(IdentityProviderMapperModel mapperModel, BrokeredIdentityContext context) {
         Map<String, List<String>> claims = mapperModel.getConfigMap(CLAIMS_PROPERTY_NAME);
+        String userSessionName = mapperModel.getConfig().get(USER_SESSION_NAME);
         boolean areClaimValuesRegex =
                 Boolean.parseBoolean(mapperModel.getConfig().get(ARE_CLAIM_VALUES_REGEX_PROPERTY_NAME));
 
@@ -127,7 +136,7 @@ public class ClaimToUserSessionNoteMapper extends AbstractClaimMapper {
                             : valueEquals(value, claimValue);
 
                     if (claimValuesMatch) {
-                        context.setSessionNote(claim.getKey(), claimValue);
+                        context.setSessionNote(userSessionName != null ? userSessionName : claim.getKey(), claimValue);
                     }
                 }
             }
