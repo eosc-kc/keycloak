@@ -179,6 +179,7 @@ public class AccountConsole implements AccountResourceProvider {
             
             boolean deleteAccountAllowed = false;
             boolean manageAccountAllowed = false;
+            boolean manageAccountLinkAllowed = false;
             boolean manageConsentAllowed = false;
             boolean manageAccountBasicAuthAllowed = false;
             boolean manageAccount2faAllowed = false;
@@ -189,8 +190,8 @@ public class AccountConsole implements AccountResourceProvider {
                 deleteAccountAllowed = deleteAccountRole != null && user.hasRole(deleteAccountRole) && realm.getRequiredActionProviderByAlias(DeleteAccount.PROVIDER_ID).isEnabled();
                 RoleModel manageAccount = realm.getClientByClientId(Constants.ACCOUNT_MANAGEMENT_CLIENT_ID).getRole(AccountRoles.MANAGE_ACCOUNT);
                 manageAccountAllowed = manageAccount != null && user.hasRole(manageAccount);
-                RoleModel manageConsent = realm.getClientByClientId(Constants.ACCOUNT_MANAGEMENT_CLIENT_ID).getRole(AccountRoles.MANAGE_CONSENT);
-                manageConsentAllowed = manageConsent != null && user.hasRole(manageConsent);
+                RoleModel manageAccountLink = realm.getClientByClientId(Constants.ACCOUNT_MANAGEMENT_CLIENT_ID).getRole(AccountRoles.MANAGE_ACCOUNT_LINKS);
+                manageAccountLinkAllowed = manageAccountLink != null && user.hasRole(manageAccountLink);
                 RoleModel manageAccountBasicAuth = realm.getClientByClientId(Constants.ACCOUNT_MANAGEMENT_CLIENT_ID).getRole(AccountRoles.MANAGE_ACCOUNT_BASIC_AUTH);
                 manageAccountBasicAuthAllowed = manageAccountBasicAuth != null && user.hasRole(manageAccountBasicAuth);
                 RoleModel manageAccount2fa = realm.getClientByClientId(Constants.ACCOUNT_MANAGEMENT_CLIENT_ID).getRole(AccountRoles.MANAGE_ACCOUNT_2FA);
@@ -204,7 +205,7 @@ public class AccountConsole implements AccountResourceProvider {
 
             map.put("deleteAccountAllowed", deleteAccountAllowed);
             map.put("manageAccountAllowed", manageAccountAllowed);
-            map.put("manageConsentAllowed", manageConsentAllowed || manageAccountAllowed);
+            map.put("manageAccountLinkAllowed", manageAccountLinkAllowed || manageAccountAllowed);
             map.put("manageAccountBasicAuthAllowed", manageAccountBasicAuthAllowed || manageAccountAllowed);
             map.put("manageAccount2faAllowed", manageAccount2faAllowed || manageAccountAllowed);
             map.put("viewApplicationAllowed", viewApplicationAllowed || manageConsentAllowed || manageAccountAllowed);
