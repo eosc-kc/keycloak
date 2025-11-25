@@ -163,7 +163,7 @@
           "isViewGroupsEnabled": ${isViewGroupsEnabled?c},
           "isOid4VciEnabled": ${isOid4VciEnabled?c},
           "manageAccountAllowed" : ${manageAccountAllowed?c},
-          "manageConsentAllowed" : ${manageConsentAllowed?c},
+          "manageAccountLinkAllowed" : ${manageAccountLinkAllowed?c},
           "manageAccountBasicAuthAllowed" : ${manageAccountBasicAuthAllowed?c},
           "manageAccount2faAllowed" : ${manageAccount2faAllowed?c},
           "manageAccountAuthAllowed" : ${(manageAccountBasicAuthAllowed || manageAccount2faAllowed)?c},
