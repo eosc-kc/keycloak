@@ -36,7 +36,7 @@ public class IdpReviewProfileBean extends AbstractUserProfileBean {
     public IdpReviewProfileBean(UpdateProfileContext idpCtx, MultivaluedMap<String, String> formData, KeycloakSession session) {
         super(formData);
         this.idpCtx = idpCtx;
-        init(session, true);
+        init(session);
     }
 
     @Override
