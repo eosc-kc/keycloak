@@ -103,7 +103,7 @@ export const LinkedAccounts = () => {
             )}
           </DataList>
         </StackItem>
-        {context.environment.features["manageAccountAllowed"] && (
+        {context.environment.features["manageAccountLinkAllowed"] && (
           <StackItem>
             <Title
               headingLevel="h2"
