@@ -17,6 +17,7 @@
 
 package org.keycloak.protocol.oidc;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -48,8 +49,10 @@ import org.keycloak.OAuthErrorException;
 import org.keycloak.TokenCategory;
 import org.keycloak.TokenVerifier;
 import org.keycloak.authentication.authenticators.util.AcrStore;
+import org.keycloak.broker.oidc.AbstractOAuth2IdentityProvider;
 import org.keycloak.broker.oidc.OIDCIdentityProvider;
 import org.keycloak.broker.oidc.OIDCIdentityProviderConfig;
+import org.keycloak.broker.oidc.OIDCIdentityProviderFactory;
 import org.keycloak.broker.provider.IdentityBrokerException;
 import org.keycloak.common.ClientConnection;
 import org.keycloak.common.Profile;
@@ -63,6 +66,8 @@ import org.keycloak.events.Details;
 import org.keycloak.events.Errors;
 import org.keycloak.events.EventBuilder;
 import org.keycloak.http.HttpRequest;
+import org.keycloak.http.simple.SimpleHttp;
+import org.keycloak.http.simple.SimpleHttpResponse;
 import org.keycloak.jose.jws.JWSInput;
 import org.keycloak.jose.jws.JWSInputException;
 import org.keycloak.jose.jws.crypto.HashUtils;
@@ -72,6 +77,7 @@ import org.keycloak.models.ClientModel;
 import org.keycloak.models.ClientScopeModel;
 import org.keycloak.models.ClientSessionContext;
 import org.keycloak.models.Constants;
+import org.keycloak.models.IdentityProviderModel;
 import org.keycloak.models.IdentityProviderQuery;
 import org.keycloak.models.KeycloakSession;
 import org.keycloak.models.ProtocolMapperModel;
@@ -139,6 +145,7 @@ import static org.keycloak.representations.IDToken.NONCE;
  */
 public class TokenManager {
     private static final Logger logger = Logger.getLogger(TokenManager.class);
+    private static final String PARAM_TOKEN = "token";
 
     public static class TokenValidation {
         public final UserModel user;
@@ -244,6 +251,26 @@ public class TokenManager {
         // Check user didn't revoke granted consent
         if (!verifyConsentStillAvailable(session, user, client, clientSessionCtx.getClientScopesStream())) {
             throw new OAuthErrorException(OAuthErrorException.INVALID_SCOPE, "Client no longer has requested consent from user");
+        }
+
+        String loginIdpAlias = userSession.getNote(Details.IDENTITY_PROVIDER);
+        String refreshTokenIdP = userSession.getNote(AbstractOAuth2IdentityProvider.FEDERATED_REFRESH_TOKEN);
+        if (loginIdpAlias!= null && refreshTokenIdP != null) {
+            IdentityProviderModel idp = realm.getIdentityProviderByAlias(loginIdpAlias);
+            String tokenIntrospectionIdPUrl = idp.getConfig().get(OIDCIdentityProviderConfig.TOKEN_INTROSPECTION_URL);
+            if (OIDCIdentityProviderFactory.PROVIDER_ID.equals(idp.getProviderId()) && Boolean.valueOf(idp.getConfig().get(OIDCIdentityProviderConfig.VALIDATE_REFRESH_TOKEN)) && tokenIntrospectionIdPUrl != null) {
+                OIDCIdentityProviderConfig oidcIssuerIdp = new OIDCIdentityProviderConfig(idp);
+                try {
+                    OIDCIdentityProvider oidcIssuerProvider = new OIDCIdentityProvider(session, oidcIssuerIdp);
+                    SimpleHttpResponse response = oidcIssuerProvider.authenticateTokenRequest(SimpleHttp.create(session).doPost(tokenIntrospectionIdPUrl).param(PARAM_TOKEN, refreshTokenIdP)).asResponse();
+                    if (response.getStatus() > 300 || !response.asJson().get("active").asBoolean(false)) {
+                        throw new OAuthErrorException(OAuthErrorException.INVALID_GRANT, "Invalid IdP Refresh Token Error");
+                    }
+                } catch (IOException e) {
+                    e.printStackTrace();
+                    throw new OAuthErrorException(OAuthErrorException.INVALID_GRANT, "Invalid IdP Refresh Token Error");
+                }
+            }
         }
 
         if (oldToken.getNonce() != null) {
