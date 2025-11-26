@@ -67,6 +67,14 @@ public abstract class AbstractUserProfileBean {
             this.attributesByName = attributes.stream().collect(Collectors.toMap((a) -> a.getName(), (a) -> a));        
     }
 
+    protected void init(KeycloakSession session) {
+        UserProfileProvider provider = session.getProvider(UserProfileProvider.class);
+        this.profile = createUserProfile(provider);
+        this.attributes = toAttributes(profile.getAttributes().getReadable());
+        if(this.attributes != null)
+            this.attributesByName = attributes.stream().collect(Collectors.toMap((a) -> a.getName(), (a) -> a));
+    }
+
     /**
      * Create UserProfile instance of the relevant type. Is called from {@link #init(KeycloakSession, boolean)}.
      * 
@@ -127,6 +135,20 @@ public abstract class AbstractUserProfileBean {
                 .sorted(ATTRIBUTE_COMPARATOR)
                 .collect(Collectors.toList());
     }
+
+    private List<Attribute> toAttributes(Map<String, List<String>> attributes) {
+        if(attributes == null)
+            return null;
+        Attributes profileAttributes = profile.getAttributes();
+        return attributes.keySet().stream().map(profileAttributes::getMetadata)
+                .filter(Objects::nonNull)
+                .filter((am) -> profileAttributes.isRequired(am.getName()))
+                .filter((am) -> !profileAttributes.getUnmanagedAttributes().containsKey(am.getName()))
+                .map(Attribute::new)
+                .sorted(ATTRIBUTE_COMPARATOR)
+                .collect(Collectors.toList());
+    }
+
 
     /**
      * Info about user profile attribute available in Freemarker template. 
