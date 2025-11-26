@@ -37,6 +37,7 @@ public class OIDCIdentityProviderConfig extends OAuth2IdentityProviderConfig imp
     public static final String SUPPORTS_CLIENT_ASSERTIONS = "supportsClientAssertions";
     public static final String SUPPORTS_CLIENT_ASSERTION_REUSE = "supportsClientAssertionReuse";
     public static final String ALLOW_CLIENT_ID_AS_AUDIENCE = "allowClientIdAsAudience";
+    public static final String VALIDATE_REFRESH_TOKEN = "validateRefreshToken";
 
     public OIDCIdentityProviderConfig(IdentityProviderModel identityProviderModel) {
         super(identityProviderModel);
@@ -186,6 +187,15 @@ public class OIDCIdentityProviderConfig extends OAuth2IdentityProviderConfig imp
     public void setLastRefreshTime(long lastRefreshTime) {
         getConfig().put(LAST_REFRESH_TIME, String.valueOf(lastRefreshTime));
     }
+
+    public boolean isValidateRefreshToken() {
+        return Boolean.valueOf(getConfig().get(VALIDATE_REFRESH_TOKEN));
+    }
+
+    public void setValidateRefreshToken(boolean validateRefreshToken) {
+        getConfig().put(VALIDATE_REFRESH_TOKEN, String.valueOf(validateRefreshToken));
+    }
+
 
     @Override
     public void validate(RealmModel realm) {
