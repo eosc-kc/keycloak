@@ -66,6 +66,10 @@ export const ExtendedNonDiscoverySettings = () => {
           field="config.disableTypeClaimCheck"
           label="disableTypeClaimCheck"
         />
+        <SwitchField
+          field="config.validateRefreshToken"
+          label="validateRefreshToken"
+        />
         <TextField field="config.defaultScope" label="scopes" />
         <SwitchField label="passScope" field="config.passScope" />
         {passScope === "true" && (
