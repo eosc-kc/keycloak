@@ -72,7 +72,7 @@ public final class KcOidcBrokerLdapReadOnlyTest extends AbstractInitializedBaseB
         oauth.clientId("broker-app");
         loginPage.open(bc.consumerRealmName());
         logInWithBroker(bc);
-        updateAccountInformationPage.updateAccountInformation(bc.getUserLogin(), bc.getUserEmail(), "f", "l");
+        updateAccountInformationPage.updateAccountInformation("f", "l");
         confirmLinkPage.clickLinkAccount();
         loginPage.login(bc.getUserLogin(), "Password1");
         appPage.assertCurrent();
