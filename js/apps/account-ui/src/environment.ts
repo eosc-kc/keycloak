@@ -29,6 +29,7 @@ export type Feature = {
   isOid4VciEnabled: boolean;
   manageAccountAllowed: boolean;
   manageAccountLinkAllowed: boolean;
+  manageConsentAllowed: boolean;
   manageAccountBasicAuthAllowed: boolean;
   manageAccount2faAllowed: boolean;
   manageAccountAuthAllowed: boolean;
