@@ -5,7 +5,7 @@ import org.infinispan.protostream.annotations.ProtoField;
 import org.infinispan.protostream.annotations.ProtoTypeId;
 import org.keycloak.cluster.ClusterEvent;
 
-@ProtoTypeId(65618)
+@ProtoTypeId(65620)
 public class TaskCancellationEvent implements ClusterEvent {
     public static final String CANCEL_TASK = "cancelTask";
     private final String taskName;
