@@ -29,21 +29,21 @@ export default function AddIdentityFederation() {
         ...cleanEmptyStrings(samlFederation),
         providerId: id,
       });
-      addAlert(t("createSuccessFederation"), AlertVariant.success);
+      addAlert(t("createFederationSuccess"), AlertVariant.success);
       navigate(
         toIdentityFederations({
           realm,
         }),
       );
     } catch (error: any) {
-      addError("identity-providers:createError", error);
+      addError("createFederationError", error);
     }
   };
 
   return (
     <PageSection variant="light">
       <FormProvider {...form}>
-        <ViewHeader titleKey={"Add Saml Federation"} divider={false} />
+        <ViewHeader titleKey={t("addFederation")} divider={false} />
         <IdentityFederationForm
           type={"create"}
           providerId={id}
