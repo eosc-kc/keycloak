@@ -212,7 +212,7 @@ public class IdentityProviderResource {
             throw new jakarta.ws.rs.NotFoundException();
         }
 
-        if (!"true".equals(identityProviderModel.getConfig().get(IdentityProviderModel.AUTO_UPDATE))) {
+        if (identityProviderModel.getConfig().get(IdentityProviderModel.METADATA_DESCRIPTOR_URL) != null) {
             throw ErrorResponse.error("This is not auto updated IdP", BAD_REQUEST);
         }
 
