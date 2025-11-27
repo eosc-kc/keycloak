@@ -82,6 +82,8 @@ type HeaderProps = {
   value: boolean;
   save: () => void;
   toggleDeleteDialog: () => void;
+  toggleRefreshDialog: () => void;
+  refreshEnabled: boolean;
 };
 
 type IdPWithMapperAttributes = IdentityProviderMapperRepresentation & {
@@ -92,7 +94,14 @@ type IdPWithMapperAttributes = IdentityProviderMapperRepresentation & {
   mapperId: string;
 };
 
-const Header = ({ onChange, value, save, toggleDeleteDialog }: HeaderProps) => {
+const Header = ({
+  onChange,
+  value,
+  save,
+  toggleDeleteDialog,
+  toggleRefreshDialog,
+  refreshEnabled,
+}: HeaderProps) => {
   const { adminClient } = useAdminClient();
 
   const { t } = useTranslation();
@@ -222,6 +231,16 @@ const Header = ({ onChange, value, save, toggleDeleteDialog }: HeaderProps) => {
           <DropdownItem key="delete" onClick={() => toggleDeleteDialog()}>
             {t("delete")}
           </DropdownItem>,
+          ...(refreshEnabled
+            ? [
+                <DropdownItem
+                  key="refresh"
+                  onClick={() => toggleRefreshDialog()}
+                >
+                  {t("refresh")}
+                </DropdownItem>,
+              ]
+            : []),
         ]}
         isEnabled={value}
         onToggle={(value) => {
@@ -268,6 +287,7 @@ export default function DetailSettings() {
   const form = useForm<IdentityProviderRepresentation>();
   const { handleSubmit, getValues, reset, control } = form;
   const [provider, setProvider] = useState<IdentityProviderRepresentation>();
+  const [refreshEnabled, setRefreshEnabled] = useState<boolean>(false);
   const [selectedMapper, setSelectedMapper] =
     useState<IdPWithMapperAttributes>();
   const serverInfo = useServerInfo();
@@ -301,10 +321,12 @@ export default function DetailSettings() {
       if (!fetchedProvider) {
         throw new Error(t("notFound"));
       }
-
       reset(fetchedProvider);
       setProvider(fetchedProvider);
-
+      setRefreshEnabled(
+        fetchedProvider.config!.metadataDescriptorUrl ||
+          providerId === "openid-federation",
+      );
       if (fetchedProvider.config!.authnContextClassRefs) {
         form.setValue(
           "config.authnContextClassRefs",
@@ -367,6 +389,9 @@ export default function DetailSettings() {
         p.config!.authnContextDeclRefs = origAuthnContextDeclRefs;
       }
       reset(p);
+      setRefreshEnabled(
+        p.config!.metadataDescriptorUrl || providerId === "openid-federation",
+      );
       addAlert(t("updateSuccessIdentityProvider"), AlertVariant.success);
     } catch (error) {
       addError("updateErrorIdentityProvider", error);
@@ -385,6 +410,26 @@ export default function DetailSettings() {
         navigate(toIdentityProviders({ realm }));
       } catch (error) {
         addError("deleteErrorIdentityProvider", error);
+      }
+    },
+  });
+
+  const [toggleRefreshDialog, RefreshConfirm] = useConfirmDialog({
+    titleKey: t("refreshProvider"),
+    messageKey: t("refreshProviderConfirm", { provider: alias }),
+    continueButtonLabel: t("refresh"),
+    continueButtonVariant: ButtonVariant.primary,
+    onConfirm: async () => {
+      try {
+        if (providerId === "openid-federation") {
+          await adminClient.identityProviders.refreshOidFed({ alias: alias });
+        } else {
+          await adminClient.identityProviders.refresh({ alias: alias });
+        }
+        addAlert(t("refreshProviderSuccess"), AlertVariant.success);
+        refresh();
+      } catch (error) {
+        addError(t("refreshProviderError"), error);
       }
     },
   });
@@ -619,6 +664,7 @@ export default function DetailSettings() {
   return (
     <FormProvider {...form}>
       <DeleteConfirm />
+      <RefreshConfirm />
       <DeleteMapperConfirm />
       <Controller
         name="enabled"
@@ -630,6 +676,8 @@ export default function DetailSettings() {
             onChange={field.onChange}
             save={save}
             toggleDeleteDialog={toggleDeleteDialog}
+            toggleRefreshDialog={toggleRefreshDialog}
+            refreshEnabled={refreshEnabled}
           />
         )}
       />
