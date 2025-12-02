@@ -18,6 +18,7 @@ package org.keycloak.services.resources;
 
 import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.FormParam;
+import jakarta.ws.rs.core.Cookie;
 import jakarta.ws.rs.core.MediaType;
 import org.jboss.logging.Logger;
 import org.jboss.resteasy.reactive.NoCache;
@@ -28,6 +29,9 @@ import org.keycloak.broker.provider.IdpLinkAction;
 import org.keycloak.broker.saml.SAMLIdentityProvider;
 import org.keycloak.broker.saml.SAMLIdentityProviderConfig;
 import org.keycloak.broker.saml.SAMLIdentityProviderFactory;
+import org.keycloak.cookie.CookieProvider;
+import org.keycloak.cookie.CookieScope;
+import org.keycloak.cookie.CookieType;
 import org.keycloak.http.HttpRequest;
 import org.keycloak.OAuthErrorException;
 import org.keycloak.authentication.AuthenticationFlow;
@@ -137,10 +141,15 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.URI;
+import java.net.URLDecoder;
+import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
@@ -161,6 +170,8 @@ public class IdentityBrokerService implements IdentityProvider.AuthenticationCal
 
     // Authentication session note, which references identity provider that is currently linked
     public static final String LINKING_IDENTITY_PROVIDER = "LINKING_IDENTITY_PROVIDER";
+    private static final String KEYCLOAK_REMEMBER_IDPS = "KEYCLOAK_REMEMBER_IDPS_";
+    private static final int COOKIE_IDPS_DEFAULT_MAX_AGE = 31536000;
 
     private static final Logger logger = Logger.getLogger(IdentityBrokerService.class);
 
@@ -703,7 +714,18 @@ public class IdentityBrokerService implements IdentityProvider.AuthenticationCal
         }
 
         session.getContext().setClient(authenticationSession.getClient());
-
+        //set last login IdP to cookie (alias comma separated)
+        CookieType cookie = CookieType.create(KEYCLOAK_REMEMBER_IDPS + realmModel.getId()).scope(CookieScope.INTERNAL).build();
+        String idpsCookie = session.getProvider(CookieProvider.class).get(cookie);
+        try {
+            List<String> idpsAlias = idpsCookie == null ? new ArrayList<>() : JsonSerialization.readValue(URLDecoder.decode(idpsCookie, StandardCharsets.UTF_8), List.class);
+            if (!idpsAlias.contains(providerAlias)) {
+                idpsAlias.add(providerAlias);
+                session.getProvider(CookieProvider.class).set(cookie, URLEncoder.encode(JsonSerialization.writeValueAsString(idpsAlias), StandardCharsets.UTF_8), COOKIE_IDPS_DEFAULT_MAX_AGE);
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
         context.getIdp().preprocessFederatedIdentity(session, realmModel, context);
         KeycloakSessionFactory sessionFactory = session.getKeycloakSessionFactory();
         session.identityProviders().getMappersByAliasStream(context.getIdpConfig().getAlias()).forEach(mapper -> {

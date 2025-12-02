@@ -65,7 +65,7 @@ public final class CookieType {
         this.defaultMaxAge = defaultMaxAge;
     }
 
-    private static CookieTypeBuilder create(String name) {
+    public static CookieTypeBuilder create(String name) {
         return new CookieTypeBuilder(name);
     }
 
@@ -85,7 +85,7 @@ public final class CookieType {
         return defaultMaxAge;
     }
 
-    private static class CookieTypeBuilder {
+    public static class CookieTypeBuilder {
 
         private String name;
         private CookiePath path = CookiePath.REALM;
@@ -101,7 +101,7 @@ public final class CookieType {
             return this;
         }
 
-        CookieTypeBuilder scope(CookieScope scope) {
+        public CookieTypeBuilder scope(CookieScope scope) {
             this.scope = scope;
             return this;
         }
@@ -111,7 +111,7 @@ public final class CookieType {
             return this;
         }
 
-        CookieType build() {
+        public CookieType build() {
             return new CookieType(name, path, scope, defaultMaxAge);
         }
 

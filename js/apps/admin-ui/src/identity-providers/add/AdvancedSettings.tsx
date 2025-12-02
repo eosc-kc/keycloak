@@ -182,6 +182,7 @@ export const AdvancedSettings = ({
           rules: { required: t("required") },
         }}
       />
+      <TextField field="config.logoUri" label="logoUri" data-testid="logoUri" />
 
       {((!isSAML && !isOAuth2) || isOIDC) && (
         <FormGroupField label="filteredByClaim">
