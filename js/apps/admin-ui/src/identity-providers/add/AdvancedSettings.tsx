@@ -163,9 +163,13 @@ export const AdvancedSettings = ({
         fieldType="boolean"
       />
       <SwitchField
-        field="hideOnLogin"
+        field="config.hideOnLogin"
         label="hideOnLoginPage"
         fieldType="boolean"
+      />
+      <SwitchField
+        field="config.promotedLoginbutton"
+        label="promotedLoginbutton"
       />
       <SelectControl
         name="config.showInAccountConsole"
