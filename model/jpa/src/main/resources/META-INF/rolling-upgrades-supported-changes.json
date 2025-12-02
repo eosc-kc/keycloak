@@ -791,6 +791,10 @@
     "id" : "idp-fed-index",
     "author" : "keycloak",
     "filename" : "META-INF/jpa-changelog-saml-fed-initial.xml"
-   }],
+   }, {
+    "id" : "enable-unaccent-and-fix-search-path",
+    "author" : "cgeorgilakis@grnet.gr",
+    "filename" : "META-INF/jpa-changelog-unaccent.xml"
+  }],
   "migrations" : [ ]
 }
