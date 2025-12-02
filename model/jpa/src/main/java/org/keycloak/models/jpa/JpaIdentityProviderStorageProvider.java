@@ -592,7 +592,7 @@ public class JpaIdentityProviderStorageProvider implements IdentityProviderStora
             Expression<String> unaccentedName = builder.function(
                     "unaccent",
                     String.class,
-                    builder.function("text", String.class, idp.get(DISPLAY_NAME))  // explicit cast to text
+                    idp.get(DISPLAY_NAME)  
             );
             return builder.or(builder.like(builder.lower(idp.get(ALIAS)), search.toLowerCase(), '\\'),builder.like(builder.lower(unaccentedName), Normalizer.normalize(search.toLowerCase(), Normalizer.Form.NFD).replaceAll("\\p{M}", ""), '\\'));
         }
