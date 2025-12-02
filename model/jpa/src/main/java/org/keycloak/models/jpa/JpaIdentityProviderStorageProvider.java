@@ -16,6 +16,7 @@
  */
 package org.keycloak.models.jpa;
 
+import java.text.Normalizer;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -30,6 +31,7 @@ import jakarta.persistence.TypedQuery;
 import jakarta.persistence.criteria.CriteriaBuilder;
 import jakarta.persistence.criteria.CriteriaDelete;
 import jakarta.persistence.criteria.CriteriaQuery;
+import jakarta.persistence.criteria.Expression;
 import jakarta.persistence.criteria.Join;
 import jakarta.persistence.criteria.JoinType;
 import jakarta.persistence.criteria.MapJoin;
@@ -61,6 +63,7 @@ import org.hibernate.Session;
 import org.jboss.logging.Logger;
 
 import static org.keycloak.models.IdentityProviderModel.ALIAS;
+import static org.keycloak.models.IdentityProviderModel.ALIAS_IN;
 import static org.keycloak.models.IdentityProviderModel.ALIAS_NOT_IN;
 import static org.keycloak.models.IdentityProviderModel.AUTHENTICATE_BY_DEFAULT;
 import static org.keycloak.models.IdentityProviderModel.DISPLAY_NAME;
@@ -299,6 +302,13 @@ public class JpaIdentityProviderStorageProvider implements IdentityProviderStora
                     case SEARCH: {
                         if (StringUtil.isNotBlank(value)) {
                             predicates.add(this.getAliasSearchPredicate(value, builder, idp));
+                        }
+                        break;
+                    }
+                    case ALIAS_IN: {
+                        if (StringUtil.isNotBlank(value)) {
+                            List<String> aliases = Arrays.asList(value.split(","));
+                            predicates.add(idp.get(ALIAS).in(aliases));
                         }
                         break;
                     }
@@ -579,7 +589,12 @@ public class JpaIdentityProviderStorageProvider implements IdentityProviderStora
             if (!search.endsWith("%")) {
                 search += "%"; // default to prefix search
             }
-            return builder.or(builder.like(builder.lower(idp.get(ALIAS)), search.toLowerCase(), '\\'),builder.like(builder.lower(idp.get(DISPLAY_NAME)), search.toLowerCase(), '\\'));
+            Expression<String> unaccentedName = builder.function(
+                    "unaccent",
+                    String.class,
+                    builder.function("text", String.class, idp.get(DISPLAY_NAME))  // explicit cast to text
+            );
+            return builder.or(builder.like(builder.lower(idp.get(ALIAS)), search.toLowerCase(), '\\'),builder.like(builder.lower(unaccentedName), Normalizer.normalize(search.toLowerCase(), Normalizer.Form.NFD).replaceAll("\\p{M}", ""), '\\'));
         }
     }
 
