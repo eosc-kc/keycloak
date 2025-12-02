@@ -498,6 +498,7 @@ public class FreeMarkerLoginFormsProvider implements LoginFormsProvider {
         if (client != null) {
             attributes.put("client", new ClientBean(session, client));
         }
+        attributes.put("uriInfo", uriInfo);
 
         if (realm != null) {
             attributes.put("realm", new RealmBean(realm));
