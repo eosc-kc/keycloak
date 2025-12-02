@@ -13,4 +13,10 @@
             ALTER ROLE current_user SET search_path TO "$user", public, pg_catalog
         </sql>
     </changeSet>
+    <changeSet id="fake-unaccent-for-h2" author="cgeorgilakis">
+        <!-- H2 – fake unaccent that does nothing (required for dev mode) -->
+        <sql dbms="h2">
+            CREATE ALIAS IF NOT EXISTS unaccent AS 'String unaccent(String s) { return s == null ? null : s; }';
+        </sql>
+    </changeSet>
 </databaseChangeLog>
