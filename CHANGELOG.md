@@ -35,6 +35,7 @@ Full Keycloak upstream jira issue can be shown if filtered by Fix version.
 - Logo uri for IdPs
 - Add cookie for chosen login IdPs
 - Search without accents in Identity Providers
+- Add authnAuthorities to login event when login is done via cookie
 
 ### Changed
 - Change emailVerified User field with UserAttributeMappers (conditional trust email). [EOSC-KC-70](https://github.com/eosc-kc/keycloak/issues/70)
