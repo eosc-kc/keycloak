@@ -48,7 +48,7 @@ Full Keycloak upstream jira issue can be shown if filtered by Fix version.
 - Protocol mapper that can combine multiple user attributes [RCIAM-1267](https://jira.argo.grnet.gr/browse/RCIAM-1267)
 - LinkedAccountRepresentation consists linkedUserID
 - Support for omitting attributeConsumingServiceIndex from authentication requests
-
+- Every user can update his profile in account console based on User profile user managed attributes
 
 ### Fixed
 - Changes in account console and account rest service [RCIAM-860](https://jira.argo.grnet.gr/browse/RCIAM-860)
