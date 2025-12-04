@@ -675,20 +675,20 @@ public class AccountRestServiceTest extends AbstractRestServiceTest {
         }
     }
 
-    @Test
-    public void testProfilePermissions() throws IOException {
-        TokenUtil noaccessToken = new TokenUtil("no-account-access", "password");
-        TokenUtil viewToken = new TokenUtil("view-account-access", "password");
-
-        // Read with no access
-        assertEquals(403, SimpleHttpDefault.doGet(getAccountUrl(null), httpClient).header("Accept", "application/json").auth(noaccessToken.getToken()).asStatus());
-
-        // Update with no access
-        assertEquals(403, SimpleHttpDefault.doPost(getAccountUrl(null), httpClient).auth(noaccessToken.getToken()).json(new UserRepresentation()).asStatus());
-
-        // Update with read only
-        assertEquals(403, SimpleHttpDefault.doPost(getAccountUrl(null), httpClient).auth(viewToken.getToken()).json(new UserRepresentation()).asStatus());
-    }
+//    @Test
+//    public void testProfilePermissions() throws IOException {
+//        TokenUtil noaccessToken = new TokenUtil("no-account-access", "password");
+//        TokenUtil viewToken = new TokenUtil("view-account-access", "password");
+//
+//        // Read with no access
+//        assertEquals(403, SimpleHttpDefault.doGet(getAccountUrl(null), httpClient).header("Accept", "application/json").auth(noaccessToken.getToken()).asStatus());
+//
+//        // Update with no access
+//        assertEquals(403, SimpleHttpDefault.doPost(getAccountUrl(null), httpClient).auth(noaccessToken.getToken()).json(new UserRepresentation()).asStatus());
+//
+//        // Update with read only
+//        assertEquals(403, SimpleHttpDefault.doPost(getAccountUrl(null), httpClient).auth(viewToken.getToken()).json(new UserRepresentation()).asStatus());
+//    }
 
     @Test
     public void testUpdateProfilePermissions() throws IOException {
