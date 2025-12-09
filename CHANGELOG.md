@@ -36,10 +36,12 @@ Full Keycloak upstream jira issue can be shown if filtered by Fix version.
 - Add cookie for chosen login IdPs
 - Search without accents in Identity Providers
 - Add authnAuthorities to login event when login is done via cookie
+- User attribute unique validation [RCIAM-429](https://tts.grnet.gr/jira/browse/RCIAM-429)
+- Add no editable Attribute Validator [RCIAM-429](https://tts.grnet.gr/jira/browse/RCIAM-429)
 
 ### Changed
 - Change emailVerified User field with UserAttributeMappers (conditional trust email). [EOSC-KC-70](https://github.com/eosc-kc/keycloak/issues/70)
-- Support for configuring claims supported in Keycloak OP metadata [RCIAM-899](https://jira.argo.grnet.gr/browse/RCIAM-899)
+- Support for configuring claims supported in Keycloak[services](services%2Fsrc%2Fmain%2Fresources%2FMETA-INF%2Fservices) OP metadata [RCIAM-899](https://jira.argo.grnet.gr/browse/RCIAM-899)
 - Add is required configuration option for UserAttributeMapper and AttributeToRoleMapper 
 - Refresh token revoke per client and correct refresh flow [RCIAM-920](https://jira.argo.grnet.gr/browse/RCIAM-920)
 - SAML entityID/OIDC issuer showing in user if IdP display name does not exist [RCIAM-887](https://jira.argo.grnet.gr/browse/RCIAM-887)
