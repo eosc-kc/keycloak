@@ -50,6 +50,7 @@ import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.core.UriBuilder;
 import jakarta.ws.rs.core.UriInfo;
 
+import org.keycloak.authentication.authenticators.util.AcrStore;
 import org.keycloak.broker.provider.BrokeredIdentityContext;
 import org.keycloak.broker.provider.IdentityBrokerException;
 import org.keycloak.broker.provider.UserAuthenticationIdentityProvider;
@@ -85,6 +86,7 @@ import org.keycloak.models.RealmModel;
 import org.keycloak.models.UserSessionModel;
 import org.keycloak.protocol.LoginProtocol;
 import org.keycloak.protocol.LoginProtocolFactory;
+import org.keycloak.protocol.oidc.utils.AcrUtils;
 import org.keycloak.protocol.saml.JaxrsSAML2BindingBuilder;
 import org.keycloak.protocol.saml.SAMLDecryptionKeysLocator;
 import org.keycloak.protocol.saml.SamlMetadataKeyLocator;
@@ -735,6 +737,16 @@ public class SAMLEndpoint {
                 //check in order to add IDENTITY_PROVIDER_IDS
                 if ( authn != null && authn.getAuthnContext() != null && !authn.getAuthnContext().getAuthenticatingAuthority().isEmpty()) {
                     authSession.setUserSessionNote(Details.IDENTITY_PROVIDER_AUTHN_AUTHORITIES, JsonSerialization.writeValueAsString(authn.getAuthnContext().getAuthenticatingAuthority().stream().map(x -> new AuthnAuthorityRepresentation(x.toString())).toList()));
+                }
+
+                //set loa if it configured and IdP return appropriate value
+                if (config.isPassSetMfa() && authn.getAuthnContext() != null && authn.getAuthnContext().getSequence() != null && authn.getAuthnContext().getSequence().getClassRef() != null ) {
+                    Integer idpLoa = AcrUtils.getAcrLoaMap(authSession.getClient()).get(authn.getAuthnContext().getSequence().getClassRef().getValue().toString());
+                    AcrStore acrStore = new AcrStore(session, authSession);
+                    //set idp acr loa only if it is higher than current loa
+                    if (idpLoa != null && idpLoa > acrStore.getLevelOfAuthenticationFromCurrentAuthentication()) {
+                        acrStore.setLevelAuthenticated(idpLoa);
+                    }
                 }
 
                 return callback.authenticated(identity);
