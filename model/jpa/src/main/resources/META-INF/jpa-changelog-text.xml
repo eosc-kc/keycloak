@@ -1,0 +1,10 @@
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.1.xsd">
+
+    <changeSet author="eosc-kc" id="text-values">
+        <modifyDataType newDataType="longvarchar" tableName="USER_ATTRIBUTE" columnName="VALUE"/>
+        <modifyDataType newDataType="longvarchar" tableName="CLIENT" columnName="DESCRIPTION"/>
+        <modifyDataType newDataType="longvarchar" tableName="CLIENT_ATTRIBUTES" columnName="VALUE"/>
+        <modifyDataType newDataType="longvarchar" tableName="GROUP_ATTRIBUTE" columnName="VALUE"/>
+    </changeSet>
+
+</databaseChangeLog>
