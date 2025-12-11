@@ -97,5 +97,6 @@
     <include file="META-INF/jpa-changelog-saml-fed-clients.xml"/>
     <include file="META-INF/jpa-changelog-clientscope-policy.xml"/>
     <include file="META-INF/jpa-changelog-unaccent.xml"/>
+    <include file="META-INF/jpa-changelog-text.xml"/>
 
 </databaseChangeLog>
