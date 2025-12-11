@@ -22,9 +22,11 @@ import java.security.PrivateKey;
 import java.security.cert.X509Certificate;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Comparator;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.stream.Collectors;
@@ -65,6 +67,7 @@ import org.keycloak.events.EventBuilder;
 import org.keycloak.http.simple.SimpleHttp;
 import org.keycloak.keys.PublicKeyStorageProvider;
 import org.keycloak.keys.PublicKeyStorageUtils;
+import org.keycloak.models.Constants;
 import org.keycloak.models.FederatedIdentityModel;
 import org.keycloak.models.IdentityProviderMapperModel;
 import org.keycloak.models.KeyManager;
@@ -73,6 +76,7 @@ import org.keycloak.models.RealmModel;
 import org.keycloak.models.UserSessionModel;
 import org.keycloak.protocol.LoginProtocol;
 import org.keycloak.protocol.oidc.OIDCLoginProtocol;
+import org.keycloak.protocol.oidc.utils.AcrUtils;
 import org.keycloak.protocol.saml.JaxrsSAML2BindingBuilder;
 import org.keycloak.protocol.saml.SAMLEncryptionAlgorithms;
 import org.keycloak.protocol.saml.SamlMetadataPublicKeyLoader;
@@ -108,6 +112,8 @@ import org.keycloak.util.JsonSerialization;
 import org.jboss.logging.Logger;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
+
+import static org.keycloak.models.Constants.NO_LOA;
 
 /**
  * @author Pedro Igor
@@ -158,6 +164,15 @@ public class SAMLIdentityProvider extends AbstractIdentityProvider<SAMLIdentityP
 
             for (String authnContextDeclRef : getAuthnContextDeclRefUris())
                 requestedAuthnContext.addAuthnContextDeclRef(authnContextDeclRef);
+
+            String requestedLoa = request.getAuthenticationSession().getClientNote(Constants.REQUESTED_LEVEL_OF_AUTHENTICATION);
+            int requestedLoaNumber = requestedLoa == null ? NO_LOA : Integer.parseInt(requestedLoa);
+            String previouslyAuthenticatedNote = request.getAuthenticationSession().getClientNote(Constants.LEVEL_OF_AUTHENTICATION);
+            int previouslyAuthenticatedNoteNumber = previouslyAuthenticatedNote == null ? NO_LOA : Integer.parseInt(previouslyAuthenticatedNote);
+            if (getConfig().isPassSetMfa() && requestedLoaNumber > previouslyAuthenticatedNoteNumber) {
+                AcrUtils.getAcrLoaMap(realm).entrySet().stream().filter(entry -> requestedLoaNumber >= entry.getValue()).sorted(Map.Entry.<String, Integer>comparingByValue(Comparator.reverseOrder()))
+                        .map(Map.Entry::getKey).forEach(x ->requestedAuthnContext.addAuthnContextClassRef(x));
+            }
 
             Integer attributeConsumingServiceIndex = getConfig().isOmitAttributeConsumingServiceIndexAuthn() ? null : getConfig().getAttributeConsumingServiceIndex();
 

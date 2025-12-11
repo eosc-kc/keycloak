@@ -17,13 +17,16 @@
 package org.keycloak.broker.oidc;
 
 import java.io.IOException;
+import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.stream.Stream;
 
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.Path;
@@ -39,6 +42,7 @@ import org.keycloak.OAuth2Constants;
 import org.keycloak.OAuthErrorException;
 import org.keycloak.authentication.ClientAuthenticationFlowContext;
 import org.keycloak.authentication.authenticators.client.FederatedJWTClientValidator;
+import org.keycloak.authentication.authenticators.util.AcrStore;
 import org.keycloak.broker.jwtauthorizationgrant.JWTAuthorizationGrantIdentityProvider;
 import org.keycloak.broker.oidc.mappers.AbstractJsonUserAttributeMapper;
 import org.keycloak.broker.provider.AuthenticationRequest;
@@ -71,6 +75,7 @@ import org.keycloak.keys.PublicKeyStorageUtils;
 import org.keycloak.keys.loader.OIDCIdentityProviderPublicKeyLoader;
 import org.keycloak.keys.loader.PublicKeyStorageManager;
 import org.keycloak.models.ClientModel;
+import org.keycloak.models.Constants;
 import org.keycloak.models.FederatedIdentityModel;
 import org.keycloak.models.KeycloakSession;
 import org.keycloak.models.RealmModel;
@@ -79,7 +84,9 @@ import org.keycloak.models.UserSessionModel;
 import org.keycloak.protocol.oidc.JWTAuthorizationGrantValidationContext;
 import org.keycloak.protocol.oidc.OIDCLoginProtocol;
 import org.keycloak.protocol.oidc.TokenExchangeContext;
+import org.keycloak.protocol.oidc.utils.AcrUtils;
 import org.keycloak.representations.AccessTokenResponse;
+import org.keycloak.representations.ClaimsRepresentation;
 import org.keycloak.representations.IDToken;
 import org.keycloak.representations.JsonWebToken;
 import org.keycloak.services.ErrorPage;
@@ -97,6 +104,8 @@ import org.keycloak.vault.VaultStringSecret;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.jboss.logging.Logger;
+
+import static org.keycloak.models.Constants.NO_LOA;
 
 /**
  * @author Pedro Igor
@@ -473,8 +482,17 @@ public class OIDCIdentityProvider extends AbstractOAuth2IdentityProvider<OIDCIde
             if (!getConfig().isDisableNonce()) {
                 identity.getContextData().put(BROKER_NONCE_PARAM, idToken.getOtherClaims().get(OIDCLoginProtocol.NONCE_PARAM));
             }
-
-            if (Booleans.isTrue(getConfig().isStoreToken())) {
+            if (getConfig().isPassSetMfa() && idToken.getOtherClaims().get(IDToken.ACR) != null) {
+                AuthenticationSessionModel authenticationSession = session.getContext().getAuthenticationSession();
+                Integer idpLoa = AcrUtils.getAcrLoaMap(authenticationSession.getClient()).get(idToken.getOtherClaims().get(IDToken.ACR));
+                AcrStore acrStore = new AcrStore(session, authenticationSession);
+                //set idp acr loa only if it is higher than current loa
+                if (idpLoa != null  && idpLoa > acrStore.getLevelOfAuthenticationFromCurrentAuthentication()){
+                    acrStore.setLevelAuthenticated(idpLoa);
+                }
+            }
+            
+            if (getConfig().isStoreToken()) {
                 if (tokenResponse.getExpiresIn() > 0) {
                     long accessTokenExpiration = Time.currentTime() + tokenResponse.getExpiresIn();
                     tokenResponse.getOtherClaims().put(ACCESS_TOKEN_EXPIRATION, accessTokenExpiration);
@@ -1000,6 +1018,30 @@ public class OIDCIdentityProvider extends AbstractOAuth2IdentityProvider<OIDCIde
 
         if (Booleans.isTrue(getConfig().isPassMaxAge()) && maxAge != null) {
             uriBuilder.queryParam(OIDCLoginProtocol.MAX_AGE_PARAM, maxAge);
+        }
+
+        String requestedLoa = request.getAuthenticationSession().getClientNote(Constants.REQUESTED_LEVEL_OF_AUTHENTICATION);
+        int requestedLoaNumber = requestedLoa == null ? NO_LOA : Integer.parseInt(requestedLoa);
+        String previouslyAuthenticatedNote = request.getAuthenticationSession().getClientNote(Constants.LEVEL_OF_AUTHENTICATION);
+        if (getConfig().isPassSetMfa() && requestedLoaNumber > (previouslyAuthenticatedNote == null ? NO_LOA : Integer.parseInt(previouslyAuthenticatedNote))) {
+            Map.Entry<String, Integer> loaEntry = AcrUtils.getAcrLoaMap(request.getAuthenticationSession().getClient()).entrySet().stream().filter(entry -> entry.getValue().equals(requestedLoaNumber)).findFirst().get();
+            if (loaEntry != null && getConfig().isClaimsParameterSupported()) {
+                ClaimsRepresentation claims = new ClaimsRepresentation();
+                Map<String, ClaimsRepresentation.ClaimValue> claimValueMap = new HashMap<>();
+                ClaimsRepresentation.ClaimValue claimValue = new ClaimsRepresentation.ClaimValue();
+                claimValue.setEssential(Boolean.FALSE);
+                List<String> claimValues = Stream.of(loaEntry.getKey()).toList();
+                claimValue.setValues(claimValues);
+                claimValueMap.put(IDToken.ACR, claimValue);
+                claims.setIdTokenClaims(claimValueMap);
+                try {
+                    uriBuilder.queryParam(OIDCLoginProtocol.CLAIMS_PARAM, URLEncoder.encode(JsonSerialization.writeValueAsString(claims), "UTF-8"));
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
+                }
+            } else if (loaEntry != null ) {
+                uriBuilder.queryParam(OAuth2Constants.ACR_VALUES, loaEntry.getKey());
+            }
         }
 
         return uriBuilder;
