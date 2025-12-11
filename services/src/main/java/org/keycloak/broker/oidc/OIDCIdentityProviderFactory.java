@@ -83,6 +83,7 @@ public class OIDCIdentityProviderFactory extends AbstractIdentityProviderFactory
         if (rep.getIntrospectionEndpoint() != null) {
             config.setTokenIntrospectionUrl(rep.getIntrospectionEndpoint());
         }
+        config.setClaimsParameterSupported(rep.getClaimsParameterSupported() != null ? rep.getClaimsParameterSupported() : false);
         return config;
     }
 

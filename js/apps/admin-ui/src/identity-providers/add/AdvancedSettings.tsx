@@ -131,6 +131,12 @@ export const AdvancedSettings = ({
     defaultValue: "false",
   });
   const syncModeAvailable = transientUsers === "false";
+  const passSetMfa = useWatch({
+    control,
+    name: "config.passSetMfa",
+    defaultValue: "false",
+  });
+  const claimsParameterSupportedRequired = passSetMfa === "true";
   return (
     <>
       {!isOIDC && !isSAML && !isOAuth2 && (
@@ -263,6 +269,15 @@ export const AdvancedSettings = ({
             )}
           </FormGroup>
         </>
+      )}
+      {(isSAML || isOIDC) && (
+        <SwitchField field="config.passSetMfa" label="passSetMfa" />
+      )}
+      {isOIDC && claimsParameterSupportedRequired && (
+        <SwitchField
+          field="config.claimsParameterSupported"
+          label="claimsParameterSupported"
+        />
       )}
       <LoginFlow
         field="firstBrokerLoginFlowAlias"
