@@ -38,6 +38,7 @@ Full Keycloak upstream jira issue can be shown if filtered by Fix version.
 - Add authnAuthorities to login event when login is done via cookie
 - User attribute unique validation [RCIAM-429](https://tts.grnet.gr/jira/browse/RCIAM-429)
 - Add no editable Attribute Validator [RCIAM-429](https://tts.grnet.gr/jira/browse/RCIAM-429)
+- Signalling Multi-Factor Authentication (MFA) requests to OIDC and SAML Identity Providers 
 
 ### Changed
 - Change emailVerified User field with UserAttributeMappers (conditional trust email). [EOSC-KC-70](https://github.com/eosc-kc/keycloak/issues/70)

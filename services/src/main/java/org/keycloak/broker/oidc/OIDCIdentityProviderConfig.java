@@ -35,6 +35,7 @@ public class OIDCIdentityProviderConfig extends OAuth2IdentityProviderConfig {
     public static final String SUPPORTS_CLIENT_ASSERTIONS = "supportsClientAssertions";
     public static final String SUPPORTS_CLIENT_ASSERTION_REUSE = "supportsClientAssertionReuse";
     public static final String VALIDATE_REFRESH_TOKEN = "validateRefreshToken";
+    public static final String CLAIMS_PARAMETER_SUPPORTED = "claimsParameterSupported";
 
     public OIDCIdentityProviderConfig(IdentityProviderModel identityProviderModel) {
         super(identityProviderModel);
@@ -222,6 +223,21 @@ public class OIDCIdentityProviderConfig extends OAuth2IdentityProviderConfig {
         getConfig().put(VALIDATE_REFRESH_TOKEN, String.valueOf(validateRefreshToken));
     }
 
+    public void setPassSetMfa(boolean passSetMfa) {
+        getConfig().put(IdentityProviderModel.PASS_SET_MFA, String.valueOf(passSetMfa));
+    }
+
+    public boolean isPassSetMfa() {
+        return Boolean.valueOf(getConfig().get(IdentityProviderModel.PASS_SET_MFA));
+    }
+
+    public void setClaimsParameterSupported(boolean claimsParameterSupported) {
+        getConfig().put(CLAIMS_PARAMETER_SUPPORTED, String.valueOf(claimsParameterSupported));
+    }
+
+    public boolean isClaimsParameterSupported() {
+        return Boolean.valueOf(getConfig().get(CLAIMS_PARAMETER_SUPPORTED));
+    }
 
     @Override
     public void validate(RealmModel realm) {

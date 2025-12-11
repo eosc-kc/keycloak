@@ -221,6 +221,11 @@ const IdentityProviderFederationConfig = ({
       />
       <SwitchField
         field="config.passSetMfa"
+        label="passSetMfaFederation"
+        isReadOnly={false}
+      />
+      <SwitchField
+        field="config.passSetMfa"
         label="passSetMfa"
         isReadOnly={false}
       />

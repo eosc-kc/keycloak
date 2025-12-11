@@ -187,7 +187,7 @@ public class AutoUpdateIdentityProviderTest extends AbstractAdminTest {
             map.put("fromUrl", "http://localhost:8880/oidc-idp");
 
             Map<String, String> result = realm.identityProviders().importFrom(map);
-            assertThat(result.keySet(), containsInAnyOrder("issuer", "authorizationUrl", "tokenUrl", "userInfoUrl", "validateSignature", "useJwksUrl", "jwksUrl", "metadataDescriptorUrl"));
+            assertThat(result.keySet(), containsInAnyOrder("issuer", "authorizationUrl", "tokenUrl", "userInfoUrl", "validateSignature", "useJwksUrl", "jwksUrl", "metadataDescriptorUrl", "claimsParameterSupported"));
             assertThat(result, hasEntry("authorizationUrl", "https://aai.egi.eu/oidc/authorize"));
             assertThat(result, hasEntry("tokenUrl", "https://aai.egi.eu/oidc/token"));
 
@@ -226,7 +226,7 @@ public class AutoUpdateIdentityProviderTest extends AbstractAdminTest {
     }
 
     private void assertOidcConfig(Map<String, String> config, boolean hasExecuted) {
-        Set fields = Stream.of("issuer", "authorizationUrl", "tokenUrl", "userInfoUrl", "validateSignature", "useJwksUrl", "jwksUrl", "metadataDescriptorUrl", "syncMode", "autoUpdate", "refreshPeriod").collect(Collectors.toSet());
+        Set fields = Stream.of("issuer", "authorizationUrl", "tokenUrl", "userInfoUrl", "validateSignature", "useJwksUrl", "jwksUrl", "claimsParameterSupported", "metadataDescriptorUrl", "syncMode", "autoUpdate", "refreshPeriod").collect(Collectors.toSet());
         //autoupdated has been executed -  add lastRefreshTime
         if (hasExecuted)
             fields.add("lastRefreshTime");
