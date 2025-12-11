@@ -8,6 +8,8 @@ This fork is based on Keycloak upstream version is 26.4.1 .
 For Keycloak upstream changelog please see [Keycloak release note 26.4.0](https://www.keycloak.org/docs/latest/release_notes/index.html#keycloak-26-4-0) and latest minor and patch releases announcements.
 Full Keycloak upstream jira issue can be shown if filtered by Fix version.
 
+Our Keycloak version is working well with PostgreSQL database. For using other SQL databases, text field in database need to be evaluated.
+
 ## [Unreleased]
 
 ### Added
@@ -52,6 +54,10 @@ Full Keycloak upstream jira issue can be shown if filtered by Fix version.
 - LinkedAccountRepresentation consists linkedUserID
 - Support for omitting attributeConsumingServiceIndex from authentication requests
 - Every user can update his profile in account console based on User profile user managed attributes
+- User attribute value as text in database [RCIAM-1032](https://jira.argo.grnet.gr/browse/RCIAM-1032)
+- Client description as text in database
+- Client attribute value as text in database [RCIAM-1026)](https://jira.argo.grnet.gr/browse/RCIAM-1026)
+- Group attribute value as text in database
 
 ### Fixed
 - Changes in account console and account rest service [RCIAM-860](https://jira.argo.grnet.gr/browse/RCIAM-860)
