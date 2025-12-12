@@ -19,6 +19,7 @@ package org.keycloak.protocol.oidc.grants;
 
 import java.util.Collections;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
@@ -63,7 +64,7 @@ public class ResourceOwnerPasswordCredentialsGrantType extends OAuth2GrantTypeBa
     private static final Logger logger = Logger.getLogger(ResourceOwnerPasswordCredentialsGrantType.class);
 
     @Override
-    public Response process(Context context) {
+    public Response process(Context context) throws CorsErrorResponseException {
         setContext(context);
 
         event.detail(Details.AUTH_METHOD, "oauth_credentials");
