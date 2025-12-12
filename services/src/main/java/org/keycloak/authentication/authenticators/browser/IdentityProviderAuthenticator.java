@@ -69,6 +69,17 @@ public class IdentityProviderAuthenticator implements Authenticator {
             String defaultProvider = context.getAuthenticatorConfig().getConfig().get(IdentityProviderAuthenticatorFactory.DEFAULT_PROVIDER);
             LOG.tracef("Redirecting: default provider set to %s", defaultProvider);
             redirect(context, defaultProvider);
+        } else if (context.getAuthenticatorConfig() != null && Boolean.valueOf(context.getAuthenticatorConfig().getConfig().get(IdentityProviderAuthenticatorFactory.AUTHENTICATED_PROVIDER)) && context.getAuthenticationSession().getUserSessionNotes().get(Details.IDENTITY_PROVIDER) != null) {
+            if (context.getForwardedErrorMessage() != null) {
+                LOG.infof("Should redirect to remote IdP but forwardedError has value '%s', skipping this authenticator...", context.getForwardedErrorMessage());
+                context.attempted();
+
+                return;
+            }
+
+            String defaultProvider = context.getAuthenticationSession().getUserSessionNotes().get(Details.IDENTITY_PROVIDER);
+            LOG.tracef("Redirecting: default provider set to %s", defaultProvider);
+            redirect(context, defaultProvider);
         } else {
             LOG.tracef("No default provider set or %s query parameter provided", AdapterConstants.KC_IDP_HINT);
             context.attempted();

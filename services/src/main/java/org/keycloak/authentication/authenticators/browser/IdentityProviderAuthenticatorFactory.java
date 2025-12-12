@@ -25,6 +25,7 @@ import org.keycloak.models.KeycloakSession;
 import org.keycloak.models.KeycloakSessionFactory;
 import org.keycloak.provider.ProviderConfigProperty;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
@@ -40,6 +41,7 @@ public class IdentityProviderAuthenticatorFactory implements AuthenticatorFactor
 
     public static final String PROVIDER_ID = "identity-provider-redirector";
     public static final String DEFAULT_PROVIDER = "defaultProvider";
+    public static final String AUTHENTICATED_PROVIDER = "authenticatedProvider";
 
     @Override
     public String getDisplayType() {
@@ -73,8 +75,12 @@ public class IdentityProviderAuthenticatorFactory implements AuthenticatorFactor
 
     @Override
     public List<ProviderConfigProperty> getConfigProperties() {
+        List<ProviderConfigProperty> properties = new ArrayList<>();
         ProviderConfigProperty rep = new ProviderConfigProperty(DEFAULT_PROVIDER, "Default Identity Provider", "To automatically redirect to an identity provider set to the alias of the identity provider", STRING_TYPE, null);
-        return Collections.singletonList(rep);
+        properties.add(rep);
+        rep = new ProviderConfigProperty(AUTHENTICATED_PROVIDER,"Already authenticated Identity Provider", "If it is set to true, redirects to already authenticated provider.", ProviderConfigProperty.BOOLEAN_TYPE , Boolean.toString(false));
+        properties.add(rep);
+        return properties;
     }
 
     @Override

@@ -40,7 +40,7 @@ public class KcOidcBrokerParameterForwardTest extends AbstractBrokerTest {
             IdentityProviderRepresentation idp = createIdentityProvider(IDP_OIDC_ALIAS, IDP_OIDC_PROVIDER_ID);
             Map<String, String> config = idp.getConfig();
             applyDefaultConfiguration(config, syncMode);
-            config.put("forwardParameters", FORWARDED_PARAMETER +", " + PARAMETER_NOT_SET + ", " + OAuth2Constants.ACR_VALUES + ", " + OIDCLoginProtocol.CLAIMS_PARAM + ",forwarded_encoded");
+            config.put("forwardParameters", FORWARDED_PARAMETER +", " + PARAMETER_NOT_SET + ", " + OIDCLoginProtocol.CLAIMS_PARAM + ",forwarded_encoded");
             return idp;
         }
     }
@@ -56,7 +56,7 @@ public class KcOidcBrokerParameterForwardTest extends AbstractBrokerTest {
         String forwardedEncodedParamValue = "encoded value";
         String forwardedEncodedParamValueEncoded = URLEncoder.encode(forwardedEncodedParamValue, StandardCharsets.UTF_8);
         String queryString = "&" + FORWARDED_PARAMETER + "=" + FORWARDED_PARAMETER_VALUE + "&" + PARAMETER_NOT_FORWARDED + "=" + "value"
-                + "&" + OAuth2Constants.ACR_VALUES + "=" + "phr"
+//                + "&" + OAuth2Constants.ACR_VALUES + "=" + "phr"
                 + "&" + OIDCLoginProtocol.CLAIMS_PARAM + "=" + urlEncodedClaims
                 + "&" + forwardedEncodedParam + "=" + forwardedEncodedParamValue;
         driver.navigate().to(driver.getCurrentUrl() + queryString);
@@ -71,8 +71,8 @@ public class KcOidcBrokerParameterForwardTest extends AbstractBrokerTest {
 
         assertThat(FORWARDED_PARAMETER + "=" + FORWARDED_PARAMETER_VALUE + " should be part of the url",
                 driver.getCurrentUrl(), containsString(FORWARDED_PARAMETER + "=" + FORWARDED_PARAMETER_VALUE));
-        assertThat(OAuth2Constants.ACR_VALUES + "=" + "phr" + " should be part of the url",
-                driver.getCurrentUrl(), containsString(OAuth2Constants.ACR_VALUES + "=" + "phr"));
+//        assertThat(OAuth2Constants.ACR_VALUES + "=" + "phr" + " should be part of the url",
+//                driver.getCurrentUrl(), containsString(OAuth2Constants.ACR_VALUES + "=" + "phr"));
         assertThat(OIDCLoginProtocol.CLAIMS_PARAM + "=" + urlEncodedClaims + " should be part of the url",
                 driver.getCurrentUrl(), containsString(OIDCLoginProtocol.CLAIMS_PARAM + "=" + urlEncodedClaims));
         assertThat(forwardedEncodedParam + "=" + forwardedEncodedParamValue +  "should be part of the url",

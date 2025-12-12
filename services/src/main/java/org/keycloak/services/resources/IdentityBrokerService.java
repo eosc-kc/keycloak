@@ -24,6 +24,7 @@ import org.jboss.logging.Logger;
 import org.jboss.resteasy.reactive.NoCache;
 import org.keycloak.authentication.RequiredActionContext;
 import org.keycloak.authentication.authenticators.broker.IdpConfirmOverrideLinkAuthenticator;
+import org.keycloak.authentication.authenticators.util.AcrStore;
 import org.keycloak.broker.provider.ExchangeTokenToIdentityProviderToken;
 import org.keycloak.broker.provider.IdpLinkAction;
 import org.keycloak.broker.saml.SAMLIdentityProvider;
@@ -1094,6 +1095,7 @@ public class IdentityBrokerService implements IdentityProvider.AuthenticationCal
         //code for returning to client browser flow
         String execution = authSession.getAuthNote(AuthenticationProcessor.CLIENT_AUTHENTICATION_EXECUTION);
         String flowId =  authSession.getAuthNote(AuthenticationProcessor.CLIENT_FLOW_ID);
+        String levelOfAuthentication = authSession.getAuthNote(Constants.LEVEL_OF_AUTHENTICATION);
 
         if (execution != null && flowId !=null) {
             AuthenticationExecutionModel model = realmModel.getAuthenticationExecutionById(execution);
@@ -1113,14 +1115,25 @@ public class IdentityBrokerService implements IdentityProvider.AuthenticationCal
                     .setUriInfo(session.getContext().getUri())
                     .setRequest(request);
             processor.setAutheticatedUser(federatedUser);
-            AuthenticationFlow authenticationFlow = processor.createFlowExecution(flowId, model);
-            //maybe find next flow
-            Response challenge = authenticationFlow.continueClientAuthAfterIdPLogin(model);
-            if (challenge != null) {
-                return challenge;
-            }
-            if (!authenticationFlow.isSuccessful()) {
-                throw new AuthenticationFlowException(authenticationFlow.getFlowExceptions());
+
+            try {
+                AcrStore acrStore = new AcrStore(session, processor.getAuthenticationSession());
+                if (levelOfAuthentication != null) {
+                    acrStore.setLevelAuthenticated(Integer.valueOf(levelOfAuthentication));
+                } else if (realmModel.getAttribute(Constants.DEFAULT_IDP_ACR_VALUE) != null) {
+                    acrStore.setLevelAuthenticated(Integer.valueOf((realmModel.getAttribute(Constants.DEFAULT_IDP_ACR_VALUE))));
+                }
+                AuthenticationFlow authenticationFlow = processor.createFlowExecution(flowId, model);
+                //maybe find next flow
+                Response challenge = authenticationFlow.continueClientAuthAfterIdPLogin(model);
+                if (challenge != null) return challenge;
+                if (!authenticationFlow.isSuccessful()) {
+                    throw new AuthenticationFlowException(authenticationFlow.getFlowExceptions());
+                }
+
+            } catch (Exception e) {
+                event.event(EventType.LOGIN_ERROR);
+                return processor.handleBrowserException(e);
             }
         } else {
             logger.warn("CLIENT_AUTHENTICATION_EXECUTION and CLIENT_FLOW_ID are not included in the authenticationSession");
