@@ -19,6 +19,7 @@ package org.keycloak.protocol.oidc.grants;
 
 import java.util.Collections;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import jakarta.ws.rs.core.Response;
 
