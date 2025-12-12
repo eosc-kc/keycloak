@@ -41,6 +41,7 @@ Our Keycloak version is working well with PostgreSQL database. For using other S
 - User attribute unique validation [RCIAM-429](https://tts.grnet.gr/jira/browse/RCIAM-429)
 - Add no editable Attribute Validator [RCIAM-429](https://tts.grnet.gr/jira/browse/RCIAM-429)
 - Signalling Multi-Factor Authentication (MFA) requests to OIDC and SAML Identity Providers 
+- Extend Proxied Token Introspection to support fallback endpoints
 
 ### Changed
 - Change emailVerified User field with UserAttributeMappers (conditional trust email). [EOSC-KC-70](https://github.com/eosc-kc/keycloak/issues/70)
