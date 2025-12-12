@@ -18,8 +18,10 @@
 package org.keycloak.protocol.oidc;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.Arrays;
 import java.util.Base64;
+import java.util.List;
 
 import jakarta.ws.rs.NotFoundException;
 import jakarta.ws.rs.core.HttpHeaders;
@@ -32,6 +34,7 @@ import org.keycloak.broker.oidc.OIDCIdentityProvider;
 import org.keycloak.broker.oidc.OIDCIdentityProviderConfig;
 import org.keycloak.common.VerificationException;
 import org.keycloak.common.util.Time;
+import org.keycloak.connections.httpclient.HttpClientProvider;
 import org.keycloak.crypto.CryptoUtils;
 import org.keycloak.crypto.SignatureVerifierContext;
 import org.keycloak.events.Details;
@@ -52,6 +55,7 @@ import org.keycloak.models.UserSessionModel;
 import org.keycloak.models.customcache.CustomCacheProvider;
 import org.keycloak.models.customcache.CustomCacheProviderFactory;
 import org.keycloak.protocol.LoginProtocol;
+import org.keycloak.protocol.oidc.representations.OIDCConfigurationRepresentation;
 import org.keycloak.protocol.oidc.utils.Key;
 import org.keycloak.representations.AccessToken;
 import org.keycloak.services.Urls;
@@ -72,6 +76,9 @@ import org.jboss.logging.Logger;
 public class AccessTokenIntrospectionProvider<T extends AccessToken> implements TokenIntrospectionProvider {
 
     private static final String PARAM_TOKEN = "token";
+    private static final String wellKnown = "/.well-known/openid-configuration";
+    private static final  String PROXIED_TOKEN_INTROSPECTION_FALLBACK_PROVIDERS = "proxiedTokenIntrospectionFallbackProviders";
+    private static final ObjectMapper mapper = new ObjectMapper();
 
     protected final KeycloakSession session;
     protected final TokenManager tokenManager;
@@ -126,8 +133,8 @@ public class AccessTokenIntrospectionProvider<T extends AccessToken> implements 
                     tokenMetadata.put("active", false);
                     eventBuilder.error(Errors.INVALID_TOKEN);
                     return Response.ok(JsonSerialization.writeValueAsBytes(tokenMetadata)).type(MediaType.APPLICATION_JSON_TYPE).build();
-                } else {
-                    return introspectWithExternal(tokenStr, issuer, realm);
+                }  else {
+                    return introspectWithProxied(tokenStr, issuer, realm);
                 }
             }
 
@@ -408,14 +415,14 @@ public class AccessTokenIntrospectionProvider<T extends AccessToken> implements 
         return true;
     }
 
-    protected Response introspectWithExternal(String token, String issuer, RealmModel realm) throws IOException {
+    protected Response introspectWithProxied(String token, String issuer, RealmModel realm) throws IOException {
 
         try {
             String cachedToken = (String) tokenRelayCache.get(new Key(token, realm.getName()));
             if(cachedToken != null)
                 return Response.ok(cachedToken).type(MediaType.APPLICATION_JSON_TYPE).build();
 
-            IdentityProviderModel issuerIdp = realm.getIdentityProvidersStream().filter(idp -> issuer.equals(idp.getConfig().get("issuer"))).findAny().orElse(null);
+            IdentityProviderModel issuerIdp = realm.getIdentityProvidersStream().filter(idp -> issuer.equals(idp.getConfig().get("issuer")) && idp.isEnabled()).findAny().orElse(null);
             if (issuerIdp != null) {
                 OIDCIdentityProviderConfig oidcIssuerIdp = new OIDCIdentityProviderConfig(issuerIdp);
                 OIDCIdentityProvider oidcIssuerProvider = new OIDCIdentityProvider(session, oidcIssuerIdp);
@@ -430,6 +437,27 @@ public class AccessTokenIntrospectionProvider<T extends AccessToken> implements 
                     }
                     tokenRelayCache.put(new Key(token, realm.getName()), response.asString());
                     return Response.status(response.getStatus()).type(MediaType.APPLICATION_JSON_TYPE).entity(response.asString()).build();
+                }
+            } else if (realm.getAttribute(PROXIED_TOKEN_INTROSPECTION_FALLBACK_PROVIDERS) != null){
+                //fallback IdP
+                List<String> fallbackIdPsAlias = Arrays.asList(realm.getAttribute(PROXIED_TOKEN_INTROSPECTION_FALLBACK_PROVIDERS).split(","));
+                HttpClientProvider httpClientProvider = session.getProvider(HttpClientProvider.class);
+                for (String alias : fallbackIdPsAlias ){
+                    IdentityProviderModel idp = realm.getIdentityProviderByAlias(alias);
+                    if (idp != null && idp.isEnabled() ) {
+                        OIDCIdentityProviderConfig oidcIssuerIdp = new OIDCIdentityProviderConfig(idp);
+                        OIDCIdentityProvider oidcIssuerProvider = new OIDCIdentityProvider(session, oidcIssuerIdp);
+                        InputStream inputStream = httpClientProvider.get(new String(oidcIssuerIdp.getIssuer() + wellKnown));
+                        OIDCConfigurationRepresentation rep = JsonSerialization.readValue(inputStream, OIDCConfigurationRepresentation.class);
+                        if (rep.getIntrospectionEndpoint() != null) {
+                            SimpleHttpResponse response = oidcIssuerProvider.authenticateTokenRequest(SimpleHttp.create(session).doPost(rep.getIntrospectionEndpoint()).param(PARAM_TOKEN, token)).asResponse();
+                            if (response.getStatus() < 300 && mapper.readTree(response.asString()).path("active").asBoolean(false)) {
+                                return Response.status(response.getStatus()).type(MediaType.APPLICATION_JSON_TYPE).entity(response.asString()).build();
+                            } else {
+                                logger.warnf("IdP with alias %s responde to token introspection with status %d and body : %s", alias, response.getStatus(), response.asString());
+                            }
+                        }
+                    }
                 }
             }
             //if failed to find issuer in IdPs or IntrospectionEndpoint does not exist for specific Idp return false
