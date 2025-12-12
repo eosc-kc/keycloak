@@ -26,7 +26,6 @@ import org.keycloak.authentication.AuthenticationProcessor;
 import org.keycloak.authentication.Authenticator;
 import org.keycloak.constants.AdapterConstants;
 import org.keycloak.events.Details;
-import org.keycloak.models.AuthenticatorConfigModel;
 import org.keycloak.models.IdentityProviderModel;
 import org.keycloak.models.KeycloakSession;
 import org.keycloak.models.RealmModel;
@@ -77,12 +76,10 @@ public class IdentityProviderAuthenticator implements Authenticator {
             ? context.getUriInfo().getQueryParameters().getFirst(AdapterConstants.KC_IDP_HINT)
             : context.getAuthenticationSession().getClientNote(AdapterConstants.KC_IDP_HINT);
 
-        if (providerId == null) {
-            AuthenticatorConfigModel config = context.getAuthenticatorConfig();
-
-            if (config != null) {
-                providerId = config.getConfig().get(IdentityProviderAuthenticatorFactory.DEFAULT_PROVIDER);
-            }
+        if (providerId == null && context.getAuthenticatorConfig() != null && context.getAuthenticatorConfig().getConfig().get(IdentityProviderAuthenticatorFactory.DEFAULT_PROVIDER) != null) {
+            providerId = context.getAuthenticatorConfig().getConfig().get(IdentityProviderAuthenticatorFactory.DEFAULT_PROVIDER);
+        } else if (providerId == null ) {
+            providerId = context.getAuthenticationSession().getUserSessionNotes().get(Details.IDENTITY_PROVIDER);
         }
 
         return providerId;

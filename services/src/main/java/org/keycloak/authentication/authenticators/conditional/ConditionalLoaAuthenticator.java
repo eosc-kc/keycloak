@@ -36,6 +36,7 @@ import org.jboss.logging.Logger;
 public class ConditionalLoaAuthenticator implements ConditionalAuthenticator, AuthenticationFlowCallback {
     public static final String LEVEL = "loa-condition-level";
     public static final String MAX_AGE = "loa-max-age";
+    public static final String CHECK_REQUIRED_LOA = "check-required-loa";
     public static final int DEFAULT_MAX_AGE = 36000; // 10 days
 
     // Only for backwards compatibility with Keycloak 17
@@ -91,14 +92,21 @@ public class ConditionalLoaAuthenticator implements ConditionalAuthenticator, Au
         if (newLoa == null) {
             return;
         }
-        int maxAge = getMaxAge(context);
-        if (maxAge == 0) {
-            logger.tracef("Skip updating authenticated level '%d' in condition '%s' for future authentications due max-age set to 0", newLoa, context.getAuthenticatorConfig().getAlias());
-            acrStore.setLevelAuthenticatedToCurrentRequest(newLoa);
-        } else {
-            logger.tracef("Updating LoA to '%d' in the condition '%s' when authenticating session '%s'. Max age is %d.",
-                    newLoa, context.getAuthenticatorConfig().getAlias(), authSession.getParentSession().getId(), maxAge);
-            acrStore.setLevelAuthenticated(newLoa);
+        int currentAuthenticationLoa = acrStore.getLevelOfAuthenticationFromCurrentAuthentication();
+        if (Boolean.valueOf(context.getAuthenticatorConfig().getConfig().get(CHECK_REQUIRED_LOA)) && acrStore.isLevelOfAuthenticationForced() && !acrStore.isLevelOfAuthenticationSatisfiedFromCurrentAuthentication(context.getTopLevelFlow()) ){
+            //if it is set check for forced level based on current authenticator loa (mainly IdP return) => else return error
+            throwAuthenticationErrorForForcedLoa(acrStore, newLoa);
+        }
+        if (!Boolean.valueOf(context.getAuthenticatorConfig().getConfig().get(CHECK_REQUIRED_LOA)) && currentAuthenticationLoa < newLoa) {
+            int maxAge = getMaxAge(context);
+            if (maxAge == 0) {
+                logger.tracef("Skip updating authenticated level '%d' in condition '%s' for future authentications due max-age set to 0", newLoa, context.getAuthenticatorConfig().getAlias());
+                acrStore.setLevelAuthenticatedToCurrentRequest(newLoa);
+            } else {
+                logger.tracef("Updating LoA to '%d' in the condition '%s' when authenticating session '%s'. Max age is %d.",
+                        newLoa, context.getAuthenticatorConfig().getAlias(), authSession.getParentSession().getId(), maxAge);
+                acrStore.setLevelAuthenticated(newLoa);
+            }
         }
     }
 
@@ -109,13 +117,17 @@ public class ConditionalLoaAuthenticator implements ConditionalAuthenticator, Au
 
         logger.tracef("Finished authentication at level %d when authenticating authSession '%s'.", acrStore.getLevelOfAuthenticationFromCurrentAuthentication(), authSession.getParentSession().getId());
         if (acrStore.isLevelOfAuthenticationForced() && !acrStore.isLevelOfAuthenticationSatisfiedFromCurrentAuthentication(topFlow)) {
-            String details = String.format("Forced level of authentication did not meet the requirements. Requested level: %d, Fulfilled level: %d",
-                    acrStore.getRequestedLevelOfAuthentication(topFlow), acrStore.getLevelOfAuthenticationFromCurrentAuthentication());
-            throw new AuthenticationFlowException(AuthenticationFlowError.GENERIC_AUTHENTICATION_ERROR, details, Messages.ACR_NOT_FULFILLED);
+            throwAuthenticationErrorForForcedLoa(acrStore, acrStore.getRequestedLevelOfAuthentication(topFlow));
         }
 
         logger.tracef("Updating authenticated levels in authSession '%s' to user session note for future authentications: %s", authSession.getParentSession().getId(), authSession.getAuthNote(Constants.LOA_MAP));
         authSession.setUserSessionNote(Constants.LOA_MAP, authSession.getAuthNote(Constants.LOA_MAP));
+    }
+
+    private void throwAuthenticationErrorForForcedLoa(AcrStore acrStore, int requestedLoa){
+        String details = String.format("Forced level of authentication did not meet the requirements. Requested level: %d, Fulfilled level: %d", requestedLoa
+                , acrStore.getLevelOfAuthenticationFromCurrentAuthentication());
+        throw new AuthenticationFlowException(AuthenticationFlowError.GENERIC_AUTHENTICATION_ERROR, details, Messages.ACR_NOT_FULFILLED);
     }
 
     private Integer getConfiguredLoa(AuthenticationFlowContext context) {

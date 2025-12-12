@@ -42,6 +42,7 @@ Our Keycloak version is working well with PostgreSQL database. For using other S
 - Add no editable Attribute Validator [RCIAM-429](https://tts.grnet.gr/jira/browse/RCIAM-429)
 - Signalling Multi-Factor Authentication (MFA) requests to OIDC and SAML Identity Providers 
 - Extend Proxied Token Introspection to support fallback endpoints
+- Default acr value for Identity Providers login
 
 ### Changed
 - Change emailVerified User field with UserAttributeMappers (conditional trust email). [EOSC-KC-70](https://github.com/eosc-kc/keycloak/issues/70)
@@ -59,6 +60,7 @@ Our Keycloak version is working well with PostgreSQL database. For using other S
 - Client description as text in database
 - Client attribute value as text in database [RCIAM-1026)](https://jira.argo.grnet.gr/browse/RCIAM-1026)
 - Group attribute value as text in database
+- Support MFA with Identity Providers
 
 ### Fixed
 - Changes in account console and account rest service [RCIAM-860](https://jira.argo.grnet.gr/browse/RCIAM-860)
