@@ -80,6 +80,8 @@ public class CookieAuthenticator implements Authenticator {
                         context.setForwardedInfoMessage(Messages.AUTHENTICATE_STRONG);
                     }
 
+                    if (authResult.getSession().getNotes() != null)
+                        authResult.getSession().getNotes().entrySet().forEach(entry -> context.getAuthenticationSession().setUserSessionNote(entry.getKey(), entry.getValue()));
                     context.attempted();
                 } else {
                     // Cookie only authentication

@@ -384,8 +384,9 @@ public class LevelOfAssuranceFlowTest extends AbstractChangeImportedUserPassword
         openLoginFormWithAcrClaim(true, "silver");
         authenticateWithUsernamePassword();
         assertLoggedInWithAcr("silver");
+        // step-up to unknown acr
         openLoginFormWithAcrClaim(false, "iron");
-        assertLoggedInWithAcr("silver"); // Return silver without need to re-authenticate due maxAge for "silver" condition did not timed-out yet
+        assertErrorPage("Invalid parameter: claims");
     }
 
     @Test
@@ -415,10 +416,9 @@ public class LevelOfAssuranceFlowTest extends AbstractChangeImportedUserPassword
     }
 
     @Test
-    public void optionalUnknownClaimSucceeds() {
+    public void optionalUnknownClaimFails() {
         openLoginFormWithAcrClaim(false, "iron");
-        authenticateWithUsernamePassword();
-        assertLoggedInWithAcr("silver");
+        assertErrorPage("Invalid parameter: claims");
     }
 
     @Test
