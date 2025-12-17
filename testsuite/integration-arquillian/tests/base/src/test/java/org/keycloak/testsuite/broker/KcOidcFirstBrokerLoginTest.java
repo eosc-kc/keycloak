@@ -604,7 +604,7 @@ public class KcOidcFirstBrokerLoginTest extends AbstractFirstBrokerLoginTest {
 
         //assert fields and groups location in form, attributes without a group appear first
         List<WebElement> element = driver.findElements(By.cssSelector("form#kc-idp-review-profile-form label"));
-        String[] labelOrder = new String[]{"lastName", "username", "firstName", "header-company", "description-company", "department", "header-contact", "email", "termsAccepted"};
+        String[] labelOrder = new String[]{"lastName", "username", "firstName", "header-company", "description-company", "department", "header-contact", "email"};
         for (int i = 0; i < element.size(); i++) {
             WebElement webElement = element.get(i);
             String id;
