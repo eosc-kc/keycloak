@@ -76,6 +76,8 @@ import org.keycloak.models.KeycloakSession;
 import org.keycloak.models.ModelException;
 import org.keycloak.models.ModelIllegalStateException;
 import org.keycloak.models.OTPPolicy;
+import org.keycloak.models.OpenIdFederationConfig;
+import org.keycloak.models.OpenIdFederationGeneralConfig;
 import org.keycloak.models.OrganizationDomainModel;
 import org.keycloak.models.OrganizationModel;
 import org.keycloak.models.ParConfig;
@@ -91,6 +93,8 @@ import org.keycloak.models.UserModel;
 import org.keycloak.models.UserSessionModel;
 import org.keycloak.models.WebAuthnPolicy;
 import org.keycloak.models.credential.OTPCredentialModel;
+import org.keycloak.models.enums.ClientRegistrationTypeEnum;
+import org.keycloak.models.enums.EntityTypeEnum;
 import org.keycloak.models.light.LightweightUserAdapter;
 import org.keycloak.provider.ProviderConfigProperty;
 import org.keycloak.representations.account.CredentialMetadataRepresentation;
@@ -114,6 +118,7 @@ import org.keycloak.representations.idm.FederationMapperRepresentation;
 import org.keycloak.representations.idm.GroupRepresentation;
 import org.keycloak.representations.idm.IdentityProviderMapperRepresentation;
 import org.keycloak.representations.idm.IdentityProviderRepresentation;
+import org.keycloak.representations.idm.OpenIdFederationRepresentation;
 import org.keycloak.representations.idm.OrganizationDomainRepresentation;
 import org.keycloak.representations.idm.OrganizationRepresentation;
 import org.keycloak.representations.idm.ProtocolMapperRepresentation;
@@ -203,6 +208,19 @@ public class ModelToRepresentation {
         REALM_EXCLUDED_ATTRIBUTES.add("verifiableCredentialsEnabled");
         REALM_EXCLUDED_ATTRIBUTES.add("adminPermissionsEnabled");
         REALM_EXCLUDED_ATTRIBUTES.add("adminPermissionsClientId");
+
+        REALM_EXCLUDED_ATTRIBUTES.add(Constants.OPENID_FEDERATION_ENABLED);
+        REALM_EXCLUDED_ATTRIBUTES.add(Constants.OPENID_FEDERATION_CONTACTS);
+        REALM_EXCLUDED_ATTRIBUTES.add(Constants.OPENID_FEDERATION_ORGANIZATION_NAME);
+        REALM_EXCLUDED_ATTRIBUTES.add(Constants.OPENID_FEDERATION_AUTHORITY_HINTS);
+        REALM_EXCLUDED_ATTRIBUTES.add(Constants.OPENID_FEDERATION_LIFESPAN);
+        REALM_EXCLUDED_ATTRIBUTES.add(Constants.OPENID_FEDERATION_ORGANIZATION_NAME);
+        REALM_EXCLUDED_ATTRIBUTES.add(Constants.OPENID_FEDERATION_HISTORICAL_KEYS_ENDPOINT);
+        REALM_EXCLUDED_ATTRIBUTES.add(Constants.OPENID_FEDERATION_ORGANIZATION_URI);
+        REALM_EXCLUDED_ATTRIBUTES.add(Constants.OPENID_FEDERATION_LOGO_URI);
+        REALM_EXCLUDED_ATTRIBUTES.add(Constants.OPENID_FEDERATION_POLICY_URI);
+
+       
     }
 
     public static Set<String> CLIENT_EXCLUDED_ATTRIBUTES = new HashSet<>();
@@ -591,6 +609,30 @@ public class ModelToRepresentation {
         rep.setWebAuthnPolicyPasswordlessAcceptableAaguids(webAuthnPolicy.getAcceptableAaguids());
         rep.setWebAuthnPolicyPasswordlessExtraOrigins(webAuthnPolicy.getExtraOrigins());
         rep.setWebAuthnPolicyPasswordlessPasskeysEnabled(webAuthnPolicy.isPasskeysEnabled());
+
+        if (!realm.isOpenIdFederationEnabled()) {
+            rep.setOpenIdFederationEnabled(false);
+        } else {
+            OpenIdFederationGeneralConfig openIdFederationConfig =  realm.getOpenIdFederationGeneralConfig();
+            rep.setOpenIdFederationEnabled(true);
+            rep.setOpenIdFederationOrganizationName(openIdFederationConfig.getOrganizationName());
+            rep.setOpenIdFederationContacts(openIdFederationConfig.getContacts());
+            rep.setOpenIdFederationLogoUri(openIdFederationConfig.getLogoUri());
+            rep.setOpenIdFederationPolicyUri(openIdFederationConfig.getPolicyUri());
+            rep.setOpenIdFederationOrganizationUri(openIdFederationConfig.getOrganizationUri());
+            rep.setOpenIdFederationAuthorityHints(openIdFederationConfig.getAuthorityHints());
+            rep.setOpenIdFederationLifespan(openIdFederationConfig.getLifespan());
+            rep.setOpenIdFederationResolveEndpoint(openIdFederationConfig.getFederationResolveEndpoint());
+            rep.setOpenIdFederationHistoricalKeysEndpoint(openIdFederationConfig.getFederationHistoricalKeysEndpoint());
+            rep.setOpenIdFederationList(openIdFederationConfig.getOpenIdFederationList().stream().map(fed -> {
+                OpenIdFederationRepresentation federationRep = new OpenIdFederationRepresentation();
+                federationRep.setInternalId(fed.getInternalId());
+                federationRep.setTrustAnchor(fed.getTrustAnchor());
+                federationRep.setEntityTypes(fed.getEntityTypes().stream().map(EntityTypeEnum::toString).collect(Collectors.toList()));
+                federationRep.setClientRegistrationTypesSupported(fed.getClientRegistrationTypesSupported().stream().map(ClientRegistrationTypeEnum::toString).collect(Collectors.toList()));
+                return federationRep;
+            }).collect(Collectors.toList()));
+        }
 
         CibaConfig cibaPolicy = realm.getCibaPolicy();
         Map<String, String> attrMap = ofNullable(rep.getAttributes()).orElse(new HashMap<>());
@@ -1035,6 +1077,16 @@ public class ModelToRepresentation {
     	representation.setValidUntilTimestamp(model.getValidUntilTimestamp());
     	representation.setConfig(model.getConfig());
         return representation;
+    }
+
+    public static OpenIdFederationRepresentation toRepresentation(OpenIdFederationConfig model) {
+        OpenIdFederationRepresentation federationRep = new OpenIdFederationRepresentation();
+        federationRep.setInternalId(model.getInternalId());
+        federationRep.setTrustAnchor(model.getTrustAnchor());
+        federationRep.setEntityTypes(model.getEntityTypes().stream().map(EntityTypeEnum::toString).collect(Collectors.toList()));
+        federationRep.setClientRegistrationTypesSupported(model.getClientRegistrationTypesSupported().stream().map(ClientRegistrationTypeEnum::toString).collect(Collectors.toList()));
+        return federationRep;
+
     }
 
     public static FederationMapperRepresentation toRepresentation(FederationMapperModel model) {
