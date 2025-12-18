@@ -207,6 +207,7 @@
         <openapi.generator.plugin.version>6.3.0</openapi.generator.plugin.version>
         <build-helper-maven-plugin.version>3.2.0</build-helper-maven-plugin.version>
         <spotless-plugin.version>3.0.0</spotless-plugin.version>
+        <!--        <nimbus-jose-jwt.version>9.48</nimbus-jose-jwt.version>-->
 
         <!-- Surefire Settings -->
         <surefire.memory.Xms>512m</surefire.memory.Xms>
@@ -1337,6 +1338,12 @@
                 <type>test-jar</type>
                 <version>${infinispan.version}</version>
             </dependency>
+
+<!--            <dependency>-->
+<!--                <groupId>com.nimbusds</groupId>-->
+<!--                <artifactId>nimbus-jose-jwt</artifactId>-->
+<!--                <version>${nimbus-jose-jwt.version}</version>-->
+<!--            </dependency>-->
 
         </dependencies>
     </dependencyManagement>
