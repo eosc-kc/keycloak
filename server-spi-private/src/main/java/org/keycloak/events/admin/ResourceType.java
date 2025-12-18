@@ -215,5 +215,10 @@ public enum ResourceType {
     /**
      *
      */
-    , ORGANIZATION_MEMBERSHIP;
+    , ORGANIZATION_MEMBERSHIP
+
+    /**
+     *
+     */
+    , OPENID_FEDERATION;
 }

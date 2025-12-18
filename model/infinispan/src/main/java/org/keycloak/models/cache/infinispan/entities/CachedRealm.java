@@ -45,6 +45,7 @@ import org.keycloak.models.KeycloakSession;
 import org.keycloak.models.ModelException;
 import org.keycloak.models.OAuth2DeviceConfig;
 import org.keycloak.models.OTPPolicy;
+import org.keycloak.models.OpenIdFederationGeneralConfig;
 import org.keycloak.models.ParConfig;
 import org.keycloak.models.PasswordPolicy;
 import org.keycloak.models.RealmModel;
@@ -121,6 +122,7 @@ public class CachedRealm extends AbstractExtendableRevisioned {
     protected OTPPolicy otpPolicy;
     protected WebAuthnPolicy webAuthnPolicy;
     protected WebAuthnPolicy webAuthnPasswordlessPolicy;
+    protected OpenIdFederationGeneralConfig openIdFederationConfig;
 
     protected String loginTheme;
     protected String accountTheme;
@@ -242,6 +244,7 @@ public class CachedRealm extends AbstractExtendableRevisioned {
         otpPolicy = model.getOTPPolicy();
         webAuthnPolicy = model.getWebAuthnPolicy();
         webAuthnPasswordlessPolicy = model.getWebAuthnPolicyPasswordless();
+        openIdFederationConfig = model.getOpenIdFederationGeneralConfig();
 
         loginTheme = model.getLoginTheme();
         accountTheme = model.getAccountTheme();
@@ -681,6 +684,10 @@ public class CachedRealm extends AbstractExtendableRevisioned {
 
     public WebAuthnPolicy getWebAuthnPasswordlessPolicy() {
         return webAuthnPasswordlessPolicy;
+    }
+
+    public OpenIdFederationGeneralConfig getOpenIdFederationConfig() {
+        return openIdFederationConfig;
     }
 
     public AuthenticationFlowModel getBrowserFlow() {
