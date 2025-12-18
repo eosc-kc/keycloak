@@ -25,6 +25,7 @@ import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 
+import org.keycloak.events.EventType;
 import org.keycloak.exportimport.ClientDescriptionConverter;
 import org.keycloak.models.KeycloakSession;
 import org.keycloak.protocol.saml.EntityDescriptorDescriptionConverter;
@@ -46,7 +47,7 @@ public class EntityDescriptorClientRegistrationProvider extends AbstractClientRe
     public Response createSaml(String descriptor) {
         ClientRepresentation client = session.getProvider(ClientDescriptionConverter.class, EntityDescriptorDescriptionConverter.ID).convertToInternal(descriptor);
         EntityDescriptorClientRegistrationContext context = new EntityDescriptorClientRegistrationContext(session, client, this);
-        client = create(context);
+        client = create(context, EventType.CLIENT_REGISTER);
         validateClient(client, true);
         URI uri = session.getContext().getUri().getAbsolutePathBuilder().path(client.getClientId()).build();
         return Response.created(uri).entity(client).build();

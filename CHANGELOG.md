@@ -43,6 +43,7 @@ Our Keycloak version is working well with PostgreSQL database. For using other S
 - Signalling Multi-Factor Authentication (MFA) requests to OIDC and SAML Identity Providers 
 - Extend Proxied Token Introspection to support fallback endpoints
 - Default acr value for Identity Providers login
+- OpenID Federation OP with explicit registration
 
 ### Changed
 - Change emailVerified User field with UserAttributeMappers (conditional trust email). [EOSC-KC-70](https://github.com/eosc-kc/keycloak/issues/70)
