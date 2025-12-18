@@ -109,6 +109,7 @@ public final class OIDCConfigAttributes {
     public static final String TOS_URI = "tosUri";
     public static final String POLICY_URI = "policyUri";
     public static final String SECTOR_IDENTIFIER_URI = "sectorIdentifierUri";
+    public static final String EXPIRATION_TIME = "expiration.time";
 
     public static final String ALLOW_TOKEN_INTROSPECTION_WITHOUT_AUDIENCE_CHECK = "allow.token.introspection.without.audience.check";
 
