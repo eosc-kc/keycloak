@@ -3,11 +3,14 @@ package org.keycloak.services.scheduled;
 import org.jboss.logging.Logger;
 import org.keycloak.models.IdentityProviderModel;
 import org.keycloak.models.KeycloakSession;
+import org.keycloak.protocol.oidc.OIDCConfigAttributes;
 import org.keycloak.protocol.saml.ConfigureAutoUpdateSAMLClient;
 import org.keycloak.timer.ScheduledTask;
 import org.keycloak.timer.TimerProvider;
 
 import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.ZoneOffset;
 import java.util.Map;
 
 public class StartUpTasks implements ScheduledTask {
@@ -37,7 +40,16 @@ public class StartUpTasks implements ScheduledTask {
                 long delay = idp.getConfig().get(IdentityProviderModel.LAST_REFRESH_TIME) == null ? Long.parseLong(idp.getConfig().get(IdentityProviderModel.REFRESH_PERIOD)) * 1000 : Long.parseLong(idp.getConfig().get(IdentityProviderModel.LAST_REFRESH_TIME)) + (Long.parseLong(idp.getConfig().get(IdentityProviderModel.REFRESH_PERIOD)) * 1000) - Instant.now().toEpochMilli();
                 timer.schedule(taskRunner, delay > 60 * 1000 ? delay : 60 * 1000, Long.valueOf(idp.getConfig().get(IdentityProviderModel.REFRESH_PERIOD)) * 1000, realm.getId() + "_AutoUpdateIdP_" + idp.getAlias());
             });
-            session.clients().getClientsStream(realm).filter(clientModel ->"saml".equals(clientModel.getProtocol()) && clientModel.getAttributes() != null && Boolean.valueOf(clientModel.getAttributes().get(SAML_AUTO_UPDATED))).forEach( clientModel -> conf.configure(clientModel, realm));
+            session.clients().getClientsStream(realm).forEach(clientModel -> {
+                if ("saml".equals(clientModel.getProtocol()) && clientModel.getAttributes() != null && Boolean.valueOf(clientModel.getAttributes().get(SAML_AUTO_UPDATED))) {
+                    conf.configure(clientModel, realm);
+                } else if (clientModel.getAttributes().get(OIDCConfigAttributes.EXPIRATION_TIME) != null) {
+                    OpenIdFederationClientExpirationTask federationTask = new OpenIdFederationClientExpirationTask(clientModel.getId(), realm.getId());
+                    long expiration = (LocalDateTime.now().toEpochSecond(ZoneOffset.UTC) - Long.valueOf(clientModel.getAttribute(OIDCConfigAttributes.EXPIRATION_TIME))) * 1000;
+                    ClusterAwareScheduledTaskRunner taskRunner = new ClusterAwareScheduledTaskRunner(session.getKeycloakSessionFactory(), federationTask, expiration > 60 * 1000 ? expiration : 60 * 1000);
+                    timer.scheduleOnce(taskRunner, expiration > 60 * 1000 ? expiration : 60 * 1000, "OpenidFederationExplicitClient_" + clientModel.getId());
+                }
+            });
         });
     }
 }

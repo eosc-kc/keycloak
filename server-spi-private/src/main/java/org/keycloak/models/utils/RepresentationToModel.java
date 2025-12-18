@@ -55,8 +55,6 @@ import org.keycloak.authorization.store.ResourceServerStore;
 import org.keycloak.authorization.store.ResourceStore;
 import org.keycloak.authorization.store.ScopeStore;
 import org.keycloak.authorization.store.StoreFactory;
-import org.keycloak.broker.federation.FederationProvider;
-import org.keycloak.broker.federation.SAMLFederationProviderFactory;
 import org.keycloak.broker.provider.IdentityProvider;
 import org.keycloak.broker.provider.IdentityProviderFactory;
 import org.keycloak.broker.social.SocialIdentityProvider;
@@ -89,6 +87,7 @@ import org.keycloak.models.IdentityProviderMapperModel;
 import org.keycloak.models.IdentityProviderModel;
 import org.keycloak.models.KeycloakSession;
 import org.keycloak.models.ModelException;
+import org.keycloak.models.OpenIdFederationConfig;
 import org.keycloak.models.OrganizationDomainModel;
 import org.keycloak.models.OrganizationModel;
 import org.keycloak.models.ProtocolMapperModel;
@@ -103,6 +102,8 @@ import org.keycloak.models.credential.PasswordCredentialModel;
 import org.keycloak.models.credential.dto.OTPCredentialData;
 import org.keycloak.models.credential.dto.OTPSecretData;
 import org.keycloak.models.credential.dto.PasswordCredentialData;
+import org.keycloak.models.enums.ClientRegistrationTypeEnum;
+import org.keycloak.models.enums.EntityTypeEnum;
 import org.keycloak.organization.OrganizationProvider;
 import org.keycloak.policy.PasswordPolicyNotMetException;
 import org.keycloak.provider.ProviderConfigProperty;
@@ -120,6 +121,7 @@ import org.keycloak.representations.idm.FederationMapperRepresentation;
 import org.keycloak.representations.idm.GroupRepresentation;
 import org.keycloak.representations.idm.IdentityProviderMapperRepresentation;
 import org.keycloak.representations.idm.IdentityProviderRepresentation;
+import org.keycloak.representations.idm.OpenIdFederationRepresentation;
 import org.keycloak.representations.idm.OrganizationDomainRepresentation;
 import org.keycloak.representations.idm.OrganizationRepresentation;
 import org.keycloak.representations.idm.ProtocolMapperRepresentation;
@@ -994,6 +996,16 @@ public class RepresentationToModel {
         model.setConfig(representation.getConfig());
         return model;
     }
+
+    public static OpenIdFederationConfig toModel(OpenIdFederationRepresentation representation ) {
+        OpenIdFederationConfig fedConfig = new OpenIdFederationConfig();
+        fedConfig.setInternalId(representation.getInternalId());
+        fedConfig.setTrustAnchor(representation.getTrustAnchor());
+        fedConfig.setEntityTypes(representation.getEntityTypes().stream().map(EntityTypeEnum::valueOf).collect(Collectors.toList()));
+        fedConfig.setClientRegistrationTypesSupported(representation.getClientRegistrationTypesSupported().stream().map(ClientRegistrationTypeEnum::valueOf).collect(Collectors.toList()));
+        return fedConfig;
+    }
+
 
     public static FederationMapperModel toModel(FederationMapperRepresentation representation ) {
         FederationMapperModel model = new FederationMapperModel();

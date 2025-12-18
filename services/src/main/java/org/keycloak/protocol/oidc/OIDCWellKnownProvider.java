@@ -91,8 +91,8 @@ public class OIDCWellKnownProvider implements WellKnownProvider {
     // See: GH-10701, note that the supported prompt value "create" is only added if the realm supports registrations.
     public static final List<String> DEFAULT_PROMPT_VALUES_SUPPORTED = list(OIDCLoginProtocol.PROMPT_VALUE_NONE /*, OIDCLoginProtocol.PROMPT_VALUE_CREATE*/, OIDCLoginProtocol.PROMPT_VALUE_LOGIN, OIDCLoginProtocol.PROMPT_VALUE_CONSENT);
 
-    private final KeycloakSession session;
-    private final Map<String, Object> openidConfigOverride;
+    protected final KeycloakSession session;
+    protected final Map<String, Object> openidConfigOverride;
     private final boolean includeClientScopes;
 
     public OIDCWellKnownProvider(KeycloakSession session, Map<String, Object> openidConfigOverride, boolean includeClientScopes) {
