@@ -1201,6 +1201,11 @@ public class RealmAdminResource {
     public SAMLFederationResource getIdentityProviderFederationResource() {
         return new SAMLFederationResource(realm, session, this.auth, adminEvent);
     }
+
+    @Path("openid-federations")
+    public OpenIdFederationsResource getOpenIdFederationsResource() {
+        return new OpenIdFederationsResource(realm, session, this.auth, adminEvent);
+    }
     
     
     /**
