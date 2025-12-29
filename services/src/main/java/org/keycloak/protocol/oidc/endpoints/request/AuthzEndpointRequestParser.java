@@ -20,15 +20,23 @@ package org.keycloak.protocol.oidc.endpoints.request;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.BiConsumer;
 
 import jakarta.ws.rs.core.Response;
 
 import org.keycloak.OAuth2Constants;
 import org.keycloak.OAuthErrorException;
 import org.keycloak.constants.AdapterConstants;
+import org.keycloak.jose.JOSE;
+import org.keycloak.jose.JOSEHeader;
+import org.keycloak.jose.jwe.JWE;
+import org.keycloak.jose.jwe.JWEHeader;
+import org.keycloak.jose.jws.JWSInput;
+import org.keycloak.models.ClientModel;
 import org.keycloak.models.Constants;
 import org.keycloak.models.KeycloakSession;
 import org.keycloak.protocol.LoginProtocol;
+import org.keycloak.protocol.oidc.OIDCAdvancedConfigWrapper;
 import org.keycloak.protocol.oidc.OIDCLoginProtocol;
 import org.keycloak.protocol.oidc.OIDCProviderConfig;
 import org.keycloak.services.ErrorResponseException;
@@ -222,6 +230,48 @@ public abstract class AuthzEndpointRequestParser {
           currentAdditionalReqParamMaxOverallSize += value.length();
           additionalReqParams.put(paramName, value);
         }
+    }
+
+    protected BiConsumer<JOSE, ClientModel> createRequestObjectValidator(KeycloakSession session) {
+        return (jwt, clientModel) -> {
+            if (jwt instanceof JWSInput) {
+                JOSEHeader header = jwt.getHeader();
+                String headerAlgorithm = header.getRawAlgorithm();
+
+                if (headerAlgorithm == null) {
+                    throw new RuntimeException("Request object signed algorithm not specified");
+                }
+
+                String requestedSignatureAlgorithm = OIDCAdvancedConfigWrapper.fromClientModel(clientModel)
+                        .getRequestObjectSignatureAlg();
+
+                if (requestedSignatureAlgorithm != null && !requestedSignatureAlgorithm.equals(headerAlgorithm)) {
+                    throw new RuntimeException(
+                            "Request object signed with different algorithm than client requested algorithm");
+                }
+            } else {
+                String encryptionAlg = OIDCAdvancedConfigWrapper.fromClientModel(clientModel).getRequestObjectEncryptionAlg();
+
+                if (encryptionAlg != null) {
+                    if (!encryptionAlg.equals(jwt.getHeader().getRawAlgorithm())) {
+                        throw new RuntimeException("Request object encrypted with different algorithm than client requested algorithm");
+                    }
+                }
+
+                String encryptionEncAlg = OIDCAdvancedConfigWrapper.fromClientModel(clientModel).getRequestObjectEncryptionEnc();
+
+                if (encryptionEncAlg != null) {
+                    JWE jwe = (JWE) jwt;
+                    JWEHeader header = (JWEHeader) jwe.getHeader();
+
+                    if (!encryptionEncAlg.equals(header.getEncryptionAlgorithm())) {
+                        throw new RuntimeException("Request object content encrypted with different algorithm than client requested algorithm");
+                    }
+                }
+
+                session.setAttribute(AuthzEndpointRequestParser.AUTHZ_REQUEST_OBJECT_ENCRYPTED, jwt);
+            }
+        };
     }
 
     protected <T> T replaceIfNotNull(T previousVal, T newVal) {

@@ -150,6 +150,7 @@ public class ParEndpoint extends AbstractParEndpoint {
             checker.checkOIDCRequest();
             checker.checkOIDCParams();
             checker.checkPKCEParams(true);
+            checker.checkParDPoPParams();
         } catch (AuthorizationCheckException ex) {
             ex.throwAsCorsErrorResponseException(cors, checker.getEvent());
         }

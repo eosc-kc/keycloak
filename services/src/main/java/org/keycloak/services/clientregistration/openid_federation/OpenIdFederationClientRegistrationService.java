@@ -50,8 +50,7 @@ public class OpenIdFederationClientRegistrationService extends AbstractClientReg
     @Consumes({"application/entity-statement+jwt", "application/trust-chain+json"})
     public Response explicitClientRegistration(String body, @Context HttpHeaders headers) {
         RealmModel realm = session.getContext().getRealm();
-        Set<String> trustAnchorIds = realm.getTrustAnchorsIdsBasedOnTypes(EntityTypeEnum.OPENID_PROVIDER, ClientRegistrationTypeEnum.EXPLICIT);
-        if (trustAnchorIds.isEmpty()) {
+        if (!realm.isOpenIdFederationTypeRegistrationSupported(EntityTypeEnum.OPENID_PROVIDER, ClientRegistrationTypeEnum.EXPLICIT) || realm.getOpenIdFederations().isEmpty()) {
             throw new ErrorResponseException(Errors.INVALID_REQUEST, "Explicit OpenID Federation Client Registration is not supported in this realm", Response.Status.BAD_REQUEST);
         }
         checkSsl();
@@ -68,7 +67,7 @@ public class OpenIdFederationClientRegistrationService extends AbstractClientReg
             trustChainProcessor.validationRules(statement, true);
 
             logger.info("starting validating trust chains");
-            TrustChainResolution validChain = trustChainProcessor.constructTrustChains(statement, trustAnchorIds, true);
+            TrustChainResolution validChain = trustChainProcessor.constructTrustChains(statement, realm.getOpenIdFederationsTrustAnchors(), true);
             if (validChain == null) {
                 throw new ErrorResponseException(Errors.INVALID_TRUST_ANCHOR, "No trusted trust anchor could be found", Response.Status.NOT_FOUND);
             }

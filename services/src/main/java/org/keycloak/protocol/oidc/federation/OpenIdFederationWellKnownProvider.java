@@ -57,9 +57,18 @@ public class OpenIdFederationWellKnownProvider extends OIDCWellKnownProvider {
         UriInfo backendUriInfo = session.getContext().getUri(UrlType.BACKEND);
         Metadata metadata = new Metadata();
         CommonMetadata common = OpenIdFederationUtils.commonMetadata(openIdFederationConfig);
-        Set<ClientRegistrationTypeEnum> registrationTypes = openIdFederationConfig.getOpenIdFederationList().stream().flatMap(x -> x.getClientRegistrationTypesSupported().stream()).collect(Collectors.toSet());
+        // Get registration types from general config
+        Set<ClientRegistrationTypeEnum> opRegistrationTypes = openIdFederationConfig.getOpClientRegistrationTypesSupported() != null ? 
+            new java.util.HashSet<>(openIdFederationConfig.getOpClientRegistrationTypesSupported()) : 
+            Set.of();
+        Set<ClientRegistrationTypeEnum> rpRegistrationTypes = openIdFederationConfig.getRpClientRegistrationTypesSupported() != null ? 
+            new java.util.HashSet<>(openIdFederationConfig.getRpClientRegistrationTypesSupported()) : 
+            Set.of();
+        Set<ClientRegistrationTypeEnum> allRegistrationTypes = new java.util.HashSet<>();
+        allRegistrationTypes.addAll(opRegistrationTypes);
+        allRegistrationTypes.addAll(rpRegistrationTypes);
 
-        if (openIdFederationConfig.getOpenIdFederationList().stream().flatMap(x -> x.getEntityTypes().stream()).anyMatch(EntityTypeEnum.OPENID_PROVIDER::equals)) {
+        if (openIdFederationConfig.getEntityTypes() != null && openIdFederationConfig.getEntityTypes().contains(EntityTypeEnum.OPENID_PROVIDER)) {
             OPMetadata opMetadata;
             try {
                 opMetadata = from(((OIDCConfigurationRepresentation) super.getConfig()));
@@ -67,30 +76,24 @@ public class OpenIdFederationWellKnownProvider extends OIDCWellKnownProvider {
                 throw new InternalServerErrorException("Could not form the configuration response");
             }
 
-            if (registrationTypes.contains(ClientRegistrationTypeEnum.EXPLICIT)) {
+            if (opRegistrationTypes.contains(ClientRegistrationTypeEnum.EXPLICIT)) {
                 opMetadata.setFederationRegistrationEndpoint(backendUriInfo.getBaseUriBuilder().clone().path(RealmsResource.class).path(RealmsResource.class, "getOpenIdFederationClientsService").build(realm.getName()).toString());
             }
-            opMetadata.setClientRegistrationTypesSupported(registrationTypes.stream().map(ClientRegistrationTypeEnum::getValue).collect(Collectors.toList()));
-            opMetadata.setContacts(openIdFederationConfig.getContacts());
-            opMetadata.setLogoUri(openIdFederationConfig.getLogoUri());
-            opMetadata.setPolicyUri(openIdFederationConfig.getPolicyUri());
-            opMetadata.setCommonMetadata(common);
+            opMetadata.setClientRegistrationTypesSupported(opRegistrationTypes.stream().map(ClientRegistrationTypeEnum::getValue).collect(Collectors.toList()));
             metadata.setOpenIdProviderMetadata(opMetadata);
         }
 
-        if (openIdFederationConfig.getOpenIdFederationList().stream().flatMap(x -> x.getEntityTypes().stream()).collect(Collectors.toSet()).contains(EntityTypeEnum.OPENID_RELYING_PARTY)) {
-            RPMetadata rPMetadata = OpenIdFederationUtils.createRPMetadata(openIdFederationConfig, registrationTypes.stream(), common, RealmsResource.protocolUrl(backendUriInfo).clone().path(OIDCLoginProtocolService.class, "certs").build(realm.getName(),
+        if (openIdFederationConfig.getEntityTypes() != null && openIdFederationConfig.getEntityTypes().contains(EntityTypeEnum.OPENID_RELYING_PARTY)) {
+            RPMetadata rPMetadata = OpenIdFederationUtils.createRPMetadata(openIdFederationConfig, rpRegistrationTypes.stream(), null, RealmsResource.protocolUrl(backendUriInfo).clone().path(OIDCLoginProtocolService.class, "certs").build(realm.getName(),
                     OIDCLoginProtocol.LOGIN_PROTOCOL).toString(), frontendUriInfo, realm.getName());
-            List<String> openIdFederationSubjectTypes = openIdFederationConfig.getOpenIdFederationList().stream().flatMap(x -> {
-                String subjectTypesStr = x.getIdpConfiguration().get(OpenIdFederationUtils.SUBJECT_TYPES_SUPPORTED);
-                return subjectTypesStr == null ? OIDCWellKnownProvider.DEFAULT_SUBJECT_TYPES_SUPPORTED.stream() : Arrays.asList(subjectTypesStr.split("##")).stream();
-            }).distinct().collect(Collectors.toList());
+            // For now, use default subject types since we removed the individual federation configs
+            List<String> openIdFederationSubjectTypes = OIDCWellKnownProvider.DEFAULT_SUBJECT_TYPES_SUPPORTED;
             rPMetadata.setSubjectTypesSupported(openIdFederationSubjectTypes);
             metadata.setRelyingPartyMetadata(rPMetadata);
         }
 
         if (openIdFederationConfig.getFederationResolveEndpoint() != null || openIdFederationConfig.getFederationHistoricalKeysEndpoint() != null ||
-                openIdFederationConfig.getOrganizationName() != null || ! openIdFederationConfig.getContacts().isEmpty() ||
+                openIdFederationConfig.getOrganizationName() != null || openIdFederationConfig.getContacts() != null ||
                 openIdFederationConfig.getOrganizationUri() != null || openIdFederationConfig.getPolicyUri() != null || openIdFederationConfig.getLogoUri() != null) {
             OpenIdFederationEntity federationEntity = getOpenIdFederationEntity(openIdFederationConfig, common);
             metadata.setFederationEntity(federationEntity);

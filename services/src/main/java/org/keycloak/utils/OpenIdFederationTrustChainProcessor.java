@@ -76,9 +76,9 @@ public class OpenIdFederationTrustChainProcessor implements TrustChainProcessor 
                 }
 
                 if (forRp) {
-                    trustChainResolution.setMetadataAfterPolicies(MetadataPolicyUtils.applyPoliciesToRPStatement(trustChainResolution.getEntityFromTA() != null ? trustChainResolution.getEntityFromTA().getMetadata().getRelyingPartyMetadata() : leafEs.getMetadata().getRelyingPartyMetadata(), (RPMetadataPolicy) combinedPolicy));
+                    trustChainResolution.setMetadataAfterPolicies(MetadataPolicyUtils.applyPoliciesToRPStatement(leafEs.getMetadata().getRelyingPartyMetadata(), (RPMetadataPolicy) combinedPolicy));
                 } else {
-                    trustChainResolution.setMetadataAfterPolicies(MetadataPolicyUtils.applyPoliciesToOPStatement(trustChainResolution.getEntityFromTA() != null ? trustChainResolution.getEntityFromTA().getMetadata().getOpenIdProviderMetadata() : leafEs.getMetadata().getOpenIdProviderMetadata(), (OPMetadataPolicy) combinedPolicy));
+                    trustChainResolution.setMetadataAfterPolicies(MetadataPolicyUtils.applyPoliciesToOPStatement(leafEs.getMetadata().getOpenIdProviderMetadata(), (OPMetadataPolicy) combinedPolicy));
                 }
 
                 trustChainResolution.setCombinedPolicy(combinedPolicy);
@@ -114,17 +114,17 @@ public class OpenIdFederationTrustChainProcessor implements TrustChainProcessor 
                     if (!validateEntityStatementFields(subNodeSubordinateES, authHint, leafEs.getSubject())) {
                         throw new ErrorResponseException(Errors.INVALID_TRUST_CHAIN, "Trust chain is not valid", Response.Status.BAD_REQUEST);
                     }
+                    if (leafEs.getSubject().equals(initialEntity) && (subNodeSubordinateES.getMetadata() == null ||
+                            ((forRp && subNodeSubordinateES.getMetadata().getRelyingPartyMetadata() == null) || (!forRp && subNodeSubordinateES.getMetadata().getOpenIdProviderMetadata() == null)))
+                            && !OpenIdFederationUtils.containedInListEndpoint(subNodeSelfES.getMetadata().getFederationEntity().getFederationListEndpoint(), forRp ? EntityTypeEnum.OPENID_RELYING_PARTY.getValue() : EntityTypeEnum.OPENID_PROVIDER.getValue(), initialEntity, session)) {
+                        //check that RP is registered as RP in immediate superior
+                        throw new ErrorResponseException(Errors.INVALID_TRUST_CHAIN, "Trust chain is not valid", Response.Status.BAD_REQUEST);
+                    }
                     logger.debug(String.format("EntityStatement of %s about %s. AuthHints: %s", subNodeSubordinateES.getIssuer(), subNodeSubordinateES.getSubject(), subNodeSubordinateES.getAuthorityHints()));
 
                     visitedNodes.add(subNodeSelfES.getSubject());
                     if (trustAnchorIds.contains(authHint)) {
                         TrustChainResolution trustAnchor = new TrustChainResolution();
-                        if (leafEs.getSubject().equals(initialEntity) && subNodeSubordinateES.getMetadata() != null && ((forRp && subNodeSubordinateES.getMetadata().getRelyingPartyMetadata() != null) || (!forRp && subNodeSubordinateES.getMetadata().getOpenIdProviderMetadata() != null))) {
-                            trustAnchor.setEntityFromTA(subNodeSubordinateES);
-                        } else if (!OpenIdFederationUtils.containedInListEndpoint(subNodeSelfES.getMetadata().getFederationEntity().getFederationListEndpoint(), forRp ? EntityTypeEnum.OPENID_RELYING_PARTY.getValue() : EntityTypeEnum.OPENID_PROVIDER.getValue(), initialEntity, session)) {
-                            //check that RP is registered as RP in trust anchor
-                            throw new ErrorResponseException(Errors.INVALID_TRUST_CHAIN, "Trust chain is not valid", Response.Status.BAD_REQUEST);
-                        }
                         trustAnchor.getParsedChain().add(0, subNodeSelfES);
                         trustAnchor.setTrustAnchorId(authHint);
                         chainsList.add(trustAnchor);
@@ -224,7 +224,7 @@ public class OpenIdFederationTrustChainProcessor implements TrustChainProcessor 
         if (!statement.getIssuer().trim().equals(statement.getSubject().trim())) {
             throw new ErrorResponseException(Errors.INVALID_ISSUER, "The registration request issuer differs from the subject.", Response.Status.NOT_FOUND);
         }
-        if (checkAudience && statement.getAudience() == null || !statement.getAudience()[0].equals(Urls.realmIssuer(session.getContext().getUri(UrlType.FRONTEND).getBaseUri(), session.getContext().getRealm().getName()))) {
+        if (checkAudience && statement.getAudience() == null || !statement.hasAudience(Urls.realmIssuer(session.getContext().getUri(UrlType.FRONTEND).getBaseUri(), session.getContext().getRealm().getName()))) {
             throw new ErrorResponseException(Errors.INVALID_REQUEST, "Aud must contain OP entity Identifier", Response.Status.BAD_REQUEST);
         }
     }

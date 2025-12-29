@@ -883,9 +883,9 @@ public class RealmAdapter implements CachedRealmModel {
     }
 
     @Override
-    public Stream<OpenIdFederationConfig> getTrustAnchorsBasedOnTypes(EntityTypeEnum entityType, ClientRegistrationTypeEnum clientRegistrationType) {
-        if (isUpdated()) return updated.getTrustAnchorsBasedOnTypes(entityType, clientRegistrationType);
-        return isOpenIdFederationEnabled() ? cached.getOpenIdFederationConfig().getOpenIdFederationList().stream().filter(x -> x.getEntityTypes().contains(entityType) && x.getClientRegistrationTypesSupported().contains(clientRegistrationType)) : Stream.empty();
+    public boolean isOpenIdFederationTypeRegistrationSupported(EntityTypeEnum entityType, ClientRegistrationTypeEnum clientRegistrationType) {
+        if (isUpdated()) return updated.isOpenIdFederationTypeRegistrationSupported(entityType, clientRegistrationType);
+        return isOpenIdFederationEnabled() && cached.getOpenIdFederationConfig().getEntityTypes() != null && cached.getOpenIdFederationConfig().getEntityTypes().contains(entityType) && (EntityTypeEnum.OPENID_PROVIDER.equals(entityType) ? cached.getOpenIdFederationConfig().getOpClientRegistrationTypesSupported() != null && cached.getOpenIdFederationConfig().getOpClientRegistrationTypesSupported().contains(clientRegistrationType) : cached.getOpenIdFederationConfig().getRpClientRegistrationTypesSupported() != null && cached.getOpenIdFederationConfig().getRpClientRegistrationTypesSupported().contains(clientRegistrationType));
     }
 
     @Override
@@ -903,7 +903,7 @@ public class RealmAdapter implements CachedRealmModel {
     @Override
     public List<OpenIdFederationConfig> getOpenIdFederations() {
         if (isUpdated()) return updated.getOpenIdFederations();
-        return isOpenIdFederationEnabled() ?  cached.getOpenIdFederationConfig().getOpenIdFederationList() : List.of();
+        return isOpenIdFederationEnabled() ? cached.getOpenIdFederationConfig().getOpenIdFederationList() : List.of();
     }
 
     @Override
