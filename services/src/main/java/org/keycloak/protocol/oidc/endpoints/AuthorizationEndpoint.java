@@ -59,18 +59,12 @@ import org.keycloak.protocol.oidc.utils.AcrUtils;
 import org.keycloak.protocol.oidc.utils.OIDCRedirectUriBuilder;
 import org.keycloak.protocol.oidc.utils.OIDCResponseMode;
 import org.keycloak.protocol.oidc.utils.OIDCResponseType;
-import org.keycloak.representations.idm.ClientRepresentation;
-import org.keycloak.representations.openid_federation.EntityStatement;
-import org.keycloak.representations.openid_federation.RPMetadata;
-import org.keycloak.representations.openid_federation.TrustChainResolution;
 import org.keycloak.services.ErrorPageException;
 import org.keycloak.services.ErrorResponseException;
 import org.keycloak.services.Urls;
 import org.keycloak.services.clientpolicy.ClientPolicyException;
 import org.keycloak.services.clientpolicy.context.AuthorizationRequestContext;
 import org.keycloak.services.clientpolicy.context.PreAuthorizationRequestContext;
-import org.keycloak.services.clientregistration.ClientRegistrationAuth;
-import org.keycloak.services.clientregistration.openid_federation.OpenIdFederationClientRegistrationService;
 import org.keycloak.services.managers.AuthenticationSessionManager;
 import org.keycloak.services.messages.Messages;
 import org.keycloak.services.resources.LoginActionsService;
@@ -78,7 +72,6 @@ import org.keycloak.services.util.CacheControlUtil;
 import org.keycloak.services.util.LocaleUtil;
 import org.keycloak.sessions.AuthenticationSessionModel;
 import org.keycloak.util.TokenUtil;
-import org.keycloak.utils.OpenIdFederationTrustChainProcessor;
 import org.keycloak.utils.OpenIdFederationUtils;
 
 import org.jboss.logging.Logger;
@@ -115,13 +108,11 @@ public class AuthorizationEndpoint extends AuthorizationEndpointBase {
 
     private AuthorizationEndpointRequest request;
     private String redirectUri;
-    private OpenIdFederationTrustChainProcessor trustChainProcessor;
     private boolean automaticRegistration = false;
 
     public AuthorizationEndpoint(KeycloakSession session, EventBuilder event) {
         super(session, event);
         event.event(EventType.LOGIN);
-        this.trustChainProcessor = new OpenIdFederationTrustChainProcessor(session);
     }
 
     @POST
@@ -298,24 +289,9 @@ public class AuthorizationEndpoint extends AuthorizationEndpointBase {
         client = realm.getClientByClientId(clientId);
         if (UriUtils.isUri(clientId) && (client == null || !client.isEnabled()) && realm.isOpenIdFederationTypeRegistrationSupported(EntityTypeEnum.OPENID_PROVIDER, ClientRegistrationTypeEnum.AUTOMATIC)) {
                 try {
-                    String rpMetadata = OpenIdFederationUtils.getSelfSignedToken(clientId, session);
-                    EntityStatement rpEntityStatement = trustChainProcessor.parseAndValidateSelfSigned(rpMetadata);
-                    trustChainProcessor.validationRules(rpEntityStatement, false);
-                    logger.info("starting validating trust chains");
-                    TrustChainResolution validChain = trustChainProcessor.constructTrustChains(rpEntityStatement, realm.getOpenIdFederationsTrustAnchors(), true);
-
-                    if (validChain == null) {
-                        throw new ErrorResponseException(Errors.INVALID_TRUST_ANCHOR, "No trusted trust anchor could be found", Response.Status.NOT_FOUND);
-                    }
-
-                    EventBuilder event = new EventBuilder(session.getContext().getRealm(), session, session.getContext().getConnection());
-                    OpenIdFederationClientRegistrationService provider = new OpenIdFederationClientRegistrationService(session);
-                    provider.setEvent(event);
-                    provider.setAuth(new ClientRegistrationAuth(session, provider, event, "openid-connect"));
-                    ClientRepresentation clientRepresentation = provider.createOrUpdateClient(rpEntityStatement, (RPMetadata) validChain.getMetadataAfterPolicies());
-                    client = realm.getClientByClientId(clientRepresentation.getClientId());
+                    client = OpenIdFederationUtils.createOrUpdateAutomaticClient(clientId, session, realm);
                     automaticRegistration = true;
-                } catch (ErrorPageException e) {
+                } catch (ErrorPageException | ErrorResponseException e) {
                     throw e;
                 } catch (Exception e) {
                     throw new ErrorResponseException(Errors.INVALID_REQUEST, e.getMessage(), Response.Status.BAD_REQUEST);
