@@ -347,11 +347,10 @@ public class IdentityProvidersResource {
     }
 
     private IdentityProviderModel createModelForOpenIdFederation(IdentityProviderRepresentation representation){
-        List<OpenIdFederationConfig> trustAnchors = realm.getTrustAnchorsBasedOnTypes(EntityTypeEnum.OPENID_RELYING_PARTY, ClientRegistrationTypeEnum.EXPLICIT).collect(Collectors.toList());
-        if (!trustAnchors.isEmpty() && representation.getConfig().get(OIDCIdentityProviderConfig.ISSUER) != null) {
+        if (realm.isOpenIdFederationTypeRegistrationSupported(EntityTypeEnum.OPENID_RELYING_PARTY, ClientRegistrationTypeEnum.EXPLICIT) && representation.getConfig().get(OIDCIdentityProviderConfig.ISSUER) != null) {
             try {
                 OpenIdFederationGeneralConfig federationGeneralConfig = realm.getOpenIdFederationGeneralConfig();
-                OpenIdFederationConfig federationConfig = trustAnchors.stream().filter(x -> representation.getConfig().get(OpenIdFederationIdentityProviderConfig.TRUST_ANCHOR_ID).equals(x.getTrustAnchor())).findAny().orElseThrow(() -> new NotFoundException("Trust anchor does not exist"));
+                OpenIdFederationConfig federationConfig = federationGeneralConfig.getOpenIdFederationList().stream().filter(x -> representation.getConfig().get(OpenIdFederationIdentityProviderConfig.TRUST_ANCHOR_ID).equals(x.getTrustAnchor())).findAny().orElseThrow(() -> new NotFoundException("Trust anchor does not exist"));
                 TrustChainProcessor trustChainProcessor = session.getProvider(TrustChainProcessor.class, OpenIdFederationTrustChainProcessorFactory.PROVIDER_ID);
                 String opIssuer = representation.getConfig().get(OIDCIdentityProviderConfig.ISSUER);
                 EntityStatement opStatement = trustChainProcessor.parseAndValidateSelfSigned(OpenIdFederationUtils.getSelfSignedToken(opIssuer, session));
@@ -374,7 +373,11 @@ public class IdentityProvidersResource {
                 EntityStatement entityStatement = new EntityStatement(Urls.realmIssuer(frontendUriInfo.getBaseUri(), realm.getName()), Long.valueOf(federationGeneralConfig.getLifespan()), Stream.of(trustChainResolution.getLeafId()).collect(Collectors.toList()), jwks);
                 entityStatement.addAudience(opIssuer);
                 Metadata metadata = new Metadata();
-                RPMetadata rPMetadata = OpenIdFederationUtils.createRPMetadata(federationGeneralConfig, federationConfig.getClientRegistrationTypesSupported().stream(), OpenIdFederationUtils.commonMetadata(federationGeneralConfig), RealmsResource.protocolUrl(backendUriInfo).clone().path(OIDCLoginProtocolService.class, "certs").build(realm.getName(),
+                // Use RP client registration types from general config
+                Stream<ClientRegistrationTypeEnum> rpRegistrationTypes = federationGeneralConfig.getRpClientRegistrationTypesSupported() != null ? 
+                    federationGeneralConfig.getRpClientRegistrationTypesSupported().stream() : 
+                    Stream.empty();
+                RPMetadata rPMetadata = OpenIdFederationUtils.createRPMetadata(federationGeneralConfig, rpRegistrationTypes, OpenIdFederationUtils.commonMetadata(federationGeneralConfig), RealmsResource.protocolUrl(backendUriInfo).clone().path(OIDCLoginProtocolService.class, "certs").build(realm.getName(),
                         OIDCLoginProtocol.LOGIN_PROTOCOL).toString(), frontendUriInfo, realm.getName());
                 metadataFromOP(rPMetadata, federationConfig.getIdpConfiguration(), op, opStatement.getSubject());
                 metadataFromFederation(rPMetadata, federationConfig.getIdpConfiguration());
@@ -398,7 +401,7 @@ public class IdentityProvidersResource {
                 throw ErrorResponse.error(e.getMessage(), BAD_REQUEST);
             }
         } else {
-            throw ErrorResponse.error(trustAnchors.isEmpty() ? "This realm does not support Openid Federation as RP with selected trust anchor" : "Trust anchor and issuer are required", BAD_REQUEST);
+            throw ErrorResponse.error(realm.isOpenIdFederationTypeRegistrationSupported(EntityTypeEnum.OPENID_RELYING_PARTY, ClientRegistrationTypeEnum.EXPLICIT) ? "This realm does not support Openid Federation as RP with selected trust anchor" : "Trust anchor and issuer are required", BAD_REQUEST);
         }
     }
 
