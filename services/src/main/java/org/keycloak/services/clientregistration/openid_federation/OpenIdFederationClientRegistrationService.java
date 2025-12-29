@@ -1,7 +1,6 @@
 package org.keycloak.services.clientregistration.openid_federation;
 
 import java.net.URI;
-import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -20,6 +19,7 @@ import org.keycloak.models.KeycloakSession;
 import org.keycloak.models.RealmModel;
 import org.keycloak.models.enums.ClientRegistrationTypeEnum;
 import org.keycloak.models.enums.EntityTypeEnum;
+import org.keycloak.protocol.trustchain.TrustChainProcessor;
 import org.keycloak.representations.idm.ClientRepresentation;
 import org.keycloak.representations.openid_federation.EntityStatement;
 import org.keycloak.representations.openid_federation.EntityStatementExplicitResponse;
@@ -32,7 +32,6 @@ import org.keycloak.services.clientregistration.oidc.DescriptionConverter;
 import org.keycloak.urls.UrlType;
 import org.keycloak.util.TokenUtil;
 import org.keycloak.utils.OpenIdFederationTrustChainProcessorFactory;
-import org.keycloak.utils.TrustChainProcessor;
 
 import org.jboss.logging.Logger;
 
@@ -109,7 +108,7 @@ public class OpenIdFederationClientRegistrationService extends AbstractClientReg
             logger.error("The following error was thrown during OpenId Federation Client explicit registration", e);
             throw new ErrorResponseException(Errors.INVALID_METADATA, "Client metadata invalid", Response.Status.BAD_REQUEST);
         }
-
+        event.detail(Details.REQUESTED_SCOPES, client.getOptionalClientScopes());
         return client;
     }
 

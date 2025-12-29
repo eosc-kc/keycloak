@@ -1,4 +1,4 @@
-package org.keycloak.utils;
+package org.keycloak.protocol.trustchain;
 
 import org.keycloak.provider.Provider;
 import org.keycloak.provider.ProviderFactory;

@@ -74,3 +74,4 @@ Our Keycloak version is working well with PostgreSQL database. For using other S
 - Dynamic scopes( default enabled): bug corrections, filtering and consent [RCIAM-848](https://jira.argo.grnet.gr/browse/RCIAM-848)
 - Update changes related to service account with Client registration 
 - Being possible to accept terms and conditions before User is saved in Keycloak during first broker login. Follow GDPR.
+- Being possible to add realm default scopes during Dynamic Client Registration/ OpenID Federation when scopes are including in client representation

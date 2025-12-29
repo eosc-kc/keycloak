@@ -18,16 +18,9 @@ package org.keycloak.protocol.oidc.endpoints.request;
 
 import java.util.HashSet;
 import java.util.Set;
-import java.util.function.BiConsumer;
 
-import org.keycloak.jose.JOSE;
-import org.keycloak.jose.JOSEHeader;
-import org.keycloak.jose.jwe.JWE;
-import org.keycloak.jose.jwe.JWEHeader;
-import org.keycloak.jose.jws.JWSInput;
 import org.keycloak.models.ClientModel;
 import org.keycloak.models.KeycloakSession;
-import org.keycloak.protocol.oidc.OIDCAdvancedConfigWrapper;
 import org.keycloak.protocol.oidc.OIDCLoginProtocol;
 
 import com.fasterxml.jackson.databind.JsonNode;

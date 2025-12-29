@@ -1,10 +1,10 @@
 package org.keycloak.models;
 
-import org.keycloak.models.enums.ClientRegistrationTypeEnum;
-import org.keycloak.models.enums.EntityTypeEnum;
-
 import java.io.Serializable;
 import java.util.List;
+
+import org.keycloak.models.enums.ClientRegistrationTypeEnum;
+import org.keycloak.models.enums.EntityTypeEnum;
 
 public class OpenIdFederationGeneralConfig implements Serializable {
 
