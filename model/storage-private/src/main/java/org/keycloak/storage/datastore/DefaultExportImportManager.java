@@ -1525,6 +1525,16 @@ public class DefaultExportImportManager implements ExportImportManager {
             config.setLifespan(rep.getOpenIdFederationLifespan());
             config.setFederationResolveEndpoint(rep.getOpenIdFederationResolveEndpoint());
             config.setFederationHistoricalKeysEndpoint(rep.getOpenIdFederationHistoricalKeysEndpoint());
+            if (rep.getOpenIdFederationEntityTypes() != null) {
+                config.setEntityTypes(rep.getOpenIdFederationEntityTypes().stream().map(EntityTypeEnum::valueOf).collect(Collectors.toList()));
+            }
+            if (rep.getOpenIdFederationOPClientRegistrationTypesSupported() != null) {
+                config.setOpClientRegistrationTypesSupported(rep.getOpenIdFederationOPClientRegistrationTypesSupported().stream().map(ClientRegistrationTypeEnum::valueOf).collect(Collectors.toList()));
+            }
+            if (rep.getOpenIdFederationRPClientRegistrationTypesSupported() != null) {
+                config.setRpClientRegistrationTypesSupported(rep.getOpenIdFederationRPClientRegistrationTypesSupported().stream().map(ClientRegistrationTypeEnum::valueOf).collect(Collectors.toList()));
+            }
+
             if (withFederationList && rep.getOpenIdFederationList() != null && !rep.getOpenIdFederationList().isEmpty()) {
                 config.setOpenIdFederationList(rep.getOpenIdFederationList().stream().map(fedRep -> RepresentationToModel.toModel(fedRep)).collect(Collectors.toList()));
             }
@@ -1538,8 +1548,6 @@ public class DefaultExportImportManager implements ExportImportManager {
         OpenIdFederationConfig fedConfig = new OpenIdFederationConfig();
         fedConfig.setInternalId(representation.getInternalId());
         fedConfig.setTrustAnchor(representation.getTrustAnchor());
-        fedConfig.setEntityTypes(representation.getEntityTypes().stream().map(EntityTypeEnum::valueOf).collect(Collectors.toList()));
-        fedConfig.setClientRegistrationTypesSupported(representation.getClientRegistrationTypesSupported().stream().map(ClientRegistrationTypeEnum::valueOf).collect(Collectors.toList()));
         fedConfig.setIdpConfiguration(representation.getIdpConfiguration());
         return fedConfig;
     }

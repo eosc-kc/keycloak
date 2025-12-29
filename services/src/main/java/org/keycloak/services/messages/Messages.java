@@ -151,6 +151,7 @@ public class Messages {
     public static final String REALM_NOT_ENABLED = "realmNotEnabledMessage";
 
     public static final String INVALID_REQUEST = "invalidRequestMessage";
+    public static final String INVALID_REQUEST_AUTOMATIC_REGISTRATION = "invalidRequestMessageAutomaticRegistration";
 
     public static final String INVALID_REQUESTER = "invalidRequesterMessage";
 
