@@ -49,13 +49,15 @@ public class OpenIdFederationWellKnownProviderTest extends AbstractWellKnownProv
             realmRep.setOpenIdFederationOrganizationName("Keycloak");
             realmRep.setOpenIdFederationResolveEndpoint("https://edugain.org/resolve");
             realmRep.setOpenIdFederationAuthorityHints(Stream.of("https://edugain.org/federation").collect(Collectors.toList()));
+            realmRep.setOpenIdFederationOPClientRegistrationTypesSupported(Stream.of("EXPLICIT").collect(Collectors.toList()));
+            realmRep.setOpenIdFederationRPClientRegistrationTypesSupported(Stream.of("EXPLICIT").collect(Collectors.toList()));
+            realmRep.setOpenIdFederationEntityTypes(Stream.of("OPENID_PROVIDER", "OPENID_RELYING_PARTY").collect(Collectors.toList()));
             testRealm.update(realmRep);
 
             OpenIdFederationRepresentation openIdFederationRepresentation = new OpenIdFederationRepresentation();
             openIdFederationRepresentation.setTrustAnchor("https://edugain.org/trust-anchor");
-            openIdFederationRepresentation.setClientRegistrationTypesSupported(Stream.of("EXPLICIT").collect(Collectors.toList()));
-            openIdFederationRepresentation.setEntityTypes(Stream.of("OPENID_PROVIDER", "OPENID_RELYING_PARTY").collect(Collectors.toList()));
             Map<String, String> idpConfiguration = Map.of(OpenIdFederationUtils.SUBJECT_TYPES_SUPPORTED, "public");
+            openIdFederationRepresentation.setIdpConfiguration(idpConfiguration);
             testRealm.openIdFederationsResource().create(openIdFederationRepresentation);
 
             //When Open Id Federation is configured

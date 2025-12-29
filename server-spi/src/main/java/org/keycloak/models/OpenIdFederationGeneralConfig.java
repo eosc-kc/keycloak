@@ -1,5 +1,8 @@
 package org.keycloak.models;
 
+import org.keycloak.models.enums.ClientRegistrationTypeEnum;
+import org.keycloak.models.enums.EntityTypeEnum;
+
 import java.io.Serializable;
 import java.util.List;
 
@@ -16,6 +19,9 @@ public class OpenIdFederationGeneralConfig implements Serializable {
     private String federationResolveEndpoint;
     private String federationHistoricalKeysEndpoint;
     private List<OpenIdFederationConfig> openIdFederationList = List.of();
+    private List<EntityTypeEnum> entityTypes;
+    private List<ClientRegistrationTypeEnum> opClientRegistrationTypesSupported;
+    private List<ClientRegistrationTypeEnum> rpClientRegistrationTypesSupported;
 
     public OpenIdFederationGeneralConfig(){}
 
@@ -97,5 +103,29 @@ public class OpenIdFederationGeneralConfig implements Serializable {
 
     public void setOpenIdFederationList(List<OpenIdFederationConfig> openIdFederationList) {
         this.openIdFederationList = openIdFederationList == null ? List.of() : List.copyOf(openIdFederationList);
+    }
+
+    public List<EntityTypeEnum> getEntityTypes() {
+        return entityTypes;
+    }
+
+    public void setEntityTypes(List<EntityTypeEnum> entityTypes) {
+        this.entityTypes = entityTypes;
+    }
+
+    public List<ClientRegistrationTypeEnum> getOpClientRegistrationTypesSupported() {
+        return opClientRegistrationTypesSupported;
+    }
+
+    public void setOpClientRegistrationTypesSupported(List<ClientRegistrationTypeEnum> opClientRegistrationTypesSupported) {
+        this.opClientRegistrationTypesSupported = opClientRegistrationTypesSupported;
+    }
+
+    public List<ClientRegistrationTypeEnum> getRpClientRegistrationTypesSupported() {
+        return rpClientRegistrationTypesSupported;
+    }
+
+    public void setRpClientRegistrationTypesSupported(List<ClientRegistrationTypeEnum> rpClientRegistrationTypesSupported) {
+        this.rpClientRegistrationTypesSupported = rpClientRegistrationTypesSupported;
     }
 }
