@@ -3,19 +3,25 @@ package org.keycloak.protocol.oidc.federation;
 import java.util.HashSet;
 import java.util.Set;
 
+import org.keycloak.models.ClientModel;
 import org.keycloak.models.KeycloakSession;
 import org.keycloak.protocol.oidc.OIDCLoginProtocol;
 import org.keycloak.protocol.oidc.endpoints.request.AuthzEndpointRequestParser;
 
 import com.fasterxml.jackson.databind.JsonNode;
 
+import org.keycloak.services.Urls;
+import org.keycloak.services.messages.Messages;
+import org.keycloak.urls.UrlType;
+
 public class OpenIdFederationAuthzEndpointRequestObjectParser extends AuthzEndpointRequestParser {
 
     private final JsonNode requestParams;
 
-    public OpenIdFederationAuthzEndpointRequestObjectParser(KeycloakSession session, String requestObject) {
+    public OpenIdFederationAuthzEndpointRequestObjectParser(KeycloakSession session, String requestObject, ClientModel client) {
+        
         super(session);
-        this.requestParams = session.tokens().decode(requestObject, JsonNode.class);
+        this.requestParams = session.tokens().decodeClientJWT(requestObject, client, createRequestObjectValidator(session), JsonNode.class);
 
         if (this.requestParams == null) {
             throw new RuntimeException("Failed to verify signature on 'request' object");
@@ -23,6 +29,12 @@ public class OpenIdFederationAuthzEndpointRequestObjectParser extends AuthzEndpo
 
         if (requestParams.has(OIDCLoginProtocol.REQUEST_URI_PARAM)) {
             throw new RuntimeException("The request_uri claim should not be set in the request object");
+        }
+
+        if (requestParams.has("sub")  || ! requestParams.has("jti")
+                || !requestParams.has("exp") || !requestParams.has("iss")
+                ||  !Urls.realmIssuer(session.getContext().getUri(UrlType.FRONTEND).getBaseUri(), session.getContext().getRealm().getName()).equals(requestParams.get("aud"))) {
+            throw new RuntimeException(Messages.OPENID_FEDERATION_AUTOMATIC_FALSE_REQUEST_OBJECT);
         }
 
         session.setAttribute(AuthzEndpointRequestParser.AUTHZ_REQUEST_OBJECT, requestParams);
