@@ -7,12 +7,11 @@ import org.keycloak.models.ClientModel;
 import org.keycloak.models.KeycloakSession;
 import org.keycloak.protocol.oidc.OIDCLoginProtocol;
 import org.keycloak.protocol.oidc.endpoints.request.AuthzEndpointRequestParser;
-
-import com.fasterxml.jackson.databind.JsonNode;
-
 import org.keycloak.services.Urls;
 import org.keycloak.services.messages.Messages;
 import org.keycloak.urls.UrlType;
+
+import com.fasterxml.jackson.databind.JsonNode;
 
 public class OpenIdFederationAuthzEndpointRequestObjectParser extends AuthzEndpointRequestParser {
 
@@ -31,9 +30,10 @@ public class OpenIdFederationAuthzEndpointRequestObjectParser extends AuthzEndpo
             throw new RuntimeException("The request_uri claim should not be set in the request object");
         }
 
-        if (requestParams.has("sub")  || ! requestParams.has("jti")
-                || !requestParams.has("exp") || !requestParams.has("iss")
-                ||  !Urls.realmIssuer(session.getContext().getUri(UrlType.FRONTEND).getBaseUri(), session.getContext().getRealm().getName()).equals(requestParams.get("aud"))) {
+        if (requestParams.has("sub")  || ! requestParams.has("jti") || !requestParams.has("exp")
+                || !requestParams.has("client_id") || !requestParams.has("iss") || !requestParams.has("aud")
+                || !client.getClientId().equals(requestParams.get("client_id").asText()) || !client.getClientId().equals(requestParams.get("iss").asText())
+                || !Urls.realmIssuer(session.getContext().getUri(UrlType.FRONTEND).getBaseUri(), session.getContext().getRealm().getName()).equals(requestParams.get("aud").asText())) {
             throw new RuntimeException(Messages.OPENID_FEDERATION_AUTOMATIC_FALSE_REQUEST_OBJECT);
         }
 

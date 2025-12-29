@@ -3,8 +3,6 @@ package org.keycloak.models;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.keycloak.models.enums.ClientRegistrationTypeEnum;
-import org.keycloak.models.enums.EntityTypeEnum;
 
 public class OpenIdFederationConfig {
 
