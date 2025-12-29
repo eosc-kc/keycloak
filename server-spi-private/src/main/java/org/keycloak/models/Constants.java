@@ -188,6 +188,8 @@ public final class Constants {
     public static final String OPENID_FEDERATION_AUTHORITY_HINTS = "openidFederationAuthorityHints";
     public static final String OPENID_FEDERATION_CLIENT_REGISTRATION_TYPES_SUPPORTED = "openidFederationClientRegistrationTypesSupported";
     public static final String OPENID_FEDERATION_ENTITY_TYPES = "openidFederationEntityTypes";
+    public static final String OPENID_FEDERATION_OP_CLIENT_REGISTRATION_TYPES_SUPPORTED = "openidFederationOPClientRegistrationTypesSupported";
+    public static final String OPENID_FEDERATION_RP_CLIENT_REGISTRATION_TYPES_SUPPORTED = "openidFederationRPClientRegistrationTypesSupported";
     public static final String OPENID_FEDERATION_LIFESPAN = "openidFederationLifespan";
     public static final String OPENID_FEDERATION_RESOLVE_ENDPOINT = "openIdFederationResolveEndpoint";
     public static final String OPENID_FEDERATION_HISTORICAL_KEYS_ENDPOINT = "openIdFederationHistoricalKeysEndpoint";

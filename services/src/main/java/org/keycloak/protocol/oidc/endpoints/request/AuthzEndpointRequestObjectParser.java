@@ -80,46 +80,4 @@ public class AuthzEndpointRequestObjectParser extends AuthzEndpointRequestParser
         return keys;
     }
 
-    private BiConsumer<JOSE, ClientModel> createRequestObjectValidator(KeycloakSession session) {
-        return (jwt, clientModel) -> {
-            if (jwt instanceof JWSInput) {
-                JOSEHeader header = jwt.getHeader();
-                String headerAlgorithm = header.getRawAlgorithm();
-
-                if (headerAlgorithm == null) {
-                    throw new RuntimeException("Request object signed algorithm not specified");
-                }
-
-                String requestedSignatureAlgorithm = OIDCAdvancedConfigWrapper.fromClientModel(clientModel)
-                        .getRequestObjectSignatureAlg();
-
-                if (requestedSignatureAlgorithm != null && !requestedSignatureAlgorithm.equals(headerAlgorithm)) {
-                    throw new RuntimeException(
-                            "Request object signed with different algorithm than client requested algorithm");
-                }
-            } else {
-                String encryptionAlg = OIDCAdvancedConfigWrapper.fromClientModel(clientModel).getRequestObjectEncryptionAlg();
-
-                if (encryptionAlg != null) {
-                    if (!encryptionAlg.equals(jwt.getHeader().getRawAlgorithm())) {
-                        throw new RuntimeException("Request object encrypted with different algorithm than client requested algorithm");
-                    }
-                }
-
-                String encryptionEncAlg = OIDCAdvancedConfigWrapper.fromClientModel(clientModel).getRequestObjectEncryptionEnc();
-
-                if (encryptionEncAlg != null) {
-                    JWE jwe = (JWE) jwt;
-                    JWEHeader header = (JWEHeader) jwe.getHeader();
-
-                    if (!encryptionEncAlg.equals(header.getEncryptionAlgorithm())) {
-                        throw new RuntimeException("Request object content encrypted with different algorithm than client requested algorithm");
-                    }
-                }
-
-                session.setAttribute(AuthzEndpointRequestParser.AUTHZ_REQUEST_OBJECT_ENCRYPTED, jwt);
-            }
-        };
-    }
-
 }

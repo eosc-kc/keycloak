@@ -345,12 +345,8 @@ public interface RealmModel extends RoleContainerModel {
         return getOpenIdFederationGeneralConfig() != null;
     };
 
-    default Stream<OpenIdFederationConfig> getTrustAnchorsBasedOnTypes(EntityTypeEnum entityType, ClientRegistrationTypeEnum clientRegistrationType) {
-        return Stream.empty();
-    };
-
-    default Set<String> getTrustAnchorsIdsBasedOnTypes(EntityTypeEnum entityType, ClientRegistrationTypeEnum clientRegistrationType) {
-        return getTrustAnchorsBasedOnTypes(entityType, clientRegistrationType).map(OpenIdFederationConfig::getTrustAnchor).collect(Collectors.toSet());
+    default boolean isOpenIdFederationTypeRegistrationSupported(EntityTypeEnum entityType, ClientRegistrationTypeEnum clientRegistrationType) {
+        return isOpenIdFederationEnabled() && getOpenIdFederationGeneralConfig().getEntityTypes() != null  && getOpenIdFederationGeneralConfig().getEntityTypes().contains(entityType) && (EntityTypeEnum.OPENID_PROVIDER.equals(entityType) ? getOpenIdFederationGeneralConfig().getOpClientRegistrationTypesSupported() != null && getOpenIdFederationGeneralConfig().getOpClientRegistrationTypesSupported().contains(clientRegistrationType) : getOpenIdFederationGeneralConfig().getRpClientRegistrationTypesSupported() != null && getOpenIdFederationGeneralConfig().getRpClientRegistrationTypesSupported().contains(clientRegistrationType)) ;
     };
 
     default void setOpenIdFederationGeneralConfig(OpenIdFederationGeneralConfig generalConfig) {
@@ -358,6 +354,10 @@ public interface RealmModel extends RoleContainerModel {
 
     default List<OpenIdFederationConfig> getOpenIdFederations() {
         return List.of();
+    }
+
+    default Set<String> getOpenIdFederationsTrustAnchors() {
+        return getOpenIdFederations().stream().map(OpenIdFederationConfig::getTrustAnchor).collect(Collectors.toSet());
     }
 
     default void addOpenIdFederation(OpenIdFederationConfig fedConfig) {
