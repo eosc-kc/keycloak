@@ -3,6 +3,7 @@ package org.keycloak.services.scheduled;
 import org.keycloak.models.IdentityProviderModel;
 import org.keycloak.models.KeycloakSession;
 import org.keycloak.models.RealmModel;
+import org.keycloak.protocol.trustchain.TrustChainProcessor;
 import org.keycloak.timer.ScheduledTask;
 import org.keycloak.timer.TimerProvider;
 
@@ -33,11 +34,10 @@ public class OpenIdFederationIdPExpirationTask implements ScheduledTask {
         IdentityProviderModel idp = session.identityProviders().getByAlias(alias);
         if (idp == null || !"openid-federation".equals(idp.getProviderId()) ) {
             TimerProvider timer = session.getProvider(TimerProvider.class);
-            timer.cancelTask("OpenIdFederationIdPExpirationTask_" + alias);
+            timer.cancelTaskAndNotify("OpenIdFederationIdPExpirationTask_" + alias);
         } else {
-            //TODO retry for updating IdP
-            idp.setEnabled(false);
-            session.identityProviders().update(idp);
+            TrustChainProcessor trustChainProcessor = session.getProvider(TrustChainProcessor.class, "openid-federation");
+            trustChainProcessor.updateIdP(idp, realm);
         }
     }
 }
