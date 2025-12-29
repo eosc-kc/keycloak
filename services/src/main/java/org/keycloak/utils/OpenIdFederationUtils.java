@@ -1,30 +1,42 @@
 package org.keycloak.utils;
 
 import com.fasterxml.jackson.core.type.TypeReference;
+import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.core.UriInfo;
+import org.jboss.logging.Logger;
 import org.keycloak.OAuth2Constants;
 import org.keycloak.broker.oidc.OAuth2IdentityProviderConfig;
 import org.keycloak.broker.oidc.OIDCIdentityProviderConfig;
 import org.keycloak.broker.oidc.federation.OpenIdFederationIdentityProviderConfig;
 import org.keycloak.broker.provider.util.SimpleHttp;
+import org.keycloak.events.Errors;
+import org.keycloak.events.EventBuilder;
+import org.keycloak.exceptions.InvalidTrustChainException;
 import org.keycloak.models.AuthenticationFlowModel;
+import org.keycloak.models.ClientModel;
 import org.keycloak.models.IdentityProviderModel;
 import org.keycloak.models.IdentityProviderSyncMode;
 import org.keycloak.models.KeycloakSession;
 import org.keycloak.models.ModelException;
+import org.keycloak.models.OpenIdFederationConfig;
 import org.keycloak.models.OpenIdFederationGeneralConfig;
 import org.keycloak.models.RealmModel;
 import org.keycloak.models.enums.ClientRegistrationTypeEnum;
 import org.keycloak.models.utils.DefaultAuthenticationFlows;
 import org.keycloak.protocol.oidc.OIDCConfigAttributes;
 import org.keycloak.protocol.oidc.federation.OpenIdFederationWellKnownProviderFactory;
+import org.keycloak.protocol.trustchain.TrustChainProcessor;
 import org.keycloak.representations.openid_federation.CommonMetadata;
+import org.keycloak.representations.openid_federation.EntityStatement;
 import org.keycloak.representations.openid_federation.EntityStatementExplicitResponse;
 import org.keycloak.representations.openid_federation.RPMetadata;
+import org.keycloak.representations.openid_federation.TrustChainResolution;
+import org.keycloak.services.ErrorResponseException;
 import org.keycloak.services.Urls;
+import org.keycloak.services.clientregistration.ClientRegistrationAuth;
+import org.keycloak.services.clientregistration.openid_federation.OpenIdFederationClientRegistrationService;
 
 import java.io.IOException;
-import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.Collections;
@@ -35,6 +47,7 @@ import java.util.stream.Stream;
 
 public class OpenIdFederationUtils {
 
+    private static final Logger logger = Logger.getLogger(OpenIdFederationUtils.class);
     private static final String WELL_KNOWN_SUBPATH = ".well-known/openid-federation";
     public static final String SUBJECT_TYPES_SUPPORTED = "subject_types_supported";
 
@@ -78,10 +91,9 @@ public class OpenIdFederationUtils {
         return rPMetadata;
     }
 
-    public static void convertEntityStatementToIdp(IdentityProviderModel model, RealmModel realm, String alias, EntityStatementExplicitResponse entityStatement, Map<String, String> federationIdPConfig) {
+    public static void convertEntityStatementToIdp(IdentityProviderModel model, RealmModel realm, EntityStatementExplicitResponse entityStatement, Map<String, String> federationIdPConfig) {
         RPMetadata rp = entityStatement.getMetadata().getRelyingPartyMetadata();
 
-        model.setAlias(alias);
         model.setProviderId(OpenIdFederationWellKnownProviderFactory.PROVIDER_ID);
         model.setAddReadTokenRoleOnCreate(Boolean.valueOf(federationIdPConfig.get("addReadTokenRoleOnCreate")));
         model.setDisplayName(rp.getClientName());
@@ -129,5 +141,25 @@ public class OpenIdFederationUtils {
         model.getConfig().put(OpenIdFederationIdentityProviderConfig.AUTHORITY_HINTS, entityStatement.getAuthorityHints().stream().collect(Collectors.joining("##")));
         model.getConfig().put(OIDCConfigAttributes.EXPIRATION_TIME, String.valueOf(entityStatement.getExp()));
         model.getConfig().putAll(federationIdPConfig);
+    }
+
+    public static ClientModel createOrUpdateAutomaticClient(String clientId, KeycloakSession session, RealmModel realm) throws IOException, InvalidTrustChainException {
+        String rpMetadata = OpenIdFederationUtils.getSelfSignedToken(clientId, session);
+        TrustChainProcessor trustChainProcessor = session.getProvider(TrustChainProcessor.class, OpenIdFederationTrustChainProcessorFactory.PROVIDER_ID);
+        EntityStatement rpEntityStatement = trustChainProcessor.parseAndValidateSelfSigned(rpMetadata);
+        trustChainProcessor.validationRules(rpEntityStatement, false);
+        logger.info("starting validating trust chains");
+        TrustChainResolution validChain = trustChainProcessor.constructTrustChains(rpEntityStatement, realm.getOpenIdFederations().stream().map(OpenIdFederationConfig::getTrustAnchor).collect(Collectors.toSet()), true);
+
+        if (validChain == null) {
+            throw new ErrorResponseException(Errors.INVALID_TRUST_ANCHOR, "No trusted trust anchor could be found", Response.Status.NOT_FOUND);
+        }
+
+        EventBuilder event = new EventBuilder(session.getContext().getRealm(), session, session.getContext().getConnection());
+        OpenIdFederationClientRegistrationService provider = new OpenIdFederationClientRegistrationService(session);
+        provider.setEvent(event);
+        provider.setAuth(new ClientRegistrationAuth(session, provider, event, "openid-connect"));
+        provider.createOrUpdateClient(rpEntityStatement, (RPMetadata) validChain.getMetadataAfterPolicies());
+        return realm.getClientByClientId(clientId);
     }
 }

@@ -17,6 +17,7 @@
 package org.keycloak.protocol.oidc.endpoints;
 
 import org.jboss.resteasy.reactive.NoCache;
+import org.keycloak.common.util.UriUtils;
 import org.keycloak.http.HttpRequest;
 import org.keycloak.OAuth2Constants;
 import org.keycloak.TokenCategory;
@@ -46,6 +47,8 @@ import org.keycloak.models.KeycloakSession;
 import org.keycloak.models.RealmModel;
 import org.keycloak.models.UserModel;
 import org.keycloak.models.UserSessionModel;
+import org.keycloak.models.enums.ClientRegistrationTypeEnum;
+import org.keycloak.models.enums.EntityTypeEnum;
 import org.keycloak.protocol.oidc.OIDCAdvancedConfigWrapper;
 import org.keycloak.protocol.oidc.OIDCLoginProtocol;
 import org.keycloak.protocol.oidc.TokenManager;
@@ -73,6 +76,7 @@ import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.core.HttpHeaders;
 import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.core.MultivaluedMap;
+import org.keycloak.utils.OpenIdFederationUtils;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -200,10 +204,21 @@ public class UserInfoEndpoint {
                 throw error.insufficientScope(errorMessage);
             }
 
-            clientModel = realm.getClientByClientId(token.getIssuedFor());
-            if (clientModel == null) {
+            String clientId = token.getIssuedFor();
+            clientModel = realm.getClientByClientId(clientId);
+            if (UriUtils.isUri(clientId) && (clientModel == null || !clientModel.isEnabled()) && realm.isOpenIdFederationTypeRegistrationSupported(EntityTypeEnum.OPENID_PROVIDER, ClientRegistrationTypeEnum.AUTOMATIC)) {
+                try {
+                    clientModel = OpenIdFederationUtils.createOrUpdateAutomaticClient(clientId, session, realm);
+                } catch (Exception e) {
+                    event.error(clientModel == null ? Errors.CLIENT_NOT_FOUND : Errors.CLIENT_DISABLED);
+                    throw error.invalidToken(clientModel == null ?"Client not found" : "Client disabled");
+                }
+            } else if (clientModel == null) {
                 event.error(Errors.CLIENT_NOT_FOUND);
                 throw error.invalidToken("Client not found");
+            } else if (!clientModel.isEnabled()) {
+                event.error(Errors.CLIENT_DISABLED);
+                throw error.invalidToken("Client disabled");
             }
 
             cors.allowedOrigins(session, clientModel);
@@ -230,11 +245,6 @@ public class UserInfoEndpoint {
         session.getContext().setClient(clientModel);
 
         event.client(clientModel);
-
-        if (!clientModel.isEnabled()) {
-            event.error(Errors.CLIENT_DISABLED);
-            throw error.invalidToken("Client disabled");
-        }
 
         event.session(token.getSessionId());
         UserSessionUtil.UserSessionValidationResult userSessionValidation = UserSessionUtil.findValidSessionForAccessToken(session, realm, token, clientModel, (invalidUserSession -> {}));

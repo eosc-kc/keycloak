@@ -26,11 +26,15 @@ import org.keycloak.OAuthErrorException;
 import org.keycloak.authentication.AuthenticationFlowError;
 import org.keycloak.authentication.ClientAuthenticationFlowContext;
 import org.keycloak.common.util.Time;
+import org.keycloak.common.util.UriUtils;
 import org.keycloak.jose.jws.JWSInput;
 import org.keycloak.models.ClientModel;
 import org.keycloak.models.RealmModel;
 import org.keycloak.models.SingleUseObjectProvider;
+import org.keycloak.models.enums.ClientRegistrationTypeEnum;
+import org.keycloak.models.enums.EntityTypeEnum;
 import org.keycloak.representations.JsonWebToken;
+import org.keycloak.utils.OpenIdFederationUtils;
 
 import java.util.List;
 
@@ -119,7 +123,13 @@ public abstract class AbstractJWTClientValidator {
 
         client = clientAssertionState.getClient();
 
-        if (client == null) {
+        if (UriUtils.isUri(clientId) && (client == null || !client.isEnabled()) && realm.isOpenIdFederationTypeRegistrationSupported(EntityTypeEnum.OPENID_PROVIDER, ClientRegistrationTypeEnum.AUTOMATIC)) {
+            try {
+                client = OpenIdFederationUtils.createOrUpdateAutomaticClient(clientId, context.getSession(), realm);
+            } catch (Exception e) {
+                return client == null ? failure(AuthenticationFlowError.CLIENT_NOT_FOUND) : failure(AuthenticationFlowError.CLIENT_DISABLED);
+            }
+        } else if (client == null) {
             return failure(AuthenticationFlowError.CLIENT_NOT_FOUND);
         } else {
             context.getEvent().client(client.getClientId());

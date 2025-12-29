@@ -20,6 +20,7 @@ package org.keycloak.protocol.oidc.endpoints.request;
 import org.jboss.logging.Logger;
 import org.keycloak.OAuth2Constants;
 import org.keycloak.common.Profile;
+import org.keycloak.common.util.StreamUtil;
 import org.keycloak.connections.httpclient.HttpClientProvider;
 import org.keycloak.events.Details;
 import org.keycloak.events.Errors;
@@ -40,6 +41,8 @@ import org.keycloak.util.TokenUtil;
 
 import jakarta.ws.rs.core.MultivaluedMap;
 import jakarta.ws.rs.core.Response;
+
+import java.io.InputStream;
 import java.util.HashSet;
 import java.util.List;
 
@@ -116,7 +119,7 @@ public class AuthorizationEndpointRequestParserProcessor {
             if (requestParam != null && requestUriParam != null) {
                 throw new RuntimeException("Illegal to use both 'request' and 'request_uri' parameters together");
             } else  if (requestParam == null && requestUriParam == null) {
-                throw new RuntimeException("For automatic client registration");
+                throw new RuntimeException("For automatic client registration, you need to use either 'request' or 'request_uri' parameter");
             }
 
             String requestObjectRequired = OIDCAdvancedConfigWrapper.fromClientModel(client).getRequestObjectRequired();
@@ -124,19 +127,31 @@ public class AuthorizationEndpointRequestParserProcessor {
             if (OIDCConfigAttributes.REQUEST_OBJECT_REQUIRED_REQUEST.equals(requestObjectRequired)
                     && requestParam == null) {
                 throw new RuntimeException("Client is required to use 'request' parameter.");
+            } else if (OIDCConfigAttributes.REQUEST_OBJECT_REQUIRED_REQUEST_URI.equals(requestObjectRequired)
+                    && requestUriParam == null) {
+                throw new RuntimeException("Client is required to use 'request_uri' parameter.");
             }
-//            else if (OIDCConfigAttributes.REQUEST_OBJECT_REQUIRED_REQUEST_URI.equals(requestObjectRequired)
-//                    && requestUriParam == null) {
-//                throw new RuntimeException("Client is required to use 'request_uri' parameter.");
-            //            }
 
             if (requestParam != null) {
                 new OpenIdFederationAuthzEndpointRequestObjectParser(session, requestParam, client).parseRequest(request);
             } else if (requestUriParam != null) {
-                throw new RuntimeException("requestUriParam not supported for automatic client registration");
-            } else {
-                throw new RuntimeException("For automatic registration is required to use 'request' or 'request_uri' parameter.");
+                // Define, if the request is `PAR` or usual `Request Object`.
+                RequestUriType requestUriType = getRequestUriType(requestUriParam);
+                if (requestUriType == RequestUriType.PAR) {
+                    throw new RuntimeException("For automatic client registration, push authorization is not supported");
+                } else {
+                    // Validate "requestUriParam" with allowed requestUris
+                    List<String> requestUris = OIDCAdvancedConfigWrapper.fromClientModel(client).getRequestUris();
+                    String requestUri = RedirectUtils.verifyRedirectUri(session, client.getRootUrl(), requestUriParam, new HashSet<>(requestUris), false);
+                    if (requestUri == null) {
+                        throw new RuntimeException("Specified 'request_uri' not allowed for this client.");
+                    }
+                    try (InputStream is = session.getProvider(HttpClientProvider.class).get(requestUri)) {
+                        new OpenIdFederationAuthzEndpointRequestObjectParser(session, StreamUtil.readString(is), client).parseRequest(request);
+                    }
+                }
             }
+
 
             if (Profile.isFeatureEnabled(Profile.Feature.DYNAMIC_SCOPES)) {
                 request.authorizationRequestContext = AuthorizationContextUtil.getAuthorizationRequestContextFromScopes(session, request.getScope());

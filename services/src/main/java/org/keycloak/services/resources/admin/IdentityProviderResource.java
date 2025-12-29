@@ -36,6 +36,7 @@ import org.eclipse.microprofile.openapi.annotations.responses.APIResponses;
 import org.eclipse.microprofile.openapi.annotations.tags.Tag;
 import org.jboss.logging.Logger;
 import org.jboss.resteasy.reactive.NoCache;
+import org.keycloak.broker.oidc.federation.OpenIdFederationIdentityProviderFactory;
 import org.keycloak.broker.provider.IdentityProvider;
 import org.keycloak.broker.provider.IdentityProviderFactory;
 import org.keycloak.broker.provider.IdentityProviderMapper;
@@ -52,9 +53,12 @@ import org.keycloak.models.KeycloakSessionFactory;
 import org.keycloak.models.ModelDuplicateException;
 import org.keycloak.models.RealmModel;
 import org.keycloak.models.UserModel;
+import org.keycloak.models.enums.ClientRegistrationTypeEnum;
+import org.keycloak.models.enums.EntityTypeEnum;
 import org.keycloak.models.utils.ModelToRepresentation;
 import org.keycloak.models.utils.RepresentationToModel;
 import org.keycloak.models.utils.StripSecretsUtils;
+import org.keycloak.protocol.trustchain.TrustChainProcessor;
 import org.keycloak.representations.idm.ComponentRepresentation;
 import org.keycloak.representations.idm.IdentityProviderMapperRepresentation;
 import org.keycloak.representations.idm.IdentityProviderMapperTypeRepresentation;
@@ -70,6 +74,7 @@ import org.keycloak.services.scheduled.AutoUpdateIdentityProviders;
 import org.keycloak.services.scheduled.ClusterAwareScheduledTaskRunner;
 import org.keycloak.services.util.ResourcesUtil;
 import org.keycloak.timer.TimerProvider;
+import org.keycloak.utils.OpenIdFederationTrustChainProcessorFactory;
 import org.keycloak.utils.ProfileHelper;
 
 import java.io.IOException;
@@ -223,6 +228,28 @@ public class IdentityProviderResource {
         } catch (IOException e) {
             throw ErrorResponse.error("Problem refresh Identity Provider", BAD_REQUEST);
         }
+        return Response.noContent().build();
+    }
+
+
+    @POST
+    @Path("refresh/oidfed")
+    @Tag(name = KeycloakOpenAPI.Admin.Tags.IDENTITY_PROVIDERS)
+    @Operation( summary = "Refresh OpenId Federation identity provider")
+    public Response refreshOidFedIdP() {
+        this.auth.realm().requireManageIdentityProviders();
+
+        if (identityProviderModel == null) {
+            throw new jakarta.ws.rs.NotFoundException();
+        }
+
+        if (!OpenIdFederationIdentityProviderFactory.PROVIDER_ID.equals(identityProviderModel.getProviderId()) || !realm.isOpenIdFederationTypeRegistrationSupported(EntityTypeEnum.OPENID_RELYING_PARTY, ClientRegistrationTypeEnum.EXPLICIT)) {
+            throw ErrorResponse.error("This Identity Provider is not OpenId Federation type or this realm is not OpenId Federation as RP with explicit registration", BAD_REQUEST);
+        }
+
+        TrustChainProcessor trustChainProcessor = session.getProvider(TrustChainProcessor.class, OpenIdFederationTrustChainProcessorFactory.PROVIDER_ID);
+        trustChainProcessor.updateIdP(identityProviderModel, realm);
+
         return Response.noContent().build();
     }
 

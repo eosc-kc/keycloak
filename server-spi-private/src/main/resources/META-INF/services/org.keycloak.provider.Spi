@@ -113,3 +113,4 @@ org.keycloak.cache.AlternativeLookupSPI
 org.keycloak.broker.federation.SAMLFederationSpi
 org.keycloak.models.customcache.CustomCacheSpi
 org.keycloak.protocol.saml.ConfigureAutoUpdateSAMLClientSpi
+org.keycloak.protocol.trustchain.TrustChainSpi

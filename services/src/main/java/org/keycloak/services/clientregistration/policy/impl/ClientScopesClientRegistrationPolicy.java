@@ -59,9 +59,26 @@ public class ClientScopesClientRegistrationPolicy implements ClientRegistrationP
         allowedScopeNames.addAll(getAllowedScopeNames(realm, true));
         allowedScopeNames.addAll(getAllowedScopeNames(realm, false));
 
-
         checkClientScopesAllowed(requestedDefaultScopeNames, allowedScopeNames);
         checkClientScopesAllowed(requestedOptionalScopeNames, allowedScopeNames);
+
+        if (componentModel.get(ClientScopesClientRegistrationPolicyFactory.ALLOW_DEFAULT_SCOPES, false) && (requestedDefaultScopeNames != null || requestedOptionalScopeNames != null)) {
+            //if requested scopes list is not empty and add-default-scopes is true, add realm default scopes
+            List<String> defaultRealmScopes = realm.getDefaultClientScopesStream(true).map(ClientScopeModel::getName).collect(Collectors.toList());
+            if (!defaultRealmScopes.isEmpty()) {
+                List<String> currentDefaultScopes = new ArrayList<>(context.getClient().getDefaultClientScopes() == null ? new ArrayList<>() : context.getClient().getDefaultClientScopes());
+                for (String s : defaultRealmScopes) {
+                    if (!currentDefaultScopes.contains(s)) {
+                        currentDefaultScopes.add(s);
+                    }
+                }
+                context.getClient().setDefaultClientScopes(currentDefaultScopes);
+
+                if (requestedOptionalScopeNames != null) {
+                    context.getClient().getOptionalClientScopes().removeIf(x -> defaultRealmScopes.contains(x));
+                }
+            }
+        }
     }
 
     @Override
