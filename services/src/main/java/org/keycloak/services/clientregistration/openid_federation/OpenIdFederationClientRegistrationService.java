@@ -1,6 +1,7 @@
 package org.keycloak.services.clientregistration.openid_federation;
 
 import java.net.URI;
+import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -34,6 +35,7 @@ import org.keycloak.util.JsonSerialization;
 import org.keycloak.util.TokenUtil;
 import org.keycloak.utils.OpenIdFederationTrustChainProcessorFactory;
 
+import com.fasterxml.jackson.core.type.TypeReference;
 import org.jboss.logging.Logger;
 
 public class OpenIdFederationClientRegistrationService extends AbstractClientRegistrationProvider {
