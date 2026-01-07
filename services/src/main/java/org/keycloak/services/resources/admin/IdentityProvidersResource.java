@@ -44,6 +44,7 @@ import org.keycloak.models.utils.RepresentationToModel;
 import org.keycloak.models.utils.StripSecretsUtils;
 import org.keycloak.protocol.oidc.OIDCConfigAttributes;
 import org.keycloak.protocol.trustchain.TrustChainProcessor;
+import org.keycloak.urls.UrlType;
 import org.keycloak.utils.OpenIdFederationTrustChainProcessorFactory;
 import org.keycloak.representations.idm.IdentityProviderRepresentation;
 import org.keycloak.services.ErrorResponse;
@@ -282,7 +283,7 @@ public class IdentityProvidersResource {
                   }
                   model.setAlias(representation.getAlias());
                   TrustChainProcessor trustChainProcessor = session.getProvider(TrustChainProcessor.class, OpenIdFederationTrustChainProcessorFactory.PROVIDER_ID);
-                  return trustChainProcessor.rPexcplicitRegistration(representation.getConfig().get(OIDCIdentityProviderConfig.ISSUER), representation.getConfig().get(OpenIdFederationIdentityProviderConfig.TRUST_ANCHOR_ID), model, realm);
+                  return trustChainProcessor.rPexcplicitRegistration(representation.getConfig().get(OIDCIdentityProviderConfig.ISSUER), representation.getConfig().get(OpenIdFederationIdentityProviderConfig.TRUST_ANCHOR_ID), model, realm, session.getContext().getUri(UrlType.FRONTEND), session.getContext().getUri(UrlType.BACKEND));
             } catch (Exception e) {
                 throw ErrorResponse.error(e.getMessage(), BAD_REQUEST);
             }

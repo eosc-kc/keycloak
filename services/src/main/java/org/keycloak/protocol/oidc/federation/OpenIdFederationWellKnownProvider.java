@@ -97,7 +97,7 @@ public class OpenIdFederationWellKnownProvider extends OIDCWellKnownProvider {
             metadata.setFederationEntity(federationEntity);
         }
 
-        EntityStatement entityStatement = new EntityStatement(Urls.realmIssuer(frontendUriInfo.getBaseUri(), realm.getName()), Long.valueOf(openIdFederationConfig.getLifespan()), new ArrayList<>(openIdFederationConfig.getAuthorityHints()), trustChainProcessor.getKeySet());
+        EntityStatement entityStatement = new EntityStatement(Urls.realmIssuer(frontendUriInfo.getBaseUri(), realm.getName()), Long.valueOf(openIdFederationConfig.getLifespan()), new ArrayList<>(openIdFederationConfig.getAuthorityHints()), trustChainProcessor.getKeySet(realm));
         entityStatement.setMetadata(metadata);
 
         return session.tokens().encodeForOpenIdFederation(entityStatement);

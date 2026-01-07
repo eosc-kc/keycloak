@@ -80,7 +80,7 @@ import org.keycloak.util.TokenUtil;
 public class OpenIdFederationTrustChainProcessor implements TrustChainProcessor {
 
     private static final Logger logger = Logger.getLogger(OpenIdFederationTrustChainProcessor.class);
-    private  final KeycloakSession session;
+    private KeycloakSession session;
 
     public OpenIdFederationTrustChainProcessor(KeycloakSession session) {
         this.session = session;
@@ -88,7 +88,8 @@ public class OpenIdFederationTrustChainProcessor implements TrustChainProcessor 
 
     /**
      * This should construct all possible trust chains from a given leaf node self-signed and encoded JWT to a set of trust anchor urls
-     * @param leafEs  this is the EntityStatement of a leaf node (Relay party or Openid Provider)
+     *
+     * @param leafEs this is the EntityStatement of a leaf node (Relay party or Openid Provider)
      * @param trustAnchorIds this should hold the trust anchor ids
      * @return any valid trust chains from the leaf node JWT to the trust anchor.
      */
@@ -119,7 +120,7 @@ public class OpenIdFederationTrustChainProcessor implements TrustChainProcessor 
                 trustChainResolution.setLeafId(trustChainResolution.getParsedChain().get(0).getSubject());
                 return trustChainResolution;
             } catch (MetadataPolicyCombinationException | MetadataPolicyException e) {
-                logger.warn(String.format("Cannot combine metadata policy for trust anchor : "+ trustChainResolution));
+                logger.warn(String.format("Cannot combine metadata policy for trust anchor : " + trustChainResolution));
             }
         }
         return null;
@@ -170,7 +171,7 @@ public class OpenIdFederationTrustChainProcessor implements TrustChainProcessor 
                         }
                     }
                 } catch (Exception ex) {
-                    logger.warn("Problem during trust chain resolution for "+initialEntity, ex);
+                    logger.warn("Problem during trust chain resolution for " + initialEntity, ex);
                 }
 
             });
@@ -244,7 +245,7 @@ public class OpenIdFederationTrustChainProcessor implements TrustChainProcessor 
         if (statement.getIat() == null && LocalDateTime.now().toEpochSecond(ZoneOffset.UTC) > statement.getIat()) {
             throw new ErrorResponseException(Errors.INVALID_REQUEST, "Iat must exist and be before now.", Response.Status.BAD_REQUEST);
         }
-        if (statement.getExp() == null && LocalDateTime.now().toEpochSecond(ZoneOffset.UTC) < statement.getExp()){
+        if (statement.getExp() == null && LocalDateTime.now().toEpochSecond(ZoneOffset.UTC) < statement.getExp()) {
             throw new ErrorResponseException(Errors.INVALID_REQUEST, "Exp must exist and be before now.", Response.Status.BAD_REQUEST);
         }
         if (statement.getAuthorityHints() == null || statement.getAuthorityHints().isEmpty()) {
@@ -262,9 +263,10 @@ public class OpenIdFederationTrustChainProcessor implements TrustChainProcessor 
     }
 
     @Override
-    public JSONWebKeySet getKeySet() {
+    public JSONWebKeySet getKeySet(RealmModel realm) {
+        session.getContext().setRealm(realm);
         List<JWK> keys = new LinkedList<>();
-        session.keys().getKeysStream(session.getContext().getRealm())
+        session.keys().getKeysStream(realm)
                 .filter(k -> k.getStatus().isEnabled() && k.getUse().equals(KeyUse.SIG) && k.getPublicKey() != null && k.getAlgorithm().equals(session.tokens().signatureAlgorithm(TokenCategory.ENTITY_STATEMENT)))
                 .forEach(k -> {
                     JWKBuilder b = JWKBuilder.create().kid(k.getKid()).algorithm(k.getAlgorithm());
@@ -284,38 +286,32 @@ public class OpenIdFederationTrustChainProcessor implements TrustChainProcessor 
     }
 
     @Override
-    public void updateIdP(IdentityProviderModel model, RealmModel realm){
-        try {
-            model = rPexcplicitRegistration(model.getConfig().get(OIDCIdentityProviderConfig.ISSUER), model.getConfig().get(OpenIdFederationIdentityProviderConfig.TRUST_ANCHOR_ID), model, realm);
-            TimerProvider timer = session.getProvider(TimerProvider.class);
-            OpenIdFederationIdPExpirationTask task = new OpenIdFederationIdPExpirationTask(model.getAlias(), realm.getId());
-            long expiration = Long.valueOf(model.getConfig().get(OIDCConfigAttributes.EXPIRATION_TIME)) * 1000 - Time.currentTimeMillis();
-            ClusterAwareScheduledTaskRunner taskRunner = new ClusterAwareScheduledTaskRunner(session.getKeycloakSessionFactory(), task, expiration);
-            timer.scheduleOnce(taskRunner, expiration, "OpenIdFederationIdPExpirationTask_" + model.getAlias());
-        } catch (Exception e) {
-            model.setEnabled(false);
-        }
-        realm.updateIdentityProvider(model);
+    public IdentityProviderModel updateIdP(IdentityProviderModel model, RealmModel realm, UriInfo frontendUriInfo, UriInfo backendUriInfo) throws Exception {
+        model = rPexcplicitRegistration(model.getConfig().get(OIDCIdentityProviderConfig.ISSUER), model.getConfig().get(OpenIdFederationIdentityProviderConfig.TRUST_ANCHOR_ID), model, realm, frontendUriInfo, backendUriInfo);
+        TimerProvider timer = session.getProvider(TimerProvider.class);
+        OpenIdFederationIdPExpirationTask task = new OpenIdFederationIdPExpirationTask(model.getAlias(), realm.getId());
+        long expiration = Long.valueOf(model.getConfig().get(OIDCConfigAttributes.EXPIRATION_TIME)) * 1000 - Time.currentTimeMillis();
+        ClusterAwareScheduledTaskRunner taskRunner = new ClusterAwareScheduledTaskRunner(session.getKeycloakSessionFactory(), task, expiration);
+        timer.scheduleOnce(taskRunner, expiration, "OpenIdFederationIdPExpirationTask_" + model.getAlias());
+        return model;
     }
 
     @Override
-    public IdentityProviderModel rPexcplicitRegistration(String opIssuer, String trustAnchor, IdentityProviderModel model, RealmModel realm) throws Exception {
+    public IdentityProviderModel rPexcplicitRegistration(String opIssuer, String trustAnchor, IdentityProviderModel model, RealmModel realm, UriInfo frontendUriInfo, UriInfo backendUriInfo) throws Exception {
         OpenIdFederationGeneralConfig federationGeneralConfig = realm.getOpenIdFederationGeneralConfig();
         OpenIdFederationConfig federationConfig = federationGeneralConfig.getOpenIdFederationList().stream().filter(x -> trustAnchor.equals(x.getTrustAnchor())).findAny().orElseThrow(() -> new NotFoundException("Trust anchor does not exist"));
         EntityStatement opStatement = parseAndValidateSelfSigned(OpenIdFederationUtils.getSelfSignedToken(opIssuer, session));
         if (!validateEntityStatementFields(opStatement, opIssuer, opIssuer) || opStatement.getMetadata().getOpenIdProviderMetadata() == null || !opStatement.getMetadata().getOpenIdProviderMetadata().getClientRegistrationTypesSupported().contains("explicit") || opStatement.getMetadata().getOpenIdProviderMetadata().getFederationRegistrationEndpoint() == null) {
             throw new BadRequestException("No valid OP Entity Statement");
         }
-        TrustChainResolution trustChainResolution = constructTrustChains(opStatement, Stream.of(federationConfig.getTrustAnchor()).collect(Collectors.toSet()),  false);
+        TrustChainResolution trustChainResolution = constructTrustChains(opStatement, Stream.of(federationConfig.getTrustAnchor()).collect(Collectors.toSet()), false);
         if (trustChainResolution == null) {
             throw new BadRequestException("No common trust chain found");
         }
         OPMetadata op = (OPMetadata) trustChainResolution.getMetadataAfterPolicies();
-        model = OIDCIdentityProviderFactory.parseOIDCConfig(op,  OpenIdFederationIdentityProviderConfig.class, model);
+        model = OIDCIdentityProviderFactory.parseOIDCConfig(op, OpenIdFederationIdentityProviderConfig.class, model);
 
-        UriInfo frontendUriInfo = session.getContext().getUri(UrlType.FRONTEND);
-        UriInfo backendUriInfo = session.getContext().getUri(UrlType.BACKEND);
-        JSONWebKeySet jwks = getKeySet();
+        JSONWebKeySet jwks = getKeySet(realm);
         EntityStatement entityStatement = new EntityStatement(Urls.realmIssuer(frontendUriInfo.getBaseUri(), realm.getName()), Long.valueOf(federationGeneralConfig.getLifespan()), Stream.of(trustChainResolution.getLeafId()).collect(Collectors.toList()), jwks);
         entityStatement.addAudience(opIssuer);
         Metadata metadata = new Metadata();
@@ -336,16 +332,16 @@ public class OpenIdFederationTrustChainProcessor implements TrustChainProcessor 
                 .entity(entity)
                 .asResponse();
         if (response.getStatus() < 200 || response.getStatus() >= 400) {
-            throw new BadRequestException("Error during explicit client registration with body : "+ response.asString());
+            throw new BadRequestException("Error during explicit client registration with body : " + response.asString());
         }
         EntityStatementExplicitResponse statementResponse = parseAndValidateSelfSigned(response.asString(), EntityStatementExplicitResponse.class, opStatement.getJwks());
-        if (!validateEntityStatementFields(statementResponse, opIssuer, opIssuer) || statementResponse.getTrustAnchor() == null || LocalDateTime.now().toEpochSecond(ZoneOffset.UTC) > statementResponse.getExp() ) {
+        if (!validateEntityStatementFields(statementResponse, opIssuer, opIssuer) || statementResponse.getTrustAnchor() == null || LocalDateTime.now().toEpochSecond(ZoneOffset.UTC) > statementResponse.getExp()) {
             throw new BadRequestException("No valid OP Entity Statement");
         }
         return model.getInternalId() == null ? OpenIdFederationUtils.convertEntityStatementToIdp(model, realm, statementResponse, new HashMap<>(federationConfig.getIdpConfiguration())) : OpenIdFederationUtils.updateIdPFromEntityStatement(model, statementResponse);
     }
 
-    private void metadataFromFederation(RPMetadata rPMetadata, Map<String, String> federationConfig){
+    private void metadataFromFederation(RPMetadata rPMetadata, Map<String, String> federationConfig) {
         rPMetadata.setScope(federationConfig.get(OAuth2IdentityProviderConfig.DEFAULT_SCOPE));
     }
 
