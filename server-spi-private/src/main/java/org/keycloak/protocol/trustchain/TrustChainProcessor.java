@@ -2,6 +2,8 @@ package org.keycloak.protocol.trustchain;
 
 import java.util.Set;
 
+import jakarta.ws.rs.core.UriInfo;
+
 import org.keycloak.exceptions.InvalidTrustChainException;
 import org.keycloak.jose.jwk.JSONWebKeySet;
 import org.keycloak.models.IdentityProviderModel;
@@ -16,8 +18,8 @@ public interface TrustChainProcessor extends Provider {
     EntityStatement parseAndValidateSelfSigned(String token) throws InvalidTrustChainException;
     boolean validateEntityStatementFields(EntityStatement statement, String issuer, String subject);
     void validationRules(EntityStatement statement, boolean checkAudience);
-    JSONWebKeySet getKeySet();
-    void updateIdP(IdentityProviderModel model, RealmModel realm);
-    IdentityProviderModel rPexcplicitRegistration(String opIssuer, String trustAnchor, IdentityProviderModel model, RealmModel realm) throws Exception;
+    JSONWebKeySet getKeySet(RealmModel realm);
+    IdentityProviderModel updateIdP(IdentityProviderModel model, RealmModel realm, UriInfo frontendUriInfo, UriInfo backendUriInfo) throws Exception;
+    IdentityProviderModel rPexcplicitRegistration(String opIssuer, String trustAnchor, IdentityProviderModel model, RealmModel realm, UriInfo frontendUriInfo, UriInfo backendUriInfo) throws Exception;
 
 }

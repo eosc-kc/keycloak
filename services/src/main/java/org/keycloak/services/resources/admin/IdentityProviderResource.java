@@ -76,6 +76,7 @@ import org.keycloak.services.scheduled.AutoUpdateIdentityProviders;
 import org.keycloak.services.scheduled.ClusterAwareScheduledTaskRunner;
 import org.keycloak.services.util.ResourcesUtil;
 import org.keycloak.timer.TimerProvider;
+import org.keycloak.urls.UrlType;
 import org.keycloak.utils.OpenIdFederationTrustChainProcessorFactory;
 import org.keycloak.utils.ProfileHelper;
 
@@ -228,7 +229,8 @@ public class IdentityProviderResource {
             idp.getConfig().put(IdentityProviderModel.LAST_REFRESH_TIME, String.valueOf(Instant.now().toEpochMilli()));
             session.identityProviders().update(idp);
         } catch (IOException e) {
-            throw ErrorResponse.error("Problem refresh Identity Provider", BAD_REQUEST);
+            logger.error("Problem during refreshing autoupdating Identity Provider with alias "+ identityProviderModel.getAlias()+" Error: ", e);
+            throw ErrorResponse.error("Problem during refreshing autoupdating Identity Provider with alias "+ identityProviderModel.getAlias()+" Error: "+e.getMessage(), BAD_REQUEST);
         }
         return Response.noContent().build();
     }
@@ -250,9 +252,16 @@ public class IdentityProviderResource {
         }
 
         TrustChainProcessor trustChainProcessor = session.getProvider(TrustChainProcessor.class, OpenIdFederationTrustChainProcessorFactory.PROVIDER_ID);
-        trustChainProcessor.updateIdP(identityProviderModel, realm);
-
-        return Response.noContent().build();
+        try {
+            IdentityProviderModel model = trustChainProcessor.updateIdP(identityProviderModel, realm, session.getContext().getUri(UrlType.FRONTEND), session.getContext().getUri(UrlType.BACKEND));
+            realm.updateIdentityProvider(model);
+            return  Response.noContent().build();
+        } catch (Exception e) {
+            logger.warn("Error during updating OpenId Federation Identity Provider", e);
+            identityProviderModel.setEnabled(false);
+            realm.updateIdentityProvider(identityProviderModel);
+            throw ErrorResponse.error("Error during updating OpenId Federation Identity Provider with alias "+ identityProviderModel.getAlias()+" Error: "+e.getMessage(), BAD_REQUEST);
+        }
     }
 
     private void updateIdpFromRep(IdentityProviderRepresentation providerRep, RealmModel realm, KeycloakSession session) {
