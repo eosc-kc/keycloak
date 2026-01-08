@@ -114,7 +114,7 @@ public abstract class OAuth2GrantTypeBase implements OAuth2GrantType {
 
         TokenManager.AccessTokenResponseBuilder responseBuilder = tokenManager
             .responseBuilder(realm, client, event, session, userSession, clientSessionCtx).accessToken(token);
-        boolean useRefreshToken = clientConfig.isUseRefreshToken();
+        boolean useRefreshToken = clientConfig.isUseRefreshToken() || TokenUtil.isOfflineTokenRequested(scopeParam);
         if (useRefreshToken) {
             responseBuilder.generateRefreshToken();
             if (TokenUtil.TOKEN_TYPE_OFFLINE.equals(responseBuilder.getRefreshToken().getType())
