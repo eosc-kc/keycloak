@@ -39,6 +39,7 @@ public class AutoUpdateIdentityProviders implements ScheduledTask {
             TimerProvider timer = session.getProvider(TimerProvider.class);
             timer.cancelTask(realmId + "_AutoUpdateIdP_" + alias);
         }
+        session.getContext().setRealm(realm);
         IdentityProviderModel idp = realm.getIdentityProviderByAlias(alias);
         if (idp == null || idp.getConfig().get(IdentityProviderModel.METADATA_URL) == null) {
             TimerProvider timer = session.getProvider(TimerProvider.class);
