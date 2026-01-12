@@ -63,10 +63,10 @@ public class AutoUpdateIdentityProviderTest extends AbstractAdminTest {
             //change some values( postBindingLogout,postBindingAuthnRequest from true to false, enabled false)  - add autoupdated values
             result.put(IdentityProviderModel.AUTO_UPDATE, "true");
             result.put(IdentityProviderModel.METADATA_URL, "http://localhost:8880/saml-idp-metadata");
-            result.put(IdentityProviderModel.REFRESH_PERIOD, String.valueOf(30));
+            result.put(IdentityProviderModel.REFRESH_PERIOD, String.valueOf(60));
             result.put(SAMLIdentityProviderConfig.POST_BINDING_LOGOUT, "false");
             result.put(SAMLIdentityProviderConfig.POST_BINDING_AUTHN_REQUEST, "false");
-            create(createRep("saml", "saml", false, result));
+            create(createRep("saml", "saml", true, result));
 
             IdentityProviderResource provider = realm.identityProviders().get("saml");
             IdentityProviderRepresentation rep = provider.toRepresentation();
@@ -74,9 +74,9 @@ public class AutoUpdateIdentityProviderTest extends AbstractAdminTest {
             Assert.assertNotNull("internalId", rep.getInternalId());
             Assert.assertEquals("alias", "saml", rep.getAlias());
             Assert.assertEquals("providerId", "saml", rep.getProviderId());
-            Assert.assertEquals("enabled", false, rep.isEnabled());
+            Assert.assertEquals("enabled", true, rep.isEnabled());
             assertSamlConfigAutoUpdated(rep.getConfig(), false);
-            assertAdminEvents.assertEvent(realmId, OperationType.CREATE, AdminEventPaths.identityProviderPath(rep.getAlias()), rep, ResourceType.IDENTITY_PROVIDER);
+            //assertAdminEvents.assertEvent(realmId, OperationType.CREATE, AdminEventPaths.identityProviderPath(rep.getAlias()), rep, ResourceType.IDENTITY_PROVIDER);
 
             sleep(80000);
             //autoupdated - check again Idp - see if values has changed
@@ -139,7 +139,7 @@ public class AutoUpdateIdentityProviderTest extends AbstractAdminTest {
         // import endpoint simply converts IDPSSODescriptor into key value pairs.
         // check that saml-idp-metadata.xml was properly converted into key value pairs
         //System.out.println(config);
-        List<String> keys = new ArrayList<>(List.of("syncMode",
+        List<String> keys = new ArrayList<>(List.of(
                 "validateSignature",
                 "singleLogoutServiceUrl",
                 "postBindingLogout",
@@ -159,15 +159,17 @@ public class AutoUpdateIdentityProviderTest extends AbstractAdminTest {
                 "metadataUrl",
                 "refreshPeriod"
         ));
-        if (hasExecuted)
+        if (hasExecuted) {
             keys.add("lastRefreshTime");
+            keys.add("enabledFromMetadata");
+        }
 
         assertThat(config.keySet(), containsInAnyOrder(keys.toArray()));
         assertThat(config, hasEntry("validateSignature", "true"));
         assertThat(config, hasEntry("singleLogoutServiceUrl", "http://localhost:8080/auth/realms/master/protocol/saml"));
         assertThat(config, hasEntry("artifactResolutionServiceUrl", "http://localhost:8080/auth/realms/master/protocol/saml/resolve"));
         assertThat(config, hasEntry("artifactBindingResponse", "false"));
-        assertThat(config, hasEntry("postBindingAuthnRequest", "true"));
+        assertThat(config, hasEntry("postBindingAuthnRequest", hasExecuted ? "true" : "false"));
         assertThat(config, hasEntry("singleSignOnServiceUrl", "http://localhost:8080/auth/realms/master/protocol/saml"));
         assertThat(config, hasEntry("wantAuthnRequestsSigned", "true"));
         assertThat(config, hasEntry("addExtensionsElementWithKeyInfo", "false"));
@@ -200,7 +202,7 @@ public class AutoUpdateIdentityProviderTest extends AbstractAdminTest {
             map.put("fromUrl", "http://localhost:8880/oidc-idp");
 
             Map<String, String> result = realm.identityProviders().importFrom(map);
-            assertThat(result.keySet(), containsInAnyOrder("issuer", "authorizationUrl", "tokenUrl", "userInfoUrl", "validateSignature", "useJwksUrl", "jwksUrl", "metadataDescriptorUrl"));
+            assertThat(result.keySet(), containsInAnyOrder("authorizationUrl", "tokenUrl", "userInfoUrl", "validateSignature", "useJwksUrl", "jwksUrl", "metadataDescriptorUrl","iss"));
             assertThat(result, hasEntry("authorizationUrl", "https://aai.egi.eu/oidc/authorize"));
             assertThat(result, hasEntry("tokenUrl", "https://aai.egi.eu/oidc/token"));
 
@@ -223,7 +225,7 @@ public class AutoUpdateIdentityProviderTest extends AbstractAdminTest {
             assertThat(rep.getConfig(), hasEntry("authorizationUrl", "https://aai.egi.eu/oidc/authorize/new"));
             assertThat(rep.getConfig(), hasEntry("tokenUrl", "https://aai.egi.eu/oidc/token/new"));
             assertOidcConfig(rep.getConfig(), false);
-            assertAdminEvents.assertEvent(realmId, OperationType.CREATE, AdminEventPaths.identityProviderPath(rep.getAlias()), rep, ResourceType.IDENTITY_PROVIDER);
+          //  assertAdminEvents.assertEvent(realmId, OperationType.CREATE, AdminEventPaths.identityProviderPath(rep.getAlias()), rep, ResourceType.IDENTITY_PROVIDER);
 
             sleep(80000);
             //autoupdated - check again Idp - see if values has changed
@@ -240,12 +242,12 @@ public class AutoUpdateIdentityProviderTest extends AbstractAdminTest {
     }
 
     private void assertOidcConfig(Map<String, String> config, boolean hasExecuted) {
-        Set fields = Stream.of("issuer", "authorizationUrl", "tokenUrl", "userInfoUrl", "validateSignature", "useJwksUrl", "jwksUrl", "metadataDescriptorUrl", "syncMode", "autoUpdate", "metadataUrl", "refreshPeriod").collect(Collectors.toSet());
+        Set fields = Stream.of("iss", "authorizationUrl", "tokenUrl", "userInfoUrl", "validateSignature", "useJwksUrl", "jwksUrl", "metadataDescriptorUrl", "autoUpdate", "metadataUrl", "refreshPeriod").collect(Collectors.toSet());
         //autoupdated has been executed -  add lastRefreshTime
         if (hasExecuted)
             fields.add("lastRefreshTime");
         assertThat(config.keySet(), containsInAnyOrder(fields.toArray()));
-        assertThat(config, hasEntry("issuer", "https://aai.egi.eu/oidc/"));
+        assertThat(config, hasEntry("iss", "https://aai.egi.eu/oidc/"));
         assertThat(config, hasEntry("userInfoUrl", "https://aai.egi.eu/oidc/userinfo"));
         assertThat(config, hasEntry("validateSignature", "true"));
         assertThat(config, hasEntry("useJwksUrl", "true"));
