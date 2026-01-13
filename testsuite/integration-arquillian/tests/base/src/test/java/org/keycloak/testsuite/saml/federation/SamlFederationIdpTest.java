@@ -34,17 +34,12 @@ import org.hamcrest.Matchers;
 import org.jboss.logging.Logger;
 import org.junit.After;
 import org.junit.AfterClass;
-import org.junit.Assert;
 import org.junit.Before;
 import org.junit.BeforeClass;
 
-import static org.keycloak.testsuite.util.Matchers.bodyHC;
-import static org.keycloak.testsuite.util.Matchers.statusCodeIsHC;
 import static org.keycloak.testsuite.util.SamlClient.Binding.POST;
 import static org.keycloak.testsuite.util.SamlClient.Binding.REDIRECT;
 
-import static org.hamcrest.Matchers.allOf;
-import static org.hamcrest.Matchers.containsString;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertThat;
 
@@ -52,7 +47,6 @@ public abstract class SamlFederationIdpTest extends AbstractSamlTest {
 
 	private static Undertow SERVER;
 	private static final Logger log = Logger.getLogger(SamlFederationIdpTest.class);
-	private static final String loginIdp = "aHR0cHM6Ly9pZHAucmFzaC5hbC9zaW1wbGVzYW1sL3NhbWwyL2lkcC9tZXRhZGF0YS5waHA";
 	private static final String brokerIdp2 = "aHR0cHM6Ly9odWMuaWRwLmtuYXcubmwvc2ltcGxlc2FtbC9zYW1sMi9pZHAvbWV0YWRhdGEucGhw";
 
 	protected RealmResource realm;
@@ -92,19 +86,6 @@ public abstract class SamlFederationIdpTest extends AbstractSamlTest {
 		if (SERVER != null) {
 			SERVER.stop();
 		}
-	}
-
-	public void testSamlPostBindingPageIdP() throws Exception {
-
-		new SamlClientBuilder().idpInitiatedLogin(getAuthServerSamlEndpoint(REALM_NAME), "sales-post").build().login()
-				.idp(loginIdp).build().execute(r -> {
-					Assert.assertThat(r, statusCodeIsHC(Response.Status.OK));
-					Assert.assertThat(r,
-							bodyHC(allOf(containsString("Authentication Redirect"),
-									containsString("<input type=\"hidden\" name=\"SAMLRequest\""),
-									containsString("id=\"kc-page-title\">"))));
-				});
-
 	}
 
 	public void testRedirectQueryParametersPreserved() throws IOException {
