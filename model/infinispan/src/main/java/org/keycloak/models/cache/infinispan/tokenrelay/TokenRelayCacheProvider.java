@@ -24,8 +24,8 @@ public class TokenRelayCacheProvider implements CustomCacheProvider {
 
     private static final Logger logger = Logger.getLogger(TokenRelayCacheProvider.class);
 
-    private static final Long LIFESPAN_SEC = 60L;
-    private static final Long MAXIDLE_SEC = 60L;
+    private static final long LIFESPAN_SEC = 60L;
+    private static final long MAXIDLE_SEC = 55L;
 
     private Cache<Object, Object> cache;
 

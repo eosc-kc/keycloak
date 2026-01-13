@@ -54,7 +54,7 @@ import org.apache.tools.ant.filters.StringInputStream;
 import org.jboss.logging.Logger;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
-import org.junit.Ignore;
+import org.junit.Test;
 
 import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.junit.Assert.assertEquals;
@@ -64,8 +64,8 @@ import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
 
-@Ignore
-public class SAMLFederationTest extends AbstractAdminTest {
+
+public abstract class SAMLFederationTest extends AbstractAdminTest {
 
     private static Undertow SERVER;
 
@@ -108,6 +108,7 @@ public class SAMLFederationTest extends AbstractAdminTest {
     }
 
 
+    @Test
     public void testCreateUpdateAndRemoveAll() throws IOException {
 
         String internalId = createFederation("edugain-sample", "http://localhost:8880/edugain-sample-test.xml", "All", new HashSet<>(),
@@ -172,6 +173,7 @@ public class SAMLFederationTest extends AbstractAdminTest {
     }
 
 
+    @Test
     public void testCreateClientsWithDefaultScopes() throws IOException {
 
         String scopeId = createClientScope("saml-scope");
@@ -211,6 +213,7 @@ public class SAMLFederationTest extends AbstractAdminTest {
     }
 
 
+    @Test
     public void testCreateWithDenyListandRemove() throws IOException {
         //blacklist entityIdIdP entity id and registrationAuthority="http://aai.grnet.gr/"
         String scopeId = createClientScope("saml-scope");
@@ -275,6 +278,7 @@ public class SAMLFederationTest extends AbstractAdminTest {
     }
 
 
+    @Test
     public void testCreateWithAllowListandRemove() throws IOException {
         //whitelist entityIdIdP entity id and registrationAuthority="http://aai.grnet.gr/"
 
@@ -322,6 +326,7 @@ public class SAMLFederationTest extends AbstractAdminTest {
     }
 
 
+    @Test
     public void testCreateWithCategoryDenyListandRemove() throws IOException {
         //blacklist with attributeName and attributeValue exclude only hashEntityIdIdP
 
@@ -360,6 +365,7 @@ public class SAMLFederationTest extends AbstractAdminTest {
     }
 
 
+    @Test
     public void testCreateAndExportWithoutMappers() throws IOException, ParsingException {
 
         String internalId = createFederation("edugain-sample", "http://localhost:8880/edugain-sample-test.xml", "Identity Providers", new HashSet<>(),
@@ -382,6 +388,7 @@ public class SAMLFederationTest extends AbstractAdminTest {
     }
 
 
+    @Test
     public void testCreateAndExportWithMappers() throws IOException, ParsingException {
 
         String internalId = createFederation("edugain-sample", "http://localhost:8880/edugain-sample-test.xml", "Identity Providers", new HashSet<>(),
@@ -413,6 +420,7 @@ public class SAMLFederationTest extends AbstractAdminTest {
     }
 
 
+    @Test
     public void testFederationMappers() throws IOException {
 
         String internalId = createFederation("edugain-sample", "http://localhost:8880/edugain-sample-test.xml", "Identity Providers", new HashSet<>(),
@@ -445,6 +453,7 @@ public class SAMLFederationTest extends AbstractAdminTest {
     }
 
 
+    @Test
     public void testFederationMappersActions() throws IOException {
 
         String internalId = createFederation("edugain-sample", "http://localhost:8880/edugain-sample-test.xml", "Identity Providers", new HashSet<>(),
