@@ -47,7 +47,6 @@ public abstract class SamlFederationIdpTest extends AbstractSamlTest {
 
 	private static Undertow SERVER;
 	private static final Logger log = Logger.getLogger(SamlFederationIdpTest.class);
-	private static final String loginIdp = "aHR0cHM6Ly9pZHAucmFzaC5hbC9zaW1wbGVzYW1sL3NhbWwyL2lkcC9tZXRhZGF0YS5waHA";
 	private static final String brokerIdp2 = "aHR0cHM6Ly9odWMuaWRwLmtuYXcubmwvc2ltcGxlc2FtbC9zYW1sMi9pZHAvbWV0YWRhdGEucGhw";
 
 	protected RealmResource realm;
