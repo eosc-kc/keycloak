@@ -28,6 +28,7 @@ public class RemoveFederation implements ScheduledTask {
         RealmModel realm = session.realms().getRealm(realmId);
 
         if ( realm != null) {
+            session.getContext().setRealm(realm);
             FederationModel model = realm.getSAMLFederationById(federationId);
             FederationProvider federationProvider = SAMLFederationProviderFactory.getSAMLFederationProviderFactoryById(session, model.getProviderId()).create(session,model, realm.getId());
 
