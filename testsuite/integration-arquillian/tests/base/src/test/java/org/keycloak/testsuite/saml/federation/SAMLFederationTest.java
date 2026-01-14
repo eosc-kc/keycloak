@@ -169,7 +169,8 @@ public abstract class SAMLFederationTest extends AbstractAdminTest {
             assertTrue("IdP postBindingResponse not exist", idp.getConfig().containsKey("postBindingAuthnRequest"));
             assertTrue(Boolean.valueOf(idp.getConfig().get("postBindingAuthnRequest")));
         });
-
+        realm.samlFederation().delete(internalId);
+        sleep(70000);
     }
 
 
@@ -209,7 +210,8 @@ public abstract class SAMLFederationTest extends AbstractAdminTest {
         } finally {
             realm.clientScopes().get(scopeId).remove();
         }
-
+        realm.samlFederation().delete(internalId);
+        sleep(70000);
     }
 
 
@@ -274,7 +276,10 @@ public abstract class SAMLFederationTest extends AbstractAdminTest {
 
         } finally {
             realm.clientScopes().get(scopeId).remove();
+            realm.samlFederation().delete(internalId);
+            sleep(70000);
         }
+
     }
 
 
@@ -322,6 +327,8 @@ public abstract class SAMLFederationTest extends AbstractAdminTest {
             assertTrue("IdP postBindingAuthnRequest not exist", idp.getConfig().containsKey("postBindingAuthnRequest"));
             assertTrue(Boolean.valueOf(idp.getConfig().get("postBindingAuthnRequest")));
         });
+        realm.samlFederation().delete(internalId);
+        sleep(70000);
 
     }
 
@@ -360,7 +367,8 @@ public abstract class SAMLFederationTest extends AbstractAdminTest {
             assertTrue("IdP postBindingAuthnRequest not exist", idp.getConfig().containsKey("postBindingAuthnRequest"));
             assertTrue(Boolean.valueOf(idp.getConfig().get("postBindingAuthnRequest")));
         });
-
+        realm.samlFederation().delete(internalId);
+        sleep(70000);
 
     }
 
@@ -385,6 +393,8 @@ public abstract class SAMLFederationTest extends AbstractAdminTest {
         Assert.assertEquals(spDescriptor.getNameIDFormat().size(), 1);
         Assert.assertEquals(spDescriptor.getNameIDFormat().get(0), "urn:oasis:names:tc:SAML:2.0:nameid-format:persistent");
         Assert.assertTrue(spDescriptor.getAttributeConsumingService().isEmpty());
+        realm.samlFederation().delete(internalId);
+        sleep(70000);
     }
 
 
@@ -417,6 +427,8 @@ public abstract class SAMLFederationTest extends AbstractAdminTest {
         Assert.assertEquals(attributeConsuming.getRequestedAttribute().get(0).getNameFormat(), JBossSAMLURIConstants.ATTRIBUTE_FORMAT_URI.get());
         Assert.assertTrue(attributeConsuming.getServiceName() != null);
         Assert.assertEquals(attributeConsuming.getServiceName().get(0).getValue(), "federation");
+        realm.samlFederation().delete(internalId);
+        sleep(70000);
     }
 
 
@@ -450,6 +462,8 @@ public abstract class SAMLFederationTest extends AbstractAdminTest {
         } catch (NotFoundException nfe) {
             // Expected
         }
+        realm.samlFederation().delete(internalId);
+        sleep(70000);
     }
 
 
@@ -526,6 +540,8 @@ public abstract class SAMLFederationTest extends AbstractAdminTest {
             List<IdentityProviderMapperRepresentation> mappers = identityProviderResource.getMappers();
             assertEquals(0, mappers.size());
         });
+        realm.samlFederation().delete(internalId);
+        sleep(70000);
 
     }
 
