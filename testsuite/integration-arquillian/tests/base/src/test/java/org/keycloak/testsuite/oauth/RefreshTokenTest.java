@@ -653,7 +653,7 @@ public class RefreshTokenTest extends AbstractKeycloakTest {
             RefreshToken refreshToken = oauth.parseRefreshToken(response.getRefreshToken());
 
             AbstractOIDCScopeTest.assertScopes("openid email profile",  accessToken.getScope());
-            AbstractOIDCScopeTest.assertScopes("openid basic email roles web-origins acr profile",  refreshToken.getScope());
+            AbstractOIDCScopeTest.assertScopes("openid acr web-origins basic profile email",  refreshToken.getScope());
 
             Assert.assertNotNull(accessToken.getRealmAccess());
             Assert.assertNotNull(accessToken.getResourceAccess());
@@ -666,7 +666,7 @@ public class RefreshTokenTest extends AbstractKeycloakTest {
             refreshToken = oauth.parseRefreshToken(response.getRefreshToken());
 
             AbstractOIDCScopeTest.assertScopes("openid email profile",  accessToken.getScope());
-            AbstractOIDCScopeTest.assertScopes("openid basic email web-origins acr profile",  refreshToken.getScope());
+            AbstractOIDCScopeTest.assertScopes("openid acr web-origins basic profile email",  refreshToken.getScope());
 
 //            Assert.assertNotNull(accessToken.getRealmAccess());
 //            Assert.assertNotNull(accessToken.getResourceAccess());
