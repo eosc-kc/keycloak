@@ -252,7 +252,7 @@ public class CachedRealm extends AbstractExtendableRevisioned {
         userActionTokenLifespans = Collections.unmodifiableMap(new HashMap<>(model.getUserActionTokenLifespans()));
         claimsSupported = model.getClaimsSupported();
 
-        this.federations  = model.getSAMLFederations();
+        federations  = model.getSAMLFederations();
 
         smtpConfig = model.getSmtpConfig();
         browserSecurityHeaders = model.getBrowserSecurityHeaders();
