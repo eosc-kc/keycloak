@@ -63,12 +63,13 @@ public class DownscopeAssertionGrantEnforcerExecutorFactory implements ClientPol
                It ensures that the scopes in the final access token are limited to the ones already present in the JWT assertion passed.
                For the moment, the executor applies to certain grants where some initial token/assertion is passed (for example
                subject_token in case of Standard Token Exchange grant). The limitation is done over the scopes that are
-               present in the initial token/assertion, returning an error if any extra scope is requested.
+               present in the initial token/assertion, returning either an error either filtering if any extra scope is requested.
                """;
     }
 
     @Override
     public List<ProviderConfigProperty> getConfigProperties() {
-        return Collections.emptyList();
+        return Collections.singletonList(new ProviderConfigProperty(
+                "grant-valid-scope-subset", "Grant Valid Scope Subset", "Determines the behavior when the requested scopes exceed the permissions of the subject_token or the client's authorized limits. When False (Default): Keycloak will throw an invalid_scope error if any part of the scope request cannot be fulfilled. hen True (Informed/RFC 8693): Keycloak will fulfill the request using only the permitted scopes. If the permitted scopes set is not empty, Keycloak will return a successful response and MUST include the scope parameter in the response body to inform the client of the reduced set of granted scopes, as mandated by RFC 8693 Section 2.2.", ProviderConfigProperty.BOOLEAN_TYPE, false));
     }
 }
