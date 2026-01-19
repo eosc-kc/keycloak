@@ -32,21 +32,43 @@ import org.keycloak.protocol.oidc.JWTAuthorizationGrantValidationContext;
 import org.keycloak.protocol.oidc.TokenExchangeContext;
 import org.keycloak.protocol.oidc.TokenManager;
 import org.keycloak.representations.AccessToken;
+import org.keycloak.representations.idm.ClientPolicyExecutorConfigurationRepresentation;
 import org.keycloak.services.clientpolicy.ClientPolicyContext;
 import org.keycloak.services.clientpolicy.ClientPolicyException;
 import org.keycloak.services.clientpolicy.context.JWTAuthorizationGrantContext;
 import org.keycloak.services.clientpolicy.context.TokenExchangeRequestContext;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 /**
  *
  * @author rmartinc
  */
-public class DownscopeAssertionGrantEnforcerExecutor implements ClientPolicyExecutorProvider {
+public class DownscopeAssertionGrantEnforcerExecutor implements ClientPolicyExecutorProvider<DownscopeAssertionGrantEnforcerExecutor.Configuration> {
 
     private final KeycloakSession session;
+    private DownscopeAssertionGrantEnforcerExecutor.Configuration configuration;
 
     public DownscopeAssertionGrantEnforcerExecutor(KeycloakSession session) {
         this.session = session;
+    }
+
+    @Override
+    public void setupConfiguration(DownscopeAssertionGrantEnforcerExecutor.Configuration config) {
+        this.configuration = config;
+    }
+
+    public static class Configuration extends ClientPolicyExecutorConfigurationRepresentation {
+        @JsonProperty("grant-valid-scope-subset")
+        protected Boolean grantValidScopeSubset;
+
+        public Boolean isGrantValidScopeSubset() {
+            return grantValidScopeSubset;
+        }
+
+        public void setGrantValidScopeSubset(Boolean grantValidScopeSubset) {
+            this.grantValidScopeSubset = grantValidScopeSubset;
+        }
     }
 
     @Override
@@ -95,15 +117,18 @@ public class DownscopeAssertionGrantEnforcerExecutor implements ClientPolicyExec
                 ? TokenManager.parseScopeParameter(token.getScope()).collect(Collectors.toSet())
                 : Collections.emptySet();
 
-        if (scopeParam != null) {
+        if (scopeParam != null && configuration.isGrantValidScopeSubset()) {
             // the user requested specific scopes, check they are allowed
-            Set<String> requestedScopes = TokenManager.parseScopeParameter(scopeParam).collect(Collectors.toSet());
+            Set<String> requestedScopes = TokenManager.parseDynamicScopeParameter(scopeParam).collect(Collectors.toSet());
             // check all requested scopes are inside the token
-            requestedScopes.removeAll(tokenScopes);
-            if (!requestedScopes.isEmpty()) {
+            if (tokenScopes.stream().anyMatch(x -> !requestedScopes.contains(x.split(":")[0]))) {
                 throw new ClientPolicyException(OAuthErrorException.INVALID_SCOPE,
                         String.format("Scopes %s not present in the initial access token %s", requestedScopes, tokenScopes));
             }
+        } else if (scopeParam != null ) {
+            // the user requested specific scopes, check they are allowed
+            Set<String> requestedScopes = TokenManager.parseDynamicScopeParameter(scopeParam).collect(Collectors.toSet());
+            tokenScopes = tokenScopes.stream().filter(sc -> requestedScopes.contains(sc.split(":")[0])).collect(Collectors.toSet());
         }
 
         // always add as allowed restricted scopes the ones that are default and not included in token
