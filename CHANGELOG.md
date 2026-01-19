@@ -48,6 +48,7 @@ Our Keycloak version is working well with PostgreSQL database. For using other S
 - OpenID Federation RP with explicit registration
 - OpenID Federation OP with automatic registration 
 - Metadata Policies (experimental feature)
+- Add option Grant Valid Scope Subset to downscope-assertion-grant-enforcer [RCIAM-349](https://tts.grnet.gr/jira/browse/RCIAM-349)
 
 ### Changed
 - Change emailVerified User field with UserAttributeMappers (conditional trust email). [EOSC-KC-70](https://github.com/eosc-kc/keycloak/issues/70)
@@ -67,6 +68,8 @@ Our Keycloak version is working well with PostgreSQL database. For using other S
 - Group attribute value as text in database
 - Support MFA with Identity Providers
 - Return refresh token when configured or offline_access scope exists
+- Do not check for consent in Token Exchange
+- Do not reject if the requester-client is not in the audience of the subject token
 
 ### Fixed
 - Changes in account console and account rest service [RCIAM-860](https://jira.argo.grnet.gr/browse/RCIAM-860)
@@ -76,3 +79,4 @@ Our Keycloak version is working well with PostgreSQL database. For using other S
 - Update changes related to service account with Client registration 
 - Being possible to accept terms and conditions before User is saved in Keycloak during first broker login. Follow GDPR.
 - Being possible to add realm default scopes during Dynamic Client Registration/ OpenID Federation when scopes are including in client representation
+- RAR scope parsing should explicitly accept client reference [Keycloak-48981](https://github.com/keycloak/keycloak/pull/48981)
