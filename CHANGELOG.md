@@ -48,6 +48,7 @@ Our Keycloak version is working well with PostgreSQL database. For using other S
 - OpenID Federation RP with explicit registration
 - OpenID Federation OP with automatic registration 
 - Metadata Policies (experimental feature)
+- Add option Grant Valid Scope Subset to downscope-assertion-grant-enforcer [RCIAM-349](https://tts.grnet.gr/jira/browse/RCIAM-349)
 
 ### Changed
 - Change emailVerified User field with UserAttributeMappers (conditional trust email). [EOSC-KC-70](https://github.com/eosc-kc/keycloak/issues/70)
