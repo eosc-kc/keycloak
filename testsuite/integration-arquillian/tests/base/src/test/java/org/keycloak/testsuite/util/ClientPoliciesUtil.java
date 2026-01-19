@@ -59,6 +59,7 @@ import org.keycloak.services.clientpolicy.condition.ClientUpdaterSourceRolesCond
 import org.keycloak.services.clientpolicy.condition.GrantTypeCondition;
 import org.keycloak.services.clientpolicy.executor.ConsentRequiredExecutor;
 import org.keycloak.services.clientpolicy.executor.DPoPBindEnforcerExecutor;
+import org.keycloak.services.clientpolicy.executor.DownscopeAssertionGrantEnforcerExecutor;
 import org.keycloak.services.clientpolicy.executor.FullScopeDisabledExecutor;
 import org.keycloak.services.clientpolicy.executor.HolderOfKeyEnforcerExecutor;
 import org.keycloak.services.clientpolicy.executor.IntentClientBindCheckExecutor;
@@ -279,6 +280,12 @@ public final class ClientPoliciesUtil {
         if (apply != null) {
             apply.accept(config);
         }
+        return config;
+    }
+
+    public static DownscopeAssertionGrantEnforcerExecutor.Configuration createDownscopeAssertionGrantEnforcerExecutorConfig(Boolean grantValidScopeSubset) {
+        DownscopeAssertionGrantEnforcerExecutor.Configuration config = new DownscopeAssertionGrantEnforcerExecutor.Configuration();
+        config.setGrantValidScopeSubset(grantValidScopeSubset);
         return config;
     }
 
