@@ -66,6 +66,7 @@ Our Keycloak version is working well with PostgreSQL database. For using other S
 - Client attribute value as text in database [RCIAM-1026)](https://jira.argo.grnet.gr/browse/RCIAM-1026)
 - Group attribute value as text in database
 - Support MFA with Identity Providers
+- Return refresh token when configured or offline_access scope exists
 
 ### Fixed
 - Changes in account console and account rest service [RCIAM-860](https://jira.argo.grnet.gr/browse/RCIAM-860)
