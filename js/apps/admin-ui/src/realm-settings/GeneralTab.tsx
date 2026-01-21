@@ -219,6 +219,14 @@ function RealmSettingsGeneralTabForm({
               name={convertAttributeNameToForm("attributes.acr.loa.map")}
             />
           </FormGroup>
+          <TextControl
+            name="attributes.defaultIdpAcrValue"
+            label={t("defaultIdpAcrValue")}
+            labelIcon={t("defaultIdpAcrValueHelp")}
+            type="number"
+            min={0}
+            data-testid="defaultIdpAcrValue"
+          />
           <DefaultSwitchControl
             name="userManagedAccessAllowed"
             label={t("userManagedAccess")}
