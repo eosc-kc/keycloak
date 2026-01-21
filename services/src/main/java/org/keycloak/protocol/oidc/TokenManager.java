@@ -818,10 +818,6 @@ public class TokenManager {
         return Arrays.stream(scopeParam.split(" ")).distinct();
     }
 
-    public static Stream<String> parseDynamicScopeParameter(String scopeParam) {
-        return Arrays.stream(scopeParam.split(" ")).map(s -> s.split(":")[0]).distinct();
-    }
-
     // Check if user still has granted consents to all requested client scopes
     public static boolean verifyConsentStillAvailable(KeycloakSession session, UserModel user, ClientModel client,
                                                       Stream<ClientScopeModel> requestedClientScopes) {

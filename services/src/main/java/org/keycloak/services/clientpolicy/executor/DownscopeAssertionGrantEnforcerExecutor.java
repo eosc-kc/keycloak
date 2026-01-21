@@ -58,6 +58,11 @@ public class DownscopeAssertionGrantEnforcerExecutor implements ClientPolicyExec
         this.configuration = config;
     }
 
+    @Override
+    public Class<DownscopeAssertionGrantEnforcerExecutor.Configuration> getExecutorConfigurationClass() {
+        return DownscopeAssertionGrantEnforcerExecutor.Configuration.class;
+    }
+
     public static class Configuration extends ClientPolicyExecutorConfigurationRepresentation {
         @JsonProperty("grant-valid-scope-subset")
         protected Boolean grantValidScopeSubset;
@@ -116,19 +121,32 @@ public class DownscopeAssertionGrantEnforcerExecutor implements ClientPolicyExec
         Set<String> tokenScopes = token.getScope() != null
                 ? TokenManager.parseScopeParameter(token.getScope()).collect(Collectors.toSet())
                 : Collections.emptySet();
+        Set<String> existingScopes = tokenScopes;
 
         if (scopeParam != null && configuration.isGrantValidScopeSubset()) {
             // the user requested specific scopes, check they are allowed
-            Set<String> requestedScopes = TokenManager.parseDynamicScopeParameter(scopeParam).collect(Collectors.toSet());
-            // check all requested scopes are inside the token
-            if (tokenScopes.stream().anyMatch(x -> !requestedScopes.contains(x.split(":")[0]))) {
-                throw new ClientPolicyException(OAuthErrorException.INVALID_SCOPE,
-                        String.format("Scopes %s not present in the initial access token %s", requestedScopes, tokenScopes));
-            }
+            Set<String> requestedScopes = TokenManager.parseScopeParameter(scopeParam).collect(Collectors.toSet());
+
+            tokenScopes = requestedScopes.stream()
+                    .filter(reqScope -> existingScopes.stream().anyMatch(tokenScope ->
+                            reqScope.equals(tokenScope) ||
+                                    reqScope.startsWith(tokenScope + ":")
+                    ))
+                    .collect(Collectors.toSet());
         } else if (scopeParam != null ) {
             // the user requested specific scopes, check they are allowed
-            Set<String> requestedScopes = TokenManager.parseDynamicScopeParameter(scopeParam).collect(Collectors.toSet());
-            tokenScopes = tokenScopes.stream().filter(sc -> requestedScopes.contains(sc.split(":")[0])).collect(Collectors.toSet());
+            Set<String> requestedScopes = TokenManager.parseScopeParameter(scopeParam).collect(Collectors.toSet());
+            // check all requested scopes are inside the token
+            if (requestedScopes.stream()
+                    .anyMatch(reqScope -> !existingScopes.stream().anyMatch(tokenScope ->
+                            reqScope.equals(tokenScope) ||
+                                    reqScope.startsWith(tokenScope + ":")
+                    ))) {
+                throw new ClientPolicyException(OAuthErrorException.INVALID_SCOPE,
+                        String.format("Scopes %s not present in the initial access token %s", requestedScopes, tokenScopes));
+            } else {
+                tokenScopes = requestedScopes;
+            }
         }
 
         // always add as allowed restricted scopes the ones that are default and not included in token

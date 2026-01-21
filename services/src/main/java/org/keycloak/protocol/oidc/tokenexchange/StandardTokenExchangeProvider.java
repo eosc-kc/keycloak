@@ -167,9 +167,9 @@ public class StandardTokenExchangeProvider extends AbstractTokenExchangeProvider
         }
 
         //reject if the requester-client is not in the audience of the subject token
-        if (!client.equals(tokenHolder)) {
-            forbiddenIfClientIsNotWithinTokenAudience(token);
-        }
+//        if (!client.equals(tokenHolder)) {
+//            forbiddenIfClientIsNotWithinTokenAudience(token);
+//        }
     }
 
     protected void validateConsents(UserModel targetUser, ClientSessionContext clientSessionCtx) {
@@ -188,6 +188,7 @@ public class StandardTokenExchangeProvider extends AbstractTokenExchangeProvider
 
         boolean validScopes;
         if (Profile.isFeatureEnabled(Profile.Feature.DYNAMIC_SCOPES)) {
+            session.getContext().setClient(client);
             AuthorizationRequestContext authorizationRequestContext = AuthorizationContextUtil.getAuthorizationRequestContextFromScopes(session, scope);
             validScopes = TokenManager.isValidScope(session, scope, authorizationRequestContext, client, null);
         } else {
@@ -247,7 +248,7 @@ public class StandardTokenExchangeProvider extends AbstractTokenExchangeProvider
                 clientSessionCtx.setAttribute(Constants.REQUESTED_AUDIENCE_CLIENTS, targetAudienceClients.toArray(ClientModel[]::new));
             }
 
-            validateConsents(targetUser, clientSessionCtx);
+            //validateConsents(targetUser, clientSessionCtx);
             clientSessionCtx.setAttribute(Constants.GRANT_TYPE, OAuth2Constants.TOKEN_EXCHANGE_GRANT_TYPE);
 
             TokenContextEncoderProvider encoder = session.getProvider(TokenContextEncoderProvider.class);

@@ -226,6 +226,7 @@ public class DefaultClientSessionContext implements ClientSessionContext {
                 .filter(authorizationDetails -> authorizationDetails.getClientScope().isIncludeInTokenScope() || ignoreIncludeInTokenScope)
                 .filter(authorizationDetails -> isClientScopePermittedForUser(authorizationDetails.getClientScope()))
                 .map(authorizationDetails -> authorizationDetails.getAuthorizationDetails().getScopeNameFromCustomData())
+                .filter(x -> restrictedScopes == null || restrictedScopes.contains(x))
                 .collect(Collectors.joining(" "));
     }
 
