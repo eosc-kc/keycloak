@@ -68,6 +68,8 @@ Our Keycloak version is working well with PostgreSQL database. For using other S
 - Group attribute value as text in database
 - Support MFA with Identity Providers
 - Return refresh token when configured or offline_access scope exists
+- Do not check for consent in Token Exchange
+- Do not reject if the requester-client is not in the audience of the subject token
 
 ### Fixed
 - Changes in account console and account rest service [RCIAM-860](https://jira.argo.grnet.gr/browse/RCIAM-860)
