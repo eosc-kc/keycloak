@@ -283,6 +283,11 @@ public class IpatuuraUserStorageProvider implements UserStorageProvider, UserLoo
     }
 
     @Override
+    public Stream<UserModel> searchUsersForRenewTermsAndConditions(RealmModel realm, String timestampStr){
+        return Stream.empty();
+    };
+
+    @Override
     public Stream<UserModel> searchForUserStream(RealmModel realm, Map<String, String> params, Integer firstResult,
             Integer maxResults) {
         String search = params.get(UserModel.SEARCH);

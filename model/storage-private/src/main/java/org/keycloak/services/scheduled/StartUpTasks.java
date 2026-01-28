@@ -57,6 +57,9 @@ public class StartUpTasks implements ScheduledTask {
                     timer.scheduleOnce(taskRunner, expiration > 60 * 1000 ? expiration : 60 * 1000, "OpenidFederationExplicitClient_" + clientModel.getId());
                 }
             });
+            long requiredPeriod = 21600 * 1000;
+            timer.schedule(new ClusterAwareScheduledTaskRunner(session.getKeycloakSessionFactory(), new RequiredActionsResetTask(realm.getId()), requiredPeriod), 60 * 1000, requiredPeriod, "RequiredActionsResetTask_" + realm.getId());
+
         });
     }
 }

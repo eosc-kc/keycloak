@@ -416,6 +416,12 @@ public class BackwardsCompatibilityUserStorage implements UserLookupProvider, Us
     }
 
     @Override
+    public Stream<UserModel> searchUsersForRenewTermsAndConditions(RealmModel realm, String timestampStr){
+        // Assume that this is not supported
+        return Stream.empty();
+    };
+
+    @Override
     public void close() {
     }
 

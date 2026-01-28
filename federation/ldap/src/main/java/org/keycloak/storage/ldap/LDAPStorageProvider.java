@@ -313,6 +313,12 @@ public class LDAPStorageProvider implements UserStorageProvider,
         });
     }
 
+    @Override
+    public Stream<UserModel> searchUsersForRenewTermsAndConditions(RealmModel realm, String timestampStr){
+        // Assume that this is not supported
+        return Stream.empty();
+    };
+
     public boolean synchronizeRegistrations() {
         return "true".equalsIgnoreCase(model.getConfig().getFirst(LDAPConstants.SYNC_REGISTRATIONS)) && editMode == UserStorageProvider.EditMode.WRITABLE;
     }
