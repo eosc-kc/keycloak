@@ -233,6 +233,10 @@ public interface AuthenticationManagementResource {
     @Consumes(MediaType.APPLICATION_JSON)
     void updateRequiredActionConfig(@PathParam("alias") String alias, RequiredActionConfigRepresentation rep);
 
+    @Path("/required-actions/{alias}/reset")
+    @POST
+    public void resetRequiredAction(@PathParam("alias") String alias);
+    
     @Path("config-description/{providerId}")
     @GET
     @Produces(MediaType.APPLICATION_JSON)
