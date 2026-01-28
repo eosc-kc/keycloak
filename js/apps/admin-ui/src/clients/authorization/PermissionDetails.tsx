@@ -147,7 +147,7 @@ export default function PermissionDetails() {
         AlertVariant.success,
       );
     } catch (error) {
-      addError("permissionSaveError", error);
+      addError("permissionsaveError", error);
     }
   };
 
