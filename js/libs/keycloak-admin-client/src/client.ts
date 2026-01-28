@@ -3,6 +3,7 @@ import { AttackDetection } from "./resources/attackDetection.js";
 import { AuthenticationManagement } from "./resources/authenticationManagement.js";
 import { Cache } from "./resources/cache.js";
 import { ClientPolicies } from "./resources/clientPolicies.js";
+import { OpenIdFederations } from "./resources/openIdFederations.js";
 import { Clients } from "./resources/clients.js";
 import { ClientScopes } from "./resources/clientScopes.js";
 import { Components } from "./resources/components.js";
@@ -47,6 +48,7 @@ export class KeycloakAdminClient {
   public realms: Realms;
   public clientScopes: ClientScopes;
   public clientPolicies: ClientPolicies;
+  public openIdFederations: OpenIdFederations;
   public identityProviders: IdentityProviders;
   public identityFederations: IdentityFederations;
   public components: Components;
@@ -87,6 +89,7 @@ export class KeycloakAdminClient {
     this.clientScopes = new ClientScopes(this);
     this.clientPolicies = new ClientPolicies(this);
     this.identityProviders = new IdentityProviders(this);
+    this.openIdFederations = new OpenIdFederations(this);
     this.identityFederations = new IdentityFederations(this);
     this.components = new Components(this);
     this.authenticationManagement = new AuthenticationManagement(this);

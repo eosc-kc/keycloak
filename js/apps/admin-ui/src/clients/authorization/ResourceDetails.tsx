@@ -117,7 +117,7 @@ export default function ResourceDetails() {
         AlertVariant.success,
       );
     } catch (error) {
-      addError("resourceSaveError", error);
+      addError("resourcesaveError", error);
     }
   };
 
