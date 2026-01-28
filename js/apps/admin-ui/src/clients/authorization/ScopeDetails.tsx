@@ -81,7 +81,7 @@ export default function ScopeDetails() {
         AlertVariant.success,
       );
     } catch (error) {
-      addError("scopeSaveError", error);
+      addError("scopesaveError", error);
     }
   };
 
