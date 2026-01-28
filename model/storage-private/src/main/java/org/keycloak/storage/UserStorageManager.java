@@ -737,6 +737,11 @@ public class UserStorageManager extends AbstractStorageManager<UserStorageProvid
         return importValidation(realm, results);
     }
 
+    @Override
+    public Stream<UserModel> searchUsersForRenewTermsAndConditions(RealmModel realm, String timestampStr){
+        return localStorage().searchUsersForRenewTermsAndConditions(realm, timestampStr);
+    };
+
     /** {@link UserQueryProvider} methods implementation end here
         {@link UserBulkUpdateProvider} methods implementation start here */
 

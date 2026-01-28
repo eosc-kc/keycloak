@@ -65,6 +65,14 @@ public class FailingUserStorageProvider implements UserStorageProvider, UserQuer
         }
         return Stream.empty();
     }
+
+    @Override
+    public Stream<UserModel> searchUsersForRenewTermsAndConditions(RealmModel realm, String timestampStr){
+        if (Boolean.parseBoolean(model.getConfig().getFirst(FAIL_ON_SEARCH))) {
+            throw new RuntimeException("Simulated user attribute search failure - LDAP connection timeout");
+        }
+        return Stream.empty();
+    };
     
     @Override
     public Stream<UserModel> getGroupMembersStream(RealmModel realm, GroupModel group, Integer firstResult, Integer maxResults) {
