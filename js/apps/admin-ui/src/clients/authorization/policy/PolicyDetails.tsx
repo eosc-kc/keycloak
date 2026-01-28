@@ -163,7 +163,7 @@ export default function PolicyDetails() {
         AlertVariant.success,
       );
     } catch (error) {
-      addError("policySaveError", error);
+      addError("policysaveError", error);
     }
   };
 

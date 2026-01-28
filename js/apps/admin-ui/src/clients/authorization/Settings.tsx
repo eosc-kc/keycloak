@@ -74,7 +74,7 @@ export const AuthorizationSettings = ({ clientId }: { clientId: string }) => {
       );
       addAlert(t("updateResourceSuccess"), AlertVariant.success);
     } catch (error) {
-      addError("resourceSaveError", error);
+      addError("resourcesaveError", error);
     }
   };
 
