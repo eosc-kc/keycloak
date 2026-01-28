@@ -338,9 +338,9 @@ export default function ClientDetails() {
   );
 
   const save = async (
-    { confirmed = false, messageKey = "clientSaveSuccess" }: SaveOptions = {
+    { confirmed = false, messageKey = "clientsaveSuccess" }: SaveOptions = {
       confirmed: false,
-      messageKey: "clientSaveSuccess",
+      messageKey: "clientsaveSuccess",
     },
   ) => {
     if (!(await form.trigger())) {
@@ -384,7 +384,7 @@ export default function ClientDetails() {
       setClient(newClient);
       addAlert(t(messageKey), AlertVariant.success);
     } catch (error) {
-      addError("clientSaveError", error);
+      addError("clientsaveError", error);
     }
   };
 
