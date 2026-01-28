@@ -821,6 +821,47 @@ public class JpaUserProvider implements UserProvider, UserCredentialStore, JpaUs
     }
 
     @Override
+    public Stream<UserModel> searchUsersForRenewTermsAndConditions(RealmModel realm, String timestampStr) {
+        // 1. u.serviceAccountClientLink IS NULL -> Exclude service accounts
+        // 2. Not Exists (UserRequiredActionEntity) -> User doesn't already have the action pending
+        // 3. (Not Exists (Attribute) OR Exists (Attribute with smaller value))
+        //    We use the Length + String comparison to simulate numeric compare on the VARCHAR column.
+
+        String hql = """
+                SELECT u FROM UserEntity u
+                WHERE u.realmId = :realmId
+                  AND u.serviceAccountClientLink IS NULL
+                  AND NOT EXISTS (
+                      SELECT ra.id FROM UserRequiredActionEntity ra
+                      WHERE ra.user = u AND ra.action = :termsAction
+                  )
+                  AND (
+                      NOT EXISTS (
+                          SELECT attr.id FROM UserAttributeEntity attr
+                          WHERE attr.user = u AND attr.name = :termsAction
+                      )
+                      OR EXISTS (
+                          SELECT attr2.id FROM UserAttributeEntity attr2
+                          WHERE attr2.user = u
+                            AND attr2.name = :termsAction
+                            AND (
+                                LENGTH(attr2.value) < :tsLen
+                                OR (LENGTH(attr2.value) = :tsLen AND attr2.value < :tsStr)
+                            )
+                      )
+                  )
+                """;
+
+        TypedQuery<UserEntity> query = em.createQuery(hql, UserEntity.class);
+        query.setParameter("realmId", realm.getId());
+        query.setParameter("termsAction", UserModel.RequiredAction.TERMS_AND_CONDITIONS.name());
+        query.setParameter("tsLen", timestampStr.length());
+        query.setParameter("tsStr", timestampStr);
+
+        return closing(query.getResultStream().map(userEntity -> new UserAdapter(session, realm, em, userEntity)));
+    }
+
+    @Override
     public Stream<UserModel> searchForUserByUserAttributeStream(RealmModel realm, String attrName, String attrValue) {
         boolean longAttribute = attrValue != null && attrValue.length() > 255;
         TypedQuery<UserEntity> query = longAttribute ?

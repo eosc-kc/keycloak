@@ -260,6 +260,11 @@ public class UserPropertyFileStorage implements UserLookupProvider, UserStorageP
     }
 
     @Override
+    public Stream<UserModel> searchUsersForRenewTermsAndConditions(RealmModel realm, String timestampStr){
+        return Stream.empty();
+    };
+
+    @Override
     public void close() {
 
     }

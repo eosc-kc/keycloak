@@ -61,6 +61,7 @@ import org.keycloak.models.KeycloakSession;
 import org.keycloak.models.RealmModel;
 import org.keycloak.models.RequiredActionConfigModel;
 import org.keycloak.models.RequiredActionProviderModel;
+import org.keycloak.models.UserModel;
 import org.keycloak.models.utils.Base32;
 import org.keycloak.models.utils.DefaultAuthenticationFlows;
 import org.keycloak.models.utils.KeycloakModelUtils;
@@ -1500,6 +1501,21 @@ public class AuthenticationManagementResource {
             throw ErrorResponse.errors(errorReps, Response.Status.BAD_REQUEST);
         }
     }
+
+    /**
+     * Reset required action
+     *
+     * @param alias Alias of required action
+     */
+    @Path("/required-actions/{alias}/reset")
+    @POST
+    @NoCache
+    public void resetRequiredAction(@PathParam("alias") String alias) {
+        auth.realm().requireManageRealm();
+        session.users().searchForUserStream(realm, Map.of(UserModel.INCLUDE_SERVICE_ACCOUNT, "false")).forEach(user -> user.addRequiredAction(alias));
+        adminEvent.operation(OperationType.ACTION).resource(ResourceType.REQUIRED_ACTION).resourcePath(session.getContext().getUri()).success();
+    }
+
 
     /**
      * Get authenticator provider's configuration description

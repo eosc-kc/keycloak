@@ -145,6 +145,11 @@ public interface UserQueryMethodsProvider {
     Stream<UserModel> searchForUserStream(RealmModel realm, Map<String, String> params, Integer firstResult, Integer maxResults);
 
     /**
+     * Finds users who need to accept new terms and conditions.
+     */
+    Stream<UserModel> searchUsersForRenewTermsAndConditions(RealmModel realm, String timestampStr);
+
+    /**
      * Obtains users that belong to a specific group.
      *
      * @param realm a reference to the realm.
