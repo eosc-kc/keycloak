@@ -688,6 +688,11 @@ public class UserCacheSession implements UserCache, OnCreateComponent, OnUpdateC
     }
 
     @Override
+    public Stream<UserModel> searchUsersForRenewTermsAndConditions(RealmModel realm, String timestampStr){
+        return getDelegate().searchUsersForRenewTermsAndConditions(realm, timestampStr).map(u -> returnFromCacheIfPresent(realm, u));
+    };
+
+    @Override
     public Stream<FederatedIdentityModel> getFederatedIdentitiesStream(RealmModel realm, UserModel user) {
         logger.tracev("getFederatedIdentities: {0}", user.getUsername());
 
