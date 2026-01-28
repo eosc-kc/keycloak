@@ -357,6 +357,12 @@ public class UserMapStorage implements UserLookupProvider, UserStorageProvider, 
     }
 
     @Override
+    public Stream<UserModel> searchUsersForRenewTermsAndConditions(RealmModel realm, String timestampStr){
+        // Assume that this is not supported
+        return Stream.empty();
+    };
+
+    @Override
     public Stream<GroupModel> getGroupsStream(RealmModel realm, String userId) {
         Set<String> set = userGroups.get(getUserIdInMap(realm, userId));
         if (set == null) {
