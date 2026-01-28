@@ -39,6 +39,9 @@ const sortProvider = (
   }
 };
 
+export const isEmptyValue = (value: any) =>
+  value === undefined || value === null || value === "";
+
 export const toKey = (value: string) => value.replace(/\s/g, "-");
 
 export const exportClient = (client: ClientRepresentation): void => {

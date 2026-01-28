@@ -146,6 +146,7 @@ export const PageNav = () => {
                   <LeftNav title="permissions" path="/permissions" />
                 )}
               <LeftNav title="identityProviders" path="/identity-providers" />
+              <LeftNav title="openIdFederation" path="/openid-federation" />
               <LeftNav
                 title="identityFederations"
                 path="/identity-federations"

@@ -12,6 +12,7 @@ import eventRoutes from "./events/routes";
 import groupsRoutes from "./groups/routes";
 import identityProviders from "./identity-providers/routes";
 import organizationRoutes from "./organizations/routes";
+import openIdFederationRoutes from "./openid-federation/routes";
 import pageRoutes from "./page/routes";
 import permissionsConfigurationRoute from "./permissions-configuration/routes";
 import realmRoleRoutes from "./realm-roles/routes";
@@ -50,6 +51,7 @@ export const routes: AppRouteObject[] = [
   ...organizationRoutes,
   ...realmRoleRoutes,
   ...workflowRoutes,
+  ...openIdFederationRoutes,
   ...realmRoutes,
   ...realmSettingRoutes,
   ...sessionRoutes,
