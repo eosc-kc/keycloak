@@ -272,6 +272,12 @@ public class FailableHardcodedStorageProvider implements UserStorageProvider, Us
     }
 
     @Override
+    public Stream<UserModel> searchUsersForRenewTermsAndConditions(RealmModel realm, String timestampStr){
+        checkForceFail();
+        return Stream.empty();
+    };
+
+    @Override
     public void close() {
 
     }
