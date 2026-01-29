@@ -18,6 +18,7 @@ import {
   PageSection,
   Stack,
   StackItem,
+  TextInput,
 } from "@patternfly/react-core";
 import { useEffect, useState } from "react";
 import { Controller, FormProvider, useForm } from "react-hook-form";
