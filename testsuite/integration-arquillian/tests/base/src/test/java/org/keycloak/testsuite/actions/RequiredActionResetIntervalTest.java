@@ -79,7 +79,7 @@ public class RequiredActionResetIntervalTest extends AbstractTestRealmKeycloakTe
         rep.setEnabled(true);
         Map<String, String> config = new HashMap<>();
         config.put(RequiredActionsResetTask.INTERVAL_NUM, "1");
-        config.put(RequiredActionsResetTask.UNIT_MULTIPLIER, "1");
+        config.put(RequiredActionsResetTask.UNIT_MULTIPLIER, "hours");
         rep.setConfig(config);
         adminClient.realm("test").flows().updateRequiredAction(TermsAndConditions.PROVIDER_ID, rep);
 
@@ -90,7 +90,7 @@ public class RequiredActionResetIntervalTest extends AbstractTestRealmKeycloakTe
         }));
 
 
-        sleep(30000);
+        sleep(60000);
         checkIfTermsAreReset();
         termsAndConditionsAccept("test-user@localhost");
     }

@@ -1,5 +1,5 @@
-import RequiredActionConfigInfoRepresentation from "@keycloak/keycloak-admin-client/lib/defs/requiredActionConfigInfoRepresentation";
-import RequiredActionConfigRepresentation from "@keycloak/keycloak-admin-client/lib/defs/requiredActionConfigRepresentation";
+import type RequiredActionConfigInfoRepresentation from "@keycloak/keycloak-admin-client/lib/defs/requiredActionConfigInfoRepresentation";
+import type RequiredActionConfigRepresentation from "@keycloak/keycloak-admin-client/lib/defs/requiredActionConfigRepresentation";
 import type RequiredActionProviderRepresentation from "@keycloak/keycloak-admin-client/lib/defs/requiredActionProviderRepresentation";
 import {
   isUserProfileError,
@@ -22,11 +22,11 @@ import { FormProvider, useForm } from "react-hook-form";
 import { useTranslation } from "react-i18next";
 import { useAdminClient } from "../../admin-client";
 import { DynamicComponents } from "../../components/dynamic/DynamicComponents";
+import { useConfirmDialog } from "../../components/confirm-dialog/ConfirmDialog";
 import { convertFormValuesToObject, convertToFormValues } from "../../util";
 
 type RequiredActionConfigModalForm = {
-  // alias: string;
-  config: { [index: string]: string };
+  config: { [index: string]: any };
 };
 
 type RequiredActionConfigModalProps = {
@@ -42,14 +42,18 @@ export const RequiredActionConfigModal = ({
   const { t } = useTranslation();
   const { addAlert, addError } = useAlerts();
 
+  const isTermsAndConditions = requiredAction.alias === "TERMS_AND_CONDITIONS";
+
   const [configDescription, setConfigDescription] =
     useState<RequiredActionConfigInfoRepresentation>();
 
-  const form = useForm<RequiredActionConfigModalForm>();
-  const { setValue, handleSubmit } = form;
+  const form = useForm<RequiredActionConfigModalForm>({
+    defaultValues: { config: {} },
+    shouldUnregister: false,
+    mode: "onSubmit",
+  });
 
-  // // default config all required actions should have
-  // const defaultConfigProperties = [];
+  const { setValue, handleSubmit, reset, getValues } = form;
 
   const setupForm = (config?: RequiredActionConfigRepresentation) => {
     convertToFormValues(config || {}, setValue);
@@ -57,29 +61,24 @@ export const RequiredActionConfigModal = ({
 
   useFetch(
     async () => {
-      const configDescription =
+      const cd =
         await adminClient.authenticationManagement.getRequiredActionConfigDescription(
-          {
-            alias: requiredAction.alias!,
-          },
+          { alias: requiredAction.alias! },
         );
 
-      const config =
+      const cfg =
         await adminClient.authenticationManagement.getRequiredActionConfig({
           alias: requiredAction.alias!,
         });
 
-      // merge default and fetched config properties
-      configDescription.properties = [
-        //...defaultConfigProperties!,
-        ...configDescription.properties!,
-      ];
-
-      return { configDescription, config };
+      return { configDescription: cd, config: cfg };
     },
-    ({ configDescription, config }) => {
+    async ({ configDescription, config }) => {
       setConfigDescription(configDescription);
       setupForm(config);
+
+      // ✅ Force a value so min validation can actually run on load.
+      // If it's missing, set to 0 -> immediately invalid vs min: 1
     },
     [],
   );
@@ -98,10 +97,8 @@ export const RequiredActionConfigModal = ({
       if (isUserProfileError(error)) {
         setUserProfileServerError(
           error,
-          (name: string | number, error: unknown) => {
-            // TODO: Does not set set the error message to the field, yet.
-            // Still, this will do all front end replacement and translation of keys.
-            addError("configSaveError", (error as any).message);
+          (_name: string | number, err: unknown) => {
+            addError("configSaveError", (err as any).message);
           },
           t,
         );
@@ -111,6 +108,30 @@ export const RequiredActionConfigModal = ({
     }
   };
 
+  const doResetTermsAndConditions = async () => {
+    const current = getValues();
+    try {
+      await adminClient.authenticationManagement.updateRequiredAction(
+        { alias: requiredAction.alias! },
+        {
+          ...requiredAction,
+          config: current.config ?? {},
+        } as RequiredActionProviderRepresentation,
+      );
+      addAlert(t("requiredActionResetSuccess"), AlertVariant.success);
+    } catch (error) {
+      addError("requiredActionResetError", error);
+    }
+  };
+
+  const [toggleResetDialog, ResetConfirm] = useConfirmDialog({
+    titleKey: t("resetTermsConfirmTitle"),
+    messageKey: t("resetTermsConfirmMessage"),
+    continueButtonLabel: t("resetTermsConfirmButton"),
+    continueButtonVariant: ButtonVariant.danger,
+    onConfirm: doResetTermsAndConditions,
+  });
+
   return (
     <Modal
       variant={ModalVariant.small}
@@ -118,6 +139,7 @@ export const RequiredActionConfigModal = ({
       title={t("requiredActionConfig", { name: requiredAction.name })}
       onClose={onClose}
     >
+      <ResetConfirm />
       <Form id="required-action-config-form" onSubmit={handleSubmit(save)}>
         <FormProvider {...form}>
           <DynamicComponents
@@ -129,29 +151,42 @@ export const RequiredActionConfigModal = ({
           <Button data-testid="save" variant="primary" type="submit">
             {t("save")}
           </Button>
+
           <Button
             data-testid="cancel"
             variant={ButtonVariant.link}
+            type="button"
             onClick={onClose}
           >
             {t("cancel")}
           </Button>
-          <Button
-            className="pf-v5-u-ml-3xl"
-            data-testid="clear"
-            variant={ButtonVariant.link}
-            onClick={async () => {
-              await adminClient.authenticationManagement.removeRequiredActionConfig(
-                {
-                  alias: requiredAction.alias!,
-                },
-              );
-              form.reset({});
-              onClose();
-            }}
-          >
-            {t("clear")} <TrashIcon />
-          </Button>
+          <div className="pf-v5-u-ml-3xl pf-v5-u-display-flex pf-v5-u-gap-md">
+            <Button
+              data-testid="clear"
+              variant={ButtonVariant.link}
+              type="button"
+              onClick={async () => {
+                await adminClient.authenticationManagement.removeRequiredActionConfig(
+                  { alias: requiredAction.alias! },
+                );
+                reset({ config: {} });
+                onClose();
+              }}
+            >
+              {t("clear")} <TrashIcon />
+            </Button>
+
+            {isTermsAndConditions && (
+              <Button
+                data-testid="reset-terms"
+                variant={ButtonVariant.link}
+                type="button"
+                onClick={() => toggleResetDialog()}
+              >
+                {t("reset")}
+              </Button>
+            )}
+          </div>
         </ActionGroup>
       </Form>
     </Modal>
