@@ -99,5 +99,6 @@
     <include file="META-INF/jpa-changelog-unaccent.xml"/>
     <include file="META-INF/jpa-changelog-text.xml"/>
     <include file="META-INF/jpa-changelog-openid-federation.xml"/>
+    <include file="META-INF/jpa-changelog-terms.xml"/>
 
 </databaseChangeLog>

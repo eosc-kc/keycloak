@@ -1,0 +1,20 @@
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.1.xsd">
+
+    <changeSet author="eosc-kc" id="terms">
+        <update tableName="required_action_config">
+            <column name="value" value="hours"/>
+            <where>name = 'reset_every_multiplier' AND value = '3600'</where>
+        </update>
+
+        <update tableName="required_action_config">
+            <column name="value" value="days"/>
+            <where>name = 'reset_every_multiplier' AND value = '86400'</where>
+        </update>
+
+        <update tableName="required_action_config">
+            <column name="value" value="months"/>
+            <where>name = 'reset_every_multiplier' AND value = '2592000'</where>
+        </update>
+    </changeSet>
+
+</databaseChangeLog>
