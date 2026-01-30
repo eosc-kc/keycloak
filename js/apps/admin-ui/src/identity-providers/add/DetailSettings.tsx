@@ -76,6 +76,7 @@ import { KubernetesSettings } from "./KubernetesSettings";
 import { JWTAuthorizationGrantAssertionSettings } from "./JWTAuthorizationGrantAssertionSettings";
 import JWTAuthorizationGrantSettings from "./JWTAuthorizationGrantSettings";
 import { DefaultSwitchControl } from "../../components/SwitchControl";
+import { OpenIdFederationSettings } from "./OpenIdFederationSettings";
 
 type HeaderProps = {
   onChange: (value: boolean) => void;
@@ -466,7 +467,7 @@ export default function DetailSettings() {
     return <KeycloakSpinner />;
   }
 
-  const isOIDC = provider.providerId!.includes("oidc");
+  const isOIDC = provider.providerId!.includes("oidc") || provider.providerId!.includes("openid-federation");
   const isSAML = provider.providerId!.includes("saml");
   const isOAuth2 = provider.providerId!.includes("oauth2");
   const isSPIFFE = provider.providerId!.includes("spiffe");
@@ -523,6 +524,11 @@ export default function DetailSettings() {
           )}
         </FormAccess>
       ),
+    },
+    {
+      title: t("openIdFederationSettings"),
+      isHidden: !provider.providerId!.includes("openid-federation"),
+      panel: <OpenIdFederationSettings readOnly={true} />,
     },
     {
       title: t("oidcSettings"),
