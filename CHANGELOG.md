@@ -51,6 +51,7 @@ Our Keycloak version is working well with PostgreSQL database. For using other S
 - Add option Grant Valid Scope Subset to downscope-assertion-grant-enforcer [RCIAM-349](https://tts.grnet.gr/jira/browse/RCIAM-349)
 - User reaccepting Terms and Conditions. [EOSC-KC-48](https://github.com/eosc-kc/keycloak/issues/48)
 - Terms and Conditions - periodic reset for all realm users. [EOSC-KC-49](https://github.com/eosc-kc/keycloak/issues/49)
+-  Resource request parameter and audience in access token [KEYCLOAK-41527](https://github.com/keycloak/keycloak/issues/41527)
 
 ### Changed
 - Change emailVerified User field with UserAttributeMappers (conditional trust email). [EOSC-KC-70](https://github.com/eosc-kc/keycloak/issues/70)
