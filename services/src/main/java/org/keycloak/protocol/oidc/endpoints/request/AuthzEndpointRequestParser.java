@@ -111,6 +111,8 @@ public abstract class AuthzEndpointRequestParser {
         KNOWN_REQ_PARAMS.add(OAuth2Constants.CLIENT_ASSERTION);
         KNOWN_REQ_PARAMS.add(OAuth2Constants.CLIENT_SECRET);
         KNOWN_REQ_PARAMS.add(OAuth2Constants.ISSUER);
+        // https://datatracker.ietf.org/doc/html/rfc8707
+        KNOWN_REQ_PARAMS.add(OIDCLoginProtocol.RESOURCE_PARAM);
     }
 
     protected AuthzEndpointRequestParser(KeycloakSession keycloakSession) {
@@ -160,6 +162,7 @@ public abstract class AuthzEndpointRequestParser {
 
         //OpenId Federation iss
         request.iss = replaceIfNotNull(request.iss, getParameter(OAuth2Constants.ISSUER));
+        request.resource = replaceIfNotNull(request.resource, getAndValidateParameter(OIDCLoginProtocol.RESOURCE_PARAM));
 
         extractAdditionalReqParams(request.additionalReqParams);
     }
