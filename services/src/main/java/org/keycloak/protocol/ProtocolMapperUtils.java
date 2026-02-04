@@ -98,6 +98,10 @@ public class ProtocolMapperUtils {
     public static final String IDP_ATTRIBUTE_VALUES2_LABEL = "idp-attribute.values2.label";
     public static final String IDP_ATTRIBUTE_VALUES2_HELP_TEXT = "idp-attribute.values2.tooltip";
 
+    public static final String DEFAULT_AUD_VALUE = "default.aud.value";
+    public static final String DEFAULT_AUD_VALUE_LABEL = "default.aud.value.label";
+    public static final String DEFAULT_AUD_VALUE_HELP_TEXT = "default.aud.value.tooltip";
+
     // Priority of SubMapper. It should be first to allow other mappers override the `sub` claim
     public static final int SUB_MAPPER = -10;
 
