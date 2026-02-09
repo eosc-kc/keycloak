@@ -992,8 +992,8 @@ public class KcOidcFirstBrokerLoginTest extends AbstractFirstBrokerLoginTest {
 
         String userProfileConfig = "{\"attributes\": ["
                 + "{\"name\": \"email\"," + PERMISSIONS_ALL + "},"
-                + "{\"name\": \"firstName\"," + PERMISSIONS_ALL + "},"
-                + "{\"name\": \"lastName\"," + PERMISSIONS_ALL + "},"
+                + "{\"name\": \"firstName\"," + PERMISSIONS_ALL + ", \"required\": {}},"
+                + "{\"name\": \"lastName\"," + PERMISSIONS_ALL + ", \"required\": {}},"
                 + "{\"name\": \"usertype\", \"defaultValue\": \"daily\", " + PERMISSIONS_ADMIN_EDITABLE + "}"
                 + "]}";
         setUserProfileConfiguration(userProfileConfig);
