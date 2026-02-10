@@ -14,16 +14,21 @@ export const IntComponent = ({
   return (
     <TextControl
       name={convertToName(name!)}
-      type="number"
-      pattern="\d*"
+      type="text"
+      inputMode="numeric"
+      pattern="[0-9]*"
       label={t(label!)}
       labelIcon={t(helpText!)}
       data-testid={name}
+      onInput={(e) => {
+        e.currentTarget.value = e.currentTarget.value.replace(/\D/g, "");
+      }}
       rules={{
         required: {
           value: !!props.required,
           message: t("required"),
         },
+        validate: (v) => /^\d*$/.test(String(v ?? "")) || t("shouldBeANumber"),
       }}
       {...props}
     />
