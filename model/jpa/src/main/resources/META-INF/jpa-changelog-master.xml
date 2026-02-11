@@ -91,6 +91,7 @@
     <include file="META-INF/jpa-changelog-26.4.0.xml"/>
     <include file="META-INF/jpa-changelog-26.5.0.xml"/>
     <include file="META-INF/jpa-changelog-26.6.0.xml"/>
+    <include file="META-INF/jpa-changelog-migrate26.xml"/>
     <include file="META-INF/jpa-changelog-saml-fed-initial.xml"/>
     <include file="META-INF/jpa-changelog-saml-fed2.xml"/>
     <include file="META-INF/jpa-changelog-indexes.xml"/>
