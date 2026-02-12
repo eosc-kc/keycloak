@@ -76,6 +76,7 @@ import org.keycloak.urls.UrlType;
 import org.keycloak.util.JWKSUtils;
 import org.keycloak.util.TokenUtil;
 
+import org.apache.http.entity.ContentType;
 import org.apache.http.entity.StringEntity;
 import org.jboss.logging.Logger;
 
@@ -328,7 +329,7 @@ public class OpenIdFederationTrustChainProcessor implements TrustChainProcessor 
         rPMetadata.setPostLogoutRedirectUris(Stream.of(OIDCIdentityProvider.getLogoutResponse(frontendUriInfo, realm.getName(), model.getAlias())).collect(Collectors.toList()));
         metadata.setRelyingPartyMetadata(rPMetadata);
         entityStatement.setMetadata(metadata);
-        StringEntity entity = new StringEntity(session.tokens().encodeForOpenIdFederation(entityStatement), TokenUtil.APPLICATION_ENTITY_STATEMENT_JWT);
+        StringEntity entity = new StringEntity(session.tokens().encodeForOpenIdFederation(entityStatement), ContentType.create(TokenUtil.APPLICATION_ENTITY_STATEMENT_JWT));
         SimpleHttpResponse response = SimpleHttp.create(session).doPost(op.getFederationRegistrationEndpoint())
                 .header("Content-Type", "application/entity-statement+jwt")
                 .entity(entity)
