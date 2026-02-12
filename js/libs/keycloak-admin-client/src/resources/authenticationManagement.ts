@@ -260,6 +260,12 @@ export class AuthenticationManagement extends Resource<{ realm?: string }> {
     urlParamKeys: ["alias"],
   });
 
+  public resetRequiredActionConfig = this.makeRequest<{ alias: string }>({
+    method: "POST",
+    path: "/required-actions/{alias}/reset",
+    urlParamKeys: ["alias"],
+  });
+
   // Update the configuration from the RequiredAction provider in the current Realm.
   public updateRequiredActionConfig = this.makeUpdateRequest<
     { alias: string },
