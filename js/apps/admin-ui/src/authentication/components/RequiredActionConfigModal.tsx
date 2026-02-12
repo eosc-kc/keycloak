@@ -109,14 +109,9 @@ export const RequiredActionConfigModal = ({
   };
 
   const doResetTermsAndConditions = async () => {
-    const current = getValues();
     try {
-      await adminClient.authenticationManagement.updateRequiredAction(
+      await adminClient.authenticationManagement.resetRequiredActionConfig(
         { alias: requiredAction.alias! },
-        {
-          ...requiredAction,
-          config: current.config ?? {},
-        } as RequiredActionProviderRepresentation,
       );
       addAlert(t("requiredActionResetSuccess"), AlertVariant.success);
     } catch (error) {
