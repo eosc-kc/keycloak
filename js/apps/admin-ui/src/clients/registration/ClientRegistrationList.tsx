@@ -18,7 +18,7 @@ import { ClientRegistrationParams } from "../routes/ClientRegistration";
 import { AddProviderDialog } from "./AddProviderDialog";
 
 type ClientRegistrationListProps = {
-  subType: "anonymous" | "authenticated";
+  subType: "anonymous" | "authenticated" | "openid_federation";
 };
 
 const DetailLink = (comp: ComponentRepresentation) => {
