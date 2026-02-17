@@ -1,8 +1,12 @@
 package org.keycloak.services.clientpolicy.executor;
 
+import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
+
+import jakarta.ws.rs.core.MultivaluedMap;
 
 import org.keycloak.OAuth2Constants;
 import org.keycloak.OAuthErrorException;
@@ -14,8 +18,10 @@ import org.keycloak.services.clientpolicy.ClientPolicyContext;
 import org.keycloak.services.clientpolicy.ClientPolicyException;
 import org.keycloak.services.clientpolicy.context.AuthorizationRequestContext;
 import org.keycloak.services.clientpolicy.context.TokenRequestContext;
+import org.keycloak.util.JsonSerialization;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.core.type.TypeReference;
 import org.jboss.logging.Logger;
 
 /**
@@ -68,7 +74,7 @@ public class SecureResourceIndicatorExecutor implements ClientPolicyExecutorProv
 
     @Override
     public String getProviderId() {
-        return ConfidentialClientAcceptExecutorFactory.PROVIDER_ID;
+        return SecureResourceIndicatorExecutorFactory.PROVIDER_ID;
     }
 
     public void executeOnEvent(ClientPolicyContext context) throws ClientPolicyException {
@@ -81,11 +87,11 @@ public class SecureResourceIndicatorExecutor implements ClientPolicyExecutorProv
         switch (context.getEvent()) {
             case AUTHORIZATION_REQUEST:
                 AuthorizationRequestContext authzRequestContext = (AuthorizationRequestContext) context;
-                String resourceParam = authzRequestContext.getAuthorizationEndpointRequest().getResource();
-                logger.debugv(" on authz request: resourceParam = {0}", resourceParam);
+                List<String> resourceParams = authzRequestContext.getAuthorizationEndpointRequest().getResources();
+                logger.debugv(" on authz request: resourceParam = {0}", resourceParams);
                 List<String> allowResourceList = convertContentFilledList(configuration.getAllowPermittedResources());
-                if (allowResourceList != null && !allowResourceList.isEmpty() && !allowResourceList.contains(resourceParam)) {
-                    logger.warnv("not allowed resource parameter value: resource = {0}", resourceParam);
+                if (allowResourceList != null && !allowResourceList.isEmpty() && (resourceParams == null || resourceParams.isEmpty() || !allowResourceList.containsAll(resourceParams))) {
+                    logger.warnv("not allowed resource parameter value: resource = {0}", resourceParams);
                     throw new ClientPolicyException(OAuthErrorException.INVALID_REQUEST, ERR_NOT_PERMITTED_RESOURCE);
                 }
                 return;
@@ -101,7 +107,7 @@ public class SecureResourceIndicatorExecutor implements ClientPolicyExecutorProv
      * the resource parameter in the token request is ignored, not set to audience claim in an access token.
      */
     private void checkResourceParameterValue(TokenRequestContext context) throws ClientPolicyException {
-        String resourceInTokenRequest = context.getParams().getFirst(OAuth2Constants.RESOURCE);
+        List<String> resourcesInTokenRequest = getResourceFromContext(context.getParams(), OAuth2Constants.RESOURCE);
         AuthenticatedClientSessionModel clientSession = context.getParseResult().getClientSession();
         if (clientSession == null) {
             throw new ClientPolicyException(OAuthErrorException.INVALID_CLIENT, "client session is null");
@@ -114,12 +120,28 @@ public class SecureResourceIndicatorExecutor implements ClientPolicyExecutorProv
             return;
         }
 
-        if (resourceInTokenRequest == null) {
+        if (resourcesInTokenRequest == null) {
             throw new ClientPolicyException(OAuthErrorException.INVALID_REQUEST, ERR_NO_RESOURCE_IN_TOKEN_REQUEST);
         }
 
-        if (!resourceInTokenRequest.equals(resourceInAuthorizationRequest)) {
-            throw new ClientPolicyException(OAuthErrorException.INVALID_REQUEST, ERR_DIFFERENT_RESOURCE);
+        try {
+            List<String> resourcesInAuthorizationRequest = JsonSerialization.readValue(resourceInAuthorizationRequest, new TypeReference<List<String>>() {});
+            if (!resourcesInAuthorizationRequest.isEmpty() && resourcesInTokenRequest.isEmpty()) {
+                throw new ClientPolicyException(OAuthErrorException.INVALID_REQUEST, ERR_NO_RESOURCE_IN_TOKEN_REQUEST);
+            } else if (resourcesInTokenRequest.size() !=  resourcesInAuthorizationRequest.size() || !resourcesInTokenRequest.containsAll(resourcesInAuthorizationRequest)) {
+                throw new ClientPolicyException(OAuthErrorException.INVALID_REQUEST, ERR_DIFFERENT_RESOURCE);
+            }
+        } catch (IOException e) {
+            logger.warnf("problem decoding resource parameter {0} during mapper use",resourceInAuthorizationRequest);
+        }
+    }
+
+    private List<String> getResourceFromContext(MultivaluedMap<String, String> params, String paramName) {
+        List<String> values = params.get(paramName);
+        if (values == null) {
+            return new ArrayList<>();
+        } else {
+            return new ArrayList<>(values);
         }
     }
 

@@ -17,7 +17,9 @@
 
 package org.keycloak.protocol.oidc.endpoints.request;
 
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.BiConsumer;
@@ -162,7 +164,11 @@ public abstract class AuthzEndpointRequestParser {
 
         //OpenId Federation iss
         request.iss = replaceIfNotNull(request.iss, getParameter(OAuth2Constants.ISSUER));
-        request.resource = replaceIfNotNull(request.resource, getAndValidateParameter(OIDCLoginProtocol.RESOURCE_PARAM));
+
+        List<String> newResources = getAndValidateParameterAsList(OIDCLoginProtocol.RESOURCE_PARAM);
+        if (newResources != null && !newResources.isEmpty()) {
+            request.resources = newResources;
+        }
 
         extractAdditionalReqParams(request.additionalReqParams);
     }
@@ -297,7 +303,31 @@ public abstract class AuthzEndpointRequestParser {
         return paramValue;
     }
 
+    protected List<String> getAndValidateParameterAsList(String paramName) {
+        List<String> paramValues = getParameterAsList(paramName);
+
+        if (paramValues != null && !paramValues.isEmpty()) {
+            int maxLength = config.getMaxLengthForTheParameter(paramName);
+            if (additionalReqParamsFailFast && paramValues.stream().anyMatch(v -> v.length() > maxLength)) {
+                logger.warnf("The size of OIDC parameter '%s' size is longer (%d) than allowed (%d). %s", paramName, paramValues.stream().mapToInt(String::length).max(), maxLength, "Request not allowed." );
+                throw new ErrorResponseException(OAuthErrorException.INVALID_REQUEST, "The size of OIDC parameter '" + paramName + "' is longer than allowed.", Response.Status.BAD_REQUEST);
+            } else if (!additionalReqParamsFailFast) {
+               paramValues.removeIf(v ->v ==  null || v.length() > maxLength);
+            }
+        }
+
+        return paramValues;
+    }
+
     protected abstract String getParameter(String paramName);
+
+    protected List<String> getParameterAsList(String paramName) {
+        String value = getParameter(paramName);
+        List<String> parameters = new ArrayList<>();
+        if (value != null)
+            parameters.add(getParameter(paramName));
+        return parameters;
+    };
 
     protected abstract Integer getIntParameter(String paramName);
 
