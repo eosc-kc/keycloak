@@ -129,6 +129,7 @@ import org.keycloak.services.util.UserSessionUtil;
 import org.keycloak.sessions.AuthenticationSessionModel;
 import org.keycloak.tracing.TracingAttributes;
 import org.keycloak.tracing.TracingProvider;
+import org.keycloak.util.JsonSerialization;
 import org.keycloak.util.TokenUtil;
 
 import org.jboss.logging.Logger;
@@ -162,7 +163,7 @@ public class TokenManager {
     }
 
     public TokenValidation validateToken(KeycloakSession session, UriInfo uriInfo, ClientConnection connection, RealmModel realm,
-                                         RefreshToken oldToken, HttpHeaders headers, String oldTokenScope) throws OAuthErrorException {
+                                         RefreshToken oldToken, HttpHeaders headers, String oldTokenScope, List<String> resourceList) throws OAuthErrorException {
         UserSessionModel userSession = null;
         boolean offline = TokenUtil.TOKEN_TYPE_OFFLINE.equals(oldToken.getType());
 
@@ -225,6 +226,14 @@ public class TokenManager {
 
         if (!client.getClientId().equals(oldToken.getIssuedFor())) {
             throw new OAuthErrorException(OAuthErrorException.INVALID_GRANT, "Unmatching clients", "Unmatching clients");
+        }
+
+        if (resourceList != null && ! resourceList.isEmpty()) {
+            try {
+                clientSession.setNote(OIDCLoginProtocol.RESOURCE_PARAM, JsonSerialization.writeValueAsString(resourceList));
+            } catch (IOException e) {
+                logger.warn("problem encoding resource parameter" + resourceList.stream().collect(Collectors.joining(",")));
+            }
         }
 
         try {
@@ -327,7 +336,7 @@ public class TokenManager {
 
 
     public AccessTokenResponseBuilder refreshAccessToken(KeycloakSession session, UriInfo uriInfo, ClientConnection connection, RealmModel realm, ClientModel authorizedClient,
-                                            String encodedRefreshToken, EventBuilder event, HttpHeaders headers, HttpRequest request, String scopeParameter) throws OAuthErrorException {
+                                            String encodedRefreshToken, EventBuilder event, HttpHeaders headers, HttpRequest request, String scopeParameter, List<String> resourceList) throws OAuthErrorException {
         RefreshToken refreshToken = verifyRefreshToken(session, realm, authorizedClient, request, encodedRefreshToken, true);
 
         event.session(refreshToken.getSessionState())
@@ -359,7 +368,7 @@ public class TokenManager {
         }
 
 
-        TokenValidation validation = validateToken(session, uriInfo, connection, realm, refreshToken, headers, oldTokenScope);
+        TokenValidation validation = validateToken(session, uriInfo, connection, realm, refreshToken, headers, oldTokenScope, resourceList);
         session.getContext().setUserSession(validation.userSession);
         AuthenticatedClientSessionModel clientSession = validation.clientSessionCtx.getClientSession();
         OIDCAdvancedConfigWrapper clientConfig = OIDCAdvancedConfigWrapper.fromClientModel(authorizedClient);

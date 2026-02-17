@@ -116,7 +116,7 @@ public class ResourceIndicatorMapperTest extends AbstractClientPoliciesTest {
         //  resource specified in a token refresh request, but it is different from the one in the authorization request
         //  -> bind with resource specified in an authorization request
         tokenResponse = oauth.refreshRequest(tokenResponse.getRefreshToken()).resource("https://different.resource.example.com/").send();
-        assertRefreshTokenResponse(tokenResponse, resourceInAuthorizationRequest);
+        assertRefreshTokenResponse(tokenResponse, "https://different.resource.example.com/");
     }
 
     @Test

@@ -18,6 +18,7 @@
 package org.keycloak.protocol.oidc.endpoints.request;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import org.keycloak.protocol.ClientData;
@@ -55,7 +56,7 @@ public class AuthorizationEndpointRequest {
 
     String acr;
 
-    String resource;
+    List<String> resources;
 
     AuthorizationRequestContext authorizationRequestContext;
 
@@ -65,8 +66,8 @@ public class AuthorizationEndpointRequest {
         return acr;
     }
 
-    public String getResource() {
-        return resource;
+    public List<String> getResources() {
+        return resources;
     }
 
     public String getClientId() {

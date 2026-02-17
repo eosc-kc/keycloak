@@ -43,7 +43,7 @@ public class SecureResourceIndicatorExecutorFactory implements ClientPolicyExecu
 
     @Override
     public String getHelpText() {
-        return "On a token endpoint, this executor checks if the value of a resource parameter in a token request matches the one sent in its authorization request. If not, it denies its request.";
+        return "On the authorization endpoint, this executor validates the resource parameter in the authorization request, and on the token endpoint it checks that the resource parameter in the token request matches the one sent in the authorization request. If validation fails, it denies the request";
     }
 
     @Override
@@ -59,7 +59,7 @@ public class SecureResourceIndicatorExecutorFactory implements ClientPolicyExecu
         ProviderConfigProperty property = new ProviderConfigProperty(
                 PERMITTED_RESOURCES,
                 "Permitted resources",
-                "If filled, then the executor only accept resource parameter whose value exactly match one of the permitted resources.",
+                "If filled, then the executor only accepts resource parameters whose values exactly match one of the permitted resources.",
                 ProviderConfigProperty.MULTIVALUED_STRING_TYPE,
                 null);
         configProperties.add(property);

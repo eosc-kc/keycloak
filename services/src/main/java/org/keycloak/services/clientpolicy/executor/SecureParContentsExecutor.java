@@ -132,6 +132,7 @@ public class SecureParContentsExecutor implements ClientPolicyExecutorProvider<C
                 parRetrievedRequest.add(additionalParam);
             }
         }
+        if (request.getResources() != null) parRetrievedRequest.add(OIDCLoginProtocol.RESOURCE_PARAM);
 
         return parRetrievedRequest;
     }

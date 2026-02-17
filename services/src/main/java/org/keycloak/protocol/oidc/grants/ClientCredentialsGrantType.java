@@ -17,10 +17,13 @@
 
 package org.keycloak.protocol.oidc.grants;
 
+import java.io.IOException;
+import java.util.List;
 import java.util.stream.Collectors;
 
 import jakarta.ws.rs.core.Response;
 
+import org.keycloak.OAuth2Constants;
 import org.keycloak.OAuthErrorException;
 import org.keycloak.authentication.AuthenticationProcessor;
 import org.keycloak.common.constants.ServiceAccountConstants;
@@ -43,6 +46,7 @@ import org.keycloak.services.managers.AuthenticationSessionManager;
 import org.keycloak.services.managers.UserSessionManager;
 import org.keycloak.sessions.AuthenticationSessionModel;
 import org.keycloak.sessions.RootAuthenticationSessionModel;
+import org.keycloak.util.JsonSerialization;
 
 import org.jboss.logging.Logger;
 
@@ -106,6 +110,15 @@ public class ClientCredentialsGrantType extends OAuth2GrantTypeBase {
         authSession.setClientNote(OIDCLoginProtocol.ISSUER, Urls.realmIssuer(session.getContext().getUri().getBaseUri(), realm.getName()));
         authSession.setClientNote(OIDCLoginProtocol.SCOPE_PARAM, scope);
         setAuthorizationDetailsNoteIfIncluded(authSession);
+
+        List<String> resourceList = formParams.get(OAuth2Constants.RESOURCE);
+        if (resourceList != null && ! resourceList.isEmpty()) {
+            try {
+                authSession.setClientNote(OIDCLoginProtocol.RESOURCE_PARAM, JsonSerialization.writeValueAsString(resourceList));
+            } catch (IOException e) {
+                logger.warn("problem encoding resource parameter" + resourceList.stream().collect(Collectors.joining(",")));
+            }
+        }
 
         // persisting of userSession by default
         UserSessionModel.SessionPersistenceState sessionPersistenceState = UserSessionModel.SessionPersistenceState.PERSISTENT;
