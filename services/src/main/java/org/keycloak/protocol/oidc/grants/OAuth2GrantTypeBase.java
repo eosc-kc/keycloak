@@ -20,6 +20,7 @@ package org.keycloak.protocol.oidc.grants;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 import java.util.function.Function;
 
 import jakarta.ws.rs.core.HttpHeaders;
@@ -401,6 +402,11 @@ public abstract class OAuth2GrantTypeBase implements OAuth2GrantType {
 
     @Override
     public void close() {
+    }
+
+    @Override
+    public Set<String> getSupportedMultivaluedRequestParameters() {
+        return Set.of(OAuth2Constants.RESOURCE);
     }
 
 }

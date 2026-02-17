@@ -1,5 +1,6 @@
 package org.keycloak.protocol.oidc.mappers;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -17,7 +18,9 @@ import org.keycloak.protocol.oidc.OIDCLoginProtocol;
 import org.keycloak.provider.EnvironmentDependentProviderFactory;
 import org.keycloak.provider.ProviderConfigProperty;
 import org.keycloak.representations.IDToken;
+import org.keycloak.util.JsonSerialization;
 
+import com.fasterxml.jackson.core.type.TypeReference;
 import org.jboss.logging.Logger;
 
 /**
@@ -80,8 +83,15 @@ public class ResourceIndicatorMapper extends AbstractOIDCProtocolMapper implemen
         String resourceInAuthorizationRequest = clientSessionCtx.getClientSession().getNote(OAuth2Constants.RESOURCE);
         String defaultAud = mappingModel.getConfig().get(ProtocolMapperUtils.DEFAULT_AUD_VALUE);
         if (resourceInAuthorizationRequest != null && !resourceInAuthorizationRequest.isBlank()) {
-            logger.debugv(" mapper: resource in authorization request = {0}", resourceInAuthorizationRequest);
-            token.addAudience(resourceInAuthorizationRequest);
+            try {
+                List<String> resources = JsonSerialization.readValue(resourceInAuthorizationRequest, new TypeReference<List<String>>() {});
+                resources.forEach(resource -> {
+                    logger.debugv(" mapper: resource in authorization request = {0}", resource);
+                    token.addAudience(resource);
+                });
+            } catch (IOException e) {
+                logger.warnf("problem decoding resource parameter {0} during mapper use",resourceInAuthorizationRequest);
+            }
         } else if (defaultAud != null && !defaultAud.isEmpty()) {
             token.addAudience(defaultAud);
         }

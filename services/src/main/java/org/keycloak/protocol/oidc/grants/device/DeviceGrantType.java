@@ -17,7 +17,9 @@
 
 package org.keycloak.protocol.oidc.grants.device;
 
+import java.io.IOException;
 import java.net.URI;
+import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
@@ -60,6 +62,9 @@ import org.keycloak.services.managers.AuthenticationManager;
 import org.keycloak.services.resources.RealmsResource;
 import org.keycloak.services.util.DefaultClientSessionContext;
 import org.keycloak.sessions.AuthenticationSessionModel;
+import org.keycloak.util.JsonSerialization;
+
+import org.jboss.logging.Logger;
 
 import static org.keycloak.protocol.oidc.OIDCLoginProtocolService.tokenServiceBaseUrl;
 
@@ -71,6 +76,8 @@ import static org.keycloak.protocol.oidc.OIDCLoginProtocolService.tokenServiceBa
  * @author <a href="mailto:michito.okai.zn@hitachi.com">Michito Okai</a>
  */
 public class DeviceGrantType extends OAuth2GrantTypeBase {
+
+    private static final Logger logger = Logger.getLogger(DeviceGrantType.class);
 
     // OAuth 2.0 Device Authorization Grant
     public static final String OAUTH2_DEVICE_VERIFIED_USER_CODE = "OAUTH2_DEVICE_VERIFIED_USER_CODE";
@@ -322,6 +329,15 @@ public class DeviceGrantType extends OAuth2GrantTypeBase {
             event.error(Errors.INVALID_CODE);
             throw new CorsErrorResponseException(cors, OAuthErrorException.INVALID_GRANT, "Auth error",
                 Response.Status.BAD_REQUEST);
+        }
+
+        List<String> resourceList = formParams.get(OAuth2Constants.RESOURCE);
+        if (resourceList != null && ! resourceList.isEmpty()) {
+            try {
+                clientSession.setNote(OIDCLoginProtocol.RESOURCE_PARAM, JsonSerialization.writeValueAsString(resourceList));
+            } catch (IOException e) {
+                logger.warn("problem encoding resource parameter" + resourceList.stream().collect(Collectors.joining(",")));
+            }
         }
 
         if (!AuthenticationManager.isSessionValid(realm, userSession)) {

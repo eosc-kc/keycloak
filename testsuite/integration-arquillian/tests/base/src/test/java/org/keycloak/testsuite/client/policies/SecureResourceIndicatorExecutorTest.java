@@ -95,13 +95,13 @@ public class SecureResourceIndicatorExecutorTest extends AbstractClientPoliciesT
         //  resource specified in a token refresh request, but it is different from the one in the authorization request
         //  -> bind with resource specified in an authorization request
         tokenResponse = oauth.refreshRequest(tokenResponse.getRefreshToken()).resource("https://different.resource.example.com/").send();
-        assertRefreshTokenResponse(tokenResponse, resourceInAuthorizationRequest);
+        assertRefreshTokenResponse(tokenResponse, "https://different.resource.example.com/");
 
         // refresh
         //  resource not specified in a token refresh request
         //  -> bind with resource specified in an authorization request
         tokenResponse = oauth.refreshRequest(tokenResponse.getRefreshToken()).resource(null).send();
-        assertRefreshTokenResponse(tokenResponse, resourceInAuthorizationRequest);
+        assertRefreshTokenResponse(tokenResponse, "https://different.resource.example.com/");
 
         // revoke
         TokenRevocationResponse revokeResponse = oauth.doTokenRevoke(tokenResponse.getAccessToken());

@@ -17,6 +17,8 @@
 
 package org.keycloak.protocol.oidc.grants;
 
+import java.io.IOException;
+import java.util.List;
 import java.util.stream.Collectors;
 
 import jakarta.ws.rs.core.MediaType;
@@ -47,6 +49,7 @@ import org.keycloak.services.managers.AuthenticationManager;
 import org.keycloak.services.managers.AuthenticationSessionManager;
 import org.keycloak.sessions.AuthenticationSessionModel;
 import org.keycloak.sessions.RootAuthenticationSessionModel;
+import org.keycloak.util.JsonSerialization;
 import org.keycloak.util.TokenUtil;
 
 import org.jboss.logging.Logger;
@@ -97,6 +100,15 @@ public class ResourceOwnerPasswordCredentialsGrantType extends OAuth2GrantTypeBa
         authSession.setProtocol(OIDCLoginProtocol.LOGIN_PROTOCOL);
         authSession.setAction(AuthenticatedClientSessionModel.Action.AUTHENTICATE.name());
         authSession.setClientNote(OIDCLoginProtocol.ISSUER, Urls.realmIssuer(session.getContext().getUri().getBaseUri(), realm.getName()));
+
+        List<String> resourceList = formParams.get(OAuth2Constants.RESOURCE);
+        if (resourceList != null && ! resourceList.isEmpty()) {
+            try {
+                authSession.setClientNote(OIDCLoginProtocol.RESOURCE_PARAM, JsonSerialization.writeValueAsString(resourceList));
+            } catch (IOException e) {
+                logger.warn("problem encoding resource parameter" + resourceList.stream().collect(Collectors.joining(",")));
+            }
+        }
 
         AuthenticationFlowModel flow = AuthenticationFlowResolver.resolveDirectGrantFlow(authSession);
         String flowId = flow.getId();

@@ -17,6 +17,10 @@
 
 package org.keycloak.protocol.oidc.grants;
 
+import java.io.IOException;
+import java.util.List;
+import java.util.stream.Collectors;
+
 import jakarta.ws.rs.core.Response;
 
 import org.keycloak.OAuth2Constants;
@@ -45,8 +49,13 @@ import org.keycloak.services.managers.UserSessionManager;
 import org.keycloak.services.resources.IdentityBrokerService;
 import org.keycloak.sessions.AuthenticationSessionModel;
 import org.keycloak.sessions.RootAuthenticationSessionModel;
+import org.keycloak.util.JsonSerialization;
+
+import org.jboss.logging.Logger;
 
 public class JWTAuthorizationGrantType extends OAuth2GrantTypeBase {
+
+    private static final Logger logger = Logger.getLogger(JWTAuthorizationGrantType.class);
 
     @Override
     public Response process(Context context) {
@@ -134,6 +143,14 @@ public class JWTAuthorizationGrantType extends OAuth2GrantTypeBase {
 
             RootAuthenticationSessionModel rootAuthSession = new AuthenticationSessionManager(session).createAuthenticationSession(realm, false);
             AuthenticationSessionModel authSession = createSessionModel(rootAuthSession, user, client, scopeParam);
+            List<String> resourceList = formParams.get(OAuth2Constants.RESOURCE);
+            if (resourceList != null && ! resourceList.isEmpty()) {
+                try {
+                    authSession.setClientNote(OIDCLoginProtocol.RESOURCE_PARAM, JsonSerialization.writeValueAsString(resourceList));
+                } catch (IOException e) {
+                    logger.warn("problem encoding resource parameter"+ resourceList.stream().collect(Collectors.joining(",")));
+                }
+            }
             UserSessionModel userSession = new UserSessionManager(session).createUserSession(authSession.getParentSession().getId(), realm, user, user.getUsername(),
                     clientConnection.getRemoteHost(), "authorization-grant", false, null, null, UserSessionModel.SessionPersistenceState.TRANSIENT);
             event.session(userSession);

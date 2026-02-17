@@ -89,8 +89,8 @@ public class LoginUrlBuilder extends AbstractUrlBuilder {
         return this;
     }
 
-    public LoginUrlBuilder resource(String request) {
-        parameter(OIDCLoginProtocol.RESOURCE_PARAM, request);
+    public LoginUrlBuilder resource(String resource) {
+        parameter(OIDCLoginProtocol.RESOURCE_PARAM, resource);
         return this;
     }
 
