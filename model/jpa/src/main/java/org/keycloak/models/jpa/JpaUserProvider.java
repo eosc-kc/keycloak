@@ -854,7 +854,7 @@ public class JpaUserProvider implements UserProvider, UserCredentialStore, JpaUs
 
         TypedQuery<UserEntity> query = em.createQuery(hql, UserEntity.class);
         query.setParameter("realmId", realm.getId());
-        query.setParameter("termsAction", UserModel.RequiredAction.TERMS_AND_CONDITIONS.name());
+        query.setParameter("termsAction", UserModel.RequiredAction.TERMS_AND_CONDITIONS.name().toLowerCase());
         query.setParameter("tsLen", timestampStr.length());
         query.setParameter("tsStr", timestampStr);
 
