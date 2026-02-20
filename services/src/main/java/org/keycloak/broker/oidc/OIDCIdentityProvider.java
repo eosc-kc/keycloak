@@ -25,6 +25,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.stream.Stream;
 
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.Path;
@@ -1195,21 +1196,6 @@ public class OIDCIdentityProvider extends AbstractOAuth2IdentityProvider<OIDCIde
             return keyStorage.reloadKeys(modelKey, new OIDCIdentityProviderPublicKeyLoader(session, getConfig()));
         }
         return false;
-    }
-
-    @Override
-    protected void setEmailVerified(UserModel user, BrokeredIdentityContext context) {
-        OIDCIdentityProviderConfig config = getConfig();
-        Map<String, Object> contextData = context.getContextData();
-        Boolean emailVerified = (Boolean) contextData.get(IDToken.EMAIL_VERIFIED);
-
-        if (Booleans.isFalse(config.isTrustEmail()) || emailVerified == null) {
-            // fallback to the default behavior if trust is disabled or there is no email_verified claim
-            super.setEmailVerified(user, context);
-            return;
-        }
-
-        user.setEmailVerified(emailVerified);
     }
 
     private Boolean getEmailVerifiedClaim(JsonWebToken token) {

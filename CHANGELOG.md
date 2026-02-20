@@ -72,6 +72,7 @@ Our Keycloak version is working well with PostgreSQL database. For using other S
 - Return refresh token when configured or offline_access scope exists
 - Do not check for consent in Token Exchange
 - Do not reject if the requester-client is not in the audience of the subject token
+- New federated user set emailVerified based on 'Trust Email' IdP field and User Attribute Mapper
 
 ### Fixed
 - Changes in account console and account rest service [RCIAM-860](https://jira.argo.grnet.gr/browse/RCIAM-860)
