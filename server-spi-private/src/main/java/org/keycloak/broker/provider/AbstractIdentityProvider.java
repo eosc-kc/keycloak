@@ -210,18 +210,15 @@ public abstract class AbstractIdentityProvider<C extends IdentityProviderModel> 
     protected void setEmailVerified(UserModel user, BrokeredIdentityContext context) {
         AuthenticationSessionModel authSession = context.getAuthenticationSession();
         boolean isNewUser = Boolean.parseBoolean(authSession.getAuthNote(BROKER_REGISTERED_NEW_USER));
-        String federatedEmail = context.getEmail();
-        String localEmail = user.getEmail();
+        IdentityProviderModel config = context.getIdpConfig();
 
-        if (isNewUser || federatedEmail != null && !federatedEmail.equalsIgnoreCase(localEmail)) {
-            IdentityProviderModel config = context.getIdpConfig();
-            boolean trustEmail = Booleans.isTrue(config.isTrustEmail());
+        if (isNewUser && Booleans.isTrue(config.isTrustEmail())) {
 
             if (logger.isTraceEnabled()) {
-                logger.tracef("Email %s verified automatically after updating user '%s' through Identity provider '%s' ", trustEmail ? "" : "not", user.getUsername(), config.getAlias());
+                logger.tracef("Email verified automatically after updating user '%s' through Identity provider '%s' ",  user.getUsername(), config.getAlias());
             }
 
-            user.setEmailVerified(trustEmail);
+            user.setEmailVerified(true);
         }
     }
 
