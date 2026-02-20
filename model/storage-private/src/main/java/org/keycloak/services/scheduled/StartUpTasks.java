@@ -32,7 +32,7 @@ public class StartUpTasks implements ScheduledTask {
                 UpdateFederation updateFederation = new UpdateFederation(model.getInternalId(), realm.getId());
                 ClusterAwareScheduledTaskRunner taskRunner = new ClusterAwareScheduledTaskRunner(session.getKeycloakSessionFactory(), updateFederation, model.getUpdateFrequencyInMins() * 60 * 1000);
                 long delay = model.getLastMetadataRefreshTimestamp() + (model.getUpdateFrequencyInMins() * 60 * 1000) - Time.currentTimeMillis();
-                timer.schedule(taskRunner, delay > 60 * 1000 ? delay : 60 * 1000, model.getUpdateFrequencyInMins() * 60 * 1000, "UpdateFederation" + model.getInternalId());
+                timer.schedule(taskRunner, delay > 900 * 1000 ? delay : 900 * 1000, model.getUpdateFrequencyInMins() * 60 * 1000, "UpdateFederation" + model.getInternalId());
                 logger.info("Initiating update task of federation with id: " + model.getInternalId());
             });
             session.identityProviders().getAllStream(Map.of(IdentityProviderModel.AUTO_UPDATE, "true"), null, null).forEach(idp -> {
@@ -58,7 +58,7 @@ public class StartUpTasks implements ScheduledTask {
                 }
             });
             long requiredPeriod = 21600 * 1000;
-            timer.schedule(new ClusterAwareScheduledTaskRunner(session.getKeycloakSessionFactory(), new RequiredActionsResetTask(realm.getId()), requiredPeriod), 60 * 1000, requiredPeriod, "RequiredActionsResetTask_" + realm.getId());
+            timer.schedule(new ClusterAwareScheduledTaskRunner(session.getKeycloakSessionFactory(), new RequiredActionsResetTask(realm.getId()), requiredPeriod), 900 * 1000, requiredPeriod, "RequiredActionsResetTask_" + realm.getId());
 
         });
     }
