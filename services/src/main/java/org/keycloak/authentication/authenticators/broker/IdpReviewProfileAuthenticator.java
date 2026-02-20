@@ -208,6 +208,16 @@ public class IdpReviewProfileAuthenticator extends AbstractIdpAuthenticator {
             }
 
             @Override
+            public boolean isEmailVerified() {
+                return userCtx.isEmailVerified();
+            }
+
+            @Override
+            public void setEmailVerified(boolean verified) {
+                userCtx.setEmailVerified(verified);
+            }
+
+            @Override
             public String getServiceAccountClientLink() {
                 return null;
             }
