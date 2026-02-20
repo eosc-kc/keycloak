@@ -139,9 +139,6 @@ public class UserAdapter implements UserModel, JpaModel<UserEntity> {
         } else if (UserModel.USERNAME.equals(name)) {
             setUsername(value);
             return;
-        } else if (UserModel.EMAIL_VERIFIED.equals(name)) {
-            setEmailVerified(Boolean.valueOf(value));
-            return;
         }
         // Remove all existing
         if (value == null) {
