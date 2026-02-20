@@ -46,6 +46,7 @@ import org.keycloak.models.utils.FormMessage;
 import org.keycloak.models.utils.UserModelDelegate;
 import org.keycloak.representations.idm.IdentityProviderRepresentation;
 import org.keycloak.services.validation.Validation;
+import org.keycloak.storage.ReadOnlyException;
 import org.keycloak.userprofile.UserProfile;
 import org.keycloak.userprofile.UserProfileContext;
 import org.keycloak.userprofile.UserProfileProvider;
@@ -205,6 +206,16 @@ public class IdpReviewProfileAuthenticator extends AbstractIdpAuthenticator {
             @Override
             public void setUsername(String username) {
                 userCtx.setUsername(username);
+            }
+
+            @Override
+            public boolean isEmailVerified() {
+                return userCtx.isEmailVerified();
+            }
+
+            @Override
+            public void setEmailVerified(boolean verified) {
+                userCtx.setEmailVerified(verified);
             }
 
             @Override
