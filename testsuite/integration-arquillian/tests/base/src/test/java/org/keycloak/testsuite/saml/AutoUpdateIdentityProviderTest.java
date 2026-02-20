@@ -188,7 +188,7 @@ public class AutoUpdateIdentityProviderTest extends AbstractAdminTest {
             map.put("fromUrl", "http://localhost:8880/oidc-idp");
 
             Map<String, String> result = realm.identityProviders().importFrom(map);
-            assertThat(result.keySet(), containsInAnyOrder("authorizationUrl", "tokenUrl", "userInfoUrl", "validateSignature", "useJwksUrl", "jwksUrl", "metadataDescriptorUrl","iss","claimsParameterSupported"));
+            assertThat(result.keySet(), containsInAnyOrder("authorizationUrl", "tokenUrl", "userInfoUrl", "validateSignature", "useJwksUrl", "jwksUrl", "metadataDescriptorUrl","iss","claimsParameterSupported","issuer"));
             assertThat(result, hasEntry("authorizationUrl", "https://aai.egi.eu/oidc/authorize"));
             assertThat(result, hasEntry("tokenUrl", "https://aai.egi.eu/oidc/token"));
 

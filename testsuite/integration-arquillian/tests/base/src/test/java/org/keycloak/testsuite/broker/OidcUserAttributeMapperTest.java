@@ -72,10 +72,10 @@ public class OidcUserAttributeMapperTest extends AbstractUserAttributeMapperTest
     @Test
     public void testImportEmailVerified() {
         testValueMappingForImportSyncMode(ImmutableMap.<String, List<String>>builder()
-                        .put("emailVerified", ImmutableList.<String>builder().add("false").build())
+                        .put("emailVerified", ImmutableList.<String>builder().add("true").build())
                         .build(),
                 ImmutableMap.<String, List<String>>builder()
-                        .put("emailVerified", ImmutableList.<String>builder().add("true").build())
+                        .put("emailVerified", ImmutableList.<String>builder().add("false").build())
                         .build()
         );
     }
@@ -83,10 +83,10 @@ public class OidcUserAttributeMapperTest extends AbstractUserAttributeMapperTest
     @Test
     public void testForceEmailVerified() {
         testValueMappingForForceSyncMode(ImmutableMap.<String, List<String>>builder()
-                        .put("emailVerified", ImmutableList.<String>builder().add("false").build())
+                        .put("emailVerified", ImmutableList.<String>builder().add("true").build())
                         .build(),
                 ImmutableMap.<String, List<String>>builder()
-                        .put("emailVerified", ImmutableList.<String>builder().add("true").build())
+                        .put("emailVerified", ImmutableList.<String>builder().add("false").build())
                         .build()
         );
     }
