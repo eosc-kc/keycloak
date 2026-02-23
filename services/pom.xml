@@ -278,7 +278,11 @@
         	<groupId>org.keycloak</groupId>
         	<artifactId>keycloak-config-api</artifactId>
         </dependency>
-<!--        <dependency>-->
+        <dependency>
+            <groupId>org.keycloak</groupId>
+            <artifactId>keycloak-scim-services</artifactId>
+        </dependency>
+        <!--        <dependency>-->
 <!--            <groupId>com.nimbusds</groupId>-->
 <!--            <artifactId>nimbus-jose-jwt</artifactId>-->
 <!--        </dependency>-->
