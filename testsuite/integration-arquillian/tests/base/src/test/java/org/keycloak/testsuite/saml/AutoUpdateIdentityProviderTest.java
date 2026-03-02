@@ -188,7 +188,7 @@ public class AutoUpdateIdentityProviderTest extends AbstractAdminTest {
             map.put("fromUrl", "http://localhost:8880/oidc-idp");
 
             Map<String, String> result = realm.identityProviders().importFrom(map);
-            assertThat(result.keySet(), containsInAnyOrder("authorizationUrl", "tokenUrl", "userInfoUrl", "validateSignature", "useJwksUrl", "jwksUrl", "metadataDescriptorUrl","iss","claimsParameterSupported","issuer"));
+            assertThat(result.keySet(), containsInAnyOrder("authorizationUrl", "tokenUrl", "userInfoUrl", "validateSignature", "useJwksUrl", "jwksUrl", "metadataDescriptorUrl","claimsParameterSupported","issuer"));
             assertThat(result, hasEntry("authorizationUrl", "https://aai.egi.eu/oidc/authorize"));
             assertThat(result, hasEntry("tokenUrl", "https://aai.egi.eu/oidc/token"));
 
@@ -227,12 +227,12 @@ public class AutoUpdateIdentityProviderTest extends AbstractAdminTest {
     }
 
     private void assertOidcConfig(Map<String, String> config, boolean hasExecuted) {
-        Set fields = Stream.of("iss", "authorizationUrl", "tokenUrl", "userInfoUrl", "validateSignature", "useJwksUrl", "jwksUrl", "claimsParameterSupported", "metadataDescriptorUrl", "autoUpdate", "refreshPeriod").collect(Collectors.toSet());
+        Set fields = Stream.of("issuer", "authorizationUrl", "tokenUrl", "userInfoUrl", "validateSignature", "useJwksUrl", "jwksUrl", "claimsParameterSupported", "metadataDescriptorUrl", "autoUpdate", "refreshPeriod").collect(Collectors.toSet());
         //autoupdated has been executed -  add lastRefreshTime
         if (hasExecuted)
             fields.add("lastRefreshTime");
         assertThat(config.keySet(), containsInAnyOrder(fields.toArray()));
-        assertThat(config, hasEntry("iss", "https://aai.egi.eu/oidc/"));
+        assertThat(config, hasEntry("issuer", "https://aai.egi.eu/oidc/"));
         assertThat(config, hasEntry("userInfoUrl", "https://aai.egi.eu/oidc/userinfo"));
         assertThat(config, hasEntry("validateSignature", "true"));
         assertThat(config, hasEntry("useJwksUrl", "true"));
