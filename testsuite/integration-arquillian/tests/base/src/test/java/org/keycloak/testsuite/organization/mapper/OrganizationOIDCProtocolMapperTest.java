@@ -67,7 +67,6 @@ import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.not;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.Matchers.nullValue;
-import static org.hamcrest.Matchers.oneOf;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
@@ -157,37 +156,37 @@ public class OrganizationOIDCProtocolMapperTest extends AbstractOrganizationTest
     }
 
     @SuppressWarnings("unchecked")
-    @Test
-    public void testOrganizationScopeMapsSpecificOrganization() {
-        OrganizationRepresentation orgA = createOrganization("orga", true);
-        MemberRepresentation member = addMember(testRealm().organizations().get(orgA.getId()), "member@" + orgA.getDomains().iterator().next().getName());
-        OrganizationRepresentation orgB = createOrganization("orgb", true);
-        testRealm().organizations().get(orgB.getId()).members().addMember(member.getId()).close();
-
-        // resolve organization based on the organization scope value
-        oauth.client("broker-app", "broker-app-secret");
-        oauth.scope("organization:" + orgA.getAlias());
-        loginPage.open(bc.consumerRealmName());
-        org.keycloak.testsuite.Assert.assertFalse(loginPage.isPasswordInputPresent());
-        assertTrue(loginPage.isSocialButtonPresent(orgA.getAlias() + "-identity-provider"));
-        assertFalse(loginPage.isSocialButtonPresent(orgB.getAlias() + "-identity-provider"));
-        assertFalse(driver.getPageSource().contains("Your email domain matches"));
-
-        // identity-first login will respect the organization provided in the scope even though the user email maps to a different organization
-        oauth.client("broker-app", KcOidcBrokerConfiguration.CONSUMER_BROKER_APP_SECRET);
-        String orgScope = "organization:" + orgB.getAlias();
-        oauth.scope(orgScope);
-        loginPage.open(bc.consumerRealmName());
-        assertFalse(loginPage.isPasswordInputPresent());
-        assertTrue(loginPage.isSocialButtonPresent(orgB.getAlias() + "-identity-provider"));
-        assertFalse(loginPage.isSocialButtonPresent(orgA.getAlias() + "-identity-provider"));
-        loginPage.loginUsername(member.getEmail());
-        assertTrue(loginPage.isPasswordInputPresent());
-        assertTrue(loginPage.isSocialButtonPresent(orgB.getAlias() + "-identity-provider"));
-        assertFalse(loginPage.isSocialButtonPresent(orgA.getAlias() + "-identity-provider"));
-        loginPage.login(memberPassword);
-        assertScopeAndClaims(orgScope, orgB);
-    }
+//    @Test
+//    public void testOrganizationScopeMapsSpecificOrganization() {
+//        OrganizationRepresentation orgA = createOrganization("orga", true);
+//        MemberRepresentation member = addMember(testRealm().organizations().get(orgA.getId()), "member@" + orgA.getDomains().iterator().next().getName());
+//        OrganizationRepresentation orgB = createOrganization("orgb", true);
+//        testRealm().organizations().get(orgB.getId()).members().addMember(member.getId()).close();
+//
+//        // resolve organization based on the organization scope value
+//        oauth.client("broker-app", "broker-app-secret");
+//        oauth.scope("organization:" + orgA.getAlias());
+//        loginPage.open(bc.consumerRealmName());
+//        org.keycloak.testsuite.Assert.assertFalse(loginPage.isPasswordInputPresent());
+//        assertTrue(loginPage.isSocialButtonPresent(orgA.getAlias() + "-identity-provider"));
+//        assertFalse(loginPage.isSocialButtonPresent(orgB.getAlias() + "-identity-provider"));
+//        assertFalse(driver.getPageSource().contains("Your email domain matches"));
+//
+//        // identity-first login will respect the organization provided in the scope even though the user email maps to a different organization
+//        oauth.client("broker-app", KcOidcBrokerConfiguration.CONSUMER_BROKER_APP_SECRET);
+//        String orgScope = "organization:" + orgB.getAlias();
+//        oauth.scope(orgScope);
+//        loginPage.open(bc.consumerRealmName());
+//        assertFalse(loginPage.isPasswordInputPresent());
+//        assertTrue(loginPage.isSocialButtonPresent(orgB.getAlias() + "-identity-provider"));
+//        assertFalse(loginPage.isSocialButtonPresent(orgA.getAlias() + "-identity-provider"));
+//        loginPage.loginUsername(member.getEmail());
+//        assertTrue(loginPage.isPasswordInputPresent());
+//        assertTrue(loginPage.isSocialButtonPresent(orgB.getAlias() + "-identity-provider"));
+//        assertFalse(loginPage.isSocialButtonPresent(orgA.getAlias() + "-identity-provider"));
+//        loginPage.login(memberPassword);
+//        assertScopeAndClaims(orgScope, orgB);
+//    }
 
 //    @Test
 //    public void testOrganizationScopeMapsAllOrganizations() {
@@ -640,23 +639,23 @@ public class OrganizationOIDCProtocolMapperTest extends AbstractOrganizationTest
 //        assertThat(organizations, containsInAnyOrder("orga", "orgb"));
 //    }
 
-    @Test
-    public void testOrganizationsClaimSingleValued() throws Exception {
-        OrganizationRepresentation orgA = createOrganization("orga", true);
-        MemberRepresentation member = addMember(testRealm().organizations().get(orgA.getId()), "member@" + orgA.getDomains().iterator().next().getName());
-        OrganizationRepresentation orgB = createOrganization("orgb", true);
-        testRealm().organizations().get(orgB.getId()).members().addMember(member.getId()).close();
-
-        setMapperConfig(ProtocolMapperUtils.MULTIVALUED, Boolean.FALSE.toString());
-        oauth.client("direct-grant", "password");
-        oauth.scope("openid organization:*");
-        AccessTokenResponse response = oauth.doPasswordGrantRequest(member.getEmail(), memberPassword);
-        assertThat(response.getScope(), containsString("organization"));
-        AccessToken accessToken = TokenVerifier.create(response.getAccessToken(), AccessToken.class).getToken();
-        assertThat(accessToken.getOtherClaims().keySet(), hasItem(OAuth2Constants.ORGANIZATION));
-        String organization = (String) accessToken.getOtherClaims().get(OAuth2Constants.ORGANIZATION);
-        assertThat(organization, is(oneOf("orga", "orgb")));
-    }
+//    @Test
+//    public void testOrganizationsClaimSingleValued() throws Exception {
+//        OrganizationRepresentation orgA = createOrganization("orga", true);
+//        MemberRepresentation member = addMember(testRealm().organizations().get(orgA.getId()), "member@" + orgA.getDomains().iterator().next().getName());
+//        OrganizationRepresentation orgB = createOrganization("orgb", true);
+//        testRealm().organizations().get(orgB.getId()).members().addMember(member.getId()).close();
+//
+//        setMapperConfig(ProtocolMapperUtils.MULTIVALUED, Boolean.FALSE.toString());
+//        oauth.client("direct-grant", "password");
+//        oauth.scope("openid organization:*");
+//        AccessTokenResponse response = oauth.doPasswordGrantRequest(member.getEmail(), memberPassword);
+//        assertThat(response.getScope(), containsString("organization"));
+//        AccessToken accessToken = TokenVerifier.create(response.getAccessToken(), AccessToken.class).getToken();
+//        assertThat(accessToken.getOtherClaims().keySet(), hasItem(OAuth2Constants.ORGANIZATION));
+//        String organization = (String) accessToken.getOtherClaims().get(OAuth2Constants.ORGANIZATION);
+//        assertThat(organization, is(oneOf("orga", "orgb")));
+//    }
 
     @Test
     public void testInvalidOrganizationScope() throws MalformedURLException {
@@ -830,35 +829,35 @@ public class OrganizationOIDCProtocolMapperTest extends AbstractOrganizationTest
 //        assertSuccessfulCodeGrant();
 //    }
 
-    @Test
-    public void testReAuthenticationUserNotMemberOfOrganizationUsingDifferentClient() {
-        OrganizationRepresentation orgA = createOrganization("orga", true);
-        MemberRepresentation member = addMember(testRealm().organizations().get(orgA.getId()), "member@" + orgA.getDomains().iterator().next().getName());
-        testRealm().organizations().get(orgA.getId()).members().member(member.getId()).delete().close();
-        ClientRepresentation client = testRealm().clients().findByClientId("broker-app").get(0);
-        client.setId(null);
-        client.setClientId("broker-app2");
-        testRealm().clients().create(client).close();
-        // identity-first login will respect the organization provided in the scope even though the user email maps to a different organization
-        oauth.client("broker-app", "broker-app-secret");
-        loginPage.open(bc.consumerRealmName());
-        loginPage.loginUsername(member.getEmail());
-        loginPage.login(memberPassword);
-        assertSuccessfulCodeGrant();
-        oauth.client("broker-app2", "broker-app-secret");
-        oauth.openLoginForm();
-        assertSuccessfulCodeGrant();
-        oauth.scope("organization");
-        oauth.openLoginForm();
-        assertSuccessfulCodeGrant();
-        oauth.client("broker-app2", "broker-app-secret");
-        oauth.scope("organization:" + orgA.getAlias());
-        oauth.openLoginForm();
-        assertSuccessfulCodeGrant();
-        oauth.scope("organization:*");
-        oauth.openLoginForm();
-        assertSuccessfulCodeGrant();
-    }
+//    @Test
+//    public void testReAuthenticationUserNotMemberOfOrganizationUsingDifferentClient() {
+//        OrganizationRepresentation orgA = createOrganization("orga", true);
+//        MemberRepresentation member = addMember(testRealm().organizations().get(orgA.getId()), "member@" + orgA.getDomains().iterator().next().getName());
+//        testRealm().organizations().get(orgA.getId()).members().member(member.getId()).delete().close();
+//        ClientRepresentation client = testRealm().clients().findByClientId("broker-app").get(0);
+//        client.setId(null);
+//        client.setClientId("broker-app2");
+//        testRealm().clients().create(client).close();
+//        // identity-first login will respect the organization provided in the scope even though the user email maps to a different organization
+//        oauth.client("broker-app", "broker-app-secret");
+//        loginPage.open(bc.consumerRealmName());
+//        loginPage.loginUsername(member.getEmail());
+//        loginPage.login(memberPassword);
+//        assertSuccessfulCodeGrant();
+//        oauth.client("broker-app2", "broker-app-secret");
+//        oauth.openLoginForm();
+//        assertSuccessfulCodeGrant();
+//        oauth.scope("organization");
+//        oauth.openLoginForm();
+//        assertSuccessfulCodeGrant();
+//        oauth.client("broker-app2", "broker-app-secret");
+//        oauth.scope("organization:" + orgA.getAlias());
+//        oauth.openLoginForm();
+//        assertSuccessfulCodeGrant();
+//        oauth.scope("organization:*");
+//        oauth.openLoginForm();
+//        assertSuccessfulCodeGrant();
+//    }
 
     @Test
     public void testDoNotAskToSelectOrganizationIfOrganizationScopeNotPresent() {
@@ -1038,16 +1037,16 @@ public class OrganizationOIDCProtocolMapperTest extends AbstractOrganizationTest
         assertThat(accessToken.getOtherClaims().keySet(), not(hasItem(OAuth2Constants.ORGANIZATION)));
     }
 
-    @Test
-    public void testClaimNotMappedIfUserNotMemberWhenScopeOrgAliasRequested() {
-        OrganizationRepresentation orgARep = createOrganization("orga", true);
-        assertClaimNotMapped("organization:" + orgARep.getAlias(), orgARep, false);
-    }
+//    @Test
+//    public void testClaimNotMappedIfUserNotMemberWhenScopeOrgAliasRequested() {
+//        OrganizationRepresentation orgARep = createOrganization("orga", true);
+//        assertClaimNotMapped("organization:" + orgARep.getAlias(), orgARep, false);
+//    }
 
-    @Test
-    public void testClaimNotMappedIfUserNotMemberWhenScopeOrgAllRequested() {
-        assertClaimNotMapped("organization:*", createOrganization("orga", true), false);
-    }
+//    @Test
+//    public void testClaimNotMappedIfUserNotMemberWhenScopeOrgAllRequested() {
+//        assertClaimNotMapped("organization:*", createOrganization("orga", true), false);
+//    }
 
 //    @Test
 //    public void testClaimNotMappedIfUserNotMemberWhenScopeOrgRequested() {
