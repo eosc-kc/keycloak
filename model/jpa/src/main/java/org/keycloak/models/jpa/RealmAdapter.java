@@ -745,8 +745,8 @@ public class RealmAdapter implements StorageProviderRealmModel, JpaModel<RealmEn
 
     @Override
     public List<String> getClaimsSupported() {
-        if (getAttribute(RealmAttributes.CLAIMS_SUPPORTED) != null) {
-            return new ArrayList<String>(Arrays.asList(getAttribute(RealmAttributes.CLAIMS_SUPPORTED).split(",")));
+        if (getAttribute(Constants.CLAIMS_SUPPORTED) != null) {
+            return new ArrayList<String>(Arrays.asList(getAttribute(Constants.CLAIMS_SUPPORTED).split(",")));
         } else {
             return null;
         }
@@ -754,7 +754,7 @@ public class RealmAdapter implements StorageProviderRealmModel, JpaModel<RealmEn
 
     @Override
     public void setClaimsSupported(List<String> claimsSupported) {
-        setAttribute(RealmAttributes.CLAIMS_SUPPORTED, claimsSupported.stream().collect(Collectors.joining(",")));
+        setAttribute(Constants.CLAIMS_SUPPORTED, claimsSupported.stream().collect(Collectors.joining(",")));
     }
 
     protected RequiredCredentialModel initRequiredCredentialModel(String type) {
