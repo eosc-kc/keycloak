@@ -14,6 +14,7 @@ import org.keycloak.events.admin.OperationType;
 import org.keycloak.events.admin.ResourceType;
 import org.keycloak.models.BrowserSecurityHeaders;
 import org.keycloak.models.CibaConfig;
+import org.keycloak.models.Constants;
 import org.keycloak.models.OAuth2DeviceConfig;
 import org.keycloak.models.OTPPolicy;
 import org.keycloak.models.ParConfig;
@@ -64,7 +65,7 @@ public class RealmAttributesTest extends AbstractRealmTest {
                 OAuth2DeviceConfig.OAUTH2_DEVICE_CODE_LIFESPAN,
                 OAuth2DeviceConfig.OAUTH2_DEVICE_POLLING_INTERVAL,
                 ParConfig.PAR_REQUEST_URI_LIFESPAN,
-                RealmAttributes.CLAIMS_SUPPORTED
+                Constants.CLAIMS_SUPPORTED
         );
 
         // This attribute is represented in Legacy store as attribute and for Map store as a field
