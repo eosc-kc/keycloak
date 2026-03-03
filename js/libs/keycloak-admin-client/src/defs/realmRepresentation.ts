@@ -145,6 +145,7 @@ export default interface RealmRepresentation {
   openIdFederationEntityTypes?: EntityTypesSupported[];
   openIdFederationOPClientRegistrationTypesSupported?: ClientRegistrationTypesSupported[];
   openIdFederationRPClientRegistrationTypesSupported?: ClientRegistrationTypesSupported[];
+  claimsSupported?:string[];
 }
 
 export type ClientRegistrationTypesSupported = "EXPLICIT" | "AUTOMATIC";
