@@ -208,6 +208,7 @@ public class ModelToRepresentation {
         REALM_EXCLUDED_ATTRIBUTES.add("verifiableCredentialsEnabled");
         REALM_EXCLUDED_ATTRIBUTES.add("adminPermissionsEnabled");
         REALM_EXCLUDED_ATTRIBUTES.add("adminPermissionsClientId");
+        REALM_EXCLUDED_ATTRIBUTES.add("scimEnabled");
 
         REALM_EXCLUDED_ATTRIBUTES.add(Constants.OPENID_FEDERATION_ENABLED);
         REALM_EXCLUDED_ATTRIBUTES.add(Constants.OPENID_FEDERATION_CONTACTS);
@@ -534,6 +535,7 @@ public class ModelToRepresentation {
         rep.setOrganizationsEnabled(realm.isOrganizationsEnabled());
         rep.setAdminPermissionsEnabled(realm.isAdminPermissionsEnabled());
         rep.setVerifiableCredentialsEnabled(realm.isVerifiableCredentialsEnabled());
+        rep.setScimEnabled(realm.isScimEnabled());
         rep.setDefaultSignatureAlgorithm(realm.getDefaultSignatureAlgorithm());
         rep.setRevokeRefreshToken(realm.isRevokeRefreshToken());
         rep.setRefreshTokenMaxReuse(realm.getRefreshTokenMaxReuse());

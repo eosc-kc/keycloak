@@ -259,6 +259,8 @@ public class RealmRepresentation {
     @Deprecated
     protected List<ClientTemplateRepresentation> clientTemplates;
 
+    private Boolean scimEnabled;
+
     public String getId() {
         return id;
     }
@@ -1656,6 +1658,14 @@ public class RealmRepresentation {
             organizations = new ArrayList<>();
         }
         organizations.add(org);
+    }
+
+    public void setScimEnabled(Boolean scimEnabled) {
+        this.scimEnabled = scimEnabled;
+    }
+
+    public Boolean isScimEnabled() {
+        return scimEnabled;
     }
 
     public enum BruteForceStrategy {

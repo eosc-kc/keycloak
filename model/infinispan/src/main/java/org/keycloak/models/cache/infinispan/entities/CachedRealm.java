@@ -80,6 +80,7 @@ public class CachedRealm extends AbstractExtendableRevisioned {
     protected boolean organizationsEnabled;
     protected boolean adminPermissionsEnabled;
     protected boolean verifiableCredentialsEnabled;
+    protected boolean scimEnabled;
     //--- brute force settings
     protected boolean bruteForceProtected;
     protected boolean permanentLockout;
@@ -202,6 +203,7 @@ public class CachedRealm extends AbstractExtendableRevisioned {
         organizationsEnabled = model.isOrganizationsEnabled();
         adminPermissionsEnabled = model.isAdminPermissionsEnabled();
         verifiableCredentialsEnabled = model.isVerifiableCredentialsEnabled();
+        scimEnabled = model.isScimEnabled();
         //--- brute force settings
         bruteForceProtected = model.isBruteForceProtected();
         permanentLockout = model.isPermanentLockout();
@@ -792,4 +794,8 @@ public class CachedRealm extends AbstractExtendableRevisioned {
     public List<String> getClaimsSupported() {
         return claimsSupported;
     }
+
+     public boolean isScimEnabled() {
+        return scimEnabled;
+     }
 }
