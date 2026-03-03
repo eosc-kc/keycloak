@@ -197,6 +197,8 @@ public final class Constants {
     public static final String OPENID_FEDERATION_RESOLVE_ENDPOINT = "openIdFederationResolveEndpoint";
     public static final String OPENID_FEDERATION_HISTORICAL_KEYS_ENDPOINT = "openIdFederationHistoricalKeysEndpoint";
 
+    public static final String CLAIMS_SUPPORTED = "claimsSupported";
+
     public static final String SESSION_NOTE_LIGHTWEIGHT_USER = "keycloak.userModel";
 
     public static final String USE_LIGHTWEIGHT_ACCESS_TOKEN_ENABLED = "client.use.lightweight.access.token.enabled";
