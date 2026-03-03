@@ -26,14 +26,33 @@ export const OpenIdEndpointConfigurationTab = ({
   const { t } = useTranslation();
 
   const [newClaim, setNewClaim] = useState("");
-  const { control, handleSubmit, setValue } = useForm<RealmRepresentation>();
+  const { control, handleSubmit, setValue, reset } =
+    useForm<RealmRepresentation>();
 
   const setupForm = () => {
-    const attributes = realm.attributes || {};
-    setValue("attributes", attributes);
+    reset({
+      ...realm,
+      claimsSupported: realm.claimsSupported || [],
+    });
+    setNewClaim("");
   };
 
-  useEffect(setupForm, []);
+  useEffect(() => {
+    setupForm();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [realm]);
+
+  const onSubmit = (form: RealmRepresentation) => {
+    // Make sure we filter out empty strings
+    const cleanedClaims =
+      form.claimsSupported?.map((c) => c.trim()).filter(Boolean) || [];
+
+    save({
+      ...realm,
+      ...form,
+      claimsSupported: cleanedClaims,
+    });
+  };
 
   return (
     <PageSection variant="light">
@@ -41,7 +60,7 @@ export const OpenIdEndpointConfigurationTab = ({
         isHorizontal
         role="manage-realm"
         className="pf-u-mt-lg"
-        onSubmit={handleSubmit(save)}
+        onSubmit={handleSubmit(onSubmit)}
       >
         <FormGroup
           label={t("claimsSupported")}
@@ -54,43 +73,38 @@ export const OpenIdEndpointConfigurationTab = ({
           }
         >
           <Controller
-            name="attributes"
+            name="claimsSupported"
             control={control}
+            defaultValue={realm.claimsSupported || []}
             render={({ field }) => {
-              const claimsSupported = field.value?.claimsSupported?.trim()
-                ? field.value.claimsSupported.split(",")
-                : [];
+              const claimsSupported = field.value || [];
+
               return (
                 <>
-                  {claimsSupported
-                    .filter(Boolean)
-                    .map((claim: string, index: number) => (
-                      <InputGroup key={index}>
-                        <TextInput
-                          value={claim}
-                          onChange={(value) => {
-                            const attributes = field.value || {};
-                            claimsSupported[index] = value;
-                            attributes.claimsSupported =
-                              claimsSupported.join(",");
-                            field.onChange(attributes);
-                          }}
-                          aria-label={t("edit-claim-input")}
-                        />
-                        <Button
-                          icon={<MinusIcon />}
-                          aria-label={t("remove-claim-button")}
-                          onClick={() => {
-                            const attributes = field.value || {};
-                            claimsSupported.splice(index, 1);
-                            attributes.claimsSupported =
-                              claimsSupported.join(",");
-                            field.onChange(attributes);
-                          }}
-                          variant="control"
-                        />
-                      </InputGroup>
-                    ))}
+                  {claimsSupported.map((claim: string, index: number) => (
+                    <InputGroup key={index}>
+                      <TextInput
+                        value={claim}
+                        onChange={(_event, value) => {
+                          const updated = [...claimsSupported];
+                          updated[index] = value;
+                          field.onChange(updated);
+                        }}
+                        aria-label={t("edit-claim-input")}
+                      />
+                      <Button
+                        icon={<MinusIcon />}
+                        aria-label={t("remove-claim-button")}
+                        onClick={() => {
+                          const updated = claimsSupported.filter(
+                            (_c, i) => i !== index,
+                          );
+                          field.onChange(updated);
+                        }}
+                        variant="control"
+                      />
+                    </InputGroup>
+                  ))}
                   <InputGroup>
                     <TextInput
                       value={newClaim}
@@ -103,13 +117,11 @@ export const OpenIdEndpointConfigurationTab = ({
                       icon={<PlusIcon />}
                       aria-label={t("add-claim-button")}
                       onClick={() => {
-                        if (newClaim) {
-                          const attributes = field.value || {};
-                          claimsSupported.push(newClaim);
-                          attributes.claimsSupported =
-                            claimsSupported.join(",");
+                        const trimmed = newClaim.trim();
+                        if (trimmed) {
+                          const updated = [...claimsSupported, trimmed];
                           setNewClaim("");
-                          field.onChange(attributes);
+                          field.onChange(updated);
                         }
                       }}
                       variant="control"
@@ -130,7 +142,12 @@ export const OpenIdEndpointConfigurationTab = ({
           >
             {t("save")}
           </Button>
-          <Button variant="link" onClick={setupForm}>
+          <Button
+            variant="link"
+            onClick={() => {
+              setupForm();
+            }}
+          >
             {t("revert")}
           </Button>
         </ActionGroup>
