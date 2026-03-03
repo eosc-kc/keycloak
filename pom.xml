@@ -41,7 +41,7 @@
         <maven.compiler.target>17</maven.compiler.target>
         <maven.compiler.release>17</maven.compiler.release>
 
-        <project.version.npm>26.5.2</project.version.npm>
+        <project.version.npm>26.5.4</project.version.npm>
         <eosc-kc.version>${project.version}-1.0rc5</eosc-kc.version>
 
         <asciidoctor.plugin.version>1.5.8</asciidoctor.plugin.version>
@@ -309,6 +309,7 @@
         <module>test-framework</module>
         <module>tests</module>
         <module>quarkus</module>
+        <module>scim</module>
     </modules>
 
     <dependencyManagement>
@@ -1345,6 +1346,27 @@
 <!--                <version>${nimbus-jose-jwt.version}</version>-->
 <!--            </dependency>-->
 
+            <!-- SCIM -->
+            <dependency>
+                <groupId>org.keycloak</groupId>
+                <artifactId>keycloak-scim-core</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.keycloak</groupId>
+                <artifactId>keycloak-scim-client</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.keycloak</groupId>
+                <artifactId>keycloak-scim-services</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.keycloak</groupId>
+                <artifactId>keycloak-scim-model</artifactId>
+                <version>${project.version}</version>
+            </dependency>
         </dependencies>
     </dependencyManagement>
 
