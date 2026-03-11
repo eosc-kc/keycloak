@@ -105,7 +105,6 @@ public class AutoUpdateIdentityProviderTest extends AbstractAdminTest {
                 "loginHint",
                 "idpEntityId",
                 "entityAttributes",
-                "hideOnLoginPage",
                 "metadataDescriptorUrl"
         ));
 
