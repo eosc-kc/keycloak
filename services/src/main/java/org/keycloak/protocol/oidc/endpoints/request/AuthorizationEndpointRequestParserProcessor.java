@@ -20,6 +20,7 @@ package org.keycloak.protocol.oidc.endpoints.request;
 import java.io.InputStream;
 import java.util.HashSet;
 import java.util.List;
+import java.util.stream.Stream;
 
 import jakarta.ws.rs.core.MultivaluedMap;
 import jakarta.ws.rs.core.Response;
@@ -184,6 +185,20 @@ public class AuthorizationEndpointRequestParserProcessor {
         }
 
         return request;
+    }
+
+    public static boolean hasScope(EventBuilder event, KeycloakSession session, MultivaluedMap<String, String> requestParams, String scope) {
+        List<String> scopeParam = requestParams.get(OIDCLoginProtocol.SCOPE_PARAM);
+        if (scopeParam != null && scopeParam.size() == 1) {
+            String[] scopes = scopeParam.get(0).split(" ");
+            return Stream.of(scopes).anyMatch(c -> {
+                return c.toLowerCase().equals(scope);
+            });
+        } else {
+            logger.warnf("Parameter 'scope' not present or present multiple times in the HTTP request parameters");
+            event.error(Errors.INVALID_REQUEST);
+            throw new ErrorPageException(session, Response.Status.BAD_REQUEST, Messages.INVALID_REQUEST);
+        }
     }
 
     public static String getClientId(EventBuilder event, KeycloakSession session, MultivaluedMap<String, String> requestParams) {

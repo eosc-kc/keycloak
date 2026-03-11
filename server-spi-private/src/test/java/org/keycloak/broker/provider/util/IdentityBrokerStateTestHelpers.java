@@ -1033,6 +1033,16 @@ public class IdentityBrokerStateTestHelpers {
         }
 
         @Override
+        public String getIssuer() {
+            return null;
+        }
+
+        @Override
+        public void setIssuer(String issuer) {
+
+        }
+
+        @Override
         public List<String> getClaimsSupported() {
             return null;
         }

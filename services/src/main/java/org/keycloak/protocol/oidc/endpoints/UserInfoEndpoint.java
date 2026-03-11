@@ -19,7 +19,11 @@ package org.keycloak.protocol.oidc.endpoints;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.security.Key;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
+import java.util.Date;
 import java.util.Map;
+import java.util.UUID;
 
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.OPTIONS;
@@ -56,6 +60,7 @@ import org.keycloak.keys.loader.PublicKeyStorageManager;
 import org.keycloak.models.AuthenticatedClientSessionModel;
 import org.keycloak.models.ClientModel;
 import org.keycloak.models.ClientSessionContext;
+import org.keycloak.models.Constants;
 import org.keycloak.models.KeycloakSession;
 import org.keycloak.models.RealmModel;
 import org.keycloak.models.UserModel;
@@ -300,6 +305,15 @@ public class UserInfoEndpoint {
             String audience = clientModel.getClientId();
             claims.put("iss", issuerUrl);
             claims.put("aud", audience);
+            if (realm.getAttribute(Constants.ISHARE_ENABLED, false) && clientModel.getAttribute(Constants.ISHARE_ENABLED) != null &&
+                    Boolean.valueOf(clientModel.getAttribute(Constants.ISHARE_ENABLED))){
+                claims.put("jti", UUID.randomUUID().toString());
+
+                Instant now = Instant.now();
+                claims.put("iat", now.getEpochSecond());
+                claims.put("nbf", now.getEpochSecond());
+                claims.put("exp", Date.from(now.plus(30L, ChronoUnit.SECONDS)).getTime() / 1000);
+            }
 
             String signatureAlgorithm = session.tokens().signatureAlgorithm(TokenCategory.USERINFO);
 
