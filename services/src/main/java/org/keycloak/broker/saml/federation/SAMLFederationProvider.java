@@ -712,9 +712,10 @@ public class SAMLFederationProvider implements FederationProvider {
                 }
             }
             identityProviderModel.getConfig().put(SAMLIdentityProviderConfig.ENTITY_ATTRIBUTES, JsonSerialization.writeValueAsString(entityAttributes));
-            identityProviderModel.getConfig().put("hideOnLoginPage", hideOnLoginPage.toString());
+            identityProviderModel.setHideOnLogin(hideOnLoginPage);
         } else {
             identityProviderModel.getConfig().remove(SAMLIdentityProviderConfig.ENTITY_ATTRIBUTES);
+            identityProviderModel.setHideOnLogin(false);
         }
     }
 
