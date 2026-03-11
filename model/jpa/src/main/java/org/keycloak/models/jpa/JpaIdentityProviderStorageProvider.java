@@ -343,7 +343,20 @@ public class JpaIdentityProviderStorageProvider implements IdentityProviderStora
             }
         }
 
-        cq.orderBy(builder.asc(idp.get(ALIAS)));
+
+        MapJoin<IdentityProviderEntity, String, String> configJoin = idp.joinMap("config", JoinType.LEFT);
+        configJoin.on(builder.equal(configJoin.key(), "guiOrder"));
+        Expression<String> guiOrderValue = configJoin.value();
+        Expression<Integer> nullPriority = builder.selectCase()
+                .when(builder.isNull(guiOrderValue), 1)
+                .otherwise(0)
+                .as(Integer.class);
+        cq.orderBy(
+                builder.asc(nullPriority),
+                builder.asc(guiOrderValue.as(Integer.class)),
+                builder.asc(idp.get("alias"))
+        );
+
         TypedQuery<IdentityProviderEntity> typedQuery = em.createQuery(cq.select(idp).where(predicates.toArray(Predicate[]::new)));
         return closing(paginateQuery(typedQuery, first, max).getResultStream()).map(this::toModel);
     }
