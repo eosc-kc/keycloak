@@ -70,7 +70,6 @@ public class SAMLIdentityProviderConfig extends IdentityProviderModel {
     public static final String WANT_AUTHN_REQUESTS_SIGNED = "wantAuthnRequestsSigned";
     public static final String WANT_LOGOUT_REQUESTS_SIGNED = "wantLogoutRequestsSigned";
     public static final String XML_SIG_KEY_INFO_KEY_NAME_TRANSFORMER = "xmlSigKeyInfoKeyNameTransformer";
-    public static final String ENABLED_FROM_METADATA  = "enabledFromMetadata";
     public static final String AUTHN_CONTEXT_COMPARISON_TYPE = "authnContextComparisonType";
     public static final String AUTHN_CONTEXT_CLASS_REFS = "authnContextClassRefs";
     public static final String AUTHN_CONTEXT_DECL_REFS = "authnContextDeclRefs";

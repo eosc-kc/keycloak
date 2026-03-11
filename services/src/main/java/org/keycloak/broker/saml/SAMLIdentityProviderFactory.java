@@ -189,7 +189,6 @@ public class SAMLIdentityProviderFactory extends AbstractIdentityProviderFactory
                         samlIdentityProviderConfig.setEntityAttributes(null);
                     }
                     samlIdentityProviderConfig.setHideOnLogin(hideOnLogin);
-                    samlIdentityProviderConfig.getConfig().put(IdentityProviderModel.LEGACY_HIDE_ON_LOGIN_ATTR, String.valueOf(hideOnLogin));
                     return samlIdentityProviderConfig;
             }
         } catch (ParsingException pe) {
