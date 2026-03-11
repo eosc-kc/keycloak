@@ -169,7 +169,7 @@ export const AdvancedSettings = ({
         fieldType="boolean"
       />
       <SwitchField
-        field="config.hideOnLogin"
+        field="hideOnLogin"
         label="hideOnLoginPage"
         fieldType="boolean"
       />
