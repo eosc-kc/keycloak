@@ -351,10 +351,11 @@ public class JpaIdentityProviderStorageProvider implements IdentityProviderStora
                 .when(builder.isNull(guiOrderValue), 1)
                 .otherwise(0)
                 .as(Integer.class);
+        Expression<Integer> numericOrder = builder.coalesce(guiOrderValue, "0").as(Integer.class);
         cq.orderBy(
                 builder.asc(nullPriority),
-                builder.asc(guiOrderValue.as(Integer.class)),
-                builder.asc(idp.get("alias"))
+                builder.asc(numericOrder),
+                builder.asc(idp.get(ALIAS))
         );
 
         TypedQuery<IdentityProviderEntity> typedQuery = em.createQuery(cq.select(idp).where(predicates.toArray(Predicate[]::new)));
