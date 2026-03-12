@@ -99,6 +99,7 @@ public class AuthenticationFlowCallbackProviderTest extends AbstractTestRealmKey
                                         config -> {
                                             config.getConfig().put(ConditionalLoaAuthenticator.LEVEL, "1");
                                             config.getConfig().put(ConditionalLoaAuthenticator.MAX_AGE, String.valueOf(ConditionalLoaAuthenticator.DEFAULT_MAX_AGE));
+                                            config.getConfig().put(ConditionalLoaAuthenticator.OVERRIDEN_LOA, "true");
                                         })
                                 .addAuthenticatorExecution(AuthenticationExecutionModel.Requirement.REQUIRED, AllowAccessAuthenticatorFactory.PROVIDER_ID)
                         )
