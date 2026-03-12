@@ -36,7 +36,7 @@ import org.jboss.logging.Logger;
 public class ConditionalLoaAuthenticator implements ConditionalAuthenticator, AuthenticationFlowCallback {
     public static final String LEVEL = "loa-condition-level";
     public static final String MAX_AGE = "loa-max-age";
-    public static final String CHECK_REQUIRED_LOA = "check-required-loa";
+    public static final String OVERRIDEN_LOA = "overriden-loa";
     public static final int DEFAULT_MAX_AGE = 36000; // 10 days
 
     // Only for backwards compatibility with Keycloak 17
@@ -72,7 +72,7 @@ public class ConditionalLoaAuthenticator implements ConditionalAuthenticator, Au
             int maxAge = getMaxAge(context);
             boolean previouslyAuthenticated = (acrStore.isLevelAuthenticatedInPreviousAuth(configuredLoa, maxAge));
             if (previouslyAuthenticated) {
-                if (currentAuthenticationLoa < configuredLoa) {
+                if (Boolean.valueOf(context.getAuthenticatorConfig().getConfig().get(OVERRIDEN_LOA)) && currentAuthenticationLoa < configuredLoa) {
                     acrStore.setLevelAuthenticatedToCurrentRequest(configuredLoa);
                 }
             }
@@ -93,11 +93,7 @@ public class ConditionalLoaAuthenticator implements ConditionalAuthenticator, Au
             return;
         }
         int currentAuthenticationLoa = acrStore.getLevelOfAuthenticationFromCurrentAuthentication();
-        if (Boolean.valueOf(context.getAuthenticatorConfig().getConfig().get(CHECK_REQUIRED_LOA)) && acrStore.isLevelOfAuthenticationForced() && !acrStore.isLevelOfAuthenticationSatisfiedFromCurrentAuthentication(context.getTopLevelFlow()) ){
-            //if it is set check for forced level based on current authenticator loa (mainly IdP return) => else return error
-            throwAuthenticationErrorForForcedLoa(acrStore, newLoa);
-        }
-        if (currentAuthenticationLoa < newLoa) {
+        if (Boolean.valueOf(context.getAuthenticatorConfig().getConfig().get(OVERRIDEN_LOA)) && currentAuthenticationLoa < newLoa) {
             int maxAge = getMaxAge(context);
             if (maxAge == 0) {
                 logger.tracef("Skip updating authenticated level '%d' in condition '%s' for future authentications due max-age set to 0", newLoa, context.getAuthenticatorConfig().getAlias());
@@ -108,6 +104,10 @@ public class ConditionalLoaAuthenticator implements ConditionalAuthenticator, Au
                 acrStore.setLevelAuthenticated(newLoa);
             }
         }
+//        if (acrStore.isLevelOfAuthenticationForced() && !acrStore.isLevelOfAuthenticationSatisfiedFromCurrentAuthentication(context.getTopLevelFlow()) ){
+//            //if it is set check for forced level based on current authenticator loa (mainly IdP return) => else return error
+//            throwAuthenticationErrorForForcedLoa(acrStore, newLoa);
+//        }
     }
 
     @Override

@@ -455,6 +455,7 @@ public class AuthenticationMethodReferenceTest extends AbstractOIDCScopeTest{
                                     config -> {
                                         config.getConfig().put(ConditionalLoaAuthenticator.LEVEL, "1");
                                         config.getConfig().put(ConditionalLoaAuthenticator.MAX_AGE, String.valueOf(60));
+                                        config.getConfig().put(ConditionalLoaAuthenticator.OVERRIDEN_LOA, "true");
                                     });
 
                             // username input for level 1
@@ -467,6 +468,7 @@ public class AuthenticationMethodReferenceTest extends AbstractOIDCScopeTest{
                                     config -> {
                                         config.getConfig().put(ConditionalLoaAuthenticator.LEVEL, "2");
                                         config.getConfig().put(ConditionalLoaAuthenticator.MAX_AGE, String.valueOf(60));
+                                        config.getConfig().put(ConditionalLoaAuthenticator.OVERRIDEN_LOA, "true");
                                     });
 
                             // password required for level 2

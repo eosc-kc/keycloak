@@ -53,10 +53,11 @@ public class ConditionalLoaAuthenticatorFactory implements ConditionalAuthentica
             .defaultValue(ConditionalLoaAuthenticator.DEFAULT_MAX_AGE) // 10 hours
             .add()
             .property()
-            .name(ConditionalLoaAuthenticator.CHECK_REQUIRED_LOA)
-            .label(ConditionalLoaAuthenticator.CHECK_REQUIRED_LOA)
-            .helpText(ConditionalLoaAuthenticator.CHECK_REQUIRED_LOA + ".tooltip")
+            .name(ConditionalLoaAuthenticator.OVERRIDEN_LOA)
+            .label(ConditionalLoaAuthenticator.OVERRIDEN_LOA)
+            .helpText(ConditionalLoaAuthenticator.OVERRIDEN_LOA + ".tooltip")
             .type(ProviderConfigProperty.BOOLEAN_TYPE)
+            .defaultValue(Boolean.TRUE)
             .add()
             .build();
 
