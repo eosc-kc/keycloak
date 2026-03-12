@@ -222,6 +222,7 @@ public class LevelOfAssuranceFlowTest extends AbstractChangeImportedUserPassword
                                     config -> {
                                         config.getConfig().put(ConditionalLoaAuthenticator.LEVEL, "1");
                                         config.getConfig().put(ConditionalLoaAuthenticator.MAX_AGE, String.valueOf(maxAge1));
+                                        config.getConfig().put(ConditionalLoaAuthenticator.OVERRIDEN_LOA, "true");
                                     });
 
                             // username input for level 1
@@ -234,6 +235,7 @@ public class LevelOfAssuranceFlowTest extends AbstractChangeImportedUserPassword
                                     config -> {
                                         config.getConfig().put(ConditionalLoaAuthenticator.LEVEL, "2");
                                         config.getConfig().put(ConditionalLoaAuthenticator.MAX_AGE, String.valueOf(maxAge2));
+                                        config.getConfig().put(ConditionalLoaAuthenticator.OVERRIDEN_LOA, "true");
                                     });
 
                             // password required for level 2
@@ -246,6 +248,7 @@ public class LevelOfAssuranceFlowTest extends AbstractChangeImportedUserPassword
                                     config -> {
                                         config.getConfig().put(ConditionalLoaAuthenticator.LEVEL, "3");
                                         config.getConfig().put(ConditionalLoaAuthenticator.MAX_AGE, String.valueOf(maxAge3));
+                                        config.getConfig().put(ConditionalLoaAuthenticator.OVERRIDEN_LOA, "true");
                                     });
 
                             // simply push button for level 3
@@ -727,6 +730,7 @@ public class LevelOfAssuranceFlowTest extends AbstractChangeImportedUserPassword
                                     config -> {
                                         config.getConfig().put(ConditionalLoaAuthenticator.LEVEL, "1");
                                         config.getConfig().put(ConditionalLoaAuthenticator.STORE_IN_USER_SESSION, "true");
+                                        config.getConfig().put(ConditionalLoaAuthenticator.OVERRIDEN_LOA, "true");
                                     });
 
                             // username input for level 1
@@ -739,6 +743,7 @@ public class LevelOfAssuranceFlowTest extends AbstractChangeImportedUserPassword
                                     config -> {
                                         config.getConfig().put(ConditionalLoaAuthenticator.LEVEL, "2");
                                         config.getConfig().put(ConditionalLoaAuthenticator.STORE_IN_USER_SESSION, "false");
+                                        config.getConfig().put(ConditionalLoaAuthenticator.OVERRIDEN_LOA, "true");
                                     });
 
                             // password required for level 2
@@ -751,6 +756,7 @@ public class LevelOfAssuranceFlowTest extends AbstractChangeImportedUserPassword
                                     config -> {
                                         config.getConfig().put(ConditionalLoaAuthenticator.LEVEL, "3");
                                         config.getConfig().put(ConditionalLoaAuthenticator.STORE_IN_USER_SESSION, "false");
+                                        config.getConfig().put(ConditionalLoaAuthenticator.OVERRIDEN_LOA, "true");
                                     });
 
                             // simply push button for level 3
