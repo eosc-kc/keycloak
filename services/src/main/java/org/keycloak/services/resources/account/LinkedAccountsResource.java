@@ -150,7 +150,7 @@ public class LinkedAccountsResource {
             Map<String, String> searchOptions = Map.of(
                     IdentityProviderModel.ENABLED, "true",
                     IdentityProviderModel.ORGANIZATION_ID, "",
-                    IdentityProviderModel.SEARCH, search == null ? "" : search,
+                    IdentityProviderModel.SEARCH, search == null ? "" : (search.startsWith("*") ? search : "*" + search),
                     IdentityProviderModel.ALIAS_NOT_IN, fedAliasesToExclude,
 					IdentityProviderModel.SHOW_IN_ACCOUNT_CONSOLE, IdentityProviderShowInAccountConsole.ALWAYS.name());
 

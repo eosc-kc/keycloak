@@ -57,6 +57,7 @@ public class ConditionalLoaAuthenticatorFactory implements ConditionalAuthentica
             .label(ConditionalLoaAuthenticator.OVERRIDEN_LOA)
             .helpText(ConditionalLoaAuthenticator.OVERRIDEN_LOA + ".tooltip")
             .type(ProviderConfigProperty.BOOLEAN_TYPE)
+            .defaultValue(Boolean.TRUE)
             .add()
             .build();
 

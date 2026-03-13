@@ -159,7 +159,6 @@ public class LinkedAccountsRestServiceTest extends AbstractTestRealmKeycloakTest
 	}
 
     @Test
-
     public void testBuildLinkedAccountUri() throws IOException {
         AccountLinkUriRepresentation rep = SimpleHttpDefault.doGet(getAccountUrl("linked-accounts/github?redirectUri=phonyUri"), client)
                                        .auth(tokenUtil.getToken())
@@ -248,7 +247,7 @@ public class LinkedAccountsRestServiceTest extends AbstractTestRealmKeycloakTest
 
         linkedAccountAliases = accounts.stream().map(LinkedAccountRepresentation::getProviderAlias).toList();
         // the unlinked accounts are ordered by alias, not gui order (this test needs to be adjusted if the model is fixed to order by gui order)
-        assertThat(linkedAccountAliases, contains("bitbucket", "facebook", "microsoft", "myoidc", "twitter"));
+        assertThat(linkedAccountAliases, contains("myoidc", "twitter", "facebook", "bitbucket", "microsoft"));
         for (LinkedAccountRepresentation account : accounts) {
             assertFalse(account.isConnected());
         }
@@ -257,24 +256,24 @@ public class LinkedAccountsRestServiceTest extends AbstractTestRealmKeycloakTest
         accounts = linkedAccountsRep("linked=false&first=0&max=3");
         assertEquals(3, accounts.size());
         linkedAccountAliases = accounts.stream().map(LinkedAccountRepresentation::getProviderAlias).toList();
-        assertThat(linkedAccountAliases, contains("bitbucket", "facebook", "microsoft"));
+        assertThat(linkedAccountAliases, contains("myoidc", "twitter", "facebook"));
 
         accounts = linkedAccountsRep("linked=false&first=3&max=3");
         assertEquals(2, accounts.size());
         linkedAccountAliases = accounts.stream().map(LinkedAccountRepresentation::getProviderAlias).toList();
-        assertThat(linkedAccountAliases, contains("myoidc", "twitter"));
+        assertThat(linkedAccountAliases, contains("bitbucket", "microsoft"));
 
         // now use a search string to filter the results.
         accounts = linkedAccountsRep("linked=false&search=*o*");
         assertEquals(3, accounts.size());
         linkedAccountAliases = accounts.stream().map(LinkedAccountRepresentation::getProviderAlias).toList();
-        assertThat(linkedAccountAliases, contains("facebook", "microsoft", "myoidc"));
+        assertThat(linkedAccountAliases, contains("myoidc", "facebook", "microsoft"));
 
         // finally use the search string with pagination.
         accounts = linkedAccountsRep("linked=false&search=*o*&first=1&max=1");
         assertEquals(1, accounts.size());
         linkedAccountAliases = accounts.stream().map(LinkedAccountRepresentation::getProviderAlias).toList();
-        assertThat(linkedAccountAliases, contains("microsoft"));
+        assertThat(linkedAccountAliases, contains("facebook"));
 
         //search based on display name
         accounts = linkedAccountsRep("linked=false&search=*c-id*");

@@ -93,10 +93,6 @@ public class ConditionalLoaAuthenticator implements ConditionalAuthenticator, Au
             return;
         }
         int currentAuthenticationLoa = acrStore.getLevelOfAuthenticationFromCurrentAuthentication();
-        if (acrStore.isLevelOfAuthenticationForced() && !acrStore.isLevelOfAuthenticationSatisfiedFromCurrentAuthentication(context.getTopLevelFlow()) ){
-            //if it is set check for forced level based on current authenticator loa (mainly IdP return) => else return error
-            throwAuthenticationErrorForForcedLoa(acrStore, newLoa);
-        }
         if (Boolean.valueOf(context.getAuthenticatorConfig().getConfig().get(OVERRIDEN_LOA)) && currentAuthenticationLoa < newLoa) {
             int maxAge = getMaxAge(context);
             if (maxAge == 0) {
@@ -108,6 +104,10 @@ public class ConditionalLoaAuthenticator implements ConditionalAuthenticator, Au
                 acrStore.setLevelAuthenticated(newLoa);
             }
         }
+//        if (acrStore.isLevelOfAuthenticationForced() && !acrStore.isLevelOfAuthenticationSatisfiedFromCurrentAuthentication(context.getTopLevelFlow()) ){
+//            //if it is set check for forced level based on current authenticator loa (mainly IdP return) => else return error
+//            throwAuthenticationErrorForForcedLoa(acrStore, newLoa);
+//        }
     }
 
     @Override
