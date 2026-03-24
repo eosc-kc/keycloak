@@ -1,0 +1,26 @@
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.1.xsd">
+
+    <changeSet author="eosc-kc" id="client-scope-attribute">
+        <sql>
+            INSERT INTO CLIENT_SCOPE_ATTRIBUTES (SCOPE_ID, NAME, VALUE)
+            SELECT
+            SCOPE_ID,
+            'include.in.openid.provider.metadata',
+            CASE
+            WHEN VALUE = 'true' THEN 'false'
+            ELSE 'true'
+            END
+            FROM CLIENT_SCOPE_ATTRIBUTES AS CSA
+            WHERE NAME = 'hide.from.openID.provider.metadata'
+            AND NOT EXISTS (
+            SELECT 1
+            FROM CLIENT_SCOPE_ATTRIBUTES
+            WHERE NAME = 'include.in.openid.provider.metadata'
+            AND SCOPE_ID = CSA.SCOPE_ID
+            );
+
+            DELETE FROM CLIENT_SCOPE_ATTRIBUTES
+            WHERE NAME = 'hide.from.openID.provider.metadata';
+        </sql>
+    </changeSet>
+</databaseChangeLog>
