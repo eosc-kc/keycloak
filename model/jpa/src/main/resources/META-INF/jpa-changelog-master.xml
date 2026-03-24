@@ -101,5 +101,6 @@
     <include file="META-INF/jpa-changelog-text.xml"/>
     <include file="META-INF/jpa-changelog-openid-federation.xml"/>
     <include file="META-INF/jpa-changelog-terms.xml"/>
+    <include file="META-INF/jpa-changelog-client-scope.xml"/>
 
 </databaseChangeLog>
