@@ -120,8 +120,8 @@ public abstract class AbstractClientRegistrationProvider implements ClientRegist
         ClientRepresentation client = DescriptionConverter.toInternal(session, clientOIDC);
         event.detail(Details.REQUESTED_SCOPES, clientOIDC.getScope());        
         if (clientOIDC.getScope() != null) {
-            ClientModel oldClient = session.getContext().getRealm().getClientById(clientOIDC.getClientId());
-            Collection<String> defaultClientScopes = oldClient.getClientScopes(true).keySet();
+            ClientModel oldClient = session.getContext().getRealm().getClientByClientId(client.getClientId());
+            Collection<String> defaultClientScopes = oldClient.getClientScopes(true) != null ? oldClient.getClientScopes(true).keySet() : new HashSet<>();
             client.setDefaultClientScopes(new ArrayList<>(defaultClientScopes));
         }
 

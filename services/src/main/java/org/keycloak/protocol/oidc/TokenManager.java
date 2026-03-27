@@ -1279,11 +1279,12 @@ public class TokenManager {
             String scope = oldRefreshToken.getScope();
             Object reuseId = oldRefreshToken.getOtherClaims().get(Constants.REUSE_ID);
             boolean offlineTokenRequested = Arrays.asList(scope.split(" ")).contains(OAuth2Constants.OFFLINE_ACCESS) ;
-            if (offlineTokenRequested) {
-                clientSessionCtx = DefaultClientSessionContext.fromClientSessionAndScopeParameter(clientSession, scope, session);
-                if (oldRefreshToken.getNonce() != null) {
+            clientSessionCtx.getClientSession().setNote(OAuth2Constants.SCOPE,scope);
+            if (offlineTokenRequested && oldRefreshToken.getNonce() != null) {
+               // clientSessionCtx = DefaultClientSessionContext.fromClientSessionAndScopeParameter(clientSession, scope, session);
+                //if (oldRefreshToken.getNonce() != null) {
                     clientSessionCtx.setAttribute(OIDCLoginProtocol.NONCE_PARAM, oldRefreshToken.getNonce());
-                }
+              //  }
             }
             generateRefreshToken(offlineTokenRequested);
             if ((clientSession.getClient().getAttribute(OIDCConfigAttributes.REVOKE_REFRESH_TOKEN) == null && realm.isRevokeRefreshToken()) || Boolean.valueOf(clientSession.getClient().getAttribute(OIDCConfigAttributes.REVOKE_REFRESH_TOKEN))) {

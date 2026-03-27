@@ -223,6 +223,7 @@ public class UserInfoEndpoint {
             }
 
             cors.allowedOrigins(session, clientModel);
+            event.client(clientId);
 
             TokenVerifier.createWithoutSignature(token)
                     .withChecks(NotBeforeCheck.forModel(clientModel), new TokenManager.TokenRevocationCheck(session))
@@ -244,8 +245,6 @@ public class UserInfoEndpoint {
         }
 
         session.getContext().setClient(clientModel);
-
-        event.client(clientModel);
 
         event.session(token.getSessionId());
         UserSessionUtil.UserSessionValidationResult userSessionValidation = UserSessionUtil.findValidSessionForAccessToken(session, realm, token, clientModel, (invalidUserSession -> {}));
