@@ -112,6 +112,8 @@ export const OpenIdFederationGeneralSettings = ({
     register,
     control,
     handleSubmit,
+    clearErrors,
+    unregister,
     setValue,
     formState: { errors },
   } = form;
@@ -163,10 +165,18 @@ export const OpenIdFederationGeneralSettings = ({
     name: "openIdFederationEntityTypes",
     defaultValue: [],
   }) as EntityTypesSupported[];
-  const openIdFederationEnabled = useWatch({
-    control,
-    name: "openIdFederationEnabled",
-  }) as boolean;
+const openIdFederationEnabled = useWatch({
+  control,
+  name: "openIdFederationEnabled",
+  defaultValue: realm.openIdFederationEnabled ?? false,
+}) as boolean;
+
+useEffect(() => {
+  if (!openIdFederationEnabled) {
+    clearErrors("openIdFederationAuthorityHints");
+    unregister("openIdFederationAuthorityHints");
+  }
+}, [openIdFederationEnabled, clearErrors, unregister]);
   const setupForm = () => {
     const defaultValues: RealmRepresentation = {
       ...realm,
