@@ -142,7 +142,8 @@ public class DefaultClientSessionContext implements ClientSessionContext {
         if (offlineAccessRequested != null) return offlineAccessRequested;
 
         ClientScopeModel offlineAccessScope = KeycloakModelUtils.getClientScopeByName(clientSession.getRealm(), OAuth2Constants.OFFLINE_ACCESS);
-        offlineAccessRequested = offlineAccessScope == null ? false : getClientScopeIds().contains(offlineAccessScope.getId());
+        offlineAccessRequested = offlineAccessScope == null ? false :
+                (Profile.isFeatureEnabled(Profile.Feature.DYNAMIC_SCOPES) ? buildScopesStringFromAuthorizationRequest(true).contains(OAuth2Constants.OFFLINE_ACCESS) : getClientScopeIds().contains(offlineAccessScope.getId()) );
         setAttribute(OAuth2Constants.OFFLINE_ACCESS, offlineAccessRequested);
         return offlineAccessRequested;
     }
