@@ -181,9 +181,6 @@ public abstract class AbstractClientRegistrationProvider implements ClientRegist
 
     public ClientRepresentation create(ClientRegistrationContext context, EventType eventType) {
         ClientRepresentation client = context.getClient();
-        if(client.getOptionalClientScopes() != null && client.getDefaultClientScopes() == null) {
-            client.setDefaultClientScopes(List.of(OIDCLoginProtocolFactory.BASIC_SCOPE));
-        }
 
         event.event(eventType);
 
