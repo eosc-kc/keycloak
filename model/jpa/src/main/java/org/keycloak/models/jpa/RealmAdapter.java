@@ -1188,7 +1188,7 @@ public class RealmAdapter implements StorageProviderRealmModel, JpaModel<RealmEn
     @Override
     public OpenIdFederationGeneralConfig getOpenIdFederationGeneralConfig() {
         //for enabling OpenId Federation at least one Federation configuration needs to exist
-        if (getAttribute(Constants.OPENID_FEDERATION_ENABLED, Boolean.TRUE)) {
+        if (getAttribute(Constants.OPENID_FEDERATION_ENABLED, Boolean.FALSE)) {
             OpenIdFederationGeneralConfig config = new OpenIdFederationGeneralConfig();
 
             config.setOrganizationName(getAttribute(Constants.OPENID_FEDERATION_ORGANIZATION_NAME));
