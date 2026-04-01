@@ -24,6 +24,7 @@ import jakarta.ws.rs.core.Response;
 
 import org.keycloak.OAuth2Constants;
 import org.keycloak.OAuthErrorException;
+import org.keycloak.common.util.SecretGenerator;
 import org.keycloak.events.Details;
 import org.keycloak.events.Errors;
 import org.keycloak.events.EventType;
@@ -37,6 +38,8 @@ import org.keycloak.protocol.oid4vc.issuance.OID4VCIssuerEndpoint;
 import org.keycloak.protocol.oid4vc.issuance.credentialoffer.CredentialOfferStorage;
 import org.keycloak.protocol.oidc.OIDCLoginProtocol;
 import org.keycloak.protocol.oidc.TokenManager.AccessTokenResponseBuilder;
+import org.keycloak.protocol.oidc.encode.AccessTokenContext;
+import org.keycloak.protocol.oidc.encode.TokenContextEncoderProvider;
 import org.keycloak.protocol.oidc.rar.AuthorizationDetailsResponse;
 import org.keycloak.representations.AccessToken;
 import org.keycloak.representations.AccessTokenResponse;
@@ -149,13 +152,16 @@ public class PreAuthorizedCodeGrantType extends OAuth2GrantTypeBase {
         var authDetails = (OID4VCAuthorizationDetailsResponse) authorizationDetailsResponses.get(0);
         offerState.setAuthorizationDetails(authDetails);
         offerStorage.replaceOfferState(session, offerState);
+        TokenContextEncoderProvider encoder = session.getProvider(TokenContextEncoderProvider.class);
+        AccessTokenContext tokenCtx = encoder.getTokenContextFromClientSessionContext(sessionContext, SecretGenerator.getInstance().generateSecureID());
 
         AccessToken accessToken = tokenManager.createClientAccessToken(session,
                 clientSession.getRealm(),
                 clientSession.getClient(),
                 userSession.getUser(),
                 userSession,
-                sessionContext);
+                sessionContext,
+                encoder.encodeTokenId(tokenCtx));
 
         accessToken.setOtherClaims(AUTHORIZATION_DETAILS, authorizationDetailsResponses);
 

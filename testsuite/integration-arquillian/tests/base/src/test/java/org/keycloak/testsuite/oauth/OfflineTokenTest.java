@@ -22,6 +22,8 @@ import java.util.List;
 import java.util.Map;
 
 import jakarta.ws.rs.NotFoundException;
+import jakarta.ws.rs.client.Client;
+import jakarta.ws.rs.core.Response;
 
 import org.keycloak.OAuth2Constants;
 import org.keycloak.OAuthErrorException;
@@ -73,6 +75,7 @@ import org.keycloak.testsuite.util.RealmManager;
 import org.keycloak.testsuite.util.RoleBuilder;
 import org.keycloak.testsuite.util.TokenSignatureUtil;
 import org.keycloak.testsuite.util.UserBuilder;
+import org.keycloak.testsuite.util.UserInfoClientUtil;
 import org.keycloak.testsuite.util.oauth.AccessTokenResponse;
 import org.keycloak.testsuite.util.oauth.IntrospectionResponse;
 import org.keycloak.testsuite.util.oauth.LogoutResponse;
@@ -92,6 +95,7 @@ import static org.keycloak.testsuite.admin.ApiUtil.findRealmRoleByName;
 import static org.keycloak.testsuite.admin.ApiUtil.findUserByUsername;
 import static org.keycloak.testsuite.admin.ApiUtil.findUserByUsernameId;
 import static org.keycloak.testsuite.auth.page.AuthRealm.TEST;
+import static org.keycloak.testsuite.util.AdminClientUtil.createResteasyClient;
 import static org.keycloak.testsuite.util.ServerURLs.getAuthServerContextRoot;
 import static org.keycloak.testsuite.util.oauth.OAuthClient.APP_ROOT;
 
@@ -500,6 +504,39 @@ public class OfflineTokenTest extends AbstractKeycloakTest {
 
         // Assert same token can be refreshed again
         testRefreshWithOfflineToken(token, offlineToken, offlineTokenString, token.getSessionId(), userId);
+    }
+
+    @Test
+    public void userInfoWithRefreshedAccessTokenFromOfflineRefreshToken() {
+        oauth.scope("openid " + OAuth2Constants.OFFLINE_ACCESS);
+        oauth.client("offline-client", "secret1");
+
+        AccessTokenResponse initialTokenResponse = oauth.doPasswordGrantRequest("test-user@localhost", "password");
+        Assert.assertEquals(200, initialTokenResponse.getStatusCode());
+
+        String initialAccessToken = initialTokenResponse.getAccessToken();
+        String offlineRefreshToken = initialTokenResponse.getRefreshToken();
+        setTimeOffset(20);
+
+        try (Client client = createResteasyClient()) {
+            Response expiredResponse = UserInfoClientUtil.executeUserInfoRequest_getMethod(client, initialAccessToken);
+            assertEquals(401, expiredResponse.getStatus());
+            expiredResponse.close();
+
+            oauth.scope("openid email profile entitlements");
+            AccessTokenResponse refreshedTokenResponse = oauth.doRefreshTokenRequest(offlineRefreshToken);
+            Assert.assertEquals(200, refreshedTokenResponse.getStatusCode());
+
+            AccessToken refreshedAccessToken = oauth.verifyToken(refreshedTokenResponse.getAccessToken());
+            AccessTokenContext refreshedCtx = testingClient.testing("test").getTokenContext(refreshedAccessToken.getId());
+            Assert.assertEquals(AccessTokenContext.SessionType.OFFLINE, refreshedCtx.getSessionType());
+
+            Response refreshedUserInfoResponse = UserInfoClientUtil.executeUserInfoRequest_getMethod(client, refreshedTokenResponse.getAccessToken());
+            assertEquals(200, refreshedUserInfoResponse.getStatus());
+            refreshedUserInfoResponse.close();
+        } finally {
+            setTimeOffset(0);
+        }
     }
 
     @Test
