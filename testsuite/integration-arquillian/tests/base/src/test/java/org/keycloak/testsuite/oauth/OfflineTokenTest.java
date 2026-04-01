@@ -70,12 +70,12 @@ import org.keycloak.testsuite.updaters.RealmAttributeUpdater;
 import org.keycloak.testsuite.util.AccountHelper;
 import org.keycloak.testsuite.util.ClientBuilder;
 import org.keycloak.testsuite.util.ClientManager;
-import org.keycloak.testsuite.util.UserInfoClientUtil;
 import org.keycloak.testsuite.util.RealmBuilder;
 import org.keycloak.testsuite.util.RealmManager;
 import org.keycloak.testsuite.util.RoleBuilder;
 import org.keycloak.testsuite.util.TokenSignatureUtil;
 import org.keycloak.testsuite.util.UserBuilder;
+import org.keycloak.testsuite.util.UserInfoClientUtil;
 import org.keycloak.testsuite.util.oauth.AccessTokenResponse;
 import org.keycloak.testsuite.util.oauth.IntrospectionResponse;
 import org.keycloak.testsuite.util.oauth.LogoutResponse;
@@ -95,6 +95,7 @@ import static org.keycloak.testsuite.admin.ApiUtil.findRealmRoleByName;
 import static org.keycloak.testsuite.admin.ApiUtil.findUserByUsername;
 import static org.keycloak.testsuite.admin.ApiUtil.findUserByUsernameId;
 import static org.keycloak.testsuite.auth.page.AuthRealm.TEST;
+import static org.keycloak.testsuite.util.AdminClientUtil.createResteasyClient;
 import static org.keycloak.testsuite.util.ServerURLs.getAuthServerContextRoot;
 import static org.keycloak.testsuite.util.oauth.OAuthClient.APP_ROOT;
 
@@ -107,7 +108,6 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
-import static org.keycloak.testsuite.util.AdminClientUtil.createResteasyClient;
 
 /**
  * @author <a href="mailto:mposolda@redhat.com">Marek Posolda</a>
