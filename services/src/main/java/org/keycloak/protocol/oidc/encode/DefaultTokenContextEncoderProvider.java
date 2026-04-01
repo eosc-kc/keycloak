@@ -53,7 +53,7 @@ public class DefaultTokenContextEncoderProvider implements TokenContextEncoderPr
                 sessionType = AccessTokenContext.SessionType.TRANSIENT;
             }
         } else {
-            sessionType = clientSessionContext.isOfflineTokenRequested() ? AccessTokenContext.SessionType.OFFLINE : AccessTokenContext.SessionType.ONLINE;
+            sessionType = userSession.isOffline() ? AccessTokenContext.SessionType.OFFLINE : AccessTokenContext.SessionType.ONLINE;
         }
 
         boolean useLightweightToken = AbstractOIDCProtocolMapper.getShouldUseLightweightToken(session);
