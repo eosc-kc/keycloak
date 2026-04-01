@@ -32,6 +32,8 @@ public interface TokenContextEncoderProvider extends Provider {
 
     AccessTokenContext getTokenContextFromClientSessionContext(ClientSessionContext clientSessionContext, String rawTokenId);
 
+    AccessTokenContext getTokenContextFromClientSessionContextForRefresh(ClientSessionContext clientSessionContext, String rawTokenId);
+
     AccessTokenContext getTokenContextFromTokenId(String encodedTokenId);
 
     String encodeTokenId(AccessTokenContext tokenContext);

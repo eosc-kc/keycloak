@@ -291,7 +291,9 @@ public class TokenManager {
         clientSessionCtx.setAttribute(Constants.GRANT_TYPE, OAuth2Constants.REFRESH_TOKEN);
 
         // recreate token.
-        AccessToken newToken = createClientAccessToken(session, realm, client, user, userSession, clientSessionCtx);
+        TokenContextEncoderProvider encoder = session.getProvider(TokenContextEncoderProvider.class);
+        AccessTokenContext tokenCtx = encoder.getTokenContextFromClientSessionContextForRefresh(clientSessionCtx, SecretGenerator.getInstance().generateSecureID());
+        AccessToken newToken = createClientAccessToken(session, realm, client, user, userSession, clientSessionCtx, encoder.encodeTokenId(tokenCtx));
 
         return new TokenValidation(user, userSession, clientSessionCtx, newToken);
     }
@@ -575,8 +577,8 @@ public class TokenManager {
     }
 
     public AccessToken createClientAccessToken(KeycloakSession session, RealmModel realm, ClientModel client, UserModel user, UserSessionModel userSession,
-                                               ClientSessionContext clientSessionCtx) {
-        AccessToken token = initToken(session, realm, client, user, userSession, clientSessionCtx, session.getContext().getUri());
+                                               ClientSessionContext clientSessionCtx, String tokenId) {
+        AccessToken token = initToken(session, realm, client, user, userSession, clientSessionCtx, session.getContext().getUri(),tokenId);
         token = transformAccessToken(session, token, userSession, clientSessionCtx);
         return token;
     }
@@ -1092,12 +1094,9 @@ public class TokenManager {
     }
 
     protected AccessToken initToken(KeycloakSession session, RealmModel realm, ClientModel client, UserModel user, UserSessionModel userSession,
-                                    ClientSessionContext clientSessionCtx, UriInfo uriInfo) {
+                                    ClientSessionContext clientSessionCtx, UriInfo uriInfo, String tokenId) {
         AccessToken token = new AccessToken();
-
-        TokenContextEncoderProvider encoder = session.getProvider(TokenContextEncoderProvider.class);
-        AccessTokenContext tokenCtx = encoder.getTokenContextFromClientSessionContext(clientSessionCtx, SecretGenerator.getInstance().generateSecureID());
-        token.id(encoder.encodeTokenId(tokenCtx));
+        token.id(tokenId);
 
         token.type(formatTokenType(client, token));
         if (UserSessionModel.SessionPersistenceState.TRANSIENT.equals(userSession.getPersistenceState())) {
@@ -1251,7 +1250,9 @@ public class TokenManager {
 
         public AccessTokenResponseBuilder generateAccessToken() {
             UserModel user = userSession.getUser();
-            accessToken = createClientAccessToken(session, realm, client, user, userSession, clientSessionCtx);
+            TokenContextEncoderProvider encoder = session.getProvider(TokenContextEncoderProvider.class);
+            AccessTokenContext tokenCtx = encoder.getTokenContextFromClientSessionContext(clientSessionCtx, SecretGenerator.getInstance().generateSecureID());
+            accessToken = createClientAccessToken(session, realm, client, user, userSession, clientSessionCtx, encoder.encodeTokenId(tokenCtx));
             responseTokenType = formatTokenType(client, accessToken);
             return this;
         }
