@@ -86,3 +86,4 @@ Our Keycloak version is working well with PostgreSQL database. For using other S
 - Being possible to add realm default scopes during Dynamic Client Registration/ OpenID Federation when scopes are including in client representation
 - Problem saving OpenId Federation disabled [RCIAM-636](https://tts.grnet.gr/jira/browse/RCIAM-636)
 - Access token type based on related user session for refresh token flow[RCIAM-628](https://tts.grnet.gr/jira/browse/RCIAM-628)
+- Last refresh and expiration time missing from OID-Fed IdPs [RCIAM-646](https://tts.grnet.gr/jira/browse/RCIAM-646)

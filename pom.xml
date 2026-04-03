@@ -42,7 +42,7 @@
         <maven.compiler.release>17</maven.compiler.release>
 
         <project.version.npm>26.5.5</project.version.npm>
-        <eosc-kc.version>${project.version}-1.0rc12</eosc-kc.version>
+        <eosc-kc.version>${project.version}-1.0rc13</eosc-kc.version>
 
         <asciidoctor.plugin.version>1.5.8</asciidoctor.plugin.version>
 

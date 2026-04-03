@@ -313,8 +313,33 @@ export default function DetailSettings() {
   const navigate = useNavigate();
   const { realm, realmRepresentation } = useRealm();
   const [key, setKey] = useState(0);
-  const refresh = () => setKey(key + 1);
+  const refresh = () => setKey((prev) => prev + 1);
   const { hasAccess } = useAccess();
+
+  const applyProviderToForm = (
+    fetchedProvider: IdentityProviderRepresentation,
+  ) => {
+    reset(fetchedProvider);
+    setProvider(fetchedProvider);
+    setRefreshEnabled(
+      !!fetchedProvider.config?.metadataDescriptorUrl ||
+        providerId === "openid-federation",
+    );
+
+    if (fetchedProvider.config?.authnContextClassRefs) {
+      form.setValue(
+        "config.authnContextClassRefs",
+        JSON.parse(fetchedProvider.config.authnContextClassRefs),
+      );
+    }
+
+    if (fetchedProvider.config?.authnContextDeclRefs) {
+      form.setValue(
+        "config.authnContextDeclRefs",
+        JSON.parse(fetchedProvider.config.authnContextDeclRefs),
+      );
+    }
+  };
 
   useFetch(
     () => adminClient.identityProviders.findOne({ alias }),
@@ -322,27 +347,10 @@ export default function DetailSettings() {
       if (!fetchedProvider) {
         throw new Error(t("notFound"));
       }
-      reset(fetchedProvider);
-      setProvider(fetchedProvider);
-      setRefreshEnabled(
-        fetchedProvider.config!.metadataDescriptorUrl ||
-          providerId === "openid-federation",
-      );
-      if (fetchedProvider.config!.authnContextClassRefs) {
-        form.setValue(
-          "config.authnContextClassRefs",
-          JSON.parse(fetchedProvider.config?.authnContextClassRefs),
-        );
-      }
 
-      if (fetchedProvider.config!.authnContextDeclRefs) {
-        form.setValue(
-          "config.authnContextDeclRefs",
-          JSON.parse(fetchedProvider.config?.authnContextDeclRefs),
-        );
-      }
+      applyProviderToForm(fetchedProvider);
     },
-    [],
+    [alias, key],
   );
 
   const toTab = (tab: IdentityProviderTab) =>
@@ -467,7 +475,9 @@ export default function DetailSettings() {
     return <KeycloakSpinner />;
   }
 
-  const isOIDC = provider.providerId!.includes("oidc") || provider.providerId!.includes("openid-federation");
+  const isOIDC =
+    provider.providerId!.includes("oidc") ||
+    provider.providerId!.includes("openid-federation");
   const isSAML = provider.providerId!.includes("saml");
   const isOAuth2 = provider.providerId!.includes("oauth2");
   const isSPIFFE = provider.providerId!.includes("spiffe");
