@@ -10,7 +10,11 @@ import { useState } from "react";
 import { Controller, useFormContext, useWatch } from "react-hook-form";
 import { useTranslation } from "react-i18next";
 
-import { HelpItem, FormErrorText, TextControl } from "@keycloak/keycloak-ui-shared";
+import {
+  HelpItem,
+  FormErrorText,
+  TextControl,
+} from "@keycloak/keycloak-ui-shared";
 
 import { convertAttributeNameToForm } from "../../util";
 import useFormatDate from "../../utils/useFormatDate";
@@ -42,7 +46,7 @@ export const OpenIdFederationSettings = ({
   }) as Record<string, any> | undefined;
 
   const expirationSeconds = Number(config?.["expiration.time"] ?? 0);
-
+  const lastRefreshedSeconds = Number(config?.lastRefreshTime ?? 0);
   return (
     <div className="pf-v5-c-form pf-m-horizontal">
       {!create ? (
@@ -51,28 +55,26 @@ export const OpenIdFederationSettings = ({
             name="config.authorityHints"
             label={t("authorityHints")}
             type="url"
-            // isReadOnly={readOnly}
+            isDisabled={true}
           />
 
           <TextControl
             name="config.trustAnchorId"
             label={t("trustAnchorId")}
             type="text"
-            // isReadOnly={readOnly}
+            isDisabled={true}
           />
 
-          
-            <TextControl
-              name="__expirationTimeDisplay"
-              label={t("expirationTime")}
-              type="text"
-              isDisabled
-              value={
-                expirationSeconds
-                  ? formatDate(new Date(expirationSeconds * 1000))
-                  : ""
-              }
-            />
+          <FormGroup label={t("expirationTime")}>
+            {expirationSeconds
+              ? formatDate(new Date(expirationSeconds * 1000))
+              : ""}
+          </FormGroup>
+          {!!lastRefreshedSeconds && (
+            <FormGroup label={t("lastRefresh")}>
+               {new Date(lastRefreshedSeconds).toLocaleString()}
+            </FormGroup>
+          )}
         </>
       ) : (
         <>
@@ -151,7 +153,9 @@ export const OpenIdFederationSettings = ({
               )}
             />
             {errors.config?.trustAnchorId?.message && (
-              <FormErrorText message={String(errors.config.trustAnchorId.message)} />
+              <FormErrorText
+                message={String(errors.config.trustAnchorId.message)}
+              />
             )}
           </FormGroup>
         </>
