@@ -178,6 +178,8 @@ import org.keycloak.util.JsonSerialization;
 import org.jboss.logging.Logger;
 import org.jboss.resteasy.reactive.NoCache;
 
+import org.keycloak.utils.StringUtil;
+
 import static org.keycloak.broker.provider.AbstractIdentityProvider.BROKER_REGISTERED_NEW_USER;
 
 public class IdentityBrokerService implements UserAuthenticationIdentityProvider.AuthenticationCallback {
@@ -1412,7 +1414,7 @@ public class IdentityBrokerService implements UserAuthenticationIdentityProvider
                 AcrStore acrStore = new AcrStore(session, processor.getAuthenticationSession());
                 if (levelOfAuthentication != null) {
                     acrStore.setLevelAuthenticated(Integer.valueOf(levelOfAuthentication));
-                } else if (realmModel.getAttribute(Constants.DEFAULT_IDP_ACR_VALUE) != null) {
+                } else if (StringUtil.isNotBlank(realmModel.getAttribute(Constants.DEFAULT_IDP_ACR_VALUE))) {
                     acrStore.setLevelAuthenticated(Integer.valueOf((realmModel.getAttribute(Constants.DEFAULT_IDP_ACR_VALUE))));
                 }
                 AuthenticationFlow authenticationFlow = processor.createFlowExecution(flowId, model);
