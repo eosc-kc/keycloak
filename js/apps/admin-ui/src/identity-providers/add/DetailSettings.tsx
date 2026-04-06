@@ -383,11 +383,19 @@ export default function DetailSettings() {
       );
 
     try {
+      const mergedConfig = {
+        ...provider?.config,
+        ...p.config,
+      };
+
+      if (mergedConfig.nameIDPolicyFormat === "isNull") {
+        delete mergedConfig.nameIDPolicyFormat;
+      }
       await adminClient.identityProviders.update(
         { alias },
         {
           ...p,
-          config: { ...provider?.config, ...p.config },
+          config: mergedConfig,
           alias,
           providerId,
         },
