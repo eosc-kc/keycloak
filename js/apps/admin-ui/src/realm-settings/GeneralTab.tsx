@@ -158,7 +158,21 @@ function RealmSettingsGeneralTabForm({
         upConfig.unmanagedAttributePolicy = unmanagedAttributePolicy;
       }
 
-      await save({ ...data, upConfig });
+      const realmToSave: UIRealmRepresentation = {
+        ...data,
+        upConfig,
+        attributes: {
+          ...data.attributes,
+        },
+      };
+
+      if (realmToSave.attributes?.defaultIdpAcrValue === "") {
+        (
+          realmToSave.attributes as Record<string, string | null>
+        ).defaultIdpAcrValue = null;
+      }
+
+      await save(realmToSave);
     },
   );
 

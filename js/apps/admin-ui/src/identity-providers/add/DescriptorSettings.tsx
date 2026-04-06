@@ -1,7 +1,19 @@
 import IdentityProviderRepresentation from "@keycloak/keycloak-admin-client/lib/defs/identityProviderRepresentation";
-import { ExpandableSection } from "@patternfly/react-core";
-import { useState } from "react";
-import { FormProvider, useFormContext, useWatch } from "react-hook-form";
+import {
+  ExpandableSection,
+  MenuToggle,
+  MenuToggleElement,
+  Select,
+  SelectList,
+  SelectOption,
+} from "@patternfly/react-core";
+import { useRef, useState } from "react";
+import {
+  Controller,
+  FormProvider,
+  useFormContext,
+  useWatch,
+} from "react-hook-form";
 import { useTranslation } from "react-i18next";
 import {
   NumberControl,
@@ -44,6 +56,40 @@ const Fields = ({ readOnly }: DescriptorSettingsProps) => {
     control,
     name: "config.useMetadataDescriptorUrl",
   });
+
+  const [isNameIdPolicyOpen, setIsNameIdPolicyOpen] = useState(false);
+
+  const nameIdPolicyOptions = [
+    { key: "isNull", value: t("emptyNameIdPolicy") },
+    {
+      key: "urn:oasis:names:tc:SAML:2.0:nameid-format:persistent",
+      value: t("persistent"),
+    },
+    {
+      key: "urn:oasis:names:tc:SAML:2.0:nameid-format:transient",
+      value: t("transient"),
+    },
+    {
+      key: "urn:oasis:names:tc:SAML:1.1:nameid-format:emailAddress",
+      value: t("email"),
+    },
+    {
+      key: "urn:oasis:names:tc:SAML:2.0:nameid-format:kerberos",
+      value: t("kerberos"),
+    },
+    {
+      key: "urn:oasis:names:tc:SAML:1.1:nameid-format:X509SubjectName",
+      value: t("x509"),
+    },
+    {
+      key: "urn:oasis:names:tc:SAML:1.1:nameid-format:WindowsDomainQualifiedName",
+      value: t("windowsDomainQN"),
+    },
+    {
+      key: "urn:oasis:names:tc:SAML:1.1:nameid-format:unspecified",
+      value: t("unspecified"),
+    },
+  ];
 
   return (
     <div className="pf-v5-c-form pf-m-horizontal">
@@ -102,46 +148,78 @@ const Fields = ({ readOnly }: DescriptorSettingsProps) => {
           isDisabled={readOnly}
           stringify
         />
-        <SelectControl
+
+        <Controller
           name="config.nameIDPolicyFormat"
-          label={t("nameIdPolicyFormat")}
-          labelIcon={t("nameIdPolicyFormatHelp")}
-          controller={{
-            defaultValue:
-              "urn:oasis:names:tc:SAML:2.0:nameid-format:persistent",
+          control={control}
+          defaultValue={
+            !readOnly
+              ? "isNull"
+              : "urn:oasis:names:tc:SAML:2.0:nameid-format:persistent"
+          }
+          render={({ field }) => {
+            const selectedKey = field.value || "isNull";
+            const selectedOption =
+              nameIdPolicyOptions.find(
+                (option) => option.key === selectedKey,
+              ) || nameIdPolicyOptions[0];
+
+            return (
+              <div className="pf-v5-c-form__group">
+                <div className="pf-v5-c-form__group-label">
+                  <label
+                    className="pf-v5-c-form__label"
+                    htmlFor="kc-nameIdPolicyFormat"
+                  >
+                    <span className="pf-v5-c-form__label-text">
+                      {t("nameIdPolicyFormat")}
+                    </span>
+                  </label>
+                </div>
+                <div className="pf-v5-c-form__group-control">
+                  <Select
+                    id="kc-nameIdPolicyFormat"
+                    isOpen={isNameIdPolicyOpen}
+                    selected={selectedKey}
+                    onOpenChange={(isOpen) => setIsNameIdPolicyOpen(isOpen)}
+                    onSelect={(_event, value) => {
+                      field.onChange(value as string);
+                      setIsNameIdPolicyOpen(false);
+                    }}
+                    toggle={(toggleRef) => (
+                      <MenuToggle
+                        ref={toggleRef}
+                        onClick={() =>
+                          setIsNameIdPolicyOpen(!isNameIdPolicyOpen)
+                        }
+                        isExpanded={isNameIdPolicyOpen}
+                        isDisabled={readOnly}
+                      >
+                        {selectedOption.value}
+                      </MenuToggle>
+                    )}
+                  >
+                    <SelectList>
+                      {nameIdPolicyOptions.map((option) => (
+                        <SelectOption
+                          key={option.key}
+                          value={option.key}
+                          isSelected={selectedKey === option.key}
+                          data-testid={
+                            option.key === "isNull" ? "empty-option" : undefined
+                          }
+                        >
+                          {option.value}
+                        </SelectOption>
+                      ))}
+                    </SelectList>
+                  </Select>
+                </div>
+              </div>
+            );
           }}
-          isDisabled={readOnly}
-          options={[
-            {
-              key: "urn:oasis:names:tc:SAML:2.0:nameid-format:persistent",
-              value: t("persistent"),
-            },
-            {
-              key: "urn:oasis:names:tc:SAML:2.0:nameid-format:transient",
-              value: t("transient"),
-            },
-            {
-              key: "urn:oasis:names:tc:SAML:1.1:nameid-format:emailAddress",
-              value: t("email"),
-            },
-            {
-              key: "urn:oasis:names:tc:SAML:2.0:nameid-format:kerberos",
-              value: t("kerberos"),
-            },
-            {
-              key: "urn:oasis:names:tc:SAML:1.1:nameid-format:X509SubjectName",
-              value: t("x509"),
-            },
-            {
-              key: "urn:oasis:names:tc:SAML:1.1:nameid-format:WindowsDomainQualifiedName",
-              value: t("windowsDomainQN"),
-            },
-            {
-              key: "urn:oasis:names:tc:SAML:1.1:nameid-format:unspecified",
-              value: t("unspecified"),
-            },
-          ]}
         />
+
         <PrincipalTable readOnly={readOnly} />
         <DefaultSwitchControl
           name="config.allowCreate"
