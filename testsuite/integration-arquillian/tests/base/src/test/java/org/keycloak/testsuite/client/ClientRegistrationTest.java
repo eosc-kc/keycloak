@@ -43,7 +43,6 @@ import org.keycloak.client.registration.ClientRegistration;
 import org.keycloak.client.registration.ClientRegistrationException;
 import org.keycloak.client.registration.HttpErrorException;
 import org.keycloak.common.constants.ServiceAccountConstants;
-import org.keycloak.common.util.CollectionUtil;
 import org.keycloak.events.Errors;
 import org.keycloak.models.Constants;
 import org.keycloak.models.utils.KeycloakModelUtils;
