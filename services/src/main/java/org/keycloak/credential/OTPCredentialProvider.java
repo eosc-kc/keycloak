@@ -83,12 +83,13 @@ public class OTPCredentialProvider implements CredentialProvider<OTPCredentialMo
     @Override
     public boolean isValid(RealmModel realm, UserModel user, CredentialInput credentialInput) {
         if (!(credentialInput instanceof UserCredentialModel)) {
-            logger.debug("Expected instance of UserCredentialModel for CredentialInput");
+            logger.debugf("Expected instance of UserCredentialModel for CredentialInput when validating credential of user %s", user.getUsername());
             return false;
 
         }
         String challengeResponse = credentialInput.getChallengeResponse();
         if (challengeResponse == null) {
+            logger.debugf("credentialInput.getChallengeResponse() is null when validating credential of user %s", user.getUsername());
             return false;
         }
         if (ObjectUtil.isBlank(credentialInput.getCredentialId())) {
@@ -106,6 +107,7 @@ public class OTPCredentialProvider implements CredentialProvider<OTPCredentialMo
             HmacOTP validator = new HmacOTP(credentialData.getDigits(), credentialData.getAlgorithm(), policy.getLookAheadWindow());
             int counter = validator.validateHOTP(challengeResponse, otpCredentialModel.getDecodedSecret(), credentialData.getCounter());
             if (counter < 0) {
+                logger.debugf("HOTP counter < 0 when validating credential of user %s", user.getUsername());
                 return false;
             }
             otpCredentialModel.updateCounter(counter);
@@ -123,6 +125,8 @@ public class OTPCredentialProvider implements CredentialProvider<OTPCredentialMo
                 final String searchKey = credential.getId() + "." + challengeResponse;
 
                 return singleUseStore.putIfAbsent(searchKey, validLifespan);
+            } else {
+                logger.debugf("TOTP isValid false when validating credential of user %s", user.getUsername());
             }
         }
         return false;

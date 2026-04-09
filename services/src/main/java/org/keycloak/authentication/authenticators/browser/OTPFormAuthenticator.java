@@ -45,11 +45,15 @@ import org.keycloak.services.messages.Messages;
 import org.keycloak.services.validation.Validation;
 import org.keycloak.sessions.AuthenticationSessionModel;
 
+import org.jboss.logging.Logger;
+
 /**
  * @author <a href="mailto:bill@burkecentral.com">Bill Burke</a>
  * @version $Revision: 1 $
  */
 public class OTPFormAuthenticator extends AbstractUsernameFormAuthenticator implements Authenticator, CredentialValidator<OTPCredentialProvider> {
+
+    private static final Logger logger = Logger.getLogger(OTPFormAuthenticator.class);
 
     // Freemarker attribute where selected OTP credential will be stored
     public static final String SELECTED_OTP_CREDENTIAL_ID = "selectedOtpCredentialId";
@@ -93,6 +97,7 @@ public class OTPFormAuthenticator extends AbstractUsernameFormAuthenticator impl
         if (userEnabled) {
             context.getAuthenticationSession().removeAuthNote(AbstractUsernameFormAuthenticator.SESSION_INVALID);
         }
+        logger.debugf("Starting processing OTP for user '%s' in client '%s' of realm '%s'", userModel.getId(), context.getAuthenticationSession().getClient().getClientId(), context.getRealm().getName());
         if("true".equals(context.getAuthenticationSession().getAuthNote(AbstractUsernameFormAuthenticator.SESSION_INVALID))) {
             context.getEvent().user(context.getUser()).error(Errors.INVALID_AUTHENTICATION_SESSION);
             // challenge already set by calling enabledUser() above
@@ -117,6 +122,7 @@ public class OTPFormAuthenticator extends AbstractUsernameFormAuthenticator impl
             context.failureChallenge(AuthenticationFlowError.INVALID_CREDENTIALS, challengeResponse);
             return;
         }
+        logger.debugf("Successful OTP for user '%s' in client '%s' of realm '%s'", userModel.getId(), context.getAuthenticationSession().getClient().getClientId(), context.getRealm().getName());
         context.success(OTPCredentialModel.TYPE);
     }
 

@@ -174,11 +174,10 @@ import org.keycloak.sessions.AuthenticationSessionModel;
 import org.keycloak.sessions.RootAuthenticationSessionModel;
 import org.keycloak.util.Booleans;
 import org.keycloak.util.JsonSerialization;
+import org.keycloak.utils.StringUtil;
 
 import org.jboss.logging.Logger;
 import org.jboss.resteasy.reactive.NoCache;
-
-import org.keycloak.utils.StringUtil;
 
 import static org.keycloak.broker.provider.AbstractIdentityProvider.BROKER_REGISTERED_NEW_USER;
 
