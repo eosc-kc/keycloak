@@ -33,6 +33,7 @@ import org.keycloak.connections.httpclient.HttpClientProvider;
 import org.keycloak.events.Details;
 import org.keycloak.events.Errors;
 import org.keycloak.events.EventBuilder;
+import org.keycloak.ishare.Ishare;
 import org.keycloak.models.ClientModel;
 import org.keycloak.models.KeycloakSession;
 import org.keycloak.protocol.oidc.OIDCAdvancedConfigWrapper;
@@ -86,7 +87,7 @@ public class AuthorizationEndpointRequestParserProcessor {
                 new AuthzEndpointRequestObjectParser(session, requestParam, client).parseRequest(request);
             } else if (requestParam != null) {
 
-                ISHARE ishare = new ISHARE(session);
+                Ishare ishare = new Ishare(session);
 
                 Map<String, Object> claims = ishare.getClaimsFromClientAssertion(requestParam);
                 Object redirectUri = claims.get("redirect_uri");
