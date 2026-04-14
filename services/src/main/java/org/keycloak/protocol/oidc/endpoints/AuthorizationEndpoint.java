@@ -168,7 +168,7 @@ public class AuthorizationEndpoint extends AuthorizationEndpointBase {
         }
         checkClient(clientId, params);
 
-        request = automaticRegistration ? AuthorizationEndpointRequestParserProcessor.parseRequestOpenIdFederation(event, session, client, params, AuthorizationEndpointRequestParserProcessor.EndpointType.OIDC_AUTH_ENDPOINT) :AuthorizationEndpointRequestParserProcessor.parseRequest(event, session, client, params, AuthorizationEndpointRequestParserProcessor.EndpointType.OIDC_AUTH_ENDPOINT);
+        request = automaticRegistration ? AuthorizationEndpointRequestParserProcessor.parseRequestOpenIdFederation(event, session, client, params, AuthorizationEndpointRequestParserProcessor.EndpointType.OIDC_AUTH_ENDPOINT) :AuthorizationEndpointRequestParserProcessor.parseRequest(event, session, client, params, AuthorizationEndpointRequestParserProcessor.EndpointType.OIDC_AUTH_ENDPOINT, ishareRequest);
 
         AuthorizationEndpointChecker checker = new AuthorizationEndpointChecker()
                 .event(event)

@@ -20,6 +20,7 @@ package org.keycloak.protocol.oidc.endpoints.request;
 import java.io.InputStream;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Stream;
 
 import jakarta.ws.rs.core.MultivaluedMap;
@@ -55,7 +56,7 @@ public class AuthorizationEndpointRequestParserProcessor {
 
     private static final Logger logger = Logger.getLogger(AuthorizationEndpointRequestParserProcessor.class);
 
-    public static AuthorizationEndpointRequest parseRequest(EventBuilder event, KeycloakSession session, ClientModel client, MultivaluedMap<String, String> requestParams, EndpointType endpointType) {
+    public static AuthorizationEndpointRequest parseRequest(EventBuilder event, KeycloakSession session, ClientModel client, MultivaluedMap<String, String> requestParams, EndpointType endpointType, boolean ishareRequest) {
         try {
             AuthorizationEndpointRequest request = parseRequestCommon(session, requestParams, endpointType);
 
@@ -64,6 +65,8 @@ public class AuthorizationEndpointRequestParserProcessor {
 
             if (requestParam != null && requestUriParam != null) {
                 throw new RuntimeException("Illegal to use both 'request' and 'request_uri' parameters together");
+            } else  if (ishareRequest && requestParam == null) {
+                throw new RuntimeException("Illegal to use 'iSHARE' scope without 'request' parameters");
             }
 
             String requestObjectRequired = OIDCAdvancedConfigWrapper.fromClientModel(client).getRequestObjectRequired();
@@ -79,9 +82,30 @@ public class AuthorizationEndpointRequestParserProcessor {
                 throw new RuntimeException("Client is required to use 'request_uri' parameter.");
             }
 
-            if (requestParam != null) {
+            if (!ishareRequest && requestParam != null) {
                 new AuthzEndpointRequestObjectParser(session, requestParam, client).parseRequest(request);
-            } else if (requestUriParam != null) {
+            } else if (requestParam != null) {
+
+                ISHARE ishare = new ISHARE(session);
+
+                Map<String, Object> claims = ishare.getClaimsFromClientAssertion(requestParam);
+                Object redirectUri = claims.get("redirect_uri");
+                if (redirectUri != null) {
+                    request.redirectUriParam = redirectUri.toString();
+                }
+                Object nonce = claims.get("nonce");
+                if (nonce != null) {
+                    request.nonce = nonce.toString();
+                }
+                Object acr_values = claims.get("acr_values");
+                if (acr_values != null) {
+                    String[] acr_values_str = acr_values.toString().split(" ");
+                    if (acr_values_str.length > 0 && !acr_values_str[0].isEmpty()) {
+                        request.acr = acr_values_str[0];
+                    }
+                }
+
+            }else if (requestUriParam != null) {
                 // Define, if the request is `PAR` or usual `Request Object`.
                 RequestUriType requestUriType = getRequestUriType(requestUriParam);
                 if (requestUriType == RequestUriType.PAR) {
