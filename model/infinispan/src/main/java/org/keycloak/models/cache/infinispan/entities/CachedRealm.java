@@ -184,6 +184,8 @@ public class CachedRealm extends AbstractExtendableRevisioned {
 
     protected List<String> claimsSupported;
 
+    protected String issuer;
+
     public CachedRealm(Long revision, RealmModel model) {
         super(revision, model.getId());
         name = model.getName();
@@ -255,6 +257,7 @@ public class CachedRealm extends AbstractExtendableRevisioned {
 
         requiredCredentials = model.getRequiredCredentialsStream().collect(Collectors.toList());
         userActionTokenLifespans = Collections.unmodifiableMap(new HashMap<>(model.getUserActionTokenLifespans()));
+        issuer = model.getIssuer();
         claimsSupported = model.getClaimsSupported();
 
         federations  = model.getSAMLFederations();
@@ -789,6 +792,10 @@ public class CachedRealm extends AbstractExtendableRevisioned {
 
     public Map<String, RequiredActionConfigModel> getRequiredActionProviderConfigs() {
         return requiredActionProviderConfigs;
+    }
+
+    public String getIssuer() {
+        return issuer;
     }
 
     public List<String> getClaimsSupported() {

@@ -18,8 +18,11 @@
 package org.keycloak.protocol.oidc.endpoints;
 
 import java.io.IOException;
+import java.util.HashSet;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.function.BiConsumer;
 import java.util.stream.Collectors;
 
@@ -33,16 +36,20 @@ import jakarta.ws.rs.core.Response;
 
 import org.keycloak.OAuth2Constants;
 import org.keycloak.authentication.AuthenticationProcessor;
+import org.keycloak.authentication.authenticators.client.ISHAREClientAuthenticator;
 import org.keycloak.common.Profile;
 import org.keycloak.common.util.UriUtils;
 import org.keycloak.constants.AdapterConstants;
+import org.keycloak.crypto.Algorithm;
 import org.keycloak.events.Details;
 import org.keycloak.events.Errors;
 import org.keycloak.events.EventBuilder;
 import org.keycloak.events.EventType;
+import org.keycloak.ishare.Ishare;
 import org.keycloak.locale.LocaleSelectorProvider;
 import org.keycloak.models.AuthenticationFlowModel;
 import org.keycloak.models.ClientModel;
+import org.keycloak.models.ClientScopeModel;
 import org.keycloak.models.Constants;
 import org.keycloak.models.KeycloakSession;
 import org.keycloak.models.enums.ClientRegistrationTypeEnum;
@@ -50,6 +57,7 @@ import org.keycloak.models.enums.EntityTypeEnum;
 import org.keycloak.organization.utils.Organizations;
 import org.keycloak.protocol.AuthorizationEndpointBase;
 import org.keycloak.protocol.oidc.OIDCAdvancedConfigWrapper;
+import org.keycloak.protocol.oidc.OIDCConfigAttributes;
 import org.keycloak.protocol.oidc.OIDCLoginProtocol;
 import org.keycloak.protocol.oidc.endpoints.checker.AuthorizationCheckException;
 import org.keycloak.protocol.oidc.endpoints.checker.AuthorizationEndpointChecker;
@@ -112,6 +120,7 @@ public class AuthorizationEndpoint extends AuthorizationEndpointBase {
     private AuthorizationEndpointRequest request;
     private String redirectUri;
     private boolean automaticRegistration = false;
+    private boolean ishareRequest = false;
 
     public AuthorizationEndpoint(KeycloakSession session, EventBuilder event) {
         super(session, event);
@@ -157,7 +166,7 @@ public class AuthorizationEndpoint extends AuthorizationEndpointBase {
             event.error(cpe.getError());
             throw new ErrorPageException(session, authenticationSession, cpe.getErrorStatus(), cpe.getErrorDetail());
         }
-        checkClient(clientId);
+        checkClient(clientId, params);
 
         request = automaticRegistration ? AuthorizationEndpointRequestParserProcessor.parseRequestOpenIdFederation(event, session, client, params, AuthorizationEndpointRequestParserProcessor.EndpointType.OIDC_AUTH_ENDPOINT) :AuthorizationEndpointRequestParserProcessor.parseRequest(event, session, client, params, AuthorizationEndpointRequestParserProcessor.EndpointType.OIDC_AUTH_ENDPOINT);
 
@@ -280,7 +289,7 @@ public class AuthorizationEndpoint extends AuthorizationEndpointBase {
         return this;
     }
 
-    private void checkClient(String clientId) {
+    private void checkClient(String clientId, MultivaluedMap<String, String> params) {
         if (clientId == null) {
             event.detail(Details.REASON, "Missing parameter: " + OIDCLoginProtocol.CLIENT_ID_PARAM);
             event.error(Errors.INVALID_REQUEST);
@@ -288,9 +297,84 @@ public class AuthorizationEndpoint extends AuthorizationEndpointBase {
         }
 
         event.client(clientId);
-
         client = realm.getClientByClientId(clientId);
-        if (UriUtils.isUri(clientId) && (client == null || !client.isEnabled()) && realm.isOpenIdFederationTypeRegistrationSupported(EntityTypeEnum.OPENID_PROVIDER, ClientRegistrationTypeEnum.AUTOMATIC)) {
+
+        ishareRequest = realm.getAttribute(Constants.ISHARE_ENABLED, false) && AuthorizationEndpointRequestParserProcessor.hasScope(event, session, params, Constants.ISHARE_SCOPE);
+
+        if (ishareRequest) {
+            // create client dynamically
+            Ishare ishare = new Ishare(session);
+
+            String requestParam = params.getFirst(OIDCLoginProtocol.REQUEST_PARAM);
+            if (requestParam == null) {
+                throw new RuntimeException("Request Param required with ishare flow");
+            }
+
+            if (ishare.isProbablyJwe(requestParam)) {
+                logger.debug("Got encrypted JWE");
+                if (!ishare.decryptAndVerifyClientTokenAndParty(realm.getIssuer(), clientId, requestParam)) {
+                    throw new RuntimeException("Error validating decrypted jwt claims");
+                }
+            }
+            else {
+                logger.debug("Got raw JWT");
+                if (!ishare.verifyClientTokenAndParty(realm.getIssuer(), clientId, requestParam)) {
+                    throw new RuntimeException("Error validating jwt claims");
+                }
+            }
+            logger.infof("Client '%s' verified at ishare", clientId);
+
+            if (client == null) {
+                logger.infof("Client '%s', exists on ishare and is active but does not exist on Keycloak. Auto create it!", clientId);
+
+                client = realm.addClient(clientId);
+                client.setClientId(clientId);
+
+                Set<String> redirectUris = new HashSet<>();
+                redirectUris.add("*");
+                client.setRedirectUris(redirectUris);
+
+                client.setBaseUrl("");
+                client.setRootUrl("");
+                client.setBearerOnly(false);
+                client.setProtocol(OIDCLoginProtocol.LOGIN_PROTOCOL);
+                client.setClientAuthenticatorType(ISHAREClientAuthenticator.PROVIDER_ID);
+                client.setConsentRequired(true);
+                client.setAlwaysDisplayInConsole(false);
+
+                OIDCAdvancedConfigWrapper oidc = OIDCAdvancedConfigWrapper.fromClientModel(client);
+                oidc.setUseRefreshToken(false);
+                oidc.setUserInfoSignedResponseAlg(Algorithm.RS256);
+                oidc.setRequestObjectRequired(OIDCConfigAttributes.REQUEST_OBJECT_REQUIRED_REQUEST);
+                List<String> acr_values = new LinkedList();
+                acr_values.add("urn:http://eidas.europa.eu/LoA/NotNotified/substantial");
+                oidc.setAttributeMultivalued(Constants.DEFAULT_ACR_VALUES, acr_values);
+
+                client.setManagementUrl("");
+                client.setPublicClient(false);
+                client.setName("[ishare] " + clientId);
+                client.setDescription("ishare client added via dynamic client discovery.");
+
+                client.setFullScopeAllowed(true);
+                client.setFrontchannelLogout(true);
+                client.setEnabled(true);
+
+                client.setDirectAccessGrantsEnabled(false);
+                client.setStandardFlowEnabled(true);
+                client.setImplicitFlowEnabled(false);
+                client.setServiceAccountsEnabled(false);
+                client.setSurrogateAuthRequired(false);
+                client.setAttribute(Constants.ISHARE_ENABLED, "true");
+                ClientScopeModel ishareScope = realm.getClientScopesStream().filter(x -> Constants.ISHARE_SCOPE.equals(x.getName())).findAny().get();
+                client.addClientScope(ishareScope, false);
+
+                client.updateClient();
+
+                client = realm.getClientByClientId(clientId);
+
+                logger.infof("Client '%s' created. ID: %s", clientId, client.getId());
+            }
+        } else if (UriUtils.isUri(clientId) && (client == null || !client.isEnabled()) && realm.isOpenIdFederationTypeRegistrationSupported(EntityTypeEnum.OPENID_PROVIDER, ClientRegistrationTypeEnum.AUTOMATIC)) {
                 try {
                     client = OpenIdFederationUtils.createOrUpdateAutomaticClient(clientId, session, realm);
                     automaticRegistration = true;
@@ -420,8 +504,9 @@ public class AuthorizationEndpoint extends AuthorizationEndpointBase {
         authenticationSession.setAuthNote(Details.AUTH_TYPE, CODE_AUTH_TYPE);
 
         // redirect if it is a PAR request because authentication can need a refresh (kerberos) and the single object is consumed now
-        final boolean redirectToAuthenticationIfParRequest = requestUriParam != null
-                && RequestUriType.PAR == AuthorizationEndpointRequestParserProcessor.getRequestUriType(requestUriParam);
+        //or iSHARE
+        final boolean redirectToAuthenticationIfParRequest = ishareRequest || (requestUriParam != null
+                && RequestUriType.PAR == AuthorizationEndpointRequestParserProcessor.getRequestUriType(requestUriParam));
 
         return handleBrowserAuthenticationRequest(authenticationSession, new OIDCLoginProtocol(session, realm, session.getContext().getUri(), headers, event),
                 TokenUtil.hasPrompt(request.getPrompt(), OIDCLoginProtocol.PROMPT_VALUE_NONE), redirectToAuthenticationIfParRequest);

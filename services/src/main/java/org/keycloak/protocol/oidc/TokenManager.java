@@ -134,6 +134,8 @@ import org.keycloak.util.TokenUtil;
 
 import org.jboss.logging.Logger;
 
+import org.keycloak.utils.StringUtil;
+
 import static org.keycloak.OAuth2Constants.ORGANIZATION;
 import static org.keycloak.models.light.LightweightUserAdapter.isLightweightUser;
 import static org.keycloak.representations.IDToken.NONCE;
@@ -1384,7 +1386,7 @@ public class TokenManager {
             idToken.audience(client.getClientId());
             idToken.issuedNow();
             idToken.issuedFor(accessToken.getIssuedFor());
-            idToken.issuer(accessToken.getIssuer());
+            idToken.issuer(StringUtil.isNotBlank(realm.getIssuer()) ? : accessToken.getIssuer());
             idToken.setNonce(clientSessionCtx.getAttribute(OIDCLoginProtocol.NONCE_PARAM, String.class));
             idToken.setSessionId(accessToken.getSessionId());
             idToken.exp(getIdTokenExpiration(accessToken.getExp()));

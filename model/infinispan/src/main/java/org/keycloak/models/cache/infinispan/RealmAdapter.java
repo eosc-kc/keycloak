@@ -779,6 +779,18 @@ public class RealmAdapter implements CachedRealmModel {
     }
 
     @Override
+    public String getIssuer() {
+        if (isUpdated()) return updated.getIssuer();
+        return cached.getIssuer();
+    }
+
+    @Override
+    public void setIssuer(String issuer) {
+        getDelegateForUpdate();
+        updated.setIssuer(issuer);
+    }
+
+    @Override
     public List<String> getClaimsSupported() {
         if (isUpdated()) return updated.getClaimsSupported();
         return cached.getClaimsSupported();
