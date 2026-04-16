@@ -274,6 +274,9 @@ public interface RealmModel extends RoleContainerModel {
 
     void setAccessCodeLifespanUserAction(int seconds);
 
+    String getIssuer();
+    void setIssuer(String issuer);
+
     List<String> getClaimsSupported();
 
     void setClaimsSupported(List<String> claimsSupported);

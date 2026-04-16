@@ -85,8 +85,15 @@ public class DefaultTokenManager implements TokenManager {
         SignatureSignerContext signer = signatureProvider.signer();
 
         String type = type(token.getCategory());
-        String encodedToken = new JWSBuilder().type(type).jsonContent(token).sign(signer);
-        return encodedToken;
+
+        RealmModel realm = session.getContext().getRealm();
+        ClientModel client = session.getContext().getClient();
+        JWSBuilder jwsBuilder = new JWSBuilder();
+        if (realm.getAttribute(Constants.ISHARE_ENABLED, false) && client.getAttribute(Constants.ISHARE_ENABLED) != null &&
+                Boolean.valueOf(client.getAttribute(Constants.ISHARE_ENABLED)) && signer.getCertificateChain() != null && !signer.getCertificateChain().isEmpty()) {
+            jwsBuilder = jwsBuilder.x5c(signer.getCertificateChain());
+        }
+        return jwsBuilder.type(type).jsonContent(token).sign(signer);
     }
 
     @Override

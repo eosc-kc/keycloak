@@ -185,6 +185,8 @@ public class CachedRealm extends AbstractExtendableRevisioned {
 
     protected List<String> claimsSupported;
 
+    protected String issuer;
+
     public CachedRealm(long revision, RealmModel model) {
         super(revision, model.getId());
         name = model.getName();
@@ -257,6 +259,7 @@ public class CachedRealm extends AbstractExtendableRevisioned {
 
         requiredCredentials = model.getRequiredCredentialsStream().collect(Collectors.toList());
         userActionTokenLifespans = Map.copyOf(model.getUserActionTokenLifespans());
+        issuer = model.getIssuer();
         claimsSupported = model.getClaimsSupported();
         federations  = model.getSAMLFederations();
         smtpConfig = model.getSmtpConfig();

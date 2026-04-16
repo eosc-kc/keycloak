@@ -20,6 +20,8 @@ package org.keycloak.protocol.oidc.endpoints.request;
 import java.io.InputStream;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Stream;
 
 import jakarta.ws.rs.core.MultivaluedMap;
 import jakarta.ws.rs.core.Response;
@@ -31,6 +33,7 @@ import org.keycloak.connections.httpclient.HttpClientProvider;
 import org.keycloak.events.Details;
 import org.keycloak.events.Errors;
 import org.keycloak.events.EventBuilder;
+import org.keycloak.ishare.Ishare;
 import org.keycloak.models.ClientModel;
 import org.keycloak.models.KeycloakSession;
 import org.keycloak.protocol.oidc.OIDCAdvancedConfigWrapper;
@@ -54,7 +57,7 @@ public class AuthorizationEndpointRequestParserProcessor {
 
     private static final Logger logger = Logger.getLogger(AuthorizationEndpointRequestParserProcessor.class);
 
-    public static AuthorizationEndpointRequest parseRequest(EventBuilder event, KeycloakSession session, ClientModel client, MultivaluedMap<String, String> requestParams, EndpointType endpointType) {
+    public static AuthorizationEndpointRequest parseRequest(EventBuilder event, KeycloakSession session, ClientModel client, MultivaluedMap<String, String> requestParams, EndpointType endpointType, boolean ishareRequest) {
         try {
             AuthorizationEndpointRequest request = parseRequestCommon(session, requestParams, endpointType);
 
@@ -63,6 +66,8 @@ public class AuthorizationEndpointRequestParserProcessor {
 
             if (requestParam != null && requestUriParam != null) {
                 throw new RuntimeException("Illegal to use both 'request' and 'request_uri' parameters together");
+            } else  if (ishareRequest && requestParam == null) {
+                throw new RuntimeException("Illegal to use 'iSHARE' scope without 'request' parameters");
             }
 
             String requestObjectRequired = OIDCAdvancedConfigWrapper.fromClientModel(client).getRequestObjectRequired();
@@ -78,9 +83,30 @@ public class AuthorizationEndpointRequestParserProcessor {
                 throw new RuntimeException("Client is required to use 'request_uri' parameter.");
             }
 
-            if (requestParam != null) {
+            if (!ishareRequest && requestParam != null) {
                 new AuthzEndpointRequestObjectParser(session, requestParam, client).parseRequest(request);
-            } else if (requestUriParam != null) {
+            } else if (requestParam != null) {
+
+                Ishare ishare = new Ishare(session);
+
+                Map<String, Object> claims = ishare.getClaimsFromClientAssertion(requestParam);
+                Object redirectUri = claims.get("redirect_uri");
+                if (redirectUri != null) {
+                    request.redirectUriParam = redirectUri.toString();
+                }
+                Object nonce = claims.get("nonce");
+                if (nonce != null) {
+                    request.nonce = nonce.toString();
+                }
+                Object acr_values = claims.get("acr_values");
+                if (acr_values != null) {
+                    String[] acr_values_str = acr_values.toString().split(" ");
+                    if (acr_values_str.length > 0 && !acr_values_str[0].isEmpty()) {
+                        request.acr = acr_values_str[0];
+                    }
+                }
+
+            }else if (requestUriParam != null) {
                 // Define, if the request is `PAR` or usual `Request Object`.
                 RequestUriType requestUriType = getRequestUriType(requestUriParam);
                 if (requestUriType == RequestUriType.PAR) {
@@ -184,6 +210,18 @@ public class AuthorizationEndpointRequestParserProcessor {
         }
 
         return request;
+    }
+
+    public static boolean hasScope(EventBuilder event, KeycloakSession session, MultivaluedMap<String, String> requestParams, String scope) {
+        List<String> scopeParam = requestParams.get(OIDCLoginProtocol.SCOPE_PARAM);
+        if (scopeParam != null && scopeParam.size() == 1) {
+            String[] scopes = scopeParam.get(0).split(" ");
+            return Stream.of(scopes).anyMatch(c -> c.toLowerCase().equals(scope));
+        } else {
+            logger.warnf("Parameter 'scope' not present or present multiple times in the HTTP request parameters");
+            event.error(Errors.INVALID_REQUEST);
+            throw new ErrorPageException(session, Response.Status.BAD_REQUEST, Messages.INVALID_REQUEST);
+        }
     }
 
     public static String getClientId(EventBuilder event, KeycloakSession session, MultivaluedMap<String, String> requestParams) {
