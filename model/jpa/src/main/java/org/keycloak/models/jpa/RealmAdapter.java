@@ -744,6 +744,16 @@ public class RealmAdapter implements StorageProviderRealmModel, JpaModel<RealmEn
     }
 
     @Override
+    public String getIssuer() {
+        return getAttribute(RealmAttributes.ISSUER);
+    }
+
+    @Override
+    public void setIssuer(String iss) {
+        setAttribute(RealmAttributes.ISSUER, iss);
+    }
+
+    @Override
     public List<String> getClaimsSupported() {
         if (getAttribute(Constants.CLAIMS_SUPPORTED) != null) {
             return new ArrayList<String>(Arrays.asList(getAttribute(Constants.CLAIMS_SUPPORTED).split(",")));
