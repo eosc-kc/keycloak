@@ -453,6 +453,14 @@ public class RealmModelDelegate implements RealmModel {
         delegate.setAccessCodeLifespanUserAction(seconds);
     }
 
+    public String getIssuer() {
+        return delegate.getIssuer();
+    }
+
+    public void setIssuer(String issuer) {
+        delegate.setIssuer(issuer);
+    }
+
     @Override
     public List<String> getClaimsSupported() {
         return delegate.getClaimsSupported();
