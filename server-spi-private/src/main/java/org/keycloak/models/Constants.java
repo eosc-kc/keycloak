@@ -179,7 +179,7 @@ public final class Constants {
     public static final String ACR_URI_MAP = "acr.uri.map";
     public static final String DEFAULT_ACR_VALUES = "default.acr.values";
     public static final String MINIMUM_ACR_VALUE = "minimum.acr.value";
-     public static final String DEFAULT_IDP_ACR_VALUE = "defaultIdpAcrValue";
+    public static final String DEFAULT_IDP_ACR_VALUE = "defaultIdpAcrValue";
     public static final int MINIMUM_LOA = 0;
     public static final int NO_LOA = -1;
     public static final String OPENID_FEDERATION_ENABLED = "openidFederationEnabled";
@@ -198,6 +198,9 @@ public final class Constants {
     public static final String OPENID_FEDERATION_HISTORICAL_KEYS_ENDPOINT = "openIdFederationHistoricalKeysEndpoint";
 
     public static final String CLAIMS_SUPPORTED = "claimsSupported";
+
+    public static final String ISHARE_ENABLED = "ishareEnabled";
+    public static final String ISHARE_SCOPE = "iSHARE";
 
     public static final String SESSION_NOTE_LIGHTWEIGHT_USER = "keycloak.userModel";
 

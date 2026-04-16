@@ -144,6 +144,7 @@ import org.keycloak.sessions.AuthenticationSessionModel;
 import org.keycloak.tracing.TracingAttributes;
 import org.keycloak.tracing.TracingProvider;
 import org.keycloak.util.TokenUtil;
+import org.keycloak.utils.StringUtil;
 
 import org.jboss.logging.Logger;
 
@@ -1488,7 +1489,7 @@ public class TokenManager {
             idToken.audience(client.getClientId());
             idToken.issuedNow();
             idToken.issuedFor(accessToken.getIssuedFor());
-            idToken.issuer(accessToken.getIssuer());
+            idToken.issuer(StringUtil.isNotBlank(realm.getIssuer()) && Boolean.valueOf(client.getAttribute(Constants.ISHARE_ENABLED)) ? realm.getIssuer() : accessToken.getIssuer());
             idToken.setNonce(clientSessionCtx.getAttribute(OIDCLoginProtocol.NONCE_PARAM, String.class));
             idToken.setSessionId(accessToken.getSessionId());
             idToken.exp(getIdTokenExpiration(accessToken.getExp()));
