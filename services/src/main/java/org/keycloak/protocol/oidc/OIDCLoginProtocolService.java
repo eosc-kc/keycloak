@@ -40,6 +40,7 @@ import org.keycloak.models.Constants;
 import org.keycloak.models.KeycloakSession;
 import org.keycloak.models.RealmModel;
 import org.keycloak.protocol.oidc.endpoints.AuthorizationEndpoint;
+import org.keycloak.protocol.oidc.endpoints.ISHARECapabilitiesEndpoint;
 import org.keycloak.protocol.oidc.endpoints.LoginStatusIframeEndpoint;
 import org.keycloak.protocol.oidc.endpoints.LogoutEndpoint;
 import org.keycloak.protocol.oidc.endpoints.ThirdPartyCookiesIframeEndpoint;
@@ -220,6 +221,11 @@ public class OIDCLoginProtocolService {
     @Path("userinfo")
     public Object issueUserInfo() {
         return new UserInfoEndpoint(session, tokenManager);
+    }
+
+    @Path("capabilities")
+    public Object capabilities() {
+        return new ISHARECapabilitiesEndpoint(session);
     }
 
     @Path("logout")

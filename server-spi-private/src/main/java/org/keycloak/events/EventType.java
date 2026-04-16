@@ -196,8 +196,12 @@ public enum EventType implements EnumWithStableIndex {
     GROUP_MEMBERSHIP_CREATE(62, true),
     GROUP_MEMBERSHIP_UPDATE(63, true),
     GROUP_MEMBERSHIP_DELETE(64, true),
-    GROUP_MEMBERSHIP_SUSPEND(65, true)
+    GROUP_MEMBERSHIP_SUSPEND(65, true),
+
+    ISHARE_CAPABILITIES_REQUEST(68, false),
+    ISHARE_CAPABILITIES_REQUEST_ERROR(0x10000 + ISHARE_CAPABILITIES_REQUEST.getStableIndex(), false),
     ;
+
 
     private final int stableIndex;
     private final boolean saveByDefault;

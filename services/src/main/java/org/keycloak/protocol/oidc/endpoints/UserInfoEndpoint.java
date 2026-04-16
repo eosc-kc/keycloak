@@ -19,7 +19,11 @@ package org.keycloak.protocol.oidc.endpoints;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.security.Key;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
+import java.util.Date;
 import java.util.Map;
+import java.util.UUID;
 
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.OPTIONS;
@@ -56,6 +60,7 @@ import org.keycloak.keys.loader.PublicKeyStorageManager;
 import org.keycloak.models.AuthenticatedClientSessionModel;
 import org.keycloak.models.ClientModel;
 import org.keycloak.models.ClientSessionContext;
+import org.keycloak.models.Constants;
 import org.keycloak.models.KeycloakSession;
 import org.keycloak.models.RealmModel;
 import org.keycloak.models.UserModel;
@@ -299,13 +304,27 @@ public class UserInfoEndpoint {
             String audience = clientModel.getClientId();
             claims.put("iss", issuerUrl);
             claims.put("aud", audience);
+            boolean isIshare =realm.getAttribute(Constants.ISHARE_ENABLED, false) && clientModel.getAttribute(Constants.ISHARE_ENABLED) != null &&
+                    Boolean.valueOf(clientModel.getAttribute(Constants.ISHARE_ENABLED));
+            if (isIshare){
+                claims.put("jti", UUID.randomUUID().toString());
+
+                Instant now = Instant.now();
+                claims.put("iat", now.getEpochSecond());
+                claims.put("nbf", now.getEpochSecond());
+                claims.put("exp", Date.from(now.plus(30L, ChronoUnit.SECONDS)).getTime() / 1000);
+            }
 
             String signatureAlgorithm = session.tokens().signatureAlgorithm(TokenCategory.USERINFO);
 
             SignatureProvider signatureProvider = session.getProvider(SignatureProvider.class, signatureAlgorithm);
             SignatureSignerContext signer = signatureProvider.signer();
 
-            String signedUserInfo = new JWSBuilder().type("JWT").jsonContent(claims).sign(signer);
+            JWSBuilder jwsBuilder = new JWSBuilder().type("JWT");
+            if (isIshare){
+                jwsBuilder.x5c(signer.getCertificateChain());
+            }
+            String signedUserInfo =  jwsBuilder.jsonContent(claims).sign(signer);
 
             try {
                 responseBuilder = Response.ok(cfg.isUserInfoEncryptionRequired() ? jweFromContent(signedUserInfo, "JWT") :
