@@ -701,7 +701,7 @@ public class UserInfoTest extends AbstractKeycloakTest {
                     .user(Matchers.nullValue(String.class))
                     .session(Matchers.nullValue(String.class))
                     .detail(Details.AUTH_METHOD, Details.VALIDATE_ACCESS_TOKEN)
-                    .client((String) null)
+                    .client("test-app")
                     .assertEvent();
 
             events.clear();
@@ -725,7 +725,7 @@ public class UserInfoTest extends AbstractKeycloakTest {
                     .user(Matchers.nullValue(String.class))
                     .session(Matchers.nullValue(String.class))
                     .detail(Details.AUTH_METHOD, Details.VALIDATE_ACCESS_TOKEN)
-                    .client((String) null)
+                    .client("test-app")
                     .assertEvent();
 
             clientRep.setNotBefore(0);
@@ -922,7 +922,7 @@ public class UserInfoTest extends AbstractKeycloakTest {
             assertEquals(Status.UNAUTHORIZED.getStatusCode(), response.getStatus());
             events.expect(EventType.USER_INFO_REQUEST)
                     .error(Errors.INVALID_CLIENT)
-                    .client((String) null)
+                    .client("saml-client")
                     .user(Matchers.nullValue(String.class))
                     .session(Matchers.nullValue(String.class))
                     .detail(Details.AUTH_METHOD, Details.VALIDATE_ACCESS_TOKEN)
