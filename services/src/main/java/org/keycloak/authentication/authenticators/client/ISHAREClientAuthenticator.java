@@ -19,6 +19,7 @@ import org.keycloak.ishare.Ishare;
 import org.keycloak.models.AuthenticationExecutionModel;
 import org.keycloak.models.ClientModel;
 import org.keycloak.models.Constants;
+import org.keycloak.models.KeycloakSession;
 import org.keycloak.provider.ProviderConfigProperty;
 import org.keycloak.util.BasicAuthHelper;
 
@@ -172,7 +173,7 @@ public class ISHAREClientAuthenticator extends AbstractClientAuthenticator {
     }
 
     @Override
-    public Map<String, Object> getAdapterConfiguration(ClientModel client) {
+    public Map<String, Object> getAdapterConfiguration(KeycloakSession session, ClientModel client)  {
         return Collections.emptyMap();
     }
 
