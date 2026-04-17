@@ -802,6 +802,10 @@ public class CachedRealm extends AbstractExtendableRevisioned {
         return scimApiEnabled;
     }
 
+    public String getIssuer() {
+        return issuer;
+    }
+
     public List<String> getClaimsSupported() {
         return claimsSupported;
     }

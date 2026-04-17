@@ -225,7 +225,11 @@ public class OIDCLoginProtocolService {
 
     @Path("capabilities")
     public Object capabilities() {
-        return new ISHARECapabilitiesEndpoint(session);
+        if (realm.getAttribute(Constants.ISHARE_ENABLED, false)) {
+            return new ISHARECapabilitiesEndpoint(session);
+        } else {
+            throw new NotFoundException();
+        }
     }
 
     @Path("logout")
