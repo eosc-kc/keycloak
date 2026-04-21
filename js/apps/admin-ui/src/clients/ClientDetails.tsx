@@ -338,9 +338,9 @@ export default function ClientDetails() {
   );
 
   const save = async (
-    { confirmed = false, messageKey = "clientsaveSuccess" }: SaveOptions = {
+    { confirmed = false, messageKey = "clientSaveSuccess" }: SaveOptions = {
       confirmed: false,
-      messageKey: "clientsaveSuccess",
+      messageKey: "clientSaveSuccess",
     },
   ) => {
     if (!(await form.trigger())) {
