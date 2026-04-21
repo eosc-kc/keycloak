@@ -158,8 +158,8 @@ export const ClientDescription = ({
         labelIcon={t("clientDescriptionHelp")}
         rules={{
           maxLength: {
-            value: 255,
-            message: t("maxLength", { length: 255 }),
+            value: 1000,
+            message: t("maxLength", { length: 1000 }),
           },
         }}
       />
