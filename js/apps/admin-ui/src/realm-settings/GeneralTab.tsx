@@ -109,6 +109,7 @@ function RealmSettingsGeneralTabForm({
     control,
     handleSubmit,
     setValue,
+    watch,
     formState: { errors },
   } = form;
   const isFeatureEnabled = useIsFeatureEnabled();
@@ -172,9 +173,23 @@ function RealmSettingsGeneralTabForm({
         ).defaultIdpAcrValue = null;
       }
 
+      if (realmToSave.attributes?.ishareEnabled) {
+        const issuer = realmToSave.issuer?.trim();
+        realmToSave.issuer = issuer || defaultIssuer;
+      } else {
+        delete realmToSave?.issuer;
+      }
+
       await save(realmToSave);
     },
   );
+
+  const isIshareEnabled = watch(
+    convertAttributeNameToForm<FormFields>("attributes.ishareEnabled"),
+    false,
+  );
+
+  const defaultIssuer = `${addTrailingSlash(serverBaseUrl)}realms/${realmName}`;
 
   return (
     <PageSection variant="light">
@@ -288,6 +303,25 @@ function RealmSettingsGeneralTabForm({
               name="scimApiEnabled"
               label={t("scimApiEnabled")}
               labelIcon={t("scimApiEnabledHelp")}
+            />
+          )}
+          <DefaultSwitchControl
+            name={convertAttributeNameToForm<FormFields>(
+              "attributes.ishareEnabled",
+            )}
+            label={t("ishare")}
+            labelIcon={t("ishareHelp")}
+          />
+          {isIshareEnabled && (
+            <TextControl
+              name={convertAttributeNameToForm<FormFields>("attributes.issuer")}
+              label={t("overrideIssuer")}
+              labelIcon={t("overrideIssuerHelp")}
+              defaultValue={defaultIssuer}
+              rules={{
+                validate: (value) =>
+                  !isIshareEnabled || !!value?.trim() || t("required"),
+              }}
             />
           )}
           <SelectControl
