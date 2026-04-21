@@ -18,6 +18,7 @@ import { OpenIdConnectCompatibilityModes } from "./advanced/OpenIdConnectCompati
 import { OpenIdVerifiableCredentials } from "./advanced/OpenIdVerifiableCredentials";
 import { useRealm } from "../context/realm-context/RealmContext";
 import { PROTOCOL_OIDC, PROTOCOL_OID4VC } from "./constants";
+import { IshareSettings } from "./advanced/IshareSettings";
 
 export const parseResult = (
   result: GlobalRequestResult,
@@ -223,6 +224,19 @@ export const AdvancedTab = ({ save, client }: AdvancedProps) => {
                   client={client}
                   save={save}
                   reset={() => resetFields(["oid4vci.enabled"])}
+                />
+              </>
+            ),
+          },
+          {
+            title: t("ishare"),
+            isHidden: protocol === PROTOCOL_OIDC,
+            panel: (
+              <>
+                <Text className="pf-v5-u-pb-lg">{t("ishareClientHelp")}</Text>
+                <IshareSettings
+                  save={save}
+                  reset={() => resetFields(["ishareEnabled"])}
                 />
               </>
             ),
