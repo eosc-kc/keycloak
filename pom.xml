@@ -43,12 +43,12 @@
         <maven.plugin-tools.version>3.15.1</maven.plugin-tools.version>
 
         <project.version.npm>26.6.6</project.version.npm>
-        <eosc-kc.version>${project.version}-0.1</eosc-kc.version>
+        <eosc-kc.version>${project.version}-1.0rc1</eosc-kc.version>
 
         <asciidoctor.plugin.version>1.5.8</asciidoctor.plugin.version>
 
-        <quarkus.version>3.33.3.1</quarkus.version>
-        <quarkus.build.version>3.33.3.1</quarkus.build.version>
+        <quarkus.version>3.33.2</quarkus.version>
+        <quarkus.build.version>3.33.2</quarkus.build.version>
         <jboss-logging-annotations.version>3.0.4.Final</jboss-logging-annotations.version> <!-- keep in sync with the version used by quarkus -->
 
         <project.build-time>${timestamp}</project.build-time>
