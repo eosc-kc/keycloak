@@ -135,7 +135,7 @@ export default function NewClientForm() {
               name={t("loginSettings")}
               id="loginSettings"
               key="loginSettings"
-              isHidden={autoUpdated === "trueσ"}
+              isHidden={autoUpdated === "true"}
               footer={{
                 backButtonText: t("back"),
                 nextButtonText: t("save"),
