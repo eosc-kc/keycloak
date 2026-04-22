@@ -91,3 +91,12 @@ Our Keycloak version is working well with PostgreSQL database. For using other S
 - Problem saving OpenId Federation disabled [RCIAM-636](https://tts.grnet.gr/jira/browse/RCIAM-636)
 - Access token type based on related user session for refresh token flow[RCIAM-628](https://tts.grnet.gr/jira/browse/RCIAM-628)
 - Last refresh and expiration time missing from OID-Fed IdPs [RCIAM-646](https://tts.grnet.gr/jira/browse/RCIAM-646)
+
+### Migration notes
+
+- **Only when upgrading from `22.0.13-1.25`:**
+
+```sql
+UPDATE DATABASECHANGELOG
+SET MD5SUM = NULL
+WHERE ID IN ('federation-indexes', 'federation-indexes-2', 'text-values');
