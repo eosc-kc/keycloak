@@ -84,3 +84,12 @@ Our Keycloak version is working well with PostgreSQL database. For using other S
 - Being possible to accept terms and conditions before User is saved in Keycloak during first broker login. Follow GDPR.
 - Being possible to add realm default scopes during Dynamic Client Registration/ OpenID Federation when scopes are including in client representation
 - RAR scope parsing should explicitly accept client reference [Keycloak-48981](https://github.com/keycloak/keycloak/pull/48981)
+
+## Migration notes
+
+- **Only when upgrading from `22.0.13-1.25`:**
+
+```sql
+UPDATE DATABASECHANGELOG
+SET MD5SUM = NULL
+WHERE ID IN ('federation-indexes', 'federation-indexes-2', 'text-values');

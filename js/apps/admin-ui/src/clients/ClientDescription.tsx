@@ -54,6 +54,11 @@ export const ClientDescription = ({
         labelIcon={t("clientIdHelp")}
         rules={{ required: t("required") }}
       />
+      <TextControl
+        name="name"
+        label={t("name")}
+        labelIcon={t("clientNameHelp")}
+      />
       {protocol === "saml" && (
         <DefaultSwitchControl
           name={convertAttributeNameToForm("attributes.saml.auto.updated")}
@@ -147,11 +152,6 @@ export const ClientDescription = ({
           )}
         </>
       )}
-      <TextControl
-        name="name"
-        label={t("name")}
-        labelIcon={t("clientNameHelp")}
-      />
       <TextAreaControl
         name="description"
         label={t("description")}
@@ -169,11 +169,6 @@ export const ClientDescription = ({
         labelIcon={t("contactsHelp")}
       />
       <Countries />
-      <TextControl
-        name="name"
-        label={t("name")}
-        labelIcon={t("clientNameHelp")}
-      />
       <DefaultSwitchControl
         name="alwaysDisplayInConsole"
         label={t("alwaysDisplayInUI")}
@@ -181,11 +176,11 @@ export const ClientDescription = ({
       />
       {expirationTime && (
         <FormGroup
-          label={t("clients:expirationTime")}
+          label={t("expirationTime")}
           labelIcon={
             <HelpItem
-              helpText={t("clients-help:expirationTime")}
-              fieldLabelId="clients-help:expirationTime"
+              helpText={t("expirationTimeHelp")}
+              fieldLabelId="expirationTimeHelp"
             />
           }
         >
