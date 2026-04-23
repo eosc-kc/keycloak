@@ -226,7 +226,7 @@ export const AdvancedTab = ({ save, client }: AdvancedProps) => {
           },
           {
             title: t("ishare"),
-            isHidden: protocol === PROTOCOL_OIDC,
+            isHidden: protocol !== PROTOCOL_OIDC,
             panel: (
               <>
                 <Text className="pf-v5-u-pb-lg">{t("ishareClientHelp")}</Text>

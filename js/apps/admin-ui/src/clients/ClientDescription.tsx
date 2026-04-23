@@ -147,11 +147,6 @@ export const ClientDescription = ({
           )}
         </>
       )}
-      <TextControl
-        name="name"
-        label={t("name")}
-        labelIcon={t("clientNameHelp")}
-      />
       <TextAreaControl
         name="description"
         label={t("description")}
@@ -181,11 +176,11 @@ export const ClientDescription = ({
       />
       {expirationTime && (
         <FormGroup
-          label={t("clients:expirationTime")}
+          label={t("expirationTime")}
           labelIcon={
             <HelpItem
-              helpText={t("clients-help:expirationTime")}
-              fieldLabelId="clients-help:expirationTime"
+              helpText={t("expirationTimeHelp")}
+              fieldLabelId="expirationTimeHelp"
             />
           }
         >
