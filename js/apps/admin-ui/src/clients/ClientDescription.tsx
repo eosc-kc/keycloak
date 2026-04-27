@@ -54,6 +54,11 @@ export const ClientDescription = ({
         labelIcon={t("clientIdHelp")}
         rules={{ required: t("required") }}
       />
+      <TextControl
+        name="name"
+        label={t("name")}
+        labelIcon={t("clientNameHelp")}
+      />
       {protocol === "saml" && (
         <DefaultSwitchControl
           name={convertAttributeNameToForm("attributes.saml.auto.updated")}
@@ -164,11 +169,6 @@ export const ClientDescription = ({
         labelIcon={t("contactsHelp")}
       />
       <Countries />
-      <TextControl
-        name="name"
-        label={t("name")}
-        labelIcon={t("clientNameHelp")}
-      />
       <DefaultSwitchControl
         name="alwaysDisplayInConsole"
         label={t("alwaysDisplayInUI")}
