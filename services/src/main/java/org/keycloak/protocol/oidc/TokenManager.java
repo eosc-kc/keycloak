@@ -17,6 +17,7 @@
 
 package org.keycloak.protocol.oidc;
 
+import java.io.IOException;
 import java.time.Duration;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
