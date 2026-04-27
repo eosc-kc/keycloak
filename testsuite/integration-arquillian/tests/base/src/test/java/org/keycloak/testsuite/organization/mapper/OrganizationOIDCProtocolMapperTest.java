@@ -163,7 +163,7 @@ public class OrganizationOIDCProtocolMapperTest extends AbstractOrganizationTest
         assertThat(accessToken.getOtherClaims().get("groups"), nullValue());
     }
 
-    @SuppressWarnings("unchecked")
+  //  @SuppressWarnings("unchecked")
 //    @Test
 //    public void testOrganizationScopeMapsSpecificOrganization() {
 //        OrganizationRepresentation orgA = createOrganization("orga", true);
@@ -828,7 +828,7 @@ public class OrganizationOIDCProtocolMapperTest extends AbstractOrganizationTest
         assertThat(organizations.contains(orgA.getAlias()), is(true));
     }
 
-    @SuppressWarnings("unchecked")
+    //@SuppressWarnings("unchecked")
 //    @Test
 //    public void testPasswordGrantWithAllOrganizationsAndRefresh() throws Exception {
 //        OrganizationRepresentation orgA = createOrganization("orga", true);
