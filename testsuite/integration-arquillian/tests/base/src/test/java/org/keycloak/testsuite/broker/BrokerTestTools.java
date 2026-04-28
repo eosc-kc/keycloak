@@ -57,6 +57,7 @@ public class BrokerTestTools {
         identityProviderRepresentation.setDisplayName(alias);
         identityProviderRepresentation.setProviderId(providerId);
         identityProviderRepresentation.setEnabled(true);
+        identityProviderRepresentation.setStoreToken(false);
 
         return identityProviderRepresentation;
     }

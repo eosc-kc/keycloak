@@ -192,6 +192,8 @@ public class AccountConsole implements AccountResourceProvider {
                 deleteAccountAllowed = deleteAccountRole != null && user.hasRole(deleteAccountRole) && realm.getRequiredActionProviderByAlias(DeleteAccount.PROVIDER_ID).isEnabled();
                 RoleModel manageAccount = realm.getClientByClientId(Constants.ACCOUNT_MANAGEMENT_CLIENT_ID).getRole(AccountRoles.MANAGE_ACCOUNT);
                 manageAccountAllowed = manageAccount != null && user.hasRole(manageAccount);
+                RoleModel manageConsent = realm.getClientByClientId(Constants.ACCOUNT_MANAGEMENT_CLIENT_ID).getRole(AccountRoles.MANAGE_CONSENT);
+                manageConsentAllowed = manageConsent != null && user.hasRole(manageConsent);
                 RoleModel manageAccountLink = realm.getClientByClientId(Constants.ACCOUNT_MANAGEMENT_CLIENT_ID).getRole(AccountRoles.MANAGE_ACCOUNT_LINKS);
                 manageAccountLinkAllowed = manageAccountLink != null && user.hasRole(manageAccountLink);
                 RoleModel manageAccountBasicAuth = realm.getClientByClientId(Constants.ACCOUNT_MANAGEMENT_CLIENT_ID).getRole(AccountRoles.MANAGE_ACCOUNT_BASIC_AUTH);
@@ -205,13 +207,13 @@ public class AccountConsole implements AccountResourceProvider {
 
             }
 
-            map.put("deleteAccountAllowed", deleteAccountAllowed);
-            map.put("manageAccountAllowed", manageAccountAllowed);
-            map.put("manageAccountLinkAllowed", manageAccountLinkAllowed || manageAccountAllowed);
-            map.put("manageAccountBasicAuthAllowed", manageAccountBasicAuthAllowed || manageAccountAllowed);
-            map.put("manageAccount2faAllowed", manageAccount2faAllowed || manageAccountAllowed);
-            map.put("viewApplicationAllowed", viewApplicationAllowed || manageConsentAllowed || manageAccountAllowed);
-
+        map.put("deleteAccountAllowed", deleteAccountAllowed);
+        map.put("manageAccountAllowed", manageAccountAllowed);
+        map.put("manageAccountLinkAllowed", manageAccountLinkAllowed || manageAccountAllowed);
+        map.put("manageAccountBasicAuthAllowed", manageAccountBasicAuthAllowed || manageAccountAllowed);
+        map.put("manageAccount2faAllowed", manageAccount2faAllowed || manageAccountAllowed);
+        map.put("viewApplicationAllowed", viewApplicationAllowed || manageConsentAllowed || manageAccountAllowed);
+        map.put("manageConsentAllowed", manageAccountAllowed || manageConsentAllowed);
         map.put("isViewGroupsEnabled", isViewGroupsEnabled);
         map.put("isViewOrganizationsEnabled", realm.isOrganizationsEnabled());
         map.put("isOid4VciEnabled", realm.isVerifiableCredentialsEnabled());
