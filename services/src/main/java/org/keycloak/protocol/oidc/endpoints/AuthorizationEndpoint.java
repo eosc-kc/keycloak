@@ -17,11 +17,8 @@
 
 package org.keycloak.protocol.oidc.endpoints;
 
-import java.util.HashSet;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.function.BiConsumer;
 
 import jakarta.ws.rs.Consumes;
@@ -34,11 +31,9 @@ import jakarta.ws.rs.core.Response;
 
 import org.keycloak.OAuth2Constants;
 import org.keycloak.authentication.AuthenticationProcessor;
-import org.keycloak.authentication.authenticators.client.ISHAREClientAuthenticator;
 import org.keycloak.common.Profile;
 import org.keycloak.common.util.UriUtils;
 import org.keycloak.constants.AdapterConstants;
-import org.keycloak.crypto.Algorithm;
 import org.keycloak.events.Details;
 import org.keycloak.events.Errors;
 import org.keycloak.events.EventBuilder;
@@ -47,15 +42,14 @@ import org.keycloak.ishare.Ishare;
 import org.keycloak.locale.LocaleSelectorProvider;
 import org.keycloak.models.AuthenticationFlowModel;
 import org.keycloak.models.ClientModel;
-import org.keycloak.models.ClientScopeModel;
 import org.keycloak.models.Constants;
 import org.keycloak.models.KeycloakSession;
 import org.keycloak.models.enums.ClientRegistrationTypeEnum;
 import org.keycloak.models.enums.EntityTypeEnum;
 import org.keycloak.organization.utils.Organizations;
 import org.keycloak.protocol.AuthorizationEndpointBase;
+import org.keycloak.protocol.oidc.ClientCreationUtils;
 import org.keycloak.protocol.oidc.OIDCAdvancedConfigWrapper;
-import org.keycloak.protocol.oidc.OIDCConfigAttributes;
 import org.keycloak.protocol.oidc.OIDCLoginProtocol;
 import org.keycloak.protocol.oidc.endpoints.checker.AuthorizationCheckException;
 import org.keycloak.protocol.oidc.endpoints.checker.AuthorizationEndpointChecker;
@@ -310,13 +304,12 @@ public class AuthorizationEndpoint extends AuthorizationEndpointBase {
 
             if (ishare.isProbablyJwe(requestParam)) {
                 logger.debug("Got encrypted JWE");
-                if (!ishare.decryptAndVerifyClientTokenAndParty(realm.getIssuer(), clientId, requestParam)) {
+                if (!ishare.decryptAndVerifyClientTokenAndParty(realm.getIssuer(), realm.getAttribute(Constants.PR_ISSUER), clientId, requestParam)) {
                     throw new RuntimeException("Error validating decrypted jwt claims");
                 }
-            }
-            else {
+            } else {
                 logger.debug("Got raw JWT");
-                if (!ishare.verifyClientTokenAndParty(realm.getIssuer(), clientId, requestParam)) {
+                if (!ishare.verifyAuthorizationClientToken(realm.getIssuer(), realm.getAttribute(Constants.PR_ISSUER), clientId, requestParam)) {
                     throw new RuntimeException("Error validating jwt claims");
                 }
             }
@@ -325,50 +318,11 @@ public class AuthorizationEndpoint extends AuthorizationEndpointBase {
             if (client == null) {
                 logger.infof("Client '%s', exists on ishare and is active but does not exist on Keycloak. Auto create it!", clientId);
 
-                client = realm.addClient(clientId);
-                client.setClientId(clientId);
-
-                Set<String> redirectUris = new HashSet<>();
-                redirectUris.add("*");
-                client.setRedirectUris(redirectUris);
-
-                client.setBaseUrl("");
-                client.setRootUrl("");
-                client.setBearerOnly(false);
-                client.setProtocol(OIDCLoginProtocol.LOGIN_PROTOCOL);
-                client.setClientAuthenticatorType(ISHAREClientAuthenticator.PROVIDER_ID);
-                client.setConsentRequired(true);
-                client.setAlwaysDisplayInConsole(false);
-
-                OIDCAdvancedConfigWrapper oidc = OIDCAdvancedConfigWrapper.fromClientModel(client);
-                oidc.setUseRefreshToken(false);
-                oidc.setUserInfoSignedResponseAlg(Algorithm.RS256);
-                oidc.setRequestObjectRequired(OIDCConfigAttributes.REQUEST_OBJECT_REQUIRED_REQUEST);
-                List<String> acr_values = new LinkedList();
-                acr_values.add("urn:http://eidas.europa.eu/LoA/NotNotified/substantial");
-                oidc.setAttributeMultivalued(Constants.DEFAULT_ACR_VALUES, acr_values);
-
-                client.setManagementUrl("");
-                client.setPublicClient(false);
-                client.setName("[ishare] " + clientId);
-                client.setDescription("ishare client added via dynamic client discovery.");
-
-                client.setFullScopeAllowed(true);
-                client.setFrontchannelLogout(true);
-                client.setEnabled(true);
-
-                client.setDirectAccessGrantsEnabled(false);
+                client = ClientCreationUtils.createIshareClient(realm, clientId);
                 client.setStandardFlowEnabled(true);
-                client.setImplicitFlowEnabled(false);
-                client.setServiceAccountsEnabled(false);
-                client.setSurrogateAuthRequired(false);
-                client.setAttribute(Constants.ISHARE_ENABLED, "true");
-                ClientScopeModel ishareScope = realm.getClientScopesStream().filter(x -> Constants.ISHARE_SCOPE.equals(x.getName())).findAny().get();
-                client.addClientScope(ishareScope, false);
-
                 client.updateClient();
-
                 client = realm.getClientByClientId(clientId);
+                //do we need and how implement enable authorization service?
 
                 logger.infof("Client '%s' created. ID: %s", clientId, client.getId());
             }
