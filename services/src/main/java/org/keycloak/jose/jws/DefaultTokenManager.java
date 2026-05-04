@@ -59,6 +59,7 @@ import org.keycloak.protocol.oidc.OIDCAdvancedConfigWrapper;
 import org.keycloak.protocol.oidc.OIDCConfigAttributes;
 import org.keycloak.protocol.oidc.OIDCLoginProtocol;
 import org.keycloak.protocol.oidc.mappers.LogoutTokenMapper;
+import org.keycloak.representations.JsonWebToken;
 import org.keycloak.representations.LogoutToken;
 import org.keycloak.representations.openid_federation.EntityStatement;
 import org.keycloak.services.util.DefaultClientSessionContext;
@@ -87,11 +88,13 @@ public class DefaultTokenManager implements TokenManager {
         String type = type(token.getCategory());
 
         RealmModel realm = session.getContext().getRealm();
-        ClientModel client = session.getContext().getClient();
         JWSBuilder jwsBuilder = new JWSBuilder();
-        if (realm.getAttribute(Constants.ISHARE_ENABLED, false) && client.getAttribute(Constants.ISHARE_ENABLED) != null &&
-                Boolean.valueOf(client.getAttribute(Constants.ISHARE_ENABLED)) && signer.getCertificateChain() != null && !signer.getCertificateChain().isEmpty()) {
-            jwsBuilder = jwsBuilder.x5c(signer.getCertificateChain());
+        if (realm.getAttribute(Constants.ISHARE_ENABLED, false) && token instanceof JsonWebToken jwt && jwt.getIssuedFor() != null) {
+            ClientModel client = realm.getClientById(jwt.getIssuedFor());
+            if (client != null && client.getAttribute(Constants.ISHARE_ENABLED) != null &&
+                    Boolean.valueOf(client.getAttribute(Constants.ISHARE_ENABLED)) && signer.getCertificateChain() != null) {
+                jwsBuilder = jwsBuilder.x5c(signer.getCertificateChain());
+            }
         }
         return jwsBuilder.type(type).jsonContent(token).sign(signer);
     }

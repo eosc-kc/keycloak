@@ -150,12 +150,11 @@ public class Ishare {
     }
 
     protected boolean init() {
-        // TO-DO: If someone can figure out how we can use Config.Scope here,
-        // please leave an Issue on Github. For now, we slurp a config json.
+        // TO-DO: Realm settings
         try {
-            String keycloakHome = System.getenv("KEYCLOAK_HOME");
+            String keycloakHome = System.getenv("QUARKUS_HOME");
 
-            String configFilePath = (keycloakHome != null ? keycloakHome : ".") + "/conf/ishare.json";
+            String configFilePath = (keycloakHome != null ? keycloakHome : "/srv/keycloak") + "/conf/ishare.json";
             logger.infof("use ishare config %s", configFilePath);
 
             String configFileContent = getFileContent(new FileInputStream(configFilePath), "utf-8");

@@ -75,14 +75,6 @@ public class ISHAREClientAuthenticator extends AbstractClientAuthenticator {
             }
         }
 
-        /*
-        if (client_assertion_type != "urn:ietf:params:oauth:client-assertion-type:jwt-bearer") {
-            Response challengeResponse = ClientAuthUtil.errorResponse(Response.Status.BAD_REQUEST.getStatusCode(), "invalid_client", "Invalid client_assertion_type");
-            context.challenge(challengeResponse);
-            return;
-        }
-        */
-
         if (client_id == null) {
             client_id = context.getSession().getAttribute("client_id", String.class);
         }
@@ -130,7 +122,6 @@ public class ISHAREClientAuthenticator extends AbstractClientAuthenticator {
         }
 
         context.success();
-        return;
     }
 
     @Override
