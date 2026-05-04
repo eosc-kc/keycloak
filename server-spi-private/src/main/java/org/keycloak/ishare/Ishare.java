@@ -15,24 +15,28 @@ import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
-import java.util.Date;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.stream.Stream;
 
 import org.keycloak.common.util.Base64Url;
 import org.keycloak.common.util.PemUtils;
+import org.keycloak.common.util.Time;
 import org.keycloak.crypto.KeyUse;
 import org.keycloak.crypto.KeyWrapper;
 import org.keycloak.crypto.SignatureProvider;
 import org.keycloak.crypto.SignatureSignerContext;
 import org.keycloak.jose.jwe.JWE;
 import org.keycloak.jose.jwe.JWEException;
+import org.keycloak.jose.jws.Algorithm;
 import org.keycloak.jose.jws.JWSBuilder;
 import org.keycloak.jose.jws.JWSHeader;
 import org.keycloak.jose.jws.JWSInput;
 import org.keycloak.jose.jws.JWSInputException;
+import org.keycloak.jose.jws.crypto.RSAProvider;
 import org.keycloak.models.Constants;
 import org.keycloak.models.KeycloakSession;
 import org.keycloak.representations.JsonWebToken;
@@ -52,16 +56,6 @@ class ISHAREAuthenticatorConfig implements Serializable {
 
     @JsonProperty(value="ishare-ca-file", required=true)
     public String ishareCaFile;
-}
-
-class ISHAREJWSHeader extends JWSHeader
-{
-    @JsonProperty("x5c")
-    private String[] x5c;
-
-    public String[] getX5C() {
-        return x5c;
-    }
 }
 
 class ISHARESatellitePartiesResponse implements Serializable {
@@ -136,6 +130,9 @@ class JWEHeaderCerts implements Serializable {
 public class Ishare {
 
     private static final Logger logger = Logger.getLogger(Ishare.class);
+    public static final String CLIENT_ASSERTION_TYPE="urn:ietf:params:oauth:client-assertion-type:jwt-bearer";
+    private static final String SUB_FOR_AUTHORIZATION="urn:TBD";
+    private static final List<Algorithm> JWS_HEADER_APPROVED_ALGORITHMS = Stream.of(Algorithm.RS256, Algorithm.RS384, Algorithm.RS512).toList();
 
     String iSHARESatellitePartyId;
     String iSHARESatelliteBaseUrl;
@@ -150,12 +147,11 @@ public class Ishare {
     }
 
     protected boolean init() {
-        // TO-DO: If someone can figure out how we can use Config.Scope here,
-        // please leave an Issue on Github. For now, we slurp a config json.
+        // TO-DO: Realm settings
         try {
-            String keycloakHome = System.getenv("KEYCLOAK_HOME");
+            String keycloakHome = System.getenv("QUARKUS_HOME");
 
-            String configFilePath = (keycloakHome != null ? keycloakHome : ".") + "/conf/ishare.json";
+            String configFilePath = (keycloakHome != null ? keycloakHome : "/srv/keycloak") + "/conf/ishare.json";
             logger.infof("use ishare config %s", configFilePath);
 
             String configFileContent = getFileContent(new FileInputStream(configFilePath), "utf-8");
@@ -169,7 +165,7 @@ public class Ishare {
             CertificateFactory cf = CertificateFactory.getInstance("X.509");
             iSHARE_CA = (X509Certificate) cf.generateCertificate(inStream);
         } catch (Exception e) {
-            logger.errorf("Exception during init %s", e.toString());
+            logger.errorf(e,"Exception during init");
             return false;
         }
 
@@ -191,7 +187,7 @@ public class Ishare {
         }
     }
 
-    public boolean verifyClientToken(String idpEORI, String incoming_token)
+    public boolean verifyClientToken(String idpEORI, String prIdpEORI, String incoming_token, String clientId)
     {
         try {
             JWSInput jws = new JWSInput(incoming_token);
@@ -200,16 +196,25 @@ public class Ishare {
             }
 
             JsonWebToken token = jws.readJsonContent(JsonWebToken.class);
+            logger.debugf("Trying to validate jws token of ishare client authenticator. Token is: %s", JsonSerialization.writeValueAsString(token));
             if (!validateJwtToken(token, idpEORI)) {
                 return false;
             }
+            if (token.getExp() -  token.getIat() != 30L) {
+                logger.error("exp - iat must be exactly 30 seconds");
+                return false;
+            }
 
-            return true;
+            if (token.getIssuer() == null || !token.getIssuer().equals(token.getSubject()) || !token.getIssuer().equals(clientId)){
+                logger.error("Iss and sub must be equal to client_id");
+                return false;
+            }
+
+            return verifyClientAtSatellite(clientId, jws.getHeader().getX5c().get(0), prIdpEORI != null ? prIdpEORI : idpEORI, createSatelliteClientAssertion(prIdpEORI != null ? prIdpEORI : idpEORI, this.session));
         } catch (Exception e) {
-            logger.errorf("Exception validating client_assertion: %s", e.toString());
+            logger.errorf(e,"Exception validating client_assertion");
+            return false;
         }
-
-        return true;
     }
 
     public boolean isProbablyJwe(String incoming_token) {
@@ -228,7 +233,7 @@ public class Ishare {
         return jwe;
     }
 
-    public boolean decryptAndVerifyClientTokenAndParty(String idpEORI, String clientId, String incoming_token)
+    public boolean decryptAndVerifyClientTokenAndParty(String idpEORI, String prIdpEORI, String clientId, String incoming_token)
     {
         try {
             JWE jwe = this.getDecryptedJWE(incoming_token);
@@ -238,14 +243,14 @@ public class Ishare {
 
             logger.infof("Got decrypted JWT token: %s", client_assertion);
 
-            return this.verifyClientTokenAndParty(idpEORI, clientId, client_assertion);
+            return this.verifyAuthorizationClientToken(idpEORI, prIdpEORI, clientId, client_assertion);
         } catch (Exception e) {
-            logger.errorf("Exception validating client_assertion: %s", e.toString());
+            logger.errorf(e,"Exception validating client_assertion");
         }
         return false;
     }
 
-    public boolean verifyClientTokenAndParty(String idpEORI, String clientId, String incoming_token)
+    public boolean verifyAuthorizationClientToken(String idpEORI, String prIdpEORI, String clientId, String incoming_token)
     {
         try {
             JWSInput jws = new JWSInput(incoming_token);
@@ -253,18 +258,27 @@ public class Ishare {
                 return false;
             }
 
-            String[] x5c = getX5C(jws);
-
             JsonWebToken token = jws.readJsonContent(JsonWebToken.class);
             if (!validateJwtToken(token, idpEORI)) {
                 return false;
             }
+            if (token.getExp() -  token.getIat() != 30L) {
+                logger.error("exp - iat must be exactly 30 seconds");
+                return false;
+            }
+            if (!clientId.equals(token.getIssuer())){
+                logger.error("Iss must be equal to client_id");
+                return false;
+            }
 
-            String our_client_assertion = createSatelliteClientAssertion(idpEORI, this.session);
+            if (!SUB_FOR_AUTHORIZATION.equals(token.getSubject())){
+                logger.errorf("Sub must be equal to %s", SUB_FOR_AUTHORIZATION);
+                return false;
+            }
 
-            return verifyClientAtSatellite(clientId, x5c[0], idpEORI, our_client_assertion);
+            return verifyClientAtSatellite(clientId, jws.getHeader().getX5c().get(0), prIdpEORI != null ? prIdpEORI : idpEORI, createSatelliteClientAssertion(prIdpEORI != null ? prIdpEORI : idpEORI, this.session));
         } catch (Exception e) {
-            logger.errorf("Exception validating client_assertion: %s", e.toString());
+            logger.errorf(e,"Exception validating client_assertion");
         }
         return false;
     }
@@ -287,27 +301,24 @@ public class Ishare {
 
     private String createSatelliteClientAssertion(String idpEORI, KeycloakSession session)
     {
-        Instant now = Instant.now();
-
         JWSBuilder jwsBuilder = new JWSBuilder();
 
         SignatureProvider signatureProvider = session.getProvider(SignatureProvider.class, "RS256");
         SignatureSignerContext signer = signatureProvider.signer();
+        List<X509Certificate> certs = signer.getCertificateChain();
+        if (certs != null && certs.size() > 0) {
+            jwsBuilder = jwsBuilder.x5c(certs);
+        }
 
         Map<String, Object> claims = new HashMap<String, Object>();
         claims.put("jti", UUID.randomUUID().toString());
         claims.put("iss", idpEORI);
         claims.put("sub", idpEORI);
         claims.put("aud", iSHARESatellitePartyId);
+        Instant now = Instant.now();
         claims.put("iat", now.getEpochSecond());
         claims.put("nbf", now.getEpochSecond());
-        claims.put("exp", Date.from(now.plus(30L, ChronoUnit.SECONDS)).getTime() / 1000);
-
-
-        List<X509Certificate> certs = signer.getCertificateChain();
-        if (certs != null && certs.size() > 0) {
-            jwsBuilder = jwsBuilder.x5c(certs);
-        }
+        claims.put("exp", now.plus(30L, ChronoUnit.SECONDS).getEpochSecond());
 
         String client_assertion = jwsBuilder
                 .type("JWT")
@@ -315,6 +326,8 @@ public class Ishare {
                 .jsonContent(claims)
                 .sign(signer);
 
+        logger.debugf("x5c for satellite: %s", certs);
+        logger.debugf("Created client_assertion for satellite: %s", client_assertion);
         return client_assertion;
     }
 
@@ -342,23 +355,25 @@ public class Ishare {
 
         Map<String, String> parameters = new HashMap<>();
         parameters.put("grant_type", "client_credentials");
-        parameters.put("client_assertion_type", "urn:ietf:params:oauth:client-assertion-type:jwt-bearer");
+        parameters.put("client_assertion_type", CLIENT_ASSERTION_TYPE);
         parameters.put("client_assertion", client_assertion);
         parameters.put("scope", Constants.ISHARE_SCOPE);
         parameters.put("client_id", idpEORI);
 
+        String formBodyData = getParamsString(parameters);
+        byte[] postDataBytes = formBodyData.getBytes(java.nio.charset.StandardCharsets.UTF_8);
+        connection.setRequestProperty("Content-Length", String.valueOf(postDataBytes.length));
         connection.setDoOutput(true);
-        DataOutputStream out = new DataOutputStream(connection.getOutputStream());
-        out.writeBytes(getParamsString(parameters));
-        out.flush();
-        out.close();
+
+        try (DataOutputStream out = new DataOutputStream(connection.getOutputStream())) {
+            out.write(postDataBytes);
+            out.flush();
+        }
 
         int status = connection.getResponseCode();
         logger.tracef("Satellite response status: %d", status);
 
         if (status == 200) {
-            /* on success: 200 OK with { access_token, token_type, expires_in } */
-            /* on missing client_assertion: 200 OK with { status: false, message } */
             String body = readBody(connection);
 
             ISHARESatelliteResponse resp = JsonSerialization.readValue(body, ISHARESatelliteResponse.class);
@@ -370,7 +385,7 @@ public class Ishare {
             logger.tracef("got access token: %s", resp.access_token);
             return resp.access_token;
         } else {
-            logger.errorf("Satellite returned error. Statuscode: %d", status);
+            logger.errorf("Satellite returned error. Statuscode: %d. Error message: %s", status, readBody(connection));
             return null;
         }
     }
@@ -395,7 +410,7 @@ public class Ishare {
 
         int status = connection.getResponseCode();
         if (status != 200) {
-            logger.debugf("error getting parties: %d", status);
+            logger.errorf("error getting parties: %d. Error message: %s", status, readBody(connection));
             return false;
         }
 
@@ -404,7 +419,6 @@ public class Ishare {
         ISHARESatellitePartiesResponse resp = JsonSerialization.readValue(body, ISHARESatellitePartiesResponse.class);
 
         if (!validatePartiesToken(resp.party_token, clientId, clientCert, idpEORI)) {
-            logger.error("Error validating parties token");
             return false;
         }
 
@@ -416,13 +430,13 @@ public class Ishare {
         logger.tracef("validate parties token: %s", partiesToken);
         JWSInput jws = new JWSInput(partiesToken);
         if (!validateJwtCert(jws)) {
-            logger.error("Invalid parties token cert");
+            logger.error("Error validating parties token. Invalid parties token cert");
             return false;
         }
 
         JsonWebToken token = jws.readJsonContent(JsonWebToken.class);
         if (!validateJwtToken(token, idpEORI)) {
-            logger.error("invalid parties token");
+            logger.error("Error validating parties token. invalid parties token");
             return false;
         }
 
@@ -433,53 +447,47 @@ public class Ishare {
         ISHAREPartyToken partyInfoToken = JsonSerialization.readValue(contentBytes, ISHAREPartyToken.class);
 
         if (!partyInfoToken.party_info.party_id.equals(clientId)) {
-            logger.errorf("invalid party_id in party token: %s. Should be: %s", partyInfoToken.party_info.party_id, clientId);
+            logger.errorf("Error validating parties token. invalid party_id in party token: %s. Should be: %s", partyInfoToken.party_info.party_id, clientId);
             return false;
         }
 
         if (!partyInfoToken.party_info.adherence.status.equals("Active")) {
-            logger.error("party not active");
+            logger.error("Error validating parties token. party not active");
             return false;
         }
 
         List<ISHARECertificateInfo> storedCerts = partyInfoToken.party_info.certificates;
-        boolean atLeastOneCert = storedCerts.stream().anyMatch(cert -> {
-            return cert.x5c.equals(clientCert);
-        });
+        boolean atLeastOneCert = storedCerts.stream().anyMatch(cert -> cert.x5c.equals(clientCert));
 
         if (!atLeastOneCert) {
-            logger.error("no matching certificate found in jwt");
-            return false;
+            logger.error("Error validating parties token. no matching certificate found in jwt");
         }
 
         return atLeastOneCert;
     }
 
-    public boolean validateJwtToken(JsonWebToken token, String idpEORI) throws Exception
+    public boolean validateJwtToken(JsonWebToken token, String idpEORI)
     {
         if (!token.isActive()) {
             logger.error("token is not active anymore");
-            return false; // skip for debugging
+            return false;
         }
-
-        if (!token.hasAudience(idpEORI)) {
-            logger.errorf("Invalid aud: %s. Should be: %s", token.audience(), idpEORI);
+        if (token.getIat() == null || token.getIat() > Time.currentTime()) {
+            logger.error("token iat must be declared and be before now");
+            return false;
+        }
+        if (token.getId() == null) {
+            logger.error("token iat must be declared");
             return false;
         }
 
+        if (!token.hasAudience(idpEORI)) {
+            logger.errorf("Invalid aud: %s. Should be: %s", Arrays.toString(token.getAudience()), idpEORI);
+            return false;
+          //  logger.warnf("Invalid aud: %s. Should be: %s", Arrays.toString(token.getAudience()), idpEORI);
+        }
+
         return true;
-    }
-
-    private String[] getX5C(JWSInput jws) throws Exception
-    {
-        // unfortunately no way to get x5c otherwise
-        String encodedHeader = jws.getEncodedHeader();
-        byte[] headerBytes = Base64Url.decode(encodedHeader);
-
-        ISHAREJWSHeader header = JsonSerialization.readValue(headerBytes, ISHAREJWSHeader.class);
-
-        String[] x5c = header.getX5C();
-        return x5c;
     }
 
     public Map<String, Object> getClaimsFromClientAssertion(String assertion)
@@ -497,10 +505,10 @@ public class Ishare {
                 Map<String, Object> claims = webtoken.getOtherClaims();
                 return claims;
             } catch (JWEException e) {
-                logger.errorf("JWE Exception: %s", e.toString());
+                logger.errorf("JWE Exception");
                 return new HashMap<>();
             } catch (JWSInputException e) {
-                logger.errorf("Invalid JWS Input: %s", e.toString());
+                logger.errorf("Invalid JWS Input");
                 return new HashMap<>();
             }
         } else {
@@ -510,7 +518,7 @@ public class Ishare {
                 Map<String, Object> claims = webtoken.getOtherClaims();
                 return claims;
             } catch (JWSInputException e) {
-                logger.errorf("Invalid JWS Input: %s", e.toString());
+                logger.errorf(e,"Invalid JWS Input");
                 return new HashMap<>();
             }
         }
@@ -518,22 +526,30 @@ public class Ishare {
 
     public boolean validateJwtCert(JWSInput jws) throws Exception
     {
-        String[] x5c = getX5C(jws);
-        if (x5c.length == 0) {
+        JWSHeader header = jws.getHeader();
+        if (header.getAlgorithm() == null || !JWS_HEADER_APPROVED_ALGORITHMS.contains(header.getAlgorithm())) {
+            logger.errorf("Invalid JWT alg: %s. Must be RS256, RS384, or RS512", header.getAlgorithm());
+            return false;
+        }
+        if (!"JWT".equals(header.getType())) {
+            logger.errorf("Invalid JWT typ: %s. Must be JWT", header.getType());
+            return false;
+        }
+        List<String> x5c = header.getX5c();
+        if (x5c == null || x5c.isEmpty()) {
             logger.error("x5c header value empty");
             return false;
         }
-        logger.trace("--- certs ----");
-        for (String s : x5c) {
-            logger.tracef("x5c: %s", s);
-        }
-        logger.trace("----------------");
 
-        X509Certificate cert = PemUtils.decodeCertificate(x5c[0]);
+        X509Certificate cert = PemUtils.decodeCertificate(x5c.get(0));
 
         // Note: This works only if iSHARE_CA has full chain to root.
-
         cert.verify(iSHARE_CA.getPublicKey());
+
+        if (jws.getSignature() == null || !RSAProvider.verify(jws, cert.getPublicKey())) {
+            logger.error("JWT signature key used does not correspond with public key from the x5c certificate");
+            return false;
+        }
 
         return true;
     }

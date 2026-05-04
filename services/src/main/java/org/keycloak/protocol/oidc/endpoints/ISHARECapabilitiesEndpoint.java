@@ -87,7 +87,9 @@ public class ISHARECapabilitiesEndpoint {
         Map<String, Object> claims = new HashMap<>();
         claims.put("iss", issuer);
         claims.put("sub", issuer);
-        claims.put("aud", "public");
+        claims.put("aud", issuer);
+        //Todo put public in aud
+//        claims.put("aud", "public");
         claims.put("jti", UUID.randomUUID().toString());
 
         Instant now = Instant.now();

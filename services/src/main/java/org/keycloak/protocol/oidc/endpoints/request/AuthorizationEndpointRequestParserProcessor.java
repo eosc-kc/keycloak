@@ -216,7 +216,7 @@ public class AuthorizationEndpointRequestParserProcessor {
         List<String> scopeParam = requestParams.get(OIDCLoginProtocol.SCOPE_PARAM);
         if (scopeParam != null && scopeParam.size() == 1) {
             String[] scopes = scopeParam.get(0).split(" ");
-            return Stream.of(scopes).anyMatch(c -> c.toLowerCase().equals(scope));
+            return Stream.of(scopes).anyMatch(c -> c.equals(scope));
         } else {
             logger.warnf("Parameter 'scope' not present or present multiple times in the HTTP request parameters");
             event.error(Errors.INVALID_REQUEST);
