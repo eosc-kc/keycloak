@@ -246,7 +246,7 @@ public class SAMLFederationProvider implements FederationProvider {
                 realm.getDefaultClientScopesStream(false).filter(scope -> "saml".equals(scope.getProtocol())).flatMap(scope -> scope.getProtocolMappersStream().filter(mapper -> UserAttributeStatementMapper.PROVIDER_ID.equals(mapper.getProtocolMapper()))).distinct().collect(Collectors.toList());
 
 
-        logger.info("Start parsing the SAML federation (id): " + model.getAlias());
+        logger.debug("Start parsing the SAML federation (id): " + model.getAlias());
 
         Integer addIdPsBatchSize = realm.getAttribute(FEDERATION_INSERT_BATCH_SIZE, DEFAULT_BATCH_SIZE);
         boolean reExecute = false;
@@ -391,7 +391,7 @@ public class SAMLFederationProvider implements FederationProvider {
             logger.debug("Finishing parsing the entity with (entityID): " + entity.getEntityID());
         }
 
-        logger.info("finish parsing the SAML federation (id): " + model.getAlias());
+        logger.debug("finish parsing the SAML federation (id): " + model.getAlias());
         removeClients(existingClientModels, realm);
 
         if (!reExecute) {
