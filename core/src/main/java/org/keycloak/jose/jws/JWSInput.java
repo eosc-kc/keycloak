@@ -25,12 +25,15 @@ import org.keycloak.jose.JOSE;
 import org.keycloak.util.JsonSerialization;
 
 import com.fasterxml.jackson.core.type.TypeReference;
+import org.jboss.logging.Logger;
 
 /**
  * @author <a href="mailto:bill@burkecentral.com">Bill Burke</a>
  * @version $Revision: 1 $
  */
 public class JWSInput implements JOSE {
+    private static final Logger logger = Logger.getLogger(JWSInput.class);
+
     String wireString;
     String encodedHeader;
     String encodedContent;
@@ -47,6 +50,7 @@ public class JWSInput implements JOSE {
             String[] parts = wire.split("\\.");
             if (parts.length < 2 || parts.length > 3) throw new IllegalArgumentException("Parsing error");
             encodedHeader = parts[0];
+            logger.debugf("Jwt encoded Header contains: %s", encodedHeader);
             encodedContent = parts[1];
             encodedSignatureInput = encodedHeader + '.' + encodedContent;
             content = Base64Url.decode(encodedContent);

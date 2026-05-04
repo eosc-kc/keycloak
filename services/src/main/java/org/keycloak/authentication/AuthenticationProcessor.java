@@ -59,6 +59,7 @@ import org.keycloak.protocol.LoginProtocol;
 import org.keycloak.protocol.LoginProtocol.Error;
 import org.keycloak.protocol.RestartLoginCookie;
 import org.keycloak.protocol.oidc.TokenManager;
+import org.keycloak.representations.idm.OAuth2ErrorRepresentation;
 import org.keycloak.services.ErrorPage;
 import org.keycloak.services.ErrorPageException;
 import org.keycloak.services.ServicesLogger;
@@ -935,6 +936,13 @@ public class AuthenticationProcessor {
             } else if (e.getError() == AuthenticationFlowError.CLIENT_CREDENTIALS_SETUP_REQUIRED) {
                 event.error(Errors.INVALID_CLIENT_CREDENTIALS);
                 return ClientAuthUtil.errorResponse(Response.Status.BAD_REQUEST.getStatusCode(), "unauthorized_client", "Client credentials setup required");
+            } else if (e.getError() == AuthenticationFlowError.ISHARE_ERROR) {
+                if (e.getResponse().getEntity() instanceof OAuth2ErrorRepresentation errorRep) {
+                    event.error(errorRep.getError());
+                } else {
+                    event.error(Errors.INVALID_REQUEST);
+                }
+                return e.getResponse();
             } else {
                 event.error(Errors.INVALID_CLIENT_CREDENTIALS);
                 return ClientAuthUtil.errorResponse(Response.Status.UNAUTHORIZED.getStatusCode(), "invalid_client", "Invalid client or Invalid client credentials");
