@@ -54,16 +54,6 @@ class ISHAREAuthenticatorConfig implements Serializable {
     public String ishareCaFile;
 }
 
-class ISHAREJWSHeader extends JWSHeader
-{
-    @JsonProperty("x5c")
-    private String[] x5c;
-
-    public String[] getX5C() {
-        return x5c;
-    }
-}
-
 class ISHARESatellitePartiesResponse implements Serializable {
     @JsonProperty("party_token")
     public String party_token;
@@ -168,7 +158,7 @@ public class Ishare {
             CertificateFactory cf = CertificateFactory.getInstance("X.509");
             iSHARE_CA = (X509Certificate) cf.generateCertificate(inStream);
         } catch (Exception e) {
-            logger.errorf("Exception during init %s", e.toString());
+            logger.errorf(e,"Exception during init");
             return false;
         }
 
@@ -205,10 +195,9 @@ public class Ishare {
 
             return true;
         } catch (Exception e) {
-            logger.errorf("Exception validating client_assertion: %s", e.toString());
+            logger.errorf(e,"Exception validating client_assertion");
+            return false;
         }
-
-        return true;
     }
 
     public boolean isProbablyJwe(String incoming_token) {
@@ -239,7 +228,7 @@ public class Ishare {
 
             return this.verifyClientTokenAndParty(idpEORI, clientId, client_assertion);
         } catch (Exception e) {
-            logger.errorf("Exception validating client_assertion: %s", e.toString());
+            logger.errorf(e,"Exception validating client_assertion");
         }
         return false;
     }
@@ -252,7 +241,7 @@ public class Ishare {
                 return false;
             }
 
-            String[] x5c = getX5C(jws);
+            List<String> x5c = getX5C(jws);
 
             JsonWebToken token = jws.readJsonContent(JsonWebToken.class);
             if (!validateJwtToken(token, idpEORI)) {
@@ -261,9 +250,9 @@ public class Ishare {
 
             String our_client_assertion = createSatelliteClientAssertion(idpEORI, this.session);
 
-            return verifyClientAtSatellite(clientId, x5c[0], idpEORI, our_client_assertion);
+            return verifyClientAtSatellite(clientId, x5c.get(0), idpEORI, our_client_assertion);
         } catch (Exception e) {
-            logger.errorf("Exception validating client_assertion: %s", e.toString());
+            logger.errorf(e,"Exception validating client_assertion");
         }
         return false;
     }
@@ -469,16 +458,14 @@ public class Ishare {
         return true;
     }
 
-    private String[] getX5C(JWSInput jws) throws Exception
+    private List<String> getX5C(JWSInput jws) throws Exception
     {
         // unfortunately no way to get x5c otherwise
         String encodedHeader = jws.getEncodedHeader();
         byte[] headerBytes = Base64Url.decode(encodedHeader);
 
-        ISHAREJWSHeader header = JsonSerialization.readValue(headerBytes, ISHAREJWSHeader.class);
-
-        String[] x5c = header.getX5C();
-        return x5c;
+        JWSHeader header = JsonSerialization.readValue(headerBytes, JWSHeader.class);
+        return header.getX5c();
     }
 
     public Map<String, Object> getClaimsFromClientAssertion(String assertion)
@@ -496,10 +483,10 @@ public class Ishare {
                 Map<String, Object> claims = webtoken.getOtherClaims();
                 return claims;
             } catch (JWEException e) {
-                logger.errorf("JWE Exception: %s", e.toString());
+                logger.errorf("JWE Exception");
                 return new HashMap<>();
             } catch (JWSInputException e) {
-                logger.errorf("Invalid JWS Input: %s", e.toString());
+                logger.errorf("Invalid JWS Input");
                 return new HashMap<>();
             }
         } else {
@@ -509,7 +496,7 @@ public class Ishare {
                 Map<String, Object> claims = webtoken.getOtherClaims();
                 return claims;
             } catch (JWSInputException e) {
-                logger.errorf("Invalid JWS Input: %s", e.toString());
+                logger.errorf(e,"Invalid JWS Input");
                 return new HashMap<>();
             }
         }
@@ -517,8 +504,8 @@ public class Ishare {
 
     public boolean validateJwtCert(JWSInput jws) throws Exception
     {
-        String[] x5c = getX5C(jws);
-        if (x5c.length == 0) {
+        List<String> x5c = getX5C(jws);
+        if (x5c == null || x5c.isEmpty()) {
             logger.error("x5c header value empty");
             return false;
         }
@@ -528,7 +515,7 @@ public class Ishare {
         }
         logger.trace("----------------");
 
-        X509Certificate cert = PemUtils.decodeCertificate(x5c[0]);
+        X509Certificate cert = PemUtils.decodeCertificate(x5c.get(0));
 
         // Note: This works only if iSHARE_CA has full chain to root.
 
