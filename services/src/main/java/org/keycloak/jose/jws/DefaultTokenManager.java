@@ -88,15 +88,14 @@ public class DefaultTokenManager implements TokenManager {
         String type = type(token.getCategory());
 
         RealmModel realm = session.getContext().getRealm();
+        ClientModel client = session.getContext().getClient();
         JWSBuilder jwsBuilder = new JWSBuilder();
-        if (realm.getAttribute(Constants.ISHARE_ENABLED, false) && token instanceof JsonWebToken jwt && jwt.getIssuedFor() != null) {
-            ClientModel clientSession = session.getContext().getClient();
-            logger.infof("trying to add x5c for ishare. Issuer is : %s and session client is : %s", jwt.getIssuedFor(), clientSession != null ? clientSession.getClientId() : "empty");
-            ClientModel client = realm.getClientById(jwt.getIssuedFor());
-            if (client != null && client.getAttribute(Constants.ISHARE_ENABLED) != null &&
-                    Boolean.valueOf(client.getAttribute(Constants.ISHARE_ENABLED)) && signer.getCertificateChain() != null) {
-                jwsBuilder = jwsBuilder.x5c(signer.getCertificateChain());
-            }
+        if (realm.getAttribute(Constants.ISHARE_ENABLED, false) && token instanceof JsonWebToken jwt ){
+            logger.infof("trying to add x5c for ishare. Token issuer is : %s and session client is : %s", jwt.getIssuedFor(), client != null ? client.getClientId() : "empty");
+        }
+        if (realm.getAttribute(Constants.ISHARE_ENABLED, false) && client != null && client.getAttribute(Constants.ISHARE_ENABLED) != null &&
+                Boolean.valueOf(client.getAttribute(Constants.ISHARE_ENABLED)) && signer.getCertificateChain() != null && !signer.getCertificateChain().isEmpty()) {
+            jwsBuilder = jwsBuilder.x5c(signer.getCertificateChain());
         }
         return jwsBuilder.type(type).jsonContent(token).sign(signer);
     }
