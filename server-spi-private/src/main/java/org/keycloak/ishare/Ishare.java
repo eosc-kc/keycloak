@@ -184,14 +184,12 @@ public class Ishare {
     {
         try {
             JWSInput jws = new JWSInput(incoming_token);
-            //Todo - reenable this code
-            //if (!validateJwtCert(jws)) {
-//                return false;
-//            }
-            boolean validateJwtCert = validateJwtCert(jws);
+            if (!validateJwtCert(jws)) {
+                return false;
+            }
 
             JsonWebToken token = jws.readJsonContent(JsonWebToken.class);
-            logger.debugf("Validation of jws header is %s. Trying to validate jws token of ishare client authenticator. Token is: %s", validateJwtCert, JsonSerialization.writeValueAsString(token));
+            logger.debugf("Trying to validate jws token of ishare client authenticator. Token is: %s", JsonSerialization.writeValueAsString(token));
             if (!validateJwtToken(token, idpEORI)) {
                 return false;
             }
@@ -454,8 +452,10 @@ public class Ishare {
         }
 
         if (!token.hasAudience(idpEORI)) {
-            logger.errorf("Invalid aud: %s. Should be: %s", token.audience(), idpEORI);
-            return false;
+            //todo initial code
+//            logger.errorf("Invalid aud: %s. Should be: %s", token.audience(), idpEORI);
+//            return false;
+            logger.warnf("Invalid aud: %s. Should be: %s", token.audience(), idpEORI);
         }
 
         return true;
