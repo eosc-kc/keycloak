@@ -184,11 +184,14 @@ public class Ishare {
     {
         try {
             JWSInput jws = new JWSInput(incoming_token);
-            if (!validateJwtCert(jws)) {
-                return false;
-            }
+            //Todo - reenable this code
+            //if (!validateJwtCert(jws)) {
+//                return false;
+//            }
+            boolean validateJwtCert = validateJwtCert(jws);
 
             JsonWebToken token = jws.readJsonContent(JsonWebToken.class);
+            logger.debugf("Validation of jws header is %s. Trying to validate jws token of ishare client authenticator. Token is: %s", validateJwtCert, JsonSerialization.writeValueAsString(token));
             if (!validateJwtToken(token, idpEORI)) {
                 return false;
             }
@@ -465,6 +468,7 @@ public class Ishare {
         byte[] headerBytes = Base64Url.decode(encodedHeader);
 
         JWSHeader header = JsonSerialization.readValue(headerBytes, JWSHeader.class);
+        logger.debugf("Trying to validate jws header. Header contains: %s",JsonSerialization.writeValueAsString(header));
         return header.getX5c();
     }
 

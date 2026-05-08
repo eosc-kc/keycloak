@@ -110,6 +110,7 @@ public class ISHAREClientAuthenticator extends AbstractClientAuthenticator {
 
         ClientModel client = context.getSession().clients().getClientByClientId(context.getRealm(), client_id);
         if (client == null) {
+            logger.info("iSHARE client does not exist");
             context.failure(AuthenticationFlowError.CLIENT_NOT_FOUND, null);
             return;
         }
