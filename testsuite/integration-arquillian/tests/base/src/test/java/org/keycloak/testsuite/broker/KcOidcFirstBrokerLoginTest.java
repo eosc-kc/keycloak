@@ -951,10 +951,10 @@ public class KcOidcFirstBrokerLoginTest extends AbstractFirstBrokerLoginTest {
         updateExecutions(AbstractBrokerTest::enableUpdateProfileOnFirstLogin);
 
         String userProfileConfig = "{\"attributes\": ["
-                + "{\"name\": \"email\"," + PERMISSIONS_ALL + ", \"required\":{}},"
-                + "{\"name\": \"firstName\"," + PERMISSIONS_ALL + ", \"required\":{}},"
-                + "{\"name\": \"lastName\"," + PERMISSIONS_ALL + ", \"required\":{}},"
-                + "{\"name\": \"usertype\", \"defaultValue\": \"daily\", " + PERMISSIONS_ADMIN_EDITABLE + ", \"required\":{}}"
+                + "{\"name\": \"email\"," + PERMISSIONS_ALL + "},"
+                + "{\"name\": \"firstName\"," + PERMISSIONS_ALL + ", \"required\": {}},"
+                + "{\"name\": \"lastName\"," + PERMISSIONS_ALL + ", \"required\": {}},"
+                + "{\"name\": \"usertype\", \"defaultValue\": \"daily\", " + PERMISSIONS_ADMIN_EDITABLE + "}"
                 + "]}";
         setUserProfileConfiguration(userProfileConfig);
 
