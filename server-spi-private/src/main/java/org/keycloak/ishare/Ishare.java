@@ -20,15 +20,18 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.stream.Stream;
 
 import org.keycloak.common.util.Base64Url;
 import org.keycloak.common.util.PemUtils;
+import org.keycloak.common.util.Time;
 import org.keycloak.crypto.KeyUse;
 import org.keycloak.crypto.KeyWrapper;
 import org.keycloak.crypto.SignatureProvider;
 import org.keycloak.crypto.SignatureSignerContext;
 import org.keycloak.jose.jwe.JWE;
 import org.keycloak.jose.jwe.JWEException;
+import org.keycloak.jose.jws.Algorithm;
 import org.keycloak.jose.jws.JWSBuilder;
 import org.keycloak.jose.jws.JWSHeader;
 import org.keycloak.jose.jws.JWSInput;
@@ -126,6 +129,9 @@ class JWEHeaderCerts implements Serializable {
 public class Ishare {
 
     private static final Logger logger = Logger.getLogger(Ishare.class);
+    public static final String CLIENT_ASSERTION_TYPE="urn:ietf:params:oauth:client-assertion-type:jwt-bearer";
+    private static final String SUB_FOR_AUTHORIZATION="urn:TBD";
+    private static final List<Algorithm> JWS_HEADER_APPROVED_ALGORITHMS = Stream.of(Algorithm.RS256, Algorithm.RS384, Algorithm.RS512).toList();
 
     String iSHARESatellitePartyId;
     String iSHARESatelliteBaseUrl;
@@ -180,7 +186,7 @@ public class Ishare {
         }
     }
 
-    public boolean verifyClientToken(String idpEORI, String incoming_token)
+    public boolean verifyClientToken(String idpEORI, String incoming_token, String client_id)
     {
         try {
             JWSInput jws = new JWSInput(incoming_token);
@@ -191,6 +197,15 @@ public class Ishare {
             JsonWebToken token = jws.readJsonContent(JsonWebToken.class);
             logger.debugf("Trying to validate jws token of ishare client authenticator. Token is: %s", JsonSerialization.writeValueAsString(token));
             if (!validateJwtToken(token, idpEORI)) {
+                return false;
+            }
+            if (token.getExp() -  token.getIat() != 30L) {
+                logger.error("exp - iat must be exactly 30 seconds");
+                return false;
+            }
+
+            if (token.getIssuer() == null || !token.getIssuer().equals(token.getSubject()) || !token.getIssuer().equals(client_id)){
+                logger.error("Iss and sub must be equal to client_id");
                 return false;
             }
 
@@ -242,10 +257,23 @@ public class Ishare {
                 return false;
             }
 
-            List<String> x5c = getX5C(jws);
+            List<String> x5c = getHeader(jws).getX5c();
 
             JsonWebToken token = jws.readJsonContent(JsonWebToken.class);
             if (!validateJwtToken(token, idpEORI)) {
+                return false;
+            }
+            if (token.getExp() -  token.getIat() != 30L) {
+                logger.error("exp - iat must be exactly 30 seconds");
+                return false;
+            }
+            if (!clientId.equals(token.getIssuer())){
+                logger.error("Iss must be equal to client_id");
+                return false;
+            }
+
+            if (!SUB_FOR_AUTHORIZATION.equals(token.getSubject())){
+                logger.errorf("Sub must be equal to %s", SUB_FOR_AUTHORIZATION);
                 return false;
             }
 
@@ -331,7 +359,7 @@ public class Ishare {
 
         Map<String, String> parameters = new HashMap<>();
         parameters.put("grant_type", "client_credentials");
-        parameters.put("client_assertion_type", "urn:ietf:params:oauth:client-assertion-type:jwt-bearer");
+        parameters.put("client_assertion_type", CLIENT_ASSERTION_TYPE);
         parameters.put("client_assertion", client_assertion);
         parameters.put("scope", Constants.ISHARE_SCOPE);
         parameters.put("client_id", idpEORI);
@@ -450,18 +478,25 @@ public class Ishare {
             logger.error("token is not active anymore");
             return false; // skip for debugging
         }
+        if (token.getIat() == null || token.getIat() > Time.currentTime()) {
+            logger.error("token iat must be declared and be before now");
+            return false; // skip for debugging
+        }
+        if (token.getId() == null) {
+            logger.error("token iat must be declared");
+            return false; // skip for debugging
+        }
 
         if (!token.hasAudience(idpEORI)) {
-            //todo initial code
-//            logger.errorf("Invalid aud: %s. Should be: %s", token.audience(), idpEORI);
-//            return false;
-            logger.warnf("Invalid aud: %s. Should be: %s", token.audience(), idpEORI);
+            logger.errorf("Invalid aud: %s. Should be: %s", token.audience(), idpEORI);
+            return false;
+          //  logger.warnf("Invalid aud: %s. Should be: %s", token.audience(), idpEORI);
         }
 
         return true;
     }
 
-    private List<String> getX5C(JWSInput jws) throws Exception
+    private JWSHeader getHeader(JWSInput jws) throws Exception
     {
         // unfortunately no way to get x5c otherwise
         String encodedHeader = jws.getEncodedHeader();
@@ -469,7 +504,7 @@ public class Ishare {
 
         JWSHeader header = JsonSerialization.readValue(headerBytes, JWSHeader.class);
         logger.debugf("Trying to validate jws header. Header contains: %s",JsonSerialization.writeValueAsString(header));
-        return header.getX5c();
+        return header;
     }
 
     public Map<String, Object> getClaimsFromClientAssertion(String assertion)
@@ -508,7 +543,16 @@ public class Ishare {
 
     public boolean validateJwtCert(JWSInput jws) throws Exception
     {
-        List<String> x5c = getX5C(jws);
+        JWSHeader header = getHeader(jws);
+        if (header.getAlgorithm() == null || !JWS_HEADER_APPROVED_ALGORITHMS.contains(header.getAlgorithm())) {
+            logger.errorf("Invalid JWT alg: %s. Must be RS256, RS384, or RS512", header.getAlgorithm());
+            return false;
+        }
+        if (!"JWT".equals(header.getType())) {
+            logger.errorf("Invalid JWT typ: %s. Must be JWT", header.getType());
+            return false;
+        }
+        List<String> x5c = header.getX5c();
         if (x5c == null || x5c.isEmpty()) {
             logger.error("x5c header value empty");
             return false;

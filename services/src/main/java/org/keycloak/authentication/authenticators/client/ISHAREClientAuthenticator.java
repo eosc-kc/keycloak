@@ -5,6 +5,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Stream;
 
 import jakarta.ws.rs.core.HttpHeaders;
 import jakarta.ws.rs.core.MediaType;
@@ -15,10 +16,14 @@ import org.keycloak.Config;
 import org.keycloak.OAuth2Constants;
 import org.keycloak.authentication.AuthenticationFlowError;
 import org.keycloak.authentication.ClientAuthenticationFlowContext;
+import org.keycloak.events.EventType;
 import org.keycloak.ishare.Ishare;
 import org.keycloak.models.AuthenticationExecutionModel;
 import org.keycloak.models.ClientModel;
 import org.keycloak.models.Constants;
+import org.keycloak.models.OAuth2DeviceConfig;
+import org.keycloak.models.RealmModel;
+import org.keycloak.protocol.oidc.ClientCreationUtils;
 import org.keycloak.provider.ProviderConfigProperty;
 import org.keycloak.util.BasicAuthHelper;
 
@@ -29,6 +34,7 @@ public class ISHAREClientAuthenticator extends AbstractClientAuthenticator {
     private static final Logger logger = Logger.getLogger(ISHAREClientAuthenticator.class);
 
     public static final String PROVIDER_ID = "client-ishare";
+    private static final List<EventType> EVENTS_FOR_CREATE_OR_ENABLE= Stream.of(EventType.CODE_TO_TOKEN, EventType.CLIENT_LOGIN, EventType.OAUTH2_DEVICE_AUTH).toList();
 
     @Override
     public void authenticateClient(ClientAuthenticationFlowContext context) {
@@ -59,6 +65,13 @@ public class ISHAREClientAuthenticator extends AbstractClientAuthenticator {
             }
         }
 
+        RealmModel realm = context.getRealm();
+        if( isIShareEnabled(context.getRealm())) {
+            logger.info("No iSHARE enabled or iSHARE scope, skipping iSHARE client authentication");
+            context.attempted();
+            return;
+        }
+
         if (formData != null) {
             // even if basic challenge response exist, we check if client id was explicitly set in the request as a form param,
             // so we can also support clients overriding flows and using challenges (e.g: basic) to authenticate their users
@@ -81,48 +94,85 @@ public class ISHAREClientAuthenticator extends AbstractClientAuthenticator {
 
         if (client_id == null) {
             Response challengeResponse = ClientAuthUtil.errorResponse(Response.Status.BAD_REQUEST.getStatusCode(), "invalid_client", "Missing client_id parameter");
-            context.challenge(challengeResponse);
+            context.failure(AuthenticationFlowError.INVALID_CLIENT_CREDENTIALS, challengeResponse);
             return;
         }
 
         if (client_assertion == null) {
             Response challengeResponse = ClientAuthUtil.errorResponse(Response.Status.BAD_REQUEST.getStatusCode(), "invalid_client", "Missing client_assertion parameter");
-            context.challenge(challengeResponse);
+            context.failure(AuthenticationFlowError.INVALID_CLIENT_CREDENTIALS, challengeResponse);
             return;
         }
 
-        Ishare iSHARE = new Ishare(context.getSession());
-
-        String issuer = context.getRealm().getIssuer();
-        if (issuer == null || issuer.isEmpty()) {
-            context.attempted();
+        if (Ishare.CLIENT_ASSERTION_TYPE.equals(client_assertion_type) ) {
+            Response challengeResponse = ClientAuthUtil.errorResponse(Response.Status.BAD_REQUEST.getStatusCode(), "invalid_client", "client_assertion_type must be urn:ietf:params:oauth:client-assertion-type:jwt-bearer");
+            context.failure(AuthenticationFlowError.INVALID_CLIENT_CREDENTIALS, challengeResponse);
             return;
         }
 
-        if (!iSHARE.verifyClientToken(issuer, client_assertion)) {
-            logger.errorf("client assertion INVALID!");
-            context.attempted();
+        context.getEvent().client(client_id);
+        try {
+            Ishare iSHARE = new Ishare(context.getSession());
+            if (!iSHARE.verifyClientToken(realm.getIssuer(), client_assertion, client_id)) {
+                logger.errorf("client assertion INVALID!");
+                Response challengeResponse = ClientAuthUtil.errorResponse(Response.Status.BAD_REQUEST.getStatusCode(), "invalid_client", "Ishare client assertion verification failed");
+                context.failure(AuthenticationFlowError.INVALID_CLIENT_CREDENTIALS, challengeResponse);
+                return;
+            }
+        } catch (Exception e) {
+            logger.errorf(e, "Ishare initialization or client assertion verification failed!");
+            Response challengeResponse = ClientAuthUtil.errorResponse(Response.Status.BAD_REQUEST.getStatusCode(), "invalid_client", "Ishare verification failed: " + e.getMessage());
+            context.failure(AuthenticationFlowError.INVALID_CLIENT_CREDENTIALS, challengeResponse);
             return;
         }
         logger.info("client assertion verified!");
 
-        context.getEvent().client(client_id);
-
         ClientModel client = context.getSession().clients().getClientByClientId(context.getRealm(), client_id);
-        if (client == null) {
-            logger.info("iSHARE client does not exist");
-            context.failure(AuthenticationFlowError.CLIENT_NOT_FOUND, null);
-            return;
+        if (client == null && EVENTS_FOR_CREATE_OR_ENABLE.contains(context.getEvent().getEvent().getType())) {
+            logger.info("Create iSHARE client that does not exist");
+            try {
+                client = ClientCreationUtils.createIshareClient(realm, client_id);
+                switch (context.getEvent().getEvent().getType()) {
+                    case CODE_TO_TOKEN:
+                        client.setStandardFlowEnabled(true);
+                        break;
+                    case CLIENT_LOGIN:
+                        client.setStandardFlowEnabled(false);
+                        client.setServiceAccountsEnabled(true);
+                        break;
+                    case OAUTH2_DEVICE_AUTH:
+                        client.setStandardFlowEnabled(false);
+                        client.setAttribute(OAuth2DeviceConfig.OAUTH2_DEVICE_AUTHORIZATION_GRANT_ENABLED, "true");
+                        break;
+                    default:
+                        client.setStandardFlowEnabled(false);
+                        break;
+                }
+                client.updateClient();
+                client = realm.getClientByClientId(client_id);
+            } catch (Exception e) {
+                logger.errorf(e, "Problem creating Ishare client!");
+                context.failure(AuthenticationFlowError.CLIENT_NOT_FOUND, null);
+                return;
+            }
+        } else if (client == null) {
+                logger.info("iSHARE client not found and creation not allowed");
+                context.failure(AuthenticationFlowError.CLIENT_NOT_FOUND, null);
+                return;
         }
 
-        context.setClient(client);
-
         if (!client.isEnabled()) {
+            //To be changed if expiration exists
             context.failure(AuthenticationFlowError.CLIENT_DISABLED, null);
             return;
         }
 
+        context.setClient(client);
         context.success();
+    }
+
+    private boolean isIShareEnabled(RealmModel realm) {
+     return realm.getAttribute(Constants.ISHARE_ENABLED, false) && realm.getIssuer()!=null && !realm.getIssuer().isEmpty();
     }
 
     @Override
