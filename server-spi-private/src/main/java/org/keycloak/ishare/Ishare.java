@@ -472,19 +472,19 @@ public class Ishare {
         return atLeastOneCert;
     }
 
-    public boolean validateJwtToken(JsonWebToken token, String idpEORI) throws Exception
+    public boolean validateJwtToken(JsonWebToken token, String idpEORI)
     {
         if (!token.isActive()) {
             logger.error("token is not active anymore");
-            return false; // skip for debugging
+            return false;
         }
         if (token.getIat() == null || token.getIat() > Time.currentTime()) {
             logger.error("token iat must be declared and be before now");
-            return false; // skip for debugging
+            return false;
         }
         if (token.getId() == null) {
             logger.error("token iat must be declared");
-            return false; // skip for debugging
+            return false;
         }
 
         if (!token.hasAudience(idpEORI)) {
