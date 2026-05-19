@@ -27,6 +27,8 @@ import org.keycloak.models.OAuth2DeviceConfig;
 import org.keycloak.models.RealmModel;
 import org.keycloak.protocol.oidc.ClientCreationUtils;
 import org.keycloak.provider.ProviderConfigProperty;
+import org.keycloak.services.managers.ClientManager;
+import org.keycloak.services.managers.RealmManager;
 import org.keycloak.util.BasicAuthHelper;
 
 import org.jboss.logging.Logger;
@@ -93,7 +95,7 @@ public class ISHAREClientAuthenticator extends AbstractClientAuthenticator {
         }
 
         RealmModel realm = context.getRealm();
-        ClientModel client = context.getSession().clients().getClientByClientId(context.getRealm(), client_id);
+        ClientModel client = context.getSession().clients().getClientByClientId(realm, client_id);
         if( !isIShareEnabled(context.getRealm(), client)) {
             //TO BE REMOVED logging
             logger.info("No iSHARE enabled, skipping iSHARE client authentication");
@@ -107,6 +109,11 @@ public class ISHAREClientAuthenticator extends AbstractClientAuthenticator {
 
         if (!Ishare.CLIENT_ASSERTION_TYPE.equals(client_assertion_type) ) {
             failBadRequest(Errors.INVALID_CLIENT_CREDENTIALS,"client_assertion_type must be urn:ietf:params:oauth:client-assertion-type:jwt-bearer");
+        }
+
+        String scopeValue = formData.getFirst(OAuth2Constants.SCOPE);
+        if (scopeValue == null || Stream.of(scopeValue).anyMatch(c -> c.equals(Constants.ISHARE_SCOPE))){
+            failBadRequest(Errors.INVALID_REQUEST,"scope parameter does not contain iSHARE scope");
         }
 
         context.getEvent().client(client_id);
@@ -124,7 +131,8 @@ public class ISHAREClientAuthenticator extends AbstractClientAuthenticator {
             logger.info("Create iSHARE client that does not exist");
             try {
                 client = ClientCreationUtils.createIshareClient(realm, client_id);
-                switch (context.getEvent().getEvent().getType()) {
+                EventType eventType = context.getEvent().getEvent().getType();
+                switch (eventType) {
                     case CODE_TO_TOKEN:
                         client.setStandardFlowEnabled(true);
                         break;
@@ -142,6 +150,10 @@ public class ISHAREClientAuthenticator extends AbstractClientAuthenticator {
                 }
                 client.updateClient();
                 client = realm.getClientByClientId(client_id);
+                if (EventType.CLIENT_LOGIN.equals(eventType)) {
+                    new ClientManager(new RealmManager(context.getSession())).enableServiceAccount(client);
+                }
+
             } catch (Exception e) {
                 failBadRequest(Errors.CLIENT_NOT_FOUND, "Ishare client creation failed: " + e.getMessage());
             }

@@ -15,6 +15,7 @@ import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -36,6 +37,7 @@ import org.keycloak.jose.jws.JWSBuilder;
 import org.keycloak.jose.jws.JWSHeader;
 import org.keycloak.jose.jws.JWSInput;
 import org.keycloak.jose.jws.JWSInputException;
+import org.keycloak.jose.jws.crypto.RSAProvider;
 import org.keycloak.models.Constants;
 import org.keycloak.models.KeycloakSession;
 import org.keycloak.representations.JsonWebToken;
@@ -186,7 +188,7 @@ public class Ishare {
         }
     }
 
-    public boolean verifyClientToken(String idpEORI, String incoming_token, String client_id)
+    public boolean verifyClientToken(String idpEORI, String incoming_token, String clientId)
     {
         try {
             JWSInput jws = new JWSInput(incoming_token);
@@ -204,12 +206,12 @@ public class Ishare {
                 return false;
             }
 
-            if (token.getIssuer() == null || !token.getIssuer().equals(token.getSubject()) || !token.getIssuer().equals(client_id)){
+            if (token.getIssuer() == null || !token.getIssuer().equals(token.getSubject()) || !token.getIssuer().equals(clientId)){
                 logger.error("Iss and sub must be equal to client_id");
                 return false;
             }
 
-            return true;
+            return verifyClientAtSatellite(clientId, jws.getHeader().getX5c().get(0), idpEORI, createSatelliteClientAssertion(idpEORI, this.session));
         } catch (Exception e) {
             logger.errorf(e,"Exception validating client_assertion");
             return false;
@@ -242,22 +244,20 @@ public class Ishare {
 
             logger.infof("Got decrypted JWT token: %s", client_assertion);
 
-            return this.verifyClientTokenAndParty(idpEORI, clientId, client_assertion);
+            return this.verifyAuthorizationClientToken(idpEORI, clientId, client_assertion);
         } catch (Exception e) {
             logger.errorf(e,"Exception validating client_assertion");
         }
         return false;
     }
 
-    public boolean verifyClientTokenAndParty(String idpEORI, String clientId, String incoming_token)
+    public boolean verifyAuthorizationClientToken(String idpEORI, String clientId, String incoming_token)
     {
         try {
             JWSInput jws = new JWSInput(incoming_token);
             if (!validateJwtCert(jws)) {
                 return false;
             }
-
-            List<String> x5c = getHeader(jws).getX5c();
 
             JsonWebToken token = jws.readJsonContent(JsonWebToken.class);
             if (!validateJwtToken(token, idpEORI)) {
@@ -277,9 +277,7 @@ public class Ishare {
                 return false;
             }
 
-            String our_client_assertion = createSatelliteClientAssertion(idpEORI, this.session);
-
-            return verifyClientAtSatellite(clientId, x5c.get(0), idpEORI, our_client_assertion);
+            return verifyClientAtSatellite(clientId, jws.getHeader().getX5c().get(0), idpEORI, createSatelliteClientAssertion(idpEORI, this.session));
         } catch (Exception e) {
             logger.errorf(e,"Exception validating client_assertion");
         }
@@ -460,9 +458,7 @@ public class Ishare {
         }
 
         List<ISHARECertificateInfo> storedCerts = partyInfoToken.party_info.certificates;
-        boolean atLeastOneCert = storedCerts.stream().anyMatch(cert -> {
-            return cert.x5c.equals(clientCert);
-        });
+        boolean atLeastOneCert = storedCerts.stream().anyMatch(cert -> cert.x5c.equals(clientCert));
 
         if (!atLeastOneCert) {
             logger.error("no matching certificate found in jwt");
@@ -488,23 +484,12 @@ public class Ishare {
         }
 
         if (!token.hasAudience(idpEORI)) {
-            logger.errorf("Invalid aud: %s. Should be: %s", token.audience(), idpEORI);
+            logger.errorf("Invalid aud: %s. Should be: %s", Arrays.toString(token.getAudience()), idpEORI);
             return false;
-          //  logger.warnf("Invalid aud: %s. Should be: %s", token.audience(), idpEORI);
+          //  logger.warnf("Invalid aud: %s. Should be: %s", Arrays.toString(token.getAudience()), idpEORI);
         }
 
         return true;
-    }
-
-    private JWSHeader getHeader(JWSInput jws) throws Exception
-    {
-        // unfortunately no way to get x5c otherwise
-        String encodedHeader = jws.getEncodedHeader();
-        byte[] headerBytes = Base64Url.decode(encodedHeader);
-
-        JWSHeader header = JsonSerialization.readValue(headerBytes, JWSHeader.class);
-        logger.debugf("Trying to validate jws header. Header contains: %s",JsonSerialization.writeValueAsString(header));
-        return header;
     }
 
     public Map<String, Object> getClaimsFromClientAssertion(String assertion)
@@ -543,7 +528,7 @@ public class Ishare {
 
     public boolean validateJwtCert(JWSInput jws) throws Exception
     {
-        JWSHeader header = getHeader(jws);
+        JWSHeader header = jws.getHeader();
         if (header.getAlgorithm() == null || !JWS_HEADER_APPROVED_ALGORITHMS.contains(header.getAlgorithm())) {
             logger.errorf("Invalid JWT alg: %s. Must be RS256, RS384, or RS512", header.getAlgorithm());
             return false;
@@ -557,17 +542,16 @@ public class Ishare {
             logger.error("x5c header value empty");
             return false;
         }
-        logger.trace("--- certs ----");
-        for (String s : x5c) {
-            logger.tracef("x5c: %s", s);
-        }
-        logger.trace("----------------");
 
         X509Certificate cert = PemUtils.decodeCertificate(x5c.get(0));
 
         // Note: This works only if iSHARE_CA has full chain to root.
-
         cert.verify(iSHARE_CA.getPublicKey());
+
+        if (jws.getSignature() == null || !RSAProvider.verify(jws, iSHARE_CA.getPublicKey())) {
+            logger.error("JWT signature key used does not correspond with public key from the x5c certificate");
+            return false;
+        }
 
         return true;
     }

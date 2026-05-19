@@ -309,10 +309,9 @@ public class AuthorizationEndpoint extends AuthorizationEndpointBase {
                 if (!ishare.decryptAndVerifyClientTokenAndParty(realm.getIssuer(), clientId, requestParam)) {
                     throw new RuntimeException("Error validating decrypted jwt claims");
                 }
-            }
-            else {
+            } else {
                 logger.debug("Got raw JWT");
-                if (!ishare.verifyClientTokenAndParty(realm.getIssuer(), clientId, requestParam)) {
+                if (!ishare.verifyAuthorizationClientToken(realm.getIssuer(), clientId, requestParam)) {
                     throw new RuntimeException("Error validating jwt claims");
                 }
             }
@@ -325,6 +324,7 @@ public class AuthorizationEndpoint extends AuthorizationEndpointBase {
                 client.setStandardFlowEnabled(true);
                 client.updateClient();
                 client = realm.getClientByClientId(clientId);
+                //do we need and how implement enable authorization service?
 
                 logger.infof("Client '%s' created. ID: %s", clientId, client.getId());
             }
