@@ -548,7 +548,7 @@ public class Ishare {
         // Note: This works only if iSHARE_CA has full chain to root.
         cert.verify(iSHARE_CA.getPublicKey());
 
-        if (jws.getSignature() == null || !RSAProvider.verify(jws, iSHARE_CA.getPublicKey())) {
+        if (jws.getSignature() == null || !RSAProvider.verify(jws, cert.getPublicKey())) {
             logger.error("JWT signature key used does not correspond with public key from the x5c certificate");
             return false;
         }
