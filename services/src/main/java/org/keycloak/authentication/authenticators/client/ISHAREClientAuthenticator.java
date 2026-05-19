@@ -112,7 +112,7 @@ public class ISHAREClientAuthenticator extends AbstractClientAuthenticator {
         }
 
         String scopeValue = formData.getFirst(OAuth2Constants.SCOPE);
-        if (scopeValue == null || Stream.of(scopeValue).anyMatch(c -> c.equals(Constants.ISHARE_SCOPE))){
+        if (scopeValue == null || Stream.of(scopeValue).noneMatch(c -> c.equals(Constants.ISHARE_SCOPE))){
             failBadRequest(Errors.INVALID_REQUEST,"scope parameter does not contain iSHARE scope");
         }
 
