@@ -306,12 +306,12 @@ public class AuthorizationEndpoint extends AuthorizationEndpointBase {
 
             if (ishare.isProbablyJwe(requestParam)) {
                 logger.debug("Got encrypted JWE");
-                if (!ishare.decryptAndVerifyClientTokenAndParty(realm.getIssuer(), clientId, requestParam)) {
+                if (!ishare.decryptAndVerifyClientTokenAndParty(realm.getIssuer(), realm.getAttribute(Constants.PR_ISSUER), clientId, requestParam)) {
                     throw new RuntimeException("Error validating decrypted jwt claims");
                 }
             } else {
                 logger.debug("Got raw JWT");
-                if (!ishare.verifyAuthorizationClientToken(realm.getIssuer(), clientId, requestParam)) {
+                if (!ishare.verifyAuthorizationClientToken(realm.getIssuer(), realm.getAttribute(Constants.PR_ISSUER), clientId, requestParam)) {
                     throw new RuntimeException("Error validating jwt claims");
                 }
             }

@@ -188,7 +188,7 @@ public class Ishare {
         }
     }
 
-    public boolean verifyClientToken(String idpEORI, String incoming_token, String clientId)
+    public boolean verifyClientToken(String idpEORI, String prIdpEORI, String incoming_token, String clientId)
     {
         try {
             JWSInput jws = new JWSInput(incoming_token);
@@ -211,7 +211,7 @@ public class Ishare {
                 return false;
             }
 
-            return verifyClientAtSatellite(clientId, jws.getHeader().getX5c().get(0), idpEORI, createSatelliteClientAssertion(idpEORI, this.session));
+            return verifyClientAtSatellite(clientId, jws.getHeader().getX5c().get(0), prIdpEORI != null ? prIdpEORI : idpEORI, createSatelliteClientAssertion(prIdpEORI != null ? prIdpEORI : idpEORI, this.session));
         } catch (Exception e) {
             logger.errorf(e,"Exception validating client_assertion");
             return false;
@@ -234,7 +234,7 @@ public class Ishare {
         return jwe;
     }
 
-    public boolean decryptAndVerifyClientTokenAndParty(String idpEORI, String clientId, String incoming_token)
+    public boolean decryptAndVerifyClientTokenAndParty(String idpEORI, String prIdpEORI, String clientId, String incoming_token)
     {
         try {
             JWE jwe = this.getDecryptedJWE(incoming_token);
@@ -244,14 +244,14 @@ public class Ishare {
 
             logger.infof("Got decrypted JWT token: %s", client_assertion);
 
-            return this.verifyAuthorizationClientToken(idpEORI, clientId, client_assertion);
+            return this.verifyAuthorizationClientToken(idpEORI, prIdpEORI, clientId, client_assertion);
         } catch (Exception e) {
             logger.errorf(e,"Exception validating client_assertion");
         }
         return false;
     }
 
-    public boolean verifyAuthorizationClientToken(String idpEORI, String clientId, String incoming_token)
+    public boolean verifyAuthorizationClientToken(String idpEORI, String prIdpEORI, String clientId, String incoming_token)
     {
         try {
             JWSInput jws = new JWSInput(incoming_token);
@@ -277,7 +277,7 @@ public class Ishare {
                 return false;
             }
 
-            return verifyClientAtSatellite(clientId, jws.getHeader().getX5c().get(0), idpEORI, createSatelliteClientAssertion(idpEORI, this.session));
+            return verifyClientAtSatellite(clientId, jws.getHeader().getX5c().get(0), prIdpEORI != null ? prIdpEORI : idpEORI, createSatelliteClientAssertion(prIdpEORI != null ? prIdpEORI : idpEORI, this.session));
         } catch (Exception e) {
             logger.errorf(e,"Exception validating client_assertion");
         }
@@ -371,7 +371,7 @@ public class Ishare {
         int status = connection.getResponseCode();
         logger.tracef("Satellite response status: %d", status);
 
-        if (status >= 200 && status < 300) {
+        if (status == 200) {
             String body = readBody(connection);
 
             ISHARESatelliteResponse resp = JsonSerialization.readValue(body, ISHARESatelliteResponse.class);
@@ -407,7 +407,7 @@ public class Ishare {
         connection.connect();
 
         int status = connection.getResponseCode();
-        if (status < 200 && status >= 300) {
+        if (status == 200) {
             logger.errorf("error getting parties: %d. Error message: %s", status, readBody(connection));
             return false;
         }

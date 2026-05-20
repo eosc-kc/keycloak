@@ -198,6 +198,7 @@ public final class Constants {
 
     public static final String ISHARE_ENABLED = "ishareEnabled";
     public static final String ISHARE_SCOPE = "iSHARE";
+    public static final String PR_ISSUER = "pr_issuer";
 
     public static final String SESSION_NOTE_LIGHTWEIGHT_USER = "keycloak.userModel";
 

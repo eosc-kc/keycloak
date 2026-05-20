@@ -119,7 +119,7 @@ public class ISHAREClientAuthenticator extends AbstractClientAuthenticator {
         context.getEvent().client(client_id);
         try {
             Ishare iSHARE = new Ishare(context.getSession());
-            if (!iSHARE.verifyClientToken(realm.getIssuer(), client_assertion, client_id)) {
+            if (!iSHARE.verifyClientToken(realm.getIssuer(),  realm.getAttribute(Constants.PR_ISSUER), client_assertion, client_id)) {
                 failBadRequest(Errors.INVALID_REQUEST,"Ishare client assertion verification failed");
             }
         } catch (Exception e) {
