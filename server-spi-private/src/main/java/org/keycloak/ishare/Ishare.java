@@ -371,9 +371,7 @@ public class Ishare {
         int status = connection.getResponseCode();
         logger.tracef("Satellite response status: %d", status);
 
-        if (status == 200) {
-            /* on success: 200 OK with { access_token, token_type, expires_in } */
-            /* on missing client_assertion: 200 OK with { status: false, message } */
+        if (status >= 200 && status < 300) {
             String body = readBody(connection);
 
             ISHARESatelliteResponse resp = JsonSerialization.readValue(body, ISHARESatelliteResponse.class);
@@ -385,7 +383,7 @@ public class Ishare {
             logger.tracef("got access token: %s", resp.access_token);
             return resp.access_token;
         } else {
-            logger.errorf("Satellite returned error. Statuscode: %d", status);
+            logger.errorf("Satellite returned error. Statuscode: %d. Error message: %s", status, readBody(connection));
             return null;
         }
     }
@@ -409,8 +407,8 @@ public class Ishare {
         connection.connect();
 
         int status = connection.getResponseCode();
-        if (status != 200) {
-            logger.debugf("error getting parties: %d", status);
+        if (status < 200 && status >= 300) {
+            logger.errorf("error getting parties: %d. Error message: %s", status, readBody(connection));
             return false;
         }
 
@@ -419,7 +417,6 @@ public class Ishare {
         ISHARESatellitePartiesResponse resp = JsonSerialization.readValue(body, ISHARESatellitePartiesResponse.class);
 
         if (!validatePartiesToken(resp.party_token, clientId, clientCert, idpEORI)) {
-            logger.error("Error validating parties token");
             return false;
         }
 
@@ -431,13 +428,13 @@ public class Ishare {
         logger.tracef("validate parties token: %s", partiesToken);
         JWSInput jws = new JWSInput(partiesToken);
         if (!validateJwtCert(jws)) {
-            logger.error("Invalid parties token cert");
+            logger.error("Error validating parties token. Invalid parties token cert");
             return false;
         }
 
         JsonWebToken token = jws.readJsonContent(JsonWebToken.class);
         if (!validateJwtToken(token, idpEORI)) {
-            logger.error("invalid parties token");
+            logger.error("Error validating parties token. invalid parties token");
             return false;
         }
 
@@ -448,12 +445,12 @@ public class Ishare {
         ISHAREPartyToken partyInfoToken = JsonSerialization.readValue(contentBytes, ISHAREPartyToken.class);
 
         if (!partyInfoToken.party_info.party_id.equals(clientId)) {
-            logger.errorf("invalid party_id in party token: %s. Should be: %s", partyInfoToken.party_info.party_id, clientId);
+            logger.errorf("Error validating parties token. invalid party_id in party token: %s. Should be: %s", partyInfoToken.party_info.party_id, clientId);
             return false;
         }
 
         if (!partyInfoToken.party_info.adherence.status.equals("Active")) {
-            logger.error("party not active");
+            logger.error("Error validating parties token. party not active");
             return false;
         }
 
@@ -461,8 +458,7 @@ public class Ishare {
         boolean atLeastOneCert = storedCerts.stream().anyMatch(cert -> cert.x5c.equals(clientCert));
 
         if (!atLeastOneCert) {
-            logger.error("no matching certificate found in jwt");
-            return false;
+            logger.error("Error validating parties token. no matching certificate found in jwt");
         }
 
         return atLeastOneCert;
