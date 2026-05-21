@@ -409,7 +409,7 @@ public class Ishare {
         connection.connect();
 
         int status = connection.getResponseCode();
-        if (status == 200) {
+        if (status != 200) {
             logger.errorf("error getting parties: %d. Error message: %s", status, readBody(connection));
             return false;
         }
