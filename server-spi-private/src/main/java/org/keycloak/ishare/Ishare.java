@@ -363,6 +363,7 @@ public class Ishare {
         String formBodyData = getParamsString(parameters);
         byte[] postDataBytes = formBodyData.getBytes(java.nio.charset.StandardCharsets.UTF_8);
         connection.setRequestProperty("Content-Length", String.valueOf(postDataBytes.length));
+        connection.setDoOutput(true);
 
         try (DataOutputStream out = new DataOutputStream(connection.getOutputStream())) {
             out.write(postDataBytes);
