@@ -16,7 +16,6 @@ import java.security.cert.X509Certificate;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.Arrays;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -302,27 +301,24 @@ public class Ishare {
 
     private String createSatelliteClientAssertion(String idpEORI, KeycloakSession session)
     {
-        Instant now = Instant.now();
-
         JWSBuilder jwsBuilder = new JWSBuilder();
 
         SignatureProvider signatureProvider = session.getProvider(SignatureProvider.class, "RS256");
         SignatureSignerContext signer = signatureProvider.signer();
+        List<X509Certificate> certs = signer.getCertificateChain();
+        if (certs != null && certs.size() > 0) {
+            jwsBuilder = jwsBuilder.x5c(certs);
+        }
 
         Map<String, Object> claims = new HashMap<String, Object>();
         claims.put("jti", UUID.randomUUID().toString());
         claims.put("iss", idpEORI);
         claims.put("sub", idpEORI);
         claims.put("aud", iSHARESatellitePartyId);
+        Instant now = Instant.now();
         claims.put("iat", now.getEpochSecond());
         claims.put("nbf", now.getEpochSecond());
-        claims.put("exp", Date.from(now.plus(30L, ChronoUnit.SECONDS)).getTime() / 1000);
-
-
-        List<X509Certificate> certs = signer.getCertificateChain();
-        if (certs != null && certs.size() > 0) {
-            jwsBuilder = jwsBuilder.x5c(certs);
-        }
+        claims.put("exp", now.plus(30L, ChronoUnit.SECONDS).getEpochSecond());
 
         String client_assertion = jwsBuilder
                 .type("JWT")
@@ -330,6 +326,8 @@ public class Ishare {
                 .jsonContent(claims)
                 .sign(signer);
 
+        logger.debugf("x5c for satellite: %s", certs);
+        logger.debugf("Created client_assertion for satellite: %s", client_assertion);
         return client_assertion;
     }
 
@@ -362,11 +360,14 @@ public class Ishare {
         parameters.put("scope", Constants.ISHARE_SCOPE);
         parameters.put("client_id", idpEORI);
 
-        connection.setDoOutput(true);
-        DataOutputStream out = new DataOutputStream(connection.getOutputStream());
-        out.writeBytes(getParamsString(parameters));
-        out.flush();
-        out.close();
+        String formBodyData = getParamsString(parameters);
+        byte[] postDataBytes = formBodyData.getBytes(java.nio.charset.StandardCharsets.UTF_8);
+        connection.setRequestProperty("Content-Length", String.valueOf(postDataBytes.length));
+
+        try (DataOutputStream out = new DataOutputStream(connection.getOutputStream())) {
+            out.write(postDataBytes);
+            out.flush();
+        }
 
         int status = connection.getResponseCode();
         logger.tracef("Satellite response status: %d", status);
