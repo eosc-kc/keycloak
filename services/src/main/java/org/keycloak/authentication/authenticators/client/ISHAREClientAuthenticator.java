@@ -23,6 +23,7 @@ import org.keycloak.ishare.Ishare;
 import org.keycloak.models.AuthenticationExecutionModel;
 import org.keycloak.models.ClientModel;
 import org.keycloak.models.Constants;
+import org.keycloak.models.KeycloakSession;
 import org.keycloak.models.OAuth2DeviceConfig;
 import org.keycloak.models.RealmModel;
 import org.keycloak.protocol.oidc.ClientCreationUtils;

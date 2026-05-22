@@ -326,7 +326,6 @@ public class Ishare {
                 .jsonContent(claims)
                 .sign(signer);
 
-        logger.debugf("x5c for satellite: %s", certs);
         logger.debugf("Created client_assertion for satellite: %s", client_assertion);
         return client_assertion;
     }
