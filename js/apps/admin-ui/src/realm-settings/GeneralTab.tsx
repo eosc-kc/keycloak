@@ -310,6 +310,7 @@ function RealmSettingsGeneralTabForm({
               "attributes.ishareEnabled",
             )}
             label={t("ishare")}
+            stringify={true}
             labelIcon={t("ishareHelp")}
           />
           {isIshareEnabled && (
