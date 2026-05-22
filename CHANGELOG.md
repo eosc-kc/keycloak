@@ -10,9 +10,9 @@ Full Keycloak upstream jira issue can be shown if filtered by Fix version.
 
 Our Keycloak version is working well with PostgreSQL database. For using other SQL databases, text field in database need to be evaluated.
 
-## [Unreleased]
+## [26.5.5-1.1] - 2026-05-22
 
-- iShare implementation
+- Experimental iShare support
 
 ## [26.5.5-1.0] - 2026-04-14
 
