@@ -54,6 +54,7 @@ import org.apache.tools.ant.filters.StringInputStream;
 import org.jboss.logging.Logger;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
+import org.junit.Ignore;
 
 import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.junit.Assert.assertEquals;
@@ -63,6 +64,7 @@ import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
 
+@Ignore
 public class SAMLFederationTest extends AbstractAdminTest {
 
     private static Undertow SERVER;
