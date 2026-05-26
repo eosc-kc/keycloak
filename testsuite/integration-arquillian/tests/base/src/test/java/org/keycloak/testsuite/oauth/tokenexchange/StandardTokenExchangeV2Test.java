@@ -20,6 +20,7 @@
 package org.keycloak.testsuite.oauth.tokenexchange;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 
 import jakarta.ws.rs.NotAuthorizedException;
