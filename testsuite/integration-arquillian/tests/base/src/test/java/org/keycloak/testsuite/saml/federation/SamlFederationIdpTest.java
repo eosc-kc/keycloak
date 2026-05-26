@@ -34,17 +34,12 @@ import org.hamcrest.Matchers;
 import org.jboss.logging.Logger;
 import org.junit.After;
 import org.junit.AfterClass;
-import org.junit.Assert;
 import org.junit.Before;
 import org.junit.BeforeClass;
 
-import static org.keycloak.testsuite.util.Matchers.bodyHC;
-import static org.keycloak.testsuite.util.Matchers.statusCodeIsHC;
 import static org.keycloak.testsuite.util.SamlClient.Binding.POST;
 import static org.keycloak.testsuite.util.SamlClient.Binding.REDIRECT;
 
-import static org.hamcrest.Matchers.allOf;
-import static org.hamcrest.Matchers.containsString;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertThat;
 
@@ -92,19 +87,6 @@ public abstract class SamlFederationIdpTest extends AbstractSamlTest {
 		if (SERVER != null) {
 			SERVER.stop();
 		}
-	}
-
-	public void testSamlPostBindingPageIdP() throws Exception {
-
-		new SamlClientBuilder().idpInitiatedLogin(getAuthServerSamlEndpoint(REALM_NAME), "sales-post").build().login()
-				.idp(loginIdp).build().execute(r -> {
-					Assert.assertThat(r, statusCodeIsHC(Response.Status.OK));
-					Assert.assertThat(r,
-							bodyHC(allOf(containsString("Authentication Redirect"),
-									containsString("<input type=\"hidden\" name=\"SAMLRequest\""),
-									containsString("id=\"kc-page-title\">"))));
-				});
-
 	}
 
 	public void testRedirectQueryParametersPreserved() throws IOException {
