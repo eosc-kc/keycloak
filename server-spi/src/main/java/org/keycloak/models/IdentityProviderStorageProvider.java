@@ -17,6 +17,7 @@
 package org.keycloak.models;
 
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.function.Predicate;
@@ -54,12 +55,27 @@ public interface IdentityProviderStorageProvider extends Provider {
     void update(IdentityProviderModel model);
 
     /**
+     * Updates all Identity Providers of SAML Federation
+     *
+     * @param models a {@link List<IdentityProviderModel>} containing the Identity Providers that  will be updated
+     */
+    void updateForFederation(List<IdentityProviderModel> models);
+
+    /**
      * Removes the identity provider with the specified alias.
      *
      * @param providerAlias the alias of the identity provider to be removed.
      * @return {@code true} if an IDP with the specified alias was found and removed; {@code false} otherwise.
      */
     boolean remove(String providerAlias);
+
+
+    /**
+     * Removes all identity providers
+     *
+     * @param models a {@link List<IdentityProviderModel>} containing the Identity Providers that  will be updated
+     */
+    void removeForFederation(List<String> idpsAlias);
 
     /**
      * Removes all identity providers from the realm.
