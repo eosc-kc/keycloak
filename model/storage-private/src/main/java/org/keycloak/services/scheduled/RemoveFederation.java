@@ -3,6 +3,7 @@ package org.keycloak.services.scheduled;
 import org.keycloak.broker.federation.FederationProvider;
 import org.keycloak.broker.federation.SAMLFederationProviderFactory;
 import org.keycloak.models.FederationModel;
+import org.keycloak.models.IdentityProviderModel;
 import org.keycloak.models.KeycloakSession;
 import org.keycloak.models.RealmModel;
 import org.keycloak.timer.ScheduledTask;
@@ -32,7 +33,7 @@ public class RemoveFederation implements ScheduledTask {
             FederationModel model = realm.getSAMLFederationById(federationId);
             FederationProvider federationProvider = SAMLFederationProviderFactory.getSAMLFederationProviderFactoryById(session, model.getProviderId()).create(session,model, realm.getId());
 
-            session.identityProviders().getIdentityProvidersByFederation(model.getInternalId()).forEach(idp -> federationProvider.removeIdP(idp, realm, session.identityProviders()));
+            session.identityProviders().removeForFederation(session.identityProviders().getIdentityProvidersByFederation(model.getInternalId()).map(IdentityProviderModel::getAlias).toList());
             federationProvider.removeClients(session.clients().getFederationClientsStream(realm, model.getInternalId()), realm);
 
             realm.removeSAMLFederation(model.getInternalId());

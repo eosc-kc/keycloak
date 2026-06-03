@@ -284,16 +284,15 @@ public class SAMLFederationProvider implements FederationProvider {
                     IdentityProviderModel identityProviderModel = null;
 
                     //check if this federation has already included this IdP
-                    Optional<IdentityProviderModel> existingIdP;
-                    if ((existingIdP = existingIdps.stream().filter(x -> alias.equals(x.getAlias())).findAny()).isPresent()) {
-                        identityProviderModel = new SAMLIdentityProviderConfig(existingIdP.get());
+                    IdentityProviderModel existingIdP = existingIdps.stream().filter(x -> alias.equals(x.getAlias())).findAny().orElse(null);
+                    if (existingIdP != null) {
+                        identityProviderModel = new SAMLIdentityProviderConfig(existingIdP);
                         existingIdps.removeIf(x -> alias.equals(x.getAlias()));
                     } else {
 
                         // check if Idp exists in database
-                        IdentityProviderModel previous = idpsStorage.getByAlias(alias);
-                        if (previous != null) {
-                            identityProviderModel = new SAMLIdentityProviderConfig(previous);
+                        if ((existingIdP = idpsStorage.getByAlias(alias)) != null) {
+                            identityProviderModel = new SAMLIdentityProviderConfig(existingIdP);
                         } else {
                             if (addedIdps.size() > addIdPsBatchSize) {
                                 reExecute = true;
@@ -338,7 +337,7 @@ public class SAMLFederationProvider implements FederationProvider {
                     identityProviderModel.validate(realm);
                     if (identityProviderModel.getInternalId() == null) {
                         addedIdps.add(identityProviderModel);
-                    } else {
+                    } else if (isIdpDifferent(identityProviderModel, existingIdP)){
                         updatedIdps.add(identityProviderModel);
                     }
                 } catch (Exception ex) {
@@ -622,6 +621,7 @@ public class SAMLFederationProvider implements FederationProvider {
 
     private void taskExecutionFederation(FederationModel federationModel, List<IdentityProviderModel> addIdPs, List<IdentityProviderModel> updatedIdPs, List<IdentityProviderModel> removedIdPs, RealmModel realm, IdentityProviderStorageProvider idpsStorage) {
 
+        logger.debugf("Started updating IdPs of federation with id %s,  addIdPs size is %d,  updatedIdPs size is %d,  removedIdPs size is %d  ", model.getInternalId(), addIdPs.size(), updatedIdPs.size(), removedIdPs.size());
         try {
             addIdPs.stream().forEach(idp -> {
                 idpsStorage.create(idp);
@@ -635,7 +635,7 @@ public class SAMLFederationProvider implements FederationProvider {
                     }
                 });
             });
-            updatedIdPs.stream().forEach(idpsStorage::update);
+            idpsStorage.updateForFederation(updatedIdPs);
             removedIdPs.stream().forEach(idp -> removeIdP(idp, realm, idpsStorage));
             realm.updateSAMLFederation(federationModel);
         } catch (Exception e) {
@@ -646,11 +646,8 @@ public class SAMLFederationProvider implements FederationProvider {
 
     @Override
     public void removeIdP(IdentityProviderModel idp, RealmModel realm, IdentityProviderStorageProvider idpsStorage){
-        //remove mappers also
-        logger.info("Removing idp with alias = " + idp.getAlias());
         session.users().preRemove(realm, idp);
         idpsStorage.remove(idp.getAlias());
-        realm.getIdentityProviderMappersByAliasStream(idp.getAlias()).collect(Collectors.toList()).forEach(realm::removeIdentityProviderMapper);
     }
 
     @Override
@@ -746,8 +743,12 @@ public class SAMLFederationProvider implements FederationProvider {
             }
         }
 
-        identityProviderModel.getConfig().put(SAMLIdentityProviderConfig.SINGLE_LOGOUT_SERVICE_URL, singleLogoutServiceUrl);
-        identityProviderModel.getConfig().put(SAMLIdentityProviderConfig.SINGLE_SIGN_ON_SERVICE_URL, singleSignOnServiceUrl);
+        if (singleLogoutServiceUrl != null) {
+            identityProviderModel.getConfig().put(SAMLIdentityProviderConfig.SINGLE_LOGOUT_SERVICE_URL, singleLogoutServiceUrl);
+        }
+        if (singleSignOnServiceUrl != null) {
+            identityProviderModel.getConfig().put(SAMLIdentityProviderConfig.SINGLE_SIGN_ON_SERVICE_URL, singleSignOnServiceUrl);
+        }
         identityProviderModel.getConfig().put(SAMLIdentityProviderConfig.WANT_AUTHN_REQUESTS_SIGNED, idpDescriptor.isWantAuthnRequestsSigned() != null ? idpDescriptor.isWantAuthnRequestsSigned().toString(): "false");
         identityProviderModel.getConfig().put(SAMLIdentityProviderConfig.VALIDATE_SIGNATURE, idpDescriptor.isWantAuthnRequestsSigned() != null ? idpDescriptor.isWantAuthnRequestsSigned().toString(): "false");
         identityProviderModel.getConfig().put(SAMLIdentityProviderConfig.POST_BINDING_AUTHN_REQUEST, postBindingRequest.toString());
@@ -794,6 +795,16 @@ public class SAMLFederationProvider implements FederationProvider {
         }
 
 	}
+
+    private boolean isIdpDifferent(IdentityProviderModel oldIdp, IdentityProviderModel newIdp) {
+        if (oldIdp.isEnabled() != newIdp.isEnabled() || !oldIdp.isHideOnLogin().equals(newIdp.isHideOnLogin())
+                || !oldIdp.getDisplayName().equals(newIdp.getDisplayName())) {
+            return true;
+        }
+
+        return !oldIdp.getConfig().equals(newIdp.getConfig());
+    }
+
 
     @Override
     public void removeFederation() {
