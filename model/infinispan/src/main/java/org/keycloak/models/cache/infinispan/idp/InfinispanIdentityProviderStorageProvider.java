@@ -17,6 +17,7 @@
 package org.keycloak.models.cache.infinispan.idp;
 
 import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
@@ -103,6 +104,11 @@ public class InfinispanIdentityProviderStorageProvider implements IdentityProvid
     }
 
     @Override
+    public void updateForFederation(List<IdentityProviderModel> models) {
+        idpDelegate.updateForFederation(models);
+    }
+
+    @Override
     public boolean remove(String alias) {
         String cacheKey = cacheKeyIdpAlias(getRealm(), alias);
         IdentityProviderModel storedIdp = idpDelegate.getByAlias(alias);
@@ -118,6 +124,11 @@ public class InfinispanIdentityProviderStorageProvider implements IdentityProvid
         registerCountInvalidation();
         registerIDPLoginInvalidation(storedIdp);
         return idpDelegate.remove(alias);
+    }
+
+    @Override
+    public void removeForFederation(List<String> idpsAlias) {
+        idpDelegate.removeForFederation(idpsAlias);
     }
 
     @Override
