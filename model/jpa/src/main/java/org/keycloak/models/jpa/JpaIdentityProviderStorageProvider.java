@@ -90,6 +90,8 @@ public class JpaIdentityProviderStorageProvider implements IdentityProviderStora
 
     protected static final Logger logger = Logger.getLogger(IdentityProviderStorageProvider.class);
 
+    private static final int BATCH_SIZE = 50;
+
     private final EntityManager em;
     private final KeycloakSession session;
 
@@ -139,29 +141,7 @@ public class JpaIdentityProviderStorageProvider implements IdentityProviderStora
 
     @Override
     public void update(IdentityProviderModel identityProvider) {
-        // find idp by id and update it.
-        IdentityProviderEntity entity = this.getEntityById(identityProvider.getInternalId(), true);
-        entity.setAlias(identityProvider.getAlias());
-        entity.setDisplayName(identityProvider.getDisplayName());
-        entity.setEnabled(identityProvider.isEnabled());
-        entity.setTrustEmail(identityProvider.isTrustEmail());
-        entity.setAuthenticateByDefault(identityProvider.isAuthenticateByDefault());
-        entity.setFirstBrokerLoginFlowId(identityProvider.getFirstBrokerLoginFlowId());
-        entity.setPostBrokerLoginFlowId(identityProvider.getPostBrokerLoginFlowId());
-        entity.setOrganizationId(identityProvider.getOrganizationId());
-        entity.setAddReadTokenRoleOnCreate(identityProvider.isAddReadTokenRoleOnCreate());
-        entity.setStoreToken(identityProvider.isStoreToken());
-        entity.setConfig(identityProvider.getConfig());
-        entity.setLinkOnly(identityProvider.isLinkOnly());
-        entity.setHideOnLogin(identityProvider.isHideOnLogin());
-        if (identityProvider.getFederations() != null) {
-            entity.setFederations(identityProvider.getFederations().stream().map(id -> {
-                FederationEntity fed = new FederationEntity();
-                fed.setInternalId(id);
-                return fed;
-            }).collect(Collectors.toSet()));
-        }
-
+        updateEntity(identityProvider);
         // flush so that constraint violations are flagged and converted into model exception now rather than at the end of the tx.
         em.flush();
 
@@ -186,6 +166,49 @@ public class JpaIdentityProviderStorageProvider implements IdentityProviderStora
         });
     }
 
+
+    public void updateEntity(IdentityProviderModel identityProvider) {
+        // find idp by id and update it.
+        IdentityProviderEntity entity = this.getEntityById(identityProvider.getInternalId(), true);
+        entity.setAlias(identityProvider.getAlias());
+        entity.setDisplayName(identityProvider.getDisplayName());
+        entity.setEnabled(identityProvider.isEnabled());
+        entity.setTrustEmail(identityProvider.isTrustEmail());
+        entity.setAuthenticateByDefault(identityProvider.isAuthenticateByDefault());
+        entity.setFirstBrokerLoginFlowId(identityProvider.getFirstBrokerLoginFlowId());
+        entity.setPostBrokerLoginFlowId(identityProvider.getPostBrokerLoginFlowId());
+        entity.setOrganizationId(identityProvider.getOrganizationId());
+        entity.setAddReadTokenRoleOnCreate(identityProvider.isAddReadTokenRoleOnCreate());
+        entity.setStoreToken(identityProvider.isStoreToken());
+        entity.setConfig(identityProvider.getConfig());
+        entity.setLinkOnly(identityProvider.isLinkOnly());
+        entity.setHideOnLogin(identityProvider.isHideOnLogin());
+        if (identityProvider.getFederations() != null) {
+            entity.setFederations(identityProvider.getFederations().stream().map(id -> {
+                FederationEntity fed = new FederationEntity();
+                fed.setInternalId(id);
+                return fed;
+            }).collect(Collectors.toSet()));
+        }
+    }
+
+    @Override
+    public void updateForFederation(List<IdentityProviderModel> models) {
+        for (int i = 0; i < models.size(); i++) {
+            updateEntity(models.get(i));
+
+            // Flush and clear memory exactly every BATCH_SIZE records
+            if (i > 0 && i % BATCH_SIZE == 0) {
+                em.flush();
+                em.clear();
+            }
+        }
+
+        // Final flush and clear for the remaining records in the last partial batch
+        em.flush();
+        em.clear();
+    }
+
     @Override
     public boolean remove(String alias) {
         // find provider by alias in the DB and remove it.
@@ -198,9 +221,7 @@ public class JpaIdentityProviderStorageProvider implements IdentityProviderStora
 
             em.remove(entity);
             // flush so that constraint violations are flagged and converted into model exception now rather than at the end of the tx.
-            em.flush();
-
-            session.identityProviders().getMappersByAliasStream(alias).forEach(session.identityProviders()::removeMapper);
+            removeEntityAndMappers(entity, alias);
 
             // send identity provider removed event.
             RealmModel realm = this.getRealm();
@@ -224,6 +245,27 @@ public class JpaIdentityProviderStorageProvider implements IdentityProviderStora
             return true;
         }
         return false;
+    }
+
+    @Override
+    public void removeForFederation(List<String> idpsAlias) {
+        for (int i = 0; i < idpsAlias.size(); i++) {
+            IdentityProviderEntity entity = getEntityByAlias(idpsAlias.get(i));
+            if (entity != null) {
+                removeEntityAndMappers(entity, idpsAlias.get(i));
+                // Flush in batches
+                if (i > 0 && i % BATCH_SIZE == 0) {
+                    em.flush();
+                }
+            }
+        }
+        em.flush();
+    }
+
+    private void removeEntityAndMappers(IdentityProviderEntity entity, String alias) {
+        em.remove(entity);
+        session.identityProviders().getMappersByAliasStream(alias)
+                .forEach(session.identityProviders()::removeMapper);
     }
 
     @Override
