@@ -26,13 +26,13 @@ import org.junit.jupiter.api.Test;
 import static org.keycloak.OAuthErrorException.INVALID_TARGET;
 import static org.keycloak.protocol.oidc.resourceindicators.ResourceIndicatorConstants.ERROR_INVALID_RESOURCE;
 
-@KeycloakIntegrationTest(config = ResourceIndicatorsTest.ResourceIndicatorServerConfig.class)
-public class ResourceIndicatorsTest {
+@KeycloakIntegrationTest(config = ResourceIndicatorsWithoutCheckTest.ResourceIndicatorServerConfig.class)
+public class ResourceIndicatorsWithoutCheckTest {
 
-    @InjectRealm(config = ResourceIndicatorsRealm.class)
+    @InjectRealm(config = ResourceIndicatorsWithoutCheckTest.ResourceIndicatorsWithoutCheckRealm.class)
     ManagedRealm realm;
 
-    @InjectOAuthClient(config = OAuthClientConfig.class)
+    @InjectOAuthClient(config = ResourceIndicatorsWithoutCheckTest.OAuthClientConfig.class)
     OAuthClient oauth;
 
     @TestSetup
@@ -44,25 +44,13 @@ public class ResourceIndicatorsTest {
     @Test
     public void testValidResourceByClientUrn() {
         AccessTokenResponse tokenResponse = oauth.passwordGrantRequest("user", "pass").resource("urn:client:theservice").send();
-        assertValidResponse(tokenResponse, "theservice");
+        assertValidResponse(tokenResponse, "urn:client:theservice");
     }
 
     @Test
     public void testValidResourceByUrl() {
         AccessTokenResponse tokenResponse = oauth.passwordGrantRequest("user", "pass").resource("https://theservice").send();
         assertValidResponse(tokenResponse, "https://theservice");
-    }
-
-    @Test
-    public void testInvalidResourceByClientUrn() {
-        AccessTokenResponse tokenResponse = oauth.passwordGrantRequest("user", "pass").resource("urn:client:somethingelse").send();
-        assertErrorResponse(tokenResponse, INVALID_TARGET, ERROR_INVALID_RESOURCE);
-    }
-
-    @Test
-    public void testInvalidResourceByUrl() {
-        AccessTokenResponse tokenResponse = oauth.passwordGrantRequest("user", "pass").resource("https://theservice2").send();
-        assertErrorResponse(tokenResponse, INVALID_TARGET, ERROR_INVALID_RESOURCE);
     }
 
     @Test
@@ -85,7 +73,7 @@ public class ResourceIndicatorsTest {
         Assertions.assertTrue(authorizationEndpointResponse.isRedirected());
 
         AccessTokenResponse accessTokenResponse = oauth.accessTokenRequest(authorizationEndpointResponse.getCode()).resource("urn:client:theservice").send();
-        assertValidResponse(accessTokenResponse, "theservice");
+        assertValidResponse(accessTokenResponse, "urn:client:theservice");
     }
 
     @Test
@@ -94,7 +82,7 @@ public class ResourceIndicatorsTest {
         Assertions.assertTrue(authorizationEndpointResponse.isRedirected());
 
         AccessTokenResponse accessTokenResponse = oauth.accessTokenRequest(authorizationEndpointResponse.getCode()).send();
-        assertValidResponse(accessTokenResponse, "theservice");
+        assertValidResponse(accessTokenResponse, "urn:client:theservice");
     }
 
     @Test
@@ -103,7 +91,7 @@ public class ResourceIndicatorsTest {
         Assertions.assertTrue(authorizationEndpointResponse.isRedirected());
 
         AccessTokenResponse accessTokenResponse = oauth.accessTokenRequest(authorizationEndpointResponse.getCode()).resource("urn:client:theservice").send();
-        assertValidResponse(accessTokenResponse,  "theservice");
+        assertValidResponse(accessTokenResponse,  "urn:client:theservice");
     }
 
     @Test
@@ -112,7 +100,7 @@ public class ResourceIndicatorsTest {
         Assertions.assertTrue(tokenResponse.isSuccess());
 
         AccessTokenResponse refreshResponse = oauth.refreshRequest(tokenResponse.getRefreshToken()).send();
-        assertValidResponse(refreshResponse, "theservice");
+        assertValidResponse(refreshResponse, "urn:client:theservice");
     }
 
     @Test
@@ -121,7 +109,7 @@ public class ResourceIndicatorsTest {
         Assertions.assertTrue(tokenResponse.isSuccess());
 
         AccessTokenResponse refreshResponse = oauth.refreshRequest(tokenResponse.getRefreshToken()).resource("urn:client:theservice").send();
-        assertValidResponse(refreshResponse,  "theservice");
+        assertValidResponse(refreshResponse,  "urn:client:theservice");
     }
 
     @Test
@@ -133,25 +121,14 @@ public class ResourceIndicatorsTest {
         assertValidResponse(refreshResponse,  "https://otherservice");
     }
 
-    private static final class ResourceIndicatorsRealm implements RealmConfig {
+    private static final class ResourceIndicatorsWithoutCheckRealm implements RealmConfig {
 
         @Override
         public RealmConfigBuilder configure(RealmConfigBuilder realm) {
-            realm.addClient("theservice").attribute("resource_url", "https://theservice");
-            realm.clientRoles("theservice", "myrole");
 
-            realm.addClient("otherservice").attribute("resource_url", "https://otherservice");
-            realm.clientRoles("otherservice", "myrole");
+            realm.addUser("user").firstName("user").lastName("user").password("pass").email("the@email.localhost");
 
-            realm.addClient("serviceWithoutResource");
-            realm.clientRoles("serviceWithoutResource", "myrole");
-
-            realm.addUser("user").firstName("user").lastName("user").password("pass").email("the@email.localhost")
-                    .clientRoles("theservice", "myrole")
-                    .clientRoles("otherservice", "myrole")
-                    .clientRoles("serviceWithoutResource", "myrole");
-
-            realm.attribute(ResourceIndicatorsPostProcessor.RESOURCE_CHECK_IN_TOKEN_AUDIENCE, "true");
+            realm.attribute(ResourceIndicatorsPostProcessor.RESOURCE_CHECK_IN_TOKEN_AUDIENCE, "false");
 
             return realm;
         }

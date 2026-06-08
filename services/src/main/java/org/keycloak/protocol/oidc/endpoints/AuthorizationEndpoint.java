@@ -17,9 +17,11 @@
 
 package org.keycloak.protocol.oidc.endpoints;
 
+import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 import java.util.function.BiConsumer;
+import java.util.stream.Collectors;
 
 import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.GET;
@@ -73,6 +75,7 @@ import org.keycloak.services.resources.LoginActionsService;
 import org.keycloak.services.util.CacheControlUtil;
 import org.keycloak.services.util.LocaleUtil;
 import org.keycloak.sessions.AuthenticationSessionModel;
+import org.keycloak.util.JsonSerialization;
 import org.keycloak.util.TokenUtil;
 import org.keycloak.utils.OpenIdFederationUtils;
 
@@ -398,6 +401,13 @@ public class AuthorizationEndpoint extends AuthorizationEndpointBase {
         authenticationSession.setClientNote(OIDCLoginProtocol.ISSUER, Urls.realmIssuer(session.getContext().getUri().getBaseUri(), realm.getName()));
 
         performActionOnParameters(request, (paramName, paramValue) -> {if (paramValue != null) authenticationSession.setClientNote(paramName, paramValue);});
+        if (request.getResources() != null && ! request.getResources().isEmpty()) {
+            try {
+                authenticationSession.setClientNote(OAuth2Constants.RESOURCE, JsonSerialization.writeValueAsString(request.getResources()));
+            } catch (IOException e) {
+                logger.warn("problem encoding resource parameter for setting to client note" + request.getResources().stream().collect(Collectors.joining(",")));
+            }
+        }
         if (request.getMaxAge() != null) authenticationSession.setClientNote(OIDCLoginProtocol.MAX_AGE_PARAM, String.valueOf(request.getMaxAge()));
         if (request.getUiLocales() != null) authenticationSession.setClientNote(LocaleSelectorProvider.CLIENT_REQUEST_LOCALE, request.getUiLocales());
 
@@ -505,7 +515,6 @@ public class AuthorizationEndpoint extends AuthorizationEndpointBase {
         paramAction.accept(OIDCLoginProtocol.PROMPT_PARAM, request.getPrompt());
         paramAction.accept(OIDCLoginProtocol.RESPONSE_MODE_PARAM, request.getResponseMode());
         paramAction.accept(OIDCLoginProtocol.SCOPE_PARAM, request.getScope());
-        paramAction.accept(OIDCLoginProtocol.RESOURCE_PARAM, request.getResource());
         paramAction.accept(OIDCLoginProtocol.STATE_PARAM, request.getState());
         paramAction.accept(OIDCLoginProtocol.DPOP_JKT, request.getDpopJkt());
     }

@@ -18,6 +18,8 @@ package org.keycloak.protocol.oidc;
 
 import java.io.IOException;
 import java.net.URI;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 
 import jakarta.ws.rs.core.HttpHeaders;
@@ -66,8 +68,10 @@ import org.keycloak.services.managers.AuthenticationManager;
 import org.keycloak.services.managers.AuthenticationSessionManager;
 import org.keycloak.services.managers.ResourceAdminManager;
 import org.keycloak.sessions.AuthenticationSessionModel;
+import org.keycloak.util.JsonSerialization;
 import org.keycloak.util.TokenUtil;
 
+import com.fasterxml.jackson.core.type.TypeReference;
 import org.jboss.logging.Logger;
 
 import static org.keycloak.protocol.oidc.grants.device.DeviceGrantType.approveOAuth2DeviceAuthorization;
@@ -260,11 +264,20 @@ public class OIDCLoginProtocol implements LoginProtocol {
         // Standard or hybrid flow
         String code = null;
         if (responseType.hasResponseType(OIDCResponseType.CODE)) {
+            List<String> resources = new ArrayList<>();
+            if (authSession.getClientNote(OAuth2Constants.RESOURCE) != null) {
+                try {
+                    resources = JsonSerialization.readValue(authSession.getClientNote(OAuth2Constants.RESOURCE), new TypeReference<List<String>>() {
+                    });
+                } catch (IOException e) {
+                    logger.warnf("problem decoding authentication session resource {0}", authSession.getClientNote(OAuth2Constants.RESOURCE));
+                }
+            }
             OAuth2Code codeData = new OAuth2Code(SecretGenerator.getInstance().generateSecureID(),
                 Time.currentTime() + userSession.getRealm().getAccessCodeLifespan(),
                 nonce,
                 authSession.getClientNote(OAuth2Constants.SCOPE),
-                authSession.getClientNote(OAuth2Constants.RESOURCE),
+                resources,
                 authSession.getClientNote(OIDCLoginProtocol.REDIRECT_URI_PARAM),
                 authSession.getClientNote(OIDCLoginProtocol.CODE_CHALLENGE_PARAM),
                 authSession.getClientNote(OIDCLoginProtocol.CODE_CHALLENGE_METHOD_PARAM),

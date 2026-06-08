@@ -1,5 +1,10 @@
 package org.keycloak.protocol.oidc.resourceindicators;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Objects;
+import java.util.stream.Collectors;
+
 import org.keycloak.OAuth2Constants;
 import org.keycloak.OAuthErrorException;
 import org.keycloak.models.ClientModel;
@@ -12,6 +17,7 @@ import org.keycloak.protocol.oidc.token.TokenPostProcessorContext;
 public class ResourceIndicatorsPostProcessor implements TokenPostProcessor {
 
     private final KeycloakSession session;
+    public static final String RESOURCE_CHECK_IN_TOKEN_AUDIENCE = "resourceCheckInTokenAudience";
 
     public ResourceIndicatorsPostProcessor(KeycloakSession session) {
         this.session = session;
@@ -19,52 +25,66 @@ public class ResourceIndicatorsPostProcessor implements TokenPostProcessor {
 
     @Override
     public void process(TokenPostProcessorContext context) {
-        String requestedResource = context.clientSessionCtx().getAttribute(OAuth2Constants.RESOURCE, String.class);
-        if (requestedResource != null && !ResourceIndicatorValidation.isValidResourceIndicator(requestedResource)) {
+        List<String> requestedResources = (List<String>) context.clientSessionCtx().getAttribute(OAuth2Constants.RESOURCE, List.class);
+        if (requestedResources != null && requestedResources.stream().anyMatch( requestedResource -> !ResourceIndicatorValidation.isValidResourceIndicator(requestedResource))) {
             throw new TokenInterceptorException(OAuthErrorException.INVALID_TARGET, ResourceIndicatorConstants.ERROR_INVALID_RESOURCE);
         }
 
         String grantType = context.clientSessionCtx().getAttribute(Constants.GRANT_TYPE, String.class);
 
         boolean originalResourceParamRequired = false;
-        String originalResourceParam = null;
+        List<String> originalResourceParams = null;
         if (OAuth2Constants.AUTHORIZATION_CODE.equals(grantType)) {
-            originalResourceParam = context.code().getResource();
+            originalResourceParams = context.code().getResources();
             originalResourceParamRequired = true;
         } else if (OAuth2Constants.REFRESH_TOKEN.equals(grantType)) {
-            originalResourceParam = (String) context.requestRefreshToken().getOtherClaims().get(OAuth2Constants.RESOURCE);
+            originalResourceParams = (List<String>) context.requestRefreshToken().getOtherClaims().get(OAuth2Constants.RESOURCE);
             originalResourceParamRequired = true;
         }
 
-        if (originalResourceParam == null && requestedResource == null) {
+        if ((originalResourceParams == null || originalResourceParams.isEmpty()) && ( requestedResources == null || requestedResources.isEmpty()) ) {
             return;
         }
 
-        if (originalResourceParamRequired) {
-            if (originalResourceParam == null) {
-                throw new TokenInterceptorException(OAuthErrorException.INVALID_TARGET, ResourceIndicatorConstants.ERROR_NOT_MATCHING);
-            }
+        //Keycloak upstream code logic
+//        if (originalResourceParamRequired) {
+//            if (originalResourceParams == null || originalResourceParams.isEmpty() ) {
+//                throw new TokenInterceptorException(OAuthErrorException.INVALID_TARGET, ResourceIndicatorConstants.ERROR_NOT_MATCHING);
+//            }
+//
+//            if (requestedResources == null || requestedResources.isEmpty()) {
+//                requestedResources = originalResourceParams;
+//            } else if (!CollectionUtils.isEqualCollection(requestedResources, originalResourceParams)){
+//                throw new TokenInterceptorException(OAuthErrorException.INVALID_TARGET, ResourceIndicatorConstants.ERROR_NOT_MATCHING);
+//            }
+//        }
 
-            if (requestedResource == null) {
-                requestedResource = originalResourceParam;
-            } else if (!requestedResource.equals(originalResourceParam)){
-                throw new TokenInterceptorException(OAuthErrorException.INVALID_TARGET, ResourceIndicatorConstants.ERROR_NOT_MATCHING);
-            }
+        if (originalResourceParamRequired && (requestedResources == null || requestedResources.isEmpty())) {
+            requestedResources = originalResourceParams;
         }
 
-        String audienceToSet;
-        if (isClientUrn(requestedResource)) {
-            audienceToSet = findAudienceByClientUrn(requestedResource, context.accessToken().getAudience());
+        if (session.getContext().getRealm().getAttribute(RESOURCE_CHECK_IN_TOKEN_AUDIENCE, false)) {
+            List<String> audienceToSetList = context.accessToken().getAudience() == null ? new ArrayList<>() :
+                    requestedResources.stream().map(requestedResource -> {
+                        if (isClientUrn(requestedResource)) {
+                            return findAudienceByClientUrn(requestedResource, context.accessToken().getAudience());
+                        } else {
+                            return findAudienceByClientAttribute(requestedResource, context.accessToken().getAudience());
+                        }
+                    }).filter(Objects::nonNull).collect(Collectors.toList());
+
+            if (audienceToSetList.isEmpty()) {
+                throw new TokenInterceptorException(OAuthErrorException.INVALID_TARGET, ResourceIndicatorConstants.ERROR_INVALID_RESOURCE);
+            }
+            context.accessToken().audience(audienceToSetList.toArray(String[]::new));
         } else {
-            audienceToSet = findAudienceByClientAttribute(requestedResource, context.accessToken().getAudience());
+            context.accessToken().audience(requestedResources.toArray(String[]::new));
         }
 
-        if (audienceToSet == null) {
-            throw new TokenInterceptorException(OAuthErrorException.INVALID_TARGET, ResourceIndicatorConstants.ERROR_INVALID_RESOURCE);
+        if (context.refreshToken() != null) {
+            context.refreshToken().getOtherClaims().put(OAuth2Constants.RESOURCE, requestedResources);
         }
 
-        context.refreshToken().getOtherClaims().put(OAuth2Constants.RESOURCE, requestedResource);
-        context.accessToken().audience(audienceToSet);
     }
 
     private boolean isClientUrn(String resource) {

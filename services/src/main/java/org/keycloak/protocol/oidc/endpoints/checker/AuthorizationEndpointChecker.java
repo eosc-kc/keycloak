@@ -172,9 +172,9 @@ public class AuthorizationEndpointChecker extends AbstractAuthorizationEndpointC
     }
 
     public void checkValidResource() throws AuthorizationCheckException {
-        if (!ResourceIndicatorValidation.isValidResourceIndicator(request.getResource())) {
+        if (request.getResources() != null && request.getResources().stream().anyMatch(resource -> !ResourceIndicatorValidation.isValidResourceIndicator(resource))) {
             ServicesLogger.LOGGER.invalidParameter(OIDCLoginProtocol.SCOPE_PARAM);
-            String errorMessage = "Invalid resource: " + request.getResource();
+            String errorMessage = "Invalid resource: " + request.getResources();
             event.detail(Details.REASON, errorMessage);
             event.error(Errors.INVALID_REQUEST);
             throw new AuthorizationCheckException(Response.Status.BAD_REQUEST, OAuthErrorException.INVALID_TARGET, ResourceIndicatorConstants.ERROR_INVALID_RESOURCE);

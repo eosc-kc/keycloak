@@ -349,7 +349,7 @@ public class TokenManager {
 
 
     public AccessTokenResponseBuilder refreshAccessToken(KeycloakSession session, UriInfo uriInfo, ClientConnection connection, RealmModel realm, ClientModel authorizedClient,
-                                            String encodedRefreshToken, EventBuilder event, HttpHeaders headers, HttpRequest request, String scopeParameter, String resourceParameter) throws OAuthErrorException {
+                                            String encodedRefreshToken, EventBuilder event, HttpHeaders headers, HttpRequest request, String scopeParameter, List<String> resourceParameters) throws OAuthErrorException {
         RefreshToken refreshToken = verifyRefreshToken(session, realm, authorizedClient, request, encodedRefreshToken, true);
 
         if (realm.isRevokeRefreshToken()) {
@@ -413,7 +413,7 @@ public class TokenManager {
                             .toArray(ClientModel[]::new));
         }
 
-        validation.clientSessionCtx.setAttribute(OAuth2Constants.RESOURCE, resourceParameter);
+        validation.clientSessionCtx.setAttribute(OAuth2Constants.RESOURCE, resourceParameters);
 
         AccessTokenResponseBuilder responseBuilder = responseBuilder(realm, authorizedClient, event, session,
             validation.userSession, validation.clientSessionCtx).offlineToken( TokenUtil.TOKEN_TYPE_OFFLINE.equals(refreshToken.getType())).accessToken(validation.newToken);
