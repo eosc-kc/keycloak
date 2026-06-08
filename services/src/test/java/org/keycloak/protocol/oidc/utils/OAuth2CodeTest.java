@@ -18,6 +18,7 @@
 package org.keycloak.protocol.oidc.utils;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import org.junit.Assert;
@@ -27,7 +28,7 @@ public class OAuth2CodeTest {
 
     @Test
     public void testSerializeAndDeserializeWithUserId() {
-        OAuth2Code code = new OAuth2Code("code-id", "client-uuid", 1000, "nonce-123", "openid", "resource-1",
+        OAuth2Code code = new OAuth2Code("code-id", "client-uuid", 1000, "nonce-123", "openid", List.of("resource-1"),
                 "https://redirect", "challenge", "S256", "dpop", "user-session-id", "user-id-456");
 
         Assert.assertEquals("user-id-456", code.getUserId());
@@ -41,7 +42,8 @@ public class OAuth2CodeTest {
         Assert.assertEquals(1000, deserialized.getExpiration());
         Assert.assertEquals("nonce-123", deserialized.getNonce());
         Assert.assertEquals("openid", deserialized.getScope());
-        Assert.assertEquals("resource-1", deserialized.getResource());
+        Assert.assertEquals(1, deserialized.getResources().size());
+        Assert.assertEquals("resource-1", deserialized.getResources().get(0));
         Assert.assertEquals("https://redirect", deserialized.getRedirectUriParam());
         Assert.assertEquals("challenge", deserialized.getCodeChallenge());
         Assert.assertEquals("S256", deserialized.getCodeChallengeMethod());

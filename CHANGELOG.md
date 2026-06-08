@@ -74,6 +74,9 @@ Our Keycloak version is working well with PostgreSQL database. For using other S
 - Do not check for consent in Token Exchange
 - Do not reject if the requester-client is not in the audience of the subject token
 - New federated user set emailVerified based on 'Trust Email' IdP field and User Attribute Mapper
+- Support for multiple resource indicators
+- Add option for not checking resource indicator based on token audience in Token Exchange
+- Being possible to overide resource in authorization code and refresh flow
 
 ### Fixed
 - Changes in account console and account rest service [RCIAM-860](https://jira.argo.grnet.gr/browse/RCIAM-860)

@@ -18,6 +18,7 @@ import org.keycloak.admin.client.resource.RealmResource;
 import org.keycloak.admin.client.resource.UserResource;
 import org.keycloak.admin.client.resource.UsersResource;
 import org.keycloak.broker.oidc.OIDCIdentityProviderConfig;
+import org.keycloak.broker.oidc.mappers.AbstractClaimMapper;
 import org.keycloak.broker.oidc.mappers.ExternalKeycloakRoleToRoleMapper;
 import org.keycloak.broker.oidc.mappers.UserAttributeMapper;
 import org.keycloak.crypto.Algorithm;
@@ -874,7 +875,7 @@ public final class KcOidcBrokerTest extends AbstractAdvancedBrokerTest {
         userinfoEmailVerifiedMapper.getConfig().put(OIDCAttributeMapperHelper.INCLUDE_IN_ACCESS_TOKEN, "false");
         userinfoEmailVerifiedMapper.getConfig().put(OIDCAttributeMapperHelper.INCLUDE_IN_ID_TOKEN, "false");
         userinfoEmailVerifiedMapper.getConfig().put(OIDCAttributeMapperHelper.INCLUDE_IN_USERINFO, "true");
-        userinfoEmailVerifiedMapper.getConfig().put(HardcodedClaim.CLAIM_VALUE, "false");
+        userinfoEmailVerifiedMapper.getConfig().put(AbstractClaimMapper.CLAIM_VALUE, "false");
         emailClientScope.getProtocolMappers().createMapper(userinfoEmailVerifiedMapper).close();
         ProtocolMapperRepresentation userinfoEmailMapper = new ProtocolMapperRepresentation();
         userinfoEmailMapper.setName("userinfo-email");
@@ -885,7 +886,7 @@ public final class KcOidcBrokerTest extends AbstractAdvancedBrokerTest {
         userinfoEmailMapper.getConfig().put(OIDCAttributeMapperHelper.INCLUDE_IN_ACCESS_TOKEN, "false");
         userinfoEmailMapper.getConfig().put(OIDCAttributeMapperHelper.INCLUDE_IN_ID_TOKEN, "false");
         userinfoEmailMapper.getConfig().put(OIDCAttributeMapperHelper.INCLUDE_IN_USERINFO, "true");
-        userinfoEmailMapper.getConfig().put(HardcodedClaim.CLAIM_VALUE, "different-email@test.com");
+        userinfoEmailMapper.getConfig().put(AbstractClaimMapper.CLAIM_VALUE, "different-email@test.com");
         emailClientScope.getProtocolMappers().createMapper(userinfoEmailMapper).close();
 
 

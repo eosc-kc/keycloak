@@ -1,6 +1,7 @@
 package org.keycloak.tests.oauth;
 
 import org.keycloak.common.Profile;
+import org.keycloak.protocol.oidc.resourceindicators.ResourceIndicatorsPostProcessor;
 import org.keycloak.representations.AccessToken;
 import org.keycloak.testframework.annotations.InjectRealm;
 import org.keycloak.testframework.annotations.KeycloakIntegrationTest;
@@ -24,7 +25,6 @@ import org.junit.jupiter.api.Test;
 
 import static org.keycloak.OAuthErrorException.INVALID_TARGET;
 import static org.keycloak.protocol.oidc.resourceindicators.ResourceIndicatorConstants.ERROR_INVALID_RESOURCE;
-import static org.keycloak.protocol.oidc.resourceindicators.ResourceIndicatorConstants.ERROR_NOT_MATCHING;
 
 @KeycloakIntegrationTest(config = ResourceIndicatorsTest.ResourceIndicatorServerConfig.class)
 public class ResourceIndicatorsTest {
@@ -103,7 +103,7 @@ public class ResourceIndicatorsTest {
         Assertions.assertTrue(authorizationEndpointResponse.isRedirected());
 
         AccessTokenResponse accessTokenResponse = oauth.accessTokenRequest(authorizationEndpointResponse.getCode()).resource("urn:client:theservice").send();
-        assertErrorResponse(accessTokenResponse, INVALID_TARGET, ERROR_NOT_MATCHING);
+        assertValidResponse(accessTokenResponse,  "theservice");
     }
 
     @Test
@@ -130,7 +130,7 @@ public class ResourceIndicatorsTest {
         Assertions.assertTrue(tokenResponse.isSuccess());
 
         AccessTokenResponse refreshResponse = oauth.refreshRequest(tokenResponse.getRefreshToken()).resource("https://otherservice").send();
-        assertErrorResponse(refreshResponse,  INVALID_TARGET, ERROR_NOT_MATCHING);
+        assertValidResponse(refreshResponse,  "https://otherservice");
     }
 
     private static final class ResourceIndicatorsRealm implements RealmConfig {
@@ -150,6 +150,8 @@ public class ResourceIndicatorsTest {
                     .clientRoles("theservice", "myrole")
                     .clientRoles("otherservice", "myrole")
                     .clientRoles("serviceWithoutResource", "myrole");
+
+            realm.attribute(ResourceIndicatorsPostProcessor.RESOURCE_CHECK_IN_TOKEN_AUDIENCE, "true");
 
             return realm;
         }
