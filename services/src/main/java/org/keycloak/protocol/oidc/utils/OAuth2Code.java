@@ -17,8 +17,16 @@
 
 package org.keycloak.protocol.oidc.utils;
 
+import java.io.IOException;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
+
+import org.keycloak.util.JsonSerialization;
+
+import com.fasterxml.jackson.core.type.TypeReference;
+import org.jboss.logging.Logger;
 
 /**
  * Data associated with the oauth2 code.
@@ -30,6 +38,8 @@ import java.util.Map;
  * @author <a href="mailto:mposolda@redhat.com">Marek Posolda</a>
  */
 public class OAuth2Code {
+
+    private static final Logger logger = Logger.getLogger(OAuth2Code.class);
 
     public static final String ID_NOTE = "id";
     public static final String EXPIRATION_NOTE = "exp";
@@ -49,7 +59,7 @@ public class OAuth2Code {
     private final String nonce;
 
     private final String scope;
-    private final String resource;
+    private List<String> resources;
 
     private final String redirectUriParam;
 
@@ -66,7 +76,7 @@ public class OAuth2Code {
         this.expiration = expiration;
         this.nonce = nonce;
         this.scope = scope;
-        this.resource = null;
+        this.resources = null;
         this.redirectUriParam = null;
         this.codeChallenge = null;
         this.codeChallengeMethod = null;
@@ -74,13 +84,13 @@ public class OAuth2Code {
         this.userSessionId = userSessionId;
     }
 
-    public OAuth2Code(String id, int expiration, String nonce, String scope, String resource, String redirectUriParam,
+    public OAuth2Code(String id, int expiration, String nonce, String scope, List<String> resources, String redirectUriParam,
                       String codeChallenge, String codeChallengeMethod, String dpopJkt, String userSessionId) {
         this.id = id;
         this.expiration = expiration;
         this.nonce = nonce;
         this.scope = scope;
-        this.resource = resource;
+        this.resources = resources;
         this.redirectUriParam = redirectUriParam;
         this.codeChallenge = codeChallenge;
         this.codeChallengeMethod = codeChallengeMethod;
@@ -93,7 +103,12 @@ public class OAuth2Code {
         expiration = Integer.parseInt(data.get(EXPIRATION_NOTE));
         nonce = data.get(NONCE_NOTE);
         scope = data.get(SCOPE_NOTE);
-        resource = data.get(RESOURCE_NOTE);
+        try {
+            resources = data.get(RESOURCE_NOTE) != null ? JsonSerialization.readValue(data.get(RESOURCE_NOTE), new TypeReference<List<String>>() {}) : null;
+        } catch (IOException e) {
+            logger.warnf("problem decoding resource parameter {0} from Oauth2 code",data.get(RESOURCE_NOTE));
+            resources = null;
+        }
         redirectUriParam = data.get(REDIRECT_URI_PARAM_NOTE);
         codeChallenge = data.get(CODE_CHALLENGE_NOTE);
         codeChallengeMethod = data.get(CODE_CHALLENGE_METHOD_NOTE);
@@ -114,7 +129,13 @@ public class OAuth2Code {
         result.put(EXPIRATION_NOTE, String.valueOf(expiration));
         result.put(NONCE_NOTE, nonce);
         result.put(SCOPE_NOTE, scope);
-        result.put(RESOURCE_NOTE, resource);
+        if (resources != null && ! resources.isEmpty()) {
+            try {
+                result.put(RESOURCE_NOTE, JsonSerialization.writeValueAsString(resources));
+            } catch (IOException e) {
+                logger.warn("problem encoding resource parameter" + resources.stream().collect(Collectors.joining(",")));
+            }
+        }
         result.put(REDIRECT_URI_PARAM_NOTE, redirectUriParam);
         result.put(CODE_CHALLENGE_NOTE, codeChallenge);
         result.put(CODE_CHALLENGE_METHOD_NOTE, codeChallengeMethod);
@@ -140,8 +161,8 @@ public class OAuth2Code {
         return scope;
     }
 
-    public String getResource() {
-        return resource;
+    public List<String> getResources() {
+        return resources;
     }
 
     public String getRedirectUriParam() {

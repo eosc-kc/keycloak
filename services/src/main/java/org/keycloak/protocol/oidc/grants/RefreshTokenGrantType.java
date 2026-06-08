@@ -18,6 +18,7 @@
 package org.keycloak.protocol.oidc.grants;
 
 import java.util.Collections;
+import java.util.List;
 import java.util.Set;
 
 import jakarta.ws.rs.core.MediaType;
@@ -60,7 +61,7 @@ public class RefreshTokenGrantType extends OAuth2GrantTypeBase {
         }
 
         String scopeParameter = getRequestedScopes();
-        String resourceParameter = formParams.getFirst(OAuth2Constants.RESOURCE);
+        List<String> resourceParameters = formParams.get(OAuth2Constants.RESOURCE);
 
         try {
             session.clientPolicy().triggerOnEvent(new TokenRefreshContext(formParams, client, scopeParameter));
@@ -76,7 +77,7 @@ public class RefreshTokenGrantType extends OAuth2GrantTypeBase {
         AccessTokenResponse res;
         try {
             // KEYCLOAK-6771 Certificate Bound Token
-            TokenManager.AccessTokenResponseBuilder responseBuilder = tokenManager.refreshAccessToken(session, session.getContext().getUri(), clientConnection, realm, client, refreshToken, event, headers, request, scopeParameter, resourceParameter);
+            TokenManager.AccessTokenResponseBuilder responseBuilder = tokenManager.refreshAccessToken(session, session.getContext().getUri(), clientConnection, realm, client, refreshToken, event, headers, request, scopeParameter, resourceParameters);
 
             checkAndBindMtlsHoKToken(responseBuilder, clientConfig.isUseRefreshToken());
 

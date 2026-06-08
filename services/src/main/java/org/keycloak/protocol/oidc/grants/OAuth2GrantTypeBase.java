@@ -20,6 +20,7 @@ package org.keycloak.protocol.oidc.grants;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 import java.util.function.Function;
 
 import jakarta.ws.rs.core.HttpHeaders;
@@ -116,7 +117,7 @@ public abstract class OAuth2GrantTypeBase implements OAuth2GrantType {
 
     protected TokenManager.AccessTokenResponseBuilder createTokenResponseBuilder(UserModel user, UserSessionModel userSession, ClientSessionContext clientSessionCtx,  String scopeParam, Function<TokenManager.AccessTokenResponseBuilder, ClientPolicyContext> clientPolicyContextGenerator) {
         clientSessionCtx.setAttribute(Constants.GRANT_TYPE, context.getGrantType());
-        clientSessionCtx.setAttribute(OAuth2Constants.RESOURCE, formParams.getFirst(OAuth2Constants.RESOURCE));
+        clientSessionCtx.setAttribute(OAuth2Constants.RESOURCE, formParams.get(OAuth2Constants.RESOURCE));
         AccessToken token = tokenManager.createClientAccessToken(session, realm, client, user, userSession, clientSessionCtx, clientSessionCtx.isOfflineTokenRequested());
 
         TokenManager.AccessTokenResponseBuilder responseBuilder = tokenManager
@@ -395,6 +396,11 @@ public abstract class OAuth2GrantTypeBase implements OAuth2GrantType {
      */
     protected boolean useRefreshToken(String scopeParam) {
         return clientConfig.isUseRefreshToken()  || TokenUtil.isOfflineTokenRequested(scopeParam);
+    }
+
+    @Override
+    public Set<String> getSupportedMultivaluedRequestParameters() {
+        return Set.of(OAuth2Constants.RESOURCE);
     }
 
     @Override

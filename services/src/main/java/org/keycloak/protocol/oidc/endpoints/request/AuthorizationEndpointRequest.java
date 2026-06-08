@@ -18,6 +18,7 @@
 package org.keycloak.protocol.oidc.endpoints.request;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import org.keycloak.protocol.ClientData;
@@ -36,7 +37,7 @@ public class AuthorizationEndpointRequest {
     String responseMode;
     String state;
     String scope;
-    String resource;
+    List<String> resources;
     String loginHint;
     String display;
     String prompt;
@@ -96,8 +97,8 @@ public class AuthorizationEndpointRequest {
         return scope;
     }
 
-    public String getResource() {
-        return resource;
+    public List<String> getResources() {
+        return resources;
     }
 
     public String getLoginHint() {
