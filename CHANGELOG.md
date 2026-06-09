@@ -72,10 +72,11 @@ Our Keycloak version is working well with PostgreSQL database. For using other S
 - Support MFA with Identity Providers
 - Return refresh token when configured or offline_access scope exists
 - Do not check for consent in Token Exchange
+- Add audience request parameters in audience token of Token Exchange
 - Do not reject if the requester-client is not in the audience of the subject token
 - New federated user set emailVerified based on 'Trust Email' IdP field and User Attribute Mapper
 - Support for multiple resource indicators
-- Add option for not checking resource indicator based on token audience in Token Exchange
+- Add option for not checking resource indicator based on token audience
 - Being possible to overide resource in authorization code and refresh flow
 
 ### Fixed

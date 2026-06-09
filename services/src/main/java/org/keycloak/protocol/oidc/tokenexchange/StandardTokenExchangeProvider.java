@@ -298,7 +298,11 @@ public class StandardTokenExchangeProvider extends AbstractTokenExchangeProvider
 
             capExpirationBySubjectToken(responseBuilder.getAccessToken(), subjectToken);
 
-            checkRequestedAudiences(responseBuilder);
+            //checkRequestedAudiences(responseBuilder);
+            if (params.getAudience() != null && !params.getAudience().isEmpty()){
+                params.getAudience().forEach(aud -> responseBuilder.getAccessToken().addAudience(aud));
+            }
+
 
             if (encoder.getTokenContextFromTokenId(responseBuilder.getAccessToken().getId()).getSessionType() == AccessTokenContext.SessionType.TRANSIENT) {
                 responseBuilder.getAccessToken().setSessionId(null);
