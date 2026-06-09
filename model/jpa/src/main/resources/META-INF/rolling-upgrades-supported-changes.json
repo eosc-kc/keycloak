@@ -795,6 +795,54 @@
     "id" : "enable-unaccent-and-fix-search-path",
     "author" : "cgeorgilakis@grnet.gr",
     "filename" : "META-INF/jpa-changelog-unaccent.xml"
+  }, {
+    "id" : "openid-federation-idp",
+    "author" : "cgeorgilakis@grnet.gr",
+    "filename" : "META-INF/jpa-changelog-openid-federation.xml"
+  }, {
+    "id" : "fake-unaccent-for-h2",
+    "author" : "cgeorgilakis",
+    "filename" : "META-INF/jpa-changelog-unaccent.xml"
+  }, {
+    "id" : "openid-federation-unique",
+    "author" : "cgeorgilakis@grnet.gr",
+    "filename" : "META-INF/jpa-changelog-openid-federation.xml"
+  }, {
+    "id" : "migrate-openidFederationClientRegistrationTypesSupported",
+    "author" : "cgeorgilakis@grnet.gr",
+    "filename" : "META-INF/jpa-changelog-openid-federation.xml"
+  }, {
+    "id" : "openid-federation",
+    "author" : "cgeorgilakis@grnet.gr",
+    "filename" : "META-INF/jpa-changelog-openid-federation.xml"
+  }, {
+    "id" : "client-scope-attribute",
+    "author" : "eosc-kc",
+    "filename" : "META-INF/jpa-changelog-client-scope.xml"
+  }, {
+    "id" : "text-values",
+    "author" : "eosc-kc",
+    "filename" : "META-INF/jpa-changelog-text.xml"
+  }, {
+    "id" : "terms",
+    "author" : "eosc-kc",
+    "filename" : "META-INF/jpa-changelog-terms.xml"
+  }, {
+    "id" : "pro-migrate26",
+    "author" : "cgeorgilakis",
+    "filename" : "META-INF/jpa-changelog-migrate26.xml"
+  }, {
+    "id" : "enable-unaccent-and-fix-search-path",
+    "author" : "cgeorgilakis",
+    "filename" : "META-INF/jpa-changelog-unaccent.xml"
+  }, {
+    "id" : "migrate-openidFederationEntityTypes",
+    "author" : "cgeorgilakis@grnet.gr",
+    "filename" : "META-INF/jpa-changelog-openid-federation.xml"
+  }, {
+    "id" : "client-scope-policy",
+    "author" : "eosc-kc",
+    "filename" : "META-INF/jpa-changelog-clientscope-policy.xml"
   }],
   "migrations" : [ ]
 }
