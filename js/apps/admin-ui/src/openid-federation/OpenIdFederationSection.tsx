@@ -42,7 +42,7 @@ export default function OpenIdFederationSection() {
     async () => {
       try {
         return await adminClient.openIdFederations.find({ realm: realmName });
-      } catch (error) {
+      } catch {
         setOpenIdFederations([]); // Optionally clear state immediately
         return [];
       }
@@ -66,27 +66,21 @@ export default function OpenIdFederationSection() {
       );
     }
 
-    isEmptyValue(r.openIdFederationContacts) &&
-      delete r.openIdFederationContacts &&
-      delete realm?.openIdFederationContacts;
-    isEmptyValue(r.openIdFederationHistoricalKeysEndpoint) &&
-      delete r.openIdFederationHistoricalKeysEndpoint &&
-      delete realm?.openIdFederationHistoricalKeysEndpoint;
-    isEmptyValue(r.openIdFederationLogoUri) &&
-      delete r.openIdFederationLogoUri &&
-      delete realm?.openIdFederationLogoUri;
-    isEmptyValue(r.openIdFederationOrganizationName) &&
-      delete r.openIdFederationOrganizationName &&
-      delete realm?.openIdFederationOrganizationName;
-    isEmptyValue(r.openIdFederationOrganizationUri) &&
-      delete r.openIdFederationOrganizationUri &&
-      delete realm?.openIdFederationOrganizationUri;
-    isEmptyValue(r.openIdFederationPolicyUri) &&
-      delete r.openIdFederationPolicyUri &&
-      delete realm?.openIdFederationPolicyUri;
-    isEmptyValue(r.openIdFederationResolveEndpoint) &&
-      delete r.openIdFederationResolveEndpoint &&
-      delete realm?.openIdFederationResolveEndpoint;
+    const emptyOpenIdFederationFields: (keyof RealmRepresentation)[] = [
+      "openIdFederationContacts",
+      "openIdFederationHistoricalKeysEndpoint",
+      "openIdFederationLogoUri",
+      "openIdFederationOrganizationName",
+      "openIdFederationOrganizationUri",
+      "openIdFederationPolicyUri",
+      "openIdFederationResolveEndpoint",
+    ];
+
+    for (const field of emptyOpenIdFederationFields) {
+      if (isEmptyValue(r[field])) {
+        delete r[field];
+      }
+    }
 
     try {
       const savedRealm: RealmRepresentation = {
@@ -100,14 +94,14 @@ export default function OpenIdFederationSection() {
         savedRealm.smtpServer = { ...savedRealm.smtpServer, port: null };
       }
       await adminClient.realms.update({ realm: realmName }, savedRealm);
-      addAlert(t("saveSuccess"), AlertVariant.success);
+      addAlert(t("saveSuccessOpenIdFederation"), AlertVariant.success);
     } catch (error) {
-      addError("realm-settings:saveError", error);
+      addError("saveErrorOpenIdFederation", error);
     }
 
     const isRealmRenamed = realmName !== (r.realm || realm?.realm);
     if (isRealmRenamed) {
-      await refreshRealm();
+      refreshRealm();
       navigate(toOpenIdFederation({ realm: r.realm!, tab: "general" }));
     }
     refresh();

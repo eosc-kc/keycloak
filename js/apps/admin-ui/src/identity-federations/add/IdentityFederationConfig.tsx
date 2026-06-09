@@ -61,7 +61,7 @@ const IdentityProviderFederationConfig = ({
         label={t("nameIdPolicyFormat")}
         labelIcon={t("identityFederationNameIdPolicyFormatHelp")}
         controller={{
-            defaultValue: "isNull",
+          defaultValue: "isNull",
         }}
         options={[
           {
@@ -208,11 +208,6 @@ const IdentityProviderFederationConfig = ({
         label={t("signServiceProviderMetadata")}
         isDisabled={readOnly}
         stringify
-      />
-      <SwitchField
-        field="config.passSetMfa"
-        label="passSetMfaFederation"
-        isReadOnly={false}
       />
       <SwitchField
         field="config.passSetMfa"

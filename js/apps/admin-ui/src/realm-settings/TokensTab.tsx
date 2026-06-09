@@ -490,6 +490,15 @@ export const RealmSettingsTokensTab = ({
               />
             </FormGroup>
           )}
+
+          <DefaultSwitchControl
+            name={convertAttributeNameToForm(
+              "attributes.resourceCheckInTokenAudience",
+            )}
+            label={t("checkResourcesInTokenAudience")}
+            labelIcon={t("checkResourcesInTokenAudienceHelp")}
+            stringify
+          />
         </FormAccess>
       ),
     },

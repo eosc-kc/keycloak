@@ -139,11 +139,11 @@ export const ClientDescription = ({
           />
           {!!lastRefreshed && (
             <FormGroup
-              label={t("clients:lastRefresh")}
+              label={t("lastRefresh")}
               labelIcon={
                 <HelpItem
-                  helpText={t("clients-help:lastRefresh")}
-                  fieldLabelId="clients-help:lastRefresh"
+                  helpText={t("lastClientRefreshHelp")}
+                  fieldLabelId="lastClientRefreshHelp"
                 />
               }
             >
