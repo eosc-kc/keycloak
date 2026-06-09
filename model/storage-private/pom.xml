@@ -90,22 +90,22 @@
         <profile>
             <id>db-snapshot</id>
             <build>
-                <plugins>
-                    <plugin>
-                        <groupId>org.keycloak</groupId>
-                        <artifactId>db-compatibility-verifier-maven-plugin</artifactId>
-                        <version>${project.version}</version>
-                        <executions>
-                            <execution>
-                                <id>snapshot</id>
-                                <phase>compile</phase>
-                                <goals>
-                                    <goal>snapshot</goal>
-                                </goals>
-                            </execution>
-                        </executions>
-                    </plugin>
-                </plugins>
+<!--                <plugins>-->
+<!--                    <plugin>-->
+<!--                        <groupId>org.keycloak</groupId>-->
+<!--                        <artifactId>db-compatibility-verifier-maven-plugin</artifactId>-->
+<!--                        <version>${project.version}</version>-->
+<!--                        <executions>-->
+<!--                            <execution>-->
+<!--                                <id>snapshot</id>-->
+<!--                                <phase>compile</phase>-->
+<!--                                <goals>-->
+<!--                                    <goal>snapshot</goal>-->
+<!--                                </goals>-->
+<!--                            </execution>-->
+<!--                        </executions>-->
+<!--                    </plugin>-->
+<!--                </plugins>-->
             </build>
         </profile>
     </profiles>
