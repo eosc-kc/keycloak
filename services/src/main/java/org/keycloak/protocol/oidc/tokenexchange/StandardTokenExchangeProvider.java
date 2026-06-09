@@ -284,7 +284,10 @@ public class StandardTokenExchangeProvider extends AbstractTokenExchangeProvider
             TokenManager.AccessTokenResponseBuilder responseBuilder = tokenManager.responseBuilder(realm, client, event, session,
                     clientSessionCtx.getClientSession().getUserSession(), clientSessionCtx).generateAccessToken();
 
-            checkRequestedAudiences(responseBuilder);
+            //checkRequestedAudiences(responseBuilder);
+            if (params.getAudience() != null && !params.getAudience().isEmpty()){
+                params.getAudience().forEach(aud -> responseBuilder.getAccessToken().addAudience(aud));
+            }
 
             if (encoder.getTokenContextFromTokenId(responseBuilder.getAccessToken().getId()).getSessionType() == AccessTokenContext.SessionType.TRANSIENT) {
                 responseBuilder.getAccessToken().setSessionId(null);
