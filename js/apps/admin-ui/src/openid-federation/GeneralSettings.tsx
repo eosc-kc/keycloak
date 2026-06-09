@@ -11,13 +11,7 @@ import {
   ToolbarItem,
   Stack,
   StackItem,
-  EmptyState,
-  EmptyStateVariant,
-  Title,
-  EmptyStateBody,
-  EmptyStateActions,
 } from "@patternfly/react-core";
-// import { adminClient } from "../admin-client";
 import { useConfirmDialog } from "../components/confirm-dialog/ConfirmDialog";
 import { Link, useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
@@ -25,7 +19,6 @@ import { Controller, FormProvider, useForm, useWatch } from "react-hook-form";
 import { useTranslation } from "react-i18next";
 import { MultiLineInput } from "../components/multi-line-input/MultiLineInput";
 import { FormAccess } from "../components/form/FormAccess";
-// import { KeycloakTextInput } from "../components/keycloak-text-input/KeycloakTextInput";
 import { TimeSelector } from "../components/time-selector/TimeSelector";
 import { addTrailingSlash, convertToFormValues } from "../util";
 import {
@@ -34,20 +27,9 @@ import {
   SelectVariant,
 } from "@patternfly/react-core/deprecated";
 import { toOpenIdFederationCreate } from "./routes/OpenIdFederationCreate";
-// import {
-//   KeycloakDataTable,
-//   Action,
-// } from "../components/table-toolbar/KeycloakDataTable";
 import { useRealm } from "../context/realm-context/RealmContext";
 import { toOpenIdFederationEdit } from "./routes/OpenIdFederationEdit";
-// import { ListEmptyState } from "../components/list-empty-state/ListEmptyState";
-// // import OpenIdFederationRepresentation from "libs/keycloak-admin-client/lib/defs/openIdFederationRepresentation";
-// import { ScrollForm } from "../components/scroll-form/ScrollForm";
 import { FormattedLink } from "../components/external-link/FormattedLink";
-// import {
-//   ClientRegistrationTypesSupported,
-//   EntityTypesSupported,
-// } from "@keycloak/keycloak-admin-client/lib/defs/realmRepresentation";
 import { FixedButtonsGroup } from "../components/form/FixedButtonGroup";
 import OpenIdFederationRepresentation from "libs/keycloak-admin-client/lib/defs/openIdFederationRepresentation";
 import {
@@ -56,8 +38,6 @@ import {
 } from "@keycloak/keycloak-admin-client/lib/defs/realmRepresentation";
 import {
   useAlerts,
-  useFetch,
-  KeycloakSpinner,
   HelpItem,
   ScrollForm,
   FormErrorText,
@@ -66,8 +46,6 @@ import {
   ListEmptyState,
 } from "@keycloak/keycloak-ui-shared";
 import { useAdminClient } from "../admin-client";
-import { PlusCircleIcon, TrashIcon } from "@patternfly/react-icons";
-import { Table, Tbody, Td, Th, Thead, Tr } from "@patternfly/react-table";
 
 type OpenIdFederationGeneralTabProps = {
   realm: RealmRepresentation;
@@ -109,7 +87,6 @@ export const OpenIdFederationGeneralSettings = ({
   const { t } = useTranslation();
   const form = useForm<RealmRepresentation>();
   const {
-    register,
     control,
     handleSubmit,
     clearErrors,
@@ -153,9 +130,9 @@ export const OpenIdFederationGeneralSettings = ({
             (p) => p.internalId !== selectedOpenIdFederation?.internalId,
           ),
         ]);
-        addAlert(t("deletedSuccessOpenIdFederation"), AlertVariant.success);
+        addAlert(t("deletedSuccessTrustAnchor"), AlertVariant.success);
       } catch (error) {
-        addError(t("deletedErrorOpenIdFederation"), error);
+        addError(t("deletedErrorTrustAnchor"), error);
       }
     },
   });
@@ -165,18 +142,18 @@ export const OpenIdFederationGeneralSettings = ({
     name: "openIdFederationEntityTypes",
     defaultValue: [],
   }) as EntityTypesSupported[];
-const openIdFederationEnabled = useWatch({
-  control,
-  name: "openIdFederationEnabled",
-  defaultValue: realm.openIdFederationEnabled ?? false,
-}) as boolean;
+  const openIdFederationEnabled = useWatch({
+    control,
+    name: "openIdFederationEnabled",
+    defaultValue: realm.openIdFederationEnabled ?? false,
+  }) as boolean;
 
-useEffect(() => {
-  if (!openIdFederationEnabled) {
-    clearErrors("openIdFederationAuthorityHints");
-    unregister("openIdFederationAuthorityHints");
-  }
-}, [openIdFederationEnabled, clearErrors, unregister]);
+  useEffect(() => {
+    if (!openIdFederationEnabled) {
+      clearErrors("openIdFederationAuthorityHints");
+      unregister("openIdFederationAuthorityHints");
+    }
+  }, [openIdFederationEnabled, clearErrors, unregister]);
   const setupForm = () => {
     const defaultValues: RealmRepresentation = {
       ...realm,
