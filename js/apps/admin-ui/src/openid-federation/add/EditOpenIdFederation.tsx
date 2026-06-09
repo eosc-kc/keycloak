@@ -19,7 +19,6 @@ import {
 } from "@keycloak/keycloak-ui-shared";
 
 import { OpenIdFederationForm } from "./OpenIdFederationForm";
-import { FormAccess } from "../../components/form/FormAccess";
 
 type Params = {
   id: string;
@@ -41,8 +40,6 @@ export default function EditIdentityFederation() {
     useState<OpenIdFederationRepresentation>();
 
   const form = useForm<OpenIdFederationRepresentation>();
-  const { handleSubmit } = form;
-
   // Load OpenID federation
   useFetch(
     () =>
@@ -55,11 +52,11 @@ export default function EditIdentityFederation() {
   );
 
   // Load realm (optional, if OpenIdFederationForm needs it; otherwise use realmRepresentation)
-  useFetch(
-    () => adminClient.realms.findOne({ realm: realmName }),
-    setRealm,
-    [adminClient, realmName, key],
-  );
+  useFetch(() => adminClient.realms.findOne({ realm: realmName }), setRealm, [
+    adminClient,
+    realmName,
+    key,
+  ]);
 
   const effectiveRealm = realm ?? realmRepresentation;
 
@@ -78,7 +75,7 @@ export default function EditIdentityFederation() {
       refresh();
       addAlert(t("saveSuccessOpenIdFederation"), AlertVariant.success);
     } catch (error) {
-      addError(t("saveErrorOpenIdFederation"), error);
+      addError("saveErrorOpenIdFederation", error);
     }
   };
 
@@ -94,11 +91,11 @@ export default function EditIdentityFederation() {
       />
       <PageSection variant="light">
         <FormProvider {...form}>
-            <OpenIdFederationForm
-              realm={effectiveRealm}
-              openIdFederation={openIdFederation}
-              save={save}
-            />
+          <OpenIdFederationForm
+            realm={effectiveRealm}
+            openIdFederation={openIdFederation}
+            save={save}
+          />
         </FormProvider>
       </PageSection>
     </>
