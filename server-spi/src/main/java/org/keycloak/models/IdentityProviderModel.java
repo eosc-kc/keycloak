@@ -18,8 +18,10 @@ package org.keycloak.models;
 
 import java.io.Serializable;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 
 import org.keycloak.common.Profile;
 import org.keycloak.common.Profile.Feature;
@@ -62,6 +64,8 @@ public class IdentityProviderModel implements Serializable {
     public static final String SHOW_IN_ACCOUNT_CONSOLE = "showInAccountConsole";
     public static final String STORE_TOKEN_IN_SESSION = "storeTokenInSession";
     public static final int DEFAULT_MIN_VALIDITY_TOKEN = 5;
+    public static final String PROMOTED_LOGIN_BUTTON = "promotedLoginbutton";
+    public static final String FEDERATION_ID = "federationId";
 
     private String internalId;
 
@@ -109,6 +113,8 @@ public class IdentityProviderModel implements Serializable {
      */
     private Map<String, String> config = new HashMap<>();
 
+    private Set<String> federations = new HashSet<>();
+    
     public IdentityProviderModel() {
     }
 
@@ -130,6 +136,7 @@ public class IdentityProviderModel implements Serializable {
             this.organizationId = model.getOrganizationId();
             this.displayIconClasses = model.getDisplayIconClasses();
             this.hideOnLogin = model.isHideOnLogin();
+            this.federations = new HashSet<>(model.getFederations());
         }
     }
 
@@ -321,7 +328,7 @@ public class IdentityProviderModel implements Serializable {
     public void setTransientUsers(Boolean transientUsers) {
         setBooleanConfig(DO_NOT_STORE_USERS, transientUsers);
     }
-
+    
     public boolean isFilteredByClaims() {
         return getBooleanConfig(FILTERED_BY_CLAIMS);
     }
@@ -370,7 +377,29 @@ public class IdentityProviderModel implements Serializable {
 		return IdentityProviderShowInAccountConsole.valueOf(getConfig().getOrDefault(SHOW_IN_ACCOUNT_CONSOLE, IdentityProviderShowInAccountConsole.ALWAYS.name()));
 	}
 
-    public int getMinValidityToken() {
+    public boolean isPromotedLoginButton() {
+        return Boolean.valueOf(getConfig().get(PROMOTED_LOGIN_BUTTON));
+    }
+
+    public void setPromotedLoginButton(boolean promotedLoginButton) {
+        getConfig().put(PROMOTED_LOGIN_BUTTON, String.valueOf(promotedLoginButton));
+    }     
+
+    public Set<String> getFederations() {
+	return federations;
+    }
+
+    public void setFederations(Set<String> federations) {
+	this.federations = federations;
+   }
+    
+   public void addFederation (String federation) {
+        if ( federations == null)
+            federations = new HashSet<>();
+        federations.add(federation);
+   }
+
+   public int getMinValidityToken() {
         String minValidityTokenString = getConfig().get(MIN_VALIDITY_TOKEN);
         if (minValidityTokenString != null) {
             try {

@@ -33,6 +33,8 @@ import jakarta.persistence.ElementCollection;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
+import jakarta.persistence.JoinTable;
+import jakarta.persistence.ManyToMany;
 import jakarta.persistence.MapKeyColumn;
 import jakarta.persistence.NamedQueries;
 import jakarta.persistence.NamedQuery;
@@ -52,6 +54,9 @@ import org.hibernate.annotations.Nationalized;
         @NamedQuery(name="getClientById", query="select client from ClientEntity client where client.id = :id and client.realmId = :realm"),
         @NamedQuery(name="getAlwaysDisplayInConsoleClients", query="select client.id from ClientEntity client where client.alwaysDisplayInConsole = true and client.realmId = :realm order by client.clientId"),
         @NamedQuery(name="findClientIdByClientId", query="select client.id from ClientEntity client where client.clientId = :clientId and client.realmId = :realm"),
+        @NamedQuery(name="searchClientsByClientId", query="select client.id from ClientEntity client where lower(client.clientId) like lower(concat('%',:clientId,'%')) and client.realmId = :realm order by client.clientId"),
+        @NamedQuery(name="getRealmClientsCount", query="select count(client) from ClientEntity client where client.realmId = :realm"),
+        @NamedQuery(name="getFederationClients", query="select client.id from ClientEntity client join client.federations f where f.internalId = :federationId"),
         @NamedQuery(name="findClientByClientId", query="select client from ClientEntity client where client.clientId = :clientId and client.realmId = :realm"),
         @NamedQuery(name="getAllRedirectUrisOfEnabledClients", query="select new map(client as client, r as redirectUri) from ClientEntity client join client.redirectUris r where client.realmId = :realm and client.enabled = true"),
 })
@@ -160,6 +165,13 @@ public class ClientEntity {
     @Column(name="VALUE")
     @CollectionTable(name="CLIENT_NODE_REGISTRATIONS", joinColumns={ @JoinColumn(name="CLIENT_ID") })
     Map<String, Integer> registeredNodes;
+
+    @ManyToMany
+    @JoinTable(
+            name = "federation_client",
+            joinColumns = @JoinColumn(name = "client_id"),
+            inverseJoinColumns = @JoinColumn(name = "federation_id"))
+    Set<FederationEntity> federations = new HashSet<FederationEntity>();
 
     public String getRealmId() {
         return realmId;
@@ -444,6 +456,17 @@ public class ClientEntity {
 
     public void setScopeMapping(Set<String> scopeMappingIds) {
         this.scopeMappingIds = scopeMappingIds;
+    }
+
+    public Set<FederationEntity> getFederations() {
+        if (federations == null) {
+            federations = new HashSet<>();
+        }
+        return federations;
+    }
+
+    public void setFederations(Set<FederationEntity> federations) {
+        this.federations = federations;
     }
 
     @Override

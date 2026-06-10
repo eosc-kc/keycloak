@@ -18,6 +18,7 @@
 package org.keycloak.models;
 
 import java.util.Comparator;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Stream;
@@ -473,6 +474,18 @@ public interface RealmModel extends RoleContainerModel {
     void removeRequiredActionProvider(RequiredActionProviderModel model);
     RequiredActionProviderModel getRequiredActionProviderById(String id);
     RequiredActionProviderModel getRequiredActionProviderByAlias(String alias);
+
+    List<FederationModel> getSAMLFederations();
+    FederationModel getSAMLFederationById(String id);
+    FederationModel getSAMLFederationByAlias(String alias);
+    void addSAMLFederation(FederationModel federationModel);
+    void updateSAMLFederation(FederationModel federationModel);
+    void removeSAMLFederation(String internalId);
+    List<FederationMapperModel> getIdentityProviderFederationMappers(String federationId);
+    FederationMapperModel getIdentityProviderFederationMapper(String federationId, String id);
+    void addIdentityProvidersFederationMapper(FederationMapperModel federationMapperModel);
+    void updateIdentityProvidersFederationMapper(FederationMapperModel federationMapperModel);
+    void removeIdentityProvidersFederationMapper(String id, String federationId);
 
     /**
      * Returns identity providers as a stream.

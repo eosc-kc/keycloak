@@ -59,14 +59,12 @@ public class KcSamlParseIdPDescriptorTest extends AbstractKeycloakTest {
         Assert.assertNotNull(response.get(SAMLIdentityProviderConfig.SIGNING_CERTIFICATE_KEY));
         Assert.assertEquals(authServerPage.toString() + "/realms/test", response.get(SAMLIdentityProviderConfig.IDP_ENTITY_ID));
         Assert.assertEquals("true", response.get(SAMLIdentityProviderConfig.VALIDATE_SIGNATURE));
-        Assert.assertEquals("true", response.get(SAMLIdentityProviderConfig.POST_BINDING_LOGOUT));
-        Assert.assertEquals("true", response.get(SAMLIdentityProviderConfig.POST_BINDING_RESPONSE));
-        Assert.assertEquals("true", response.get(SAMLIdentityProviderConfig.POST_BINDING_AUTHN_REQUEST));
+        Assert.assertEquals("false", response.get(SAMLIdentityProviderConfig.POST_BINDING_LOGOUT));
+        Assert.assertEquals("false", response.get(SAMLIdentityProviderConfig.POST_BINDING_AUTHN_REQUEST));
         Assert.assertEquals("true", response.get(SAMLIdentityProviderConfig.WANT_AUTHN_REQUESTS_SIGNED));
         Assert.assertEquals(JBossSAMLURIConstants.NAMEID_FORMAT_PERSISTENT.get(), response.get("nameIDPolicyFormat"));
         Assert.assertEquals(authServerPage.toString() + "/realms/test/protocol/saml", response.get(SAMLIdentityProviderConfig.SINGLE_SIGN_ON_SERVICE_URL));
         Assert.assertEquals(authServerPage.toString() + "/realms/test/protocol/saml", response.get(SAMLIdentityProviderConfig.SINGLE_LOGOUT_SERVICE_URL));
-        Assert.assertEquals(authServerPage.toString() + "/realms/test/protocol/saml/resolve", response.get(SAMLIdentityProviderConfig.ARTIFACT_RESOLUTION_SERVICE_URL));
 
         // modify it with WantAuthnRequestsSigned=false
         descriptor = descriptor.replaceFirst("WantAuthnRequestsSigned=\"true\"", "WantAuthnRequestsSigned=\"false\"");

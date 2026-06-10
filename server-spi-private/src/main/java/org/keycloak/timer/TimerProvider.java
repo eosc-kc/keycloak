@@ -62,6 +62,12 @@ public interface TimerProvider extends Provider {
         scheduleTask(scheduledTask, intervalMillis, taskName);
     }
 
+    default void scheduleOnce(TaskRunner runner, final long delay) {
+        scheduleOnce(runner, delay, runner.getTaskName());
+    }
+
+    public void scheduleOnce(Runnable runnable, final long delay, String taskName);
+
     /**
      * Cancel task and return the details about it, so it can be eventually restored later
      *
@@ -70,7 +76,16 @@ public interface TimerProvider extends Provider {
      */
     public TimerTaskContext cancelTask(String taskName);
 
-    public Map<String, TimerTaskContext> getTasks();
+     public Map<String, TimerTaskContext> getTasks();
+
+    /**
+     * Cancel task and notify other nodes
+     *
+     * @param taskName
+     * @return existing task or null if task under this name doesn't exist
+     */
+    public TimerTaskContext cancelTaskAndNotify(String taskName);
+
 
     interface TimerTaskContext {
 

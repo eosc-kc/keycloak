@@ -39,6 +39,7 @@ import org.keycloak.models.AuthenticatorConfigModel;
 import org.keycloak.models.CibaConfig;
 import org.keycloak.models.ClientModel;
 import org.keycloak.models.ClientScopeModel;
+import org.keycloak.models.FederationModel;
 import org.keycloak.models.GroupModel;
 import org.keycloak.models.KeycloakSession;
 import org.keycloak.models.ModelException;
@@ -132,6 +133,7 @@ public class CachedRealm extends AbstractExtendableRevisioned {
     protected MultivaluedMap<String, ComponentModel> componentsByParent = new MultivaluedHashMap<>();
     protected MultivaluedMap<String, ComponentModel> componentsByParentAndType = new ConcurrentMultivaluedHashMap<>();
     protected Map<String, ComponentModel> components;
+    protected List<FederationModel> federations;
 
     protected Map<String, String> browserSecurityHeaders;
     protected Map<String, String> smtpConfig;
@@ -248,7 +250,7 @@ public class CachedRealm extends AbstractExtendableRevisioned {
 
         requiredCredentials = model.getRequiredCredentialsStream().collect(Collectors.toList());
         userActionTokenLifespans = Map.copyOf(model.getUserActionTokenLifespans());
-
+        federations  = model.getSAMLFederations();
         smtpConfig = model.getSmtpConfig();
         browserSecurityHeaders = model.getBrowserSecurityHeaders();
 
@@ -623,6 +625,9 @@ public class CachedRealm extends AbstractExtendableRevisioned {
         return adminEventsDetailsEnabled;
     }
 
+    public List<FederationModel> getFederations() {
+        return federations;
+    }
     public boolean isInternationalizationEnabled() {
         return internationalizationEnabled;
     }

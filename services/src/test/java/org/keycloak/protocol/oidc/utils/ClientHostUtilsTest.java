@@ -2,7 +2,9 @@ package org.keycloak.protocol.oidc.utils;
 
 import java.net.URI;
 import java.time.Instant;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -619,5 +621,25 @@ public class ClientHostUtilsTest {
 
         @Override
         public boolean hasScope(RoleModel role) { return false; }
+
+        @Override
+        public List<String> getFederations() {
+            return Collections.EMPTY_LIST;
+        }
+
+        @Override
+        public void setFederations(List<String> federations) {
+
+        }
+
+        @Override
+        public void addFederation(String federation) {
+
+        }
+
+        @Override
+        public void removeFederation(String federation) {
+
+        }
     }
 }

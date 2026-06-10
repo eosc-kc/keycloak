@@ -23,9 +23,11 @@ import java.util.Map;
 import java.util.Timer;
 import java.util.TimerTask;
 
+import org.keycloak.cluster.ClusterProvider;
 import org.keycloak.common.util.Time;
 import org.keycloak.models.KeycloakSession;
 import org.keycloak.services.scheduled.ScheduledTaskRunner;
+import org.keycloak.services.scheduled.TaskCancellationEvent;
 import org.keycloak.timer.ScheduledTask;
 import org.keycloak.timer.TimerProvider;
 
@@ -42,22 +44,32 @@ public class BasicTimerProvider implements TimerProvider {
     private final Timer timer;
     private final int transactionTimeout;
     private final BasicTimerProviderFactory factory;
+    private final ClusterProvider clusterProvider;
 
     public BasicTimerProvider(KeycloakSession session, Timer timer, int transactionTimeout, BasicTimerProviderFactory factory) {
         this.session = session;
         this.timer = timer;
         this.transactionTimeout = transactionTimeout;
         this.factory = factory;
+        this.clusterProvider = session.getProvider(ClusterProvider.class);
     }
 
     @Override
     public void schedule(final Runnable runnable, final long intervalMillis, String taskName) {
-        schedule(runnable, intervalMillis, intervalMillis, taskName);
+
+        logger.debugf("Starting task '%s' with interval '%d'", taskName, intervalMillis);
+        timer.schedule(createTimerTask (runnable, intervalMillis, taskName), intervalMillis, intervalMillis);
     }
 
     @Override
     public void schedule(final Runnable runnable, final long initialDelayMillis, final long intervalMillis, String taskName) {
-        TimerTask task = new BasicTimerTask(runnable);
+
+        logger.debugf("Starting task '%s' with dalay '%d' and interval '%d'", taskName, initialDelayMillis, intervalMillis);
+        timer.schedule(createTimerTask (runnable, intervalMillis, taskName),initialDelayMillis, intervalMillis);
+    }
+
+    private TimerTask createTimerTask (final Runnable runnable, final long intervalMillis, String taskName) {
+    	TimerTask task = new BasicTimerTask(runnable);
 
         TimerTaskContextImpl taskContext = new TimerTaskContextImpl(runnable, task, Time.currentTimeMillis(), intervalMillis);
         TimerTaskContextImpl existingTask = factory.putTask(taskName, taskContext);
@@ -65,9 +77,7 @@ public class BasicTimerProvider implements TimerProvider {
             logger.debugf("Existing timer task '%s' found. Cancelling it", taskName);
             existingTask.timerTask.cancel();
         }
-
-        logger.debugf("Starting task '%s' with initial delay '%d' and interval '%d'", taskName, initialDelayMillis, intervalMillis);
-        timer.schedule(task, initialDelayMillis, intervalMillis);
+        return task;
     }
 
     @Override
@@ -83,6 +93,13 @@ public class BasicTimerProvider implements TimerProvider {
     }
 
     @Override
+    public void scheduleOnce(final Runnable runnable, final long delay, String taskName) {
+
+        logger.debugf("Task '%s' will be executed with delay '%d'", taskName, delay);
+        timer.schedule(new BasicTimerTask(runnable), delay);
+    }
+
+    @Override
     public TimerTaskContext cancelTask(String taskName) {
         TimerTaskContextImpl existingTask = factory.removeTask(taskName);
         if (existingTask != null) {
@@ -90,6 +107,18 @@ public class BasicTimerProvider implements TimerProvider {
             existingTask.timerTask.cancel();
         }
 
+        return existingTask;
+    }
+
+    @Override
+    public TimerTaskContext cancelTaskAndNotify(String taskName) {
+        TimerTaskContextImpl existingTask = factory.removeTask(taskName);
+        if (existingTask != null) {
+            // Notify all nodes to cancel the task
+            clusterProvider.notify(TaskCancellationEvent.CANCEL_TASK, new TaskCancellationEvent(taskName), true);
+            logger.debugf("Cancelling task '%s'", taskName);
+            existingTask.timerTask.cancel();
+        }
         return existingTask;
     }
 

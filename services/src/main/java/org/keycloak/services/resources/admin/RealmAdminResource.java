@@ -1195,6 +1195,12 @@ public class RealmAdminResource {
         return new IdentityProvidersResource(realm, session, this.auth, adminEvent);
     }
 
+    @Path("saml-federations")
+    public SAMLFederationResource getIdentityProviderFederationResource() {
+        return new SAMLFederationResource(realm, session, this.auth, adminEvent);
+    }
+    
+    
     /**
      * Get group hierarchy.  Only name and ids are returned.
      *

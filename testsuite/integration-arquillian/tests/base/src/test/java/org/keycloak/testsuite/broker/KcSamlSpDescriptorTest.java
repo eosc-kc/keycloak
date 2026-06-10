@@ -212,6 +212,7 @@ public class KcSamlSpDescriptorTest extends AbstractBrokerTest {
         // Enable signing for IDP. Only signing key is present
         try (Closeable idpUpdater = new IdentityProviderAttributeUpdater(identityProviderResource)
                 .setAttribute(SAMLIdentityProviderConfig.WANT_AUTHN_REQUESTS_SIGNED, "true")
+                .setAttribute(SAMLIdentityProviderConfig.WANT_LOGOUT_REQUESTS_SIGNED, "true")
                 .update())
         {
             spDescriptor = getExportedSamlProvider();
@@ -224,6 +225,7 @@ public class KcSamlSpDescriptorTest extends AbstractBrokerTest {
         // Enable signing and encryption. Both keys are present and mapped to same realm key
         try (Closeable idpUpdater = new IdentityProviderAttributeUpdater(identityProviderResource)
                 .setAttribute(SAMLIdentityProviderConfig.WANT_AUTHN_REQUESTS_SIGNED, "true")
+                .setAttribute(SAMLIdentityProviderConfig.WANT_LOGOUT_REQUESTS_SIGNED, "true")
                 .setAttribute(SAMLIdentityProviderConfig.WANT_ASSERTIONS_ENCRYPTED, "true")
                 .update())
         {
@@ -242,6 +244,7 @@ public class KcSamlSpDescriptorTest extends AbstractBrokerTest {
         // Enable signing and encryption and set encryption algorithm. Both keys are present and mapped to different realm key (signing to "rsa-generated"m encryption to "rsa-enc-generated")
         try (Closeable idpUpdater = new IdentityProviderAttributeUpdater(identityProviderResource)
                 .setAttribute(SAMLIdentityProviderConfig.WANT_AUTHN_REQUESTS_SIGNED, "true")
+                .setAttribute(SAMLIdentityProviderConfig.WANT_LOGOUT_REQUESTS_SIGNED, "true")
                 .setAttribute(SAMLIdentityProviderConfig.WANT_ASSERTIONS_ENCRYPTED, "true")
                 .setAttribute(SAMLIdentityProviderConfig.ENCRYPTION_ALGORITHM, Algorithm.RSA_OAEP)
                 .update())
@@ -332,6 +335,7 @@ public class KcSamlSpDescriptorTest extends AbstractBrokerTest {
     public void testKeysExistenceInSpMetadata() throws IOException, ParsingException, URISyntaxException {
         try (Closeable idpUpdater = new IdentityProviderAttributeUpdater(identityProviderResource)
                 .setAttribute(SAMLIdentityProviderConfig.WANT_AUTHN_REQUESTS_SIGNED, "true")
+                .setAttribute(SAMLIdentityProviderConfig.WANT_LOGOUT_REQUESTS_SIGNED, "true")
                 .setAttribute(SAMLIdentityProviderConfig.WANT_ASSERTIONS_SIGNED, "true")
                 .setAttribute(SAMLIdentityProviderConfig.WANT_ASSERTIONS_ENCRYPTED, "true")
                 .update())

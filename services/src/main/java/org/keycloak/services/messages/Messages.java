@@ -158,6 +158,8 @@ public class Messages {
 
     public static final String INVALID_REQUESTER = "invalidRequesterMessage";
 
+    public static final String NO_PRINCIPALS_FOUND = "noPrincipalsFoundMessage";
+
     public static final String UNKNOWN_LOGIN_REQUESTER = "unknownLoginRequesterMessage";
 
     public static final String LOGIN_REQUESTER_NOT_ENABLED = "loginRequesterNotEnabledMessage";
