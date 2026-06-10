@@ -43,6 +43,7 @@ import org.keycloak.protocol.oidc.utils.PairwiseSubMapperValidator;
 import org.keycloak.protocol.oidc.utils.SubjectType;
 import org.keycloak.protocol.saml.SamlConfigAttributes;
 import org.keycloak.protocol.saml.SamlProtocol;
+import org.keycloak.representations.idm.ClientRepresentation;
 import org.keycloak.representations.idm.ProtocolMapperRepresentation;
 import org.keycloak.representations.oidc.OIDCClientRepresentation;
 import org.keycloak.services.messages.Messages;
@@ -52,6 +53,10 @@ import org.keycloak.utils.StringUtil;
 import static org.keycloak.models.utils.ModelToRepresentation.toRepresentation;
 
 public class DefaultClientValidationProvider implements ClientValidationProvider {
+
+    // Use a fake URL for validating relative URLs as we may not be validating clients in the context of a request (import at startup)
+    private static final String authServerUrl = "https://localhost/auth";
+
     private enum FieldMessages {
         ROOT_URL("rootUrl",
                 "Root URL is not a valid URL", "clientRootURLInvalid",
@@ -265,6 +270,28 @@ public class DefaultClientValidationProvider implements ClientValidationProvider
         }
     }
 
+    @Override
+    public ValidationResult validateRepresentation(ValidationContext<ClientModel> context, ClientRepresentation clientRep) {
+
+        //SOS do same checks for SAMl client representation as validateUrls
+        //SAMl Client doese not have BACKCHANNEL_LOGOUT_URL
+
+        String rootUrl = ResolveRelative.resolveRootUrl(authServerUrl, authServerUrl, clientRep.getRootUrl());
+
+        // don't need to use actual rootUrl here as it'd interfere with others URL validations
+        String baseUrl = ResolveRelative.resolveRelativeUri(authServerUrl, authServerUrl, authServerUrl, clientRep.getBaseUrl());
+
+        checkUri(FieldMessages.ROOT_URL, rootUrl, context, true, true);
+        checkUri(FieldMessages.BASE_URL, baseUrl, context, true, false);
+        clientRep.getRedirectUris().stream()
+                .map(u -> ResolveRelative.resolveRelativeUri(authServerUrl, authServerUrl, rootUrl, u))
+                .forEach(u -> checkUri(FieldMessages.REDIRECT_URIS, u, context, false, true));
+        checkUriLogo(FieldMessages.LOGO_URI, clientRep.getAttributes().get(ClientModel.LOGO_URI), context);
+        checkUri(FieldMessages.POLICY_URI, clientRep.getAttributes().get(ClientModel.POLICY_URI), context, true, false);
+        checkUri(FieldMessages.TOS_URI, clientRep.getAttributes().get(ClientModel.TOS_URI), context, true, false);
+
+        return context.toResult();
+    }
 
     private void checkUri(FieldMessages field, String url, ValidationContext<ClientModel> context, boolean checkValidUrl, boolean checkFragment) {
         if (url == null || url.isEmpty()) {

@@ -35,6 +35,8 @@ import java.util.stream.Collectors;
 
 import jakarta.ws.rs.core.MediaType;
 
+import org.keycloak.broker.federation.FederationProvider;
+import org.keycloak.broker.federation.SAMLFederationProviderFactory;
 import org.keycloak.common.Profile;
 import org.keycloak.common.Profile.Feature;
 import org.keycloak.common.enums.SslRequired;
@@ -60,6 +62,8 @@ import org.keycloak.models.ClientModel;
 import org.keycloak.models.ClientScopeModel;
 import org.keycloak.models.Constants;
 import org.keycloak.models.FederatedIdentityModel;
+import org.keycloak.models.FederationMapperModel;
+import org.keycloak.models.FederationModel;
 import org.keycloak.models.GroupModel;
 import org.keycloak.models.IdentityProviderModel;
 import org.keycloak.models.KeycloakSession;
@@ -101,6 +105,7 @@ import org.keycloak.representations.idm.ComponentExportRepresentation;
 import org.keycloak.representations.idm.ComponentRepresentation;
 import org.keycloak.representations.idm.CredentialRepresentation;
 import org.keycloak.representations.idm.FederatedIdentityRepresentation;
+import org.keycloak.representations.idm.FederationMapperRepresentation;
 import org.keycloak.representations.idm.GroupRepresentation;
 import org.keycloak.representations.idm.IdentityProviderMapperRepresentation;
 import org.keycloak.representations.idm.IdentityProviderRepresentation;
@@ -113,6 +118,7 @@ import org.keycloak.representations.idm.ProtocolMapperRepresentation;
 import org.keycloak.representations.idm.RealmRepresentation;
 import org.keycloak.representations.idm.RequiredActionProviderRepresentation;
 import org.keycloak.representations.idm.RoleRepresentation;
+import org.keycloak.representations.idm.SAMLFederationRepresentation;
 import org.keycloak.representations.idm.ScopeMappingRepresentation;
 import org.keycloak.representations.idm.SocialLinkRepresentation;
 import org.keycloak.representations.idm.UserConsentRepresentation;
@@ -363,6 +369,7 @@ public class DefaultExportImportManager implements ExportImportManager {
             DefaultRequiredActions.addActions(newRealm);
         }
 
+        importIdentityProvidersFederations(session,rep.getSamlFederations(),newRealm);
         importIdentityProviders(rep, newRealm, session);
         importIdentityProviderMappers(rep, session);
 
@@ -610,6 +617,60 @@ public class DefaultExportImportManager implements ExportImportManager {
             appMap.put(app.getName(), app);
         }
         return appMap;
+    }
+
+    private static void importIdentityProvidersFederations(KeycloakSession session, List<SAMLFederationRepresentation> federations, RealmModel newRealm) {
+        if (federations != null) {
+            for (SAMLFederationRepresentation representation : federations) {
+                //set LastMetadataRefreshTimestamp to null in order to run immediately the schedule task
+                representation.setLastMetadataRefreshTimestamp(null);
+                FederationModel model = toModel(representation);
+                model.setFederationMapperModels(
+                        representation.getFederationMappers().stream().map(mapper -> toModel(mapper)).collect(Collectors.toList()));
+                newRealm.addSAMLFederation(model);
+                representation.getFederationMappers().stream().forEach(mapper -> {
+                    mapper.setFederationId(representation.getInternalId());
+                    FederationMapperModel mapperModel = toModel(mapper);
+                    newRealm.addIdentityProvidersFederationMapper(mapperModel);
+                });
+                FederationProvider federationProvider = SAMLFederationProviderFactory
+                        .getSAMLFederationProviderFactoryById(session, model.getProviderId())
+                        .create(session, model, newRealm.getId());
+                federationProvider.enableUpdateTask();
+            }
+        }
+    }
+
+    public static FederationModel toModel(SAMLFederationRepresentation representation ) {
+        FederationModel model = new FederationModel();
+        model.setInternalId(representation.getInternalId());
+        model.setAlias(representation.getAlias());
+        model.setDisplayName(representation.getDisplayName());
+        model.setLastMetadataRefreshTimestamp(representation.getLastMetadataRefreshTimestamp());
+        model.setProviderId(representation.getProviderId());
+        model.setUpdateFrequencyInMins(representation.getUpdateFrequencyInMins());
+        model.setEntityIdDenyList(representation.getEntityIdDenyList());
+        model.setEntityIdAllowList(representation.getEntityIdAllowList());
+        model.setRegistrationAuthorityDenyList(representation.getRegistrationAuthorityDenyList());
+        model.setRegistrationAuthorityAllowList(representation.getRegistrationAuthorityAllowList());
+        model.setCategoryDenyList(representation.getCategoryDenyList());
+        model.setCategoryAllowList(representation.getCategoryAllowList());
+        model.setUrl(representation.getUrl());
+        model.setValidUntilTimestamp(representation.getValidUntilTimestamp());
+        model.setCategory(representation.getCategory());
+        model.setConfig(representation.getConfig());
+        return model;
+    }
+
+    public static FederationMapperModel toModel(FederationMapperRepresentation representation ) {
+        FederationMapperModel model = new FederationMapperModel();
+        model.setId(representation.getId());
+        model.setIdentityProviderMapper(representation.getIdentityProviderMapper());
+        model.setName(representation.getName());
+        model.setFederationId(representation.getFederationId());
+        model.setConfig(representation.getConfig());
+        return model;
+
     }
 
     private static void importIdentityProviders(RealmRepresentation rep, RealmModel newRealm, KeycloakSession session) {

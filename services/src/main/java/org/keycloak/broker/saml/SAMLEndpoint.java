@@ -123,6 +123,7 @@ import org.keycloak.services.messages.Messages;
 import org.keycloak.services.util.CacheControlUtil;
 import org.keycloak.sessions.AuthenticationSessionModel;
 import org.keycloak.util.Booleans;
+import org.keycloak.util.JsonSerialization;
 import org.keycloak.utils.StringUtil;
 
 import org.jboss.logging.Logger;
@@ -181,7 +182,7 @@ public class SAMLEndpoint {
     public Response redirectBinding(@QueryParam(GeneralConstants.SAML_REQUEST_KEY) String samlRequest,
                                     @QueryParam(GeneralConstants.SAML_RESPONSE_KEY) String samlResponse,
                                     @QueryParam(GeneralConstants.SAML_ARTIFACT_KEY) String samlArt,
-                                    @QueryParam(GeneralConstants.RELAY_STATE) String relayState)  {
+                                    @QueryParam(GeneralConstants.RELAY_STATE) String relayState) throws IOException {
         if (Objects.isNull(samlArt)) {
             return new RedirectBinding().execute(samlRequest, samlResponse, null, relayState, null);
         }
@@ -196,7 +197,7 @@ public class SAMLEndpoint {
     public Response postBinding(@FormParam(GeneralConstants.SAML_REQUEST_KEY) String samlRequest,
                                 @FormParam(GeneralConstants.SAML_RESPONSE_KEY) String samlResponse,
                                 @FormParam(GeneralConstants.SAML_ARTIFACT_KEY) String samlArt,
-                                @FormParam(GeneralConstants.RELAY_STATE) String relayState) {
+                                @FormParam(GeneralConstants.RELAY_STATE) String relayState) throws IOException {
         if (Objects.isNull(samlArt)) {
             return new PostBinding().execute(samlRequest, samlResponse, null, relayState, null);
         }
@@ -208,7 +209,7 @@ public class SAMLEndpoint {
     public Response redirectBindingIdpInitiated(@QueryParam(GeneralConstants.SAML_REQUEST_KEY) String samlRequest,
                                                 @QueryParam(GeneralConstants.SAML_RESPONSE_KEY) String samlResponse,
                                                 @QueryParam(GeneralConstants.RELAY_STATE) String relayState,
-                                                @PathParam("client_id") String clientId)  {
+                                                @PathParam("client_id") String clientId) throws IOException {
         return new RedirectBinding().execute(samlRequest, samlResponse, null, relayState, clientId);
     }
 
@@ -221,7 +222,7 @@ public class SAMLEndpoint {
     public Response postBindingIdpInitiated(@FormParam(GeneralConstants.SAML_REQUEST_KEY) String samlRequest,
                                             @FormParam(GeneralConstants.SAML_RESPONSE_KEY) String samlResponse,
                                             @FormParam(GeneralConstants.RELAY_STATE) String relayState,
-                                            @PathParam("client_id") String clientId) {
+                                            @PathParam("client_id") String clientId) throws IOException {
         return new PostBinding().execute(samlRequest, samlResponse, null, relayState, clientId);
     }
 
@@ -260,7 +261,7 @@ public class SAMLEndpoint {
         protected abstract boolean isMessageFullySigned(SAMLDocumentHolder documentHolder);
         protected abstract void verifySignature(String key, SAMLDocumentHolder documentHolder) throws VerificationException;
         protected abstract SAMLDocumentHolder extractRequestDocument(String samlRequest);
-        protected abstract SAMLDocumentHolder extractResponseDocument(String response);
+        protected abstract SAMLDocumentHolder extractResponseDocument(String response) throws IOException;
 
         protected boolean isDestinationRequired() {
             return true;
@@ -291,7 +292,7 @@ public class SAMLEndpoint {
             return new HardcodedKeyLocator(keys);
         }
 
-        public Response execute(String samlRequest, String samlResponse, String samlArt, String relayState, String clientId) {
+        public Response execute(String samlRequest, String samlResponse, String samlArt, String relayState, String clientId) throws IOException {
             event = new EventBuilder(realm, session, clientConnection);
             Response response = basicChecks(samlRequest, samlResponse, samlArt);
             if (response != null) return response;
@@ -317,7 +318,7 @@ public class SAMLEndpoint {
                 event.error(Errors.INVALID_REQUEST);
                 return ErrorPage.error(session, null, Response.Status.BAD_REQUEST, Messages.INVALID_REQUEST);
             }
-            if (! destinationValidator.validate(getExpectedDestination(config.getAlias(), null), requestAbstractType.getDestination())) {
+            if (! destinationValidator.validate(getExpectedDestination(config.getAlias(), null), requestAbstractType.getDestination()) && (config.getFederations().isEmpty() || ! destinationValidator.validate(getExpectedDestination( ), requestAbstractType.getDestination()))) {
                 event.event(EventType.IDENTITY_PROVIDER_RESPONSE);
                 event.detail(Details.REASON, Errors.INVALID_DESTINATION);
                 event.error(Errors.INVALID_SAML_RESPONSE);
@@ -400,7 +401,7 @@ public class SAMLEndpoint {
             JaxrsSAML2BindingBuilder binding = new JaxrsSAML2BindingBuilder(session)
                         .relayState(relayState);
             boolean postBinding = config.isPostBindingLogout();
-            if (config.isWantAuthnRequestsSigned()) {
+            if (config.isWantLogoutRequestsSigned()) {
                 KeyManager.ActiveRsaKey keys = session.keys().getActiveRsaKey(realm);
                 String keyName = config.getXmlSigKeyInfoKeyNameTransformer().getKeyName(keys.getKid(), keys.getCertificate());
                 binding.signWith(keyName, keys.getPrivateKey(), keys.getPublicKey(), keys.getCertificate())
@@ -637,13 +638,33 @@ public class SAMLEndpoint {
                 }
 
                 NameIDType subjectNameID = getSubjectNameID(assertion);
-                String principal = getPrincipal(assertion);
+                String principal = null;
+                LinkedList<SAMLIdentityProviderConfig.Principal> principals = config.getMultiplePrincipals();
+                if (principals.isEmpty()) {
+                    //default value when principal has not been set
+                    principal = subjectNameID != null ? subjectNameID.getValue() : null;
+                } else {
+                    //find first existing principal
+                    for (SAMLIdentityProviderConfig.Principal pr : principals) {
+                        principal = getPrincipal(assertion, pr);
+                        if (principal != null)
+                            break;
+                    }
+                }
 
                 if (principal == null) {
-                    logger.errorf("no principal in assertion; expected: %s", expectedPrincipalType());
+                    logger.errorf("no principal in assertion; expected: %s", JsonSerialization.writeValueAsString(config.getMultiplePrincipals()));
                     event.event(EventType.IDENTITY_PROVIDER_RESPONSE);
-                    event.error(Errors.INVALID_SAML_RESPONSE);
-                    return ErrorPage.error(session, authSession, Response.Status.BAD_REQUEST, Messages.INVALID_REQUESTER);
+                    event.error(Errors.NO_PRINCIPALS_FOUND);
+                    StringBuilder sb = new StringBuilder();
+                    config.getMultiplePrincipals().stream().forEach(pr -> {
+                        if (SamlPrincipalType.SUBJECT.equals(pr.getPrincipalType())) {
+                            sb.append("subject-id<br>");
+                        } else {
+                            sb.append(pr.getPrincipalAttribute()).append("<br>");
+                        }
+                    });
+                    return ErrorPage.error(session, authSession, Response.Status.BAD_REQUEST, Messages.NO_PRINCIPALS_FOUND, config.getDisplayName() != null ? config.getDisplayName() : config.getAlias(), sb.toString());
                 }
 
                 BrokeredIdentityContext identity = new BrokeredIdentityContext(principal, config);
@@ -766,7 +787,7 @@ public class SAMLEndpoint {
         }
 
 
-        public Response handleSamlResponse(String samlResponse, String relayState, String clientId) {
+        public Response handleSamlResponse(String samlResponse, String relayState, String clientId) throws IOException {
             SAMLDocumentHolder holder = extractResponseDocument(samlResponse);
             if (holder == null) {
                 event.event(EventType.IDENTITY_PROVIDER_RESPONSE);
@@ -783,7 +804,8 @@ public class SAMLEndpoint {
                 event.error(Errors.INVALID_SAML_RESPONSE);
                 return ErrorPage.error(session, null, Response.Status.BAD_REQUEST, Messages.INVALID_REQUEST);
             }
-            if (! destinationValidator.validate(getExpectedDestination(config.getAlias(), clientId), statusResponse.getDestination())) {
+            //if clientId == null, check if destination is federation endpoint
+            if (! destinationValidator.validate(getExpectedDestination(config.getAlias(), clientId), statusResponse.getDestination()) && (clientId != null || config.getFederations().isEmpty() || ! destinationValidator.validate(getExpectedDestination( ), statusResponse.getDestination()))) {
                 event.event(EventType.IDENTITY_PROVIDER_RESPONSE);
                 event.detail(Details.REASON, Errors.INVALID_DESTINATION);
                 event.error(Errors.INVALID_SAML_RESPONSE);
@@ -839,6 +861,10 @@ public class SAMLEndpoint {
             }
             return Urls.identityProviderAuthnResponse(session.getContext().getUri().getBaseUri(), providerAlias, realm.getName()).toString();
         }
+
+        private String getExpectedDestination() {
+            return Urls.identityProviderAuthnResponse(session.getContext().getUri().getBaseUri(), realm.getName()).toString();
+        }
     }
 
     protected class PostBinding extends Binding {
@@ -872,7 +898,7 @@ public class SAMLEndpoint {
             return SAMLRequestParser.parseRequestPostBinding(samlRequest);
         }
         @Override
-        protected SAMLDocumentHolder extractResponseDocument(String response) {
+        protected SAMLDocumentHolder extractResponseDocument(String response) throws IOException {
             byte[] samlBytes = PostBindingUtil.base64Decode(response);
             return SAMLRequestParser.parseResponseDocument(samlBytes);
         }
@@ -997,17 +1023,15 @@ public class SAMLEndpoint {
         return getFirstMatchingAttribute(assertion, attribute -> Objects.equals(attribute.getFriendlyName(), friendlyName));
     }
 
+    protected String getPrincipal(AssertionType assertion,SAMLIdentityProviderConfig.Principal principal) {
 
-    protected final String getPrincipal(AssertionType assertion) {
-        SamlPrincipalType principalType = config.getPrincipalType();
-
-        if (principalType == null || principalType.equals(SamlPrincipalType.SUBJECT)) {
+        if (principal.getPrincipalType() == null || principal.getPrincipalType().equals(SamlPrincipalType.SUBJECT)) {
             NameIDType subjectNameID = getSubjectNameID(assertion);
-            return subjectNameID != null ? subjectNameID.getValue() : null;
-        } else if (principalType.equals(SamlPrincipalType.ATTRIBUTE)) {
-            return getAttributeByName(assertion, config.getPrincipalAttribute());
+            return ( subjectNameID != null && subjectNameID.getFormat()!= null && subjectNameID.getFormat().toString().equals(principal.getNameIDPolicyFormat())) ? subjectNameID.getValue() : null;
+        } else if (principal.getPrincipalType().equals(SamlPrincipalType.ATTRIBUTE)) {
+            return getAttributeByName(assertion, principal.getPrincipalAttribute());
         } else {
-            return getAttributeByFriendlyName(assertion, config.getPrincipalAttribute());
+            return getAttributeByFriendlyName(assertion, principal.getPrincipalAttribute());
         }
 
     }
@@ -1021,22 +1045,29 @@ public class SAMLEndpoint {
                 .map(AttributeType::getAttributeValue)
                 .flatMap(Collection::stream)
                 .findFirst()
-                .map(Object::toString)
+                .map(val -> {
+                    if (val != null && val instanceof NameIDType) {
+                        NameIDType nameIDType = (NameIDType) val;
+                        return nameIDType.getValue();
+                    } else {
+                        return val.toString();
+                    }
+                })
                 .orElse(null);
     }
 
-    protected final String expectedPrincipalType() {
-        SamlPrincipalType principalType = config.getPrincipalType();
-        switch (principalType) {
-            case SUBJECT:
-                return principalType.name();
-            case ATTRIBUTE:
-            case FRIENDLY_ATTRIBUTE:
-                return String.format("%s(%s)", principalType.name(), config.getPrincipalAttribute());
-            default:
-                return null;
-        }
-    }
+//    private String expectedPrincipalType() {
+//        SamlPrincipalType principalType = config.getPrincipalType();
+//        switch (principalType) {
+//            case SUBJECT:
+//                return principalType.name();
+//            case ATTRIBUTE:
+//            case FRIENDLY_ATTRIBUTE:
+//                return String.format("%s(%s)", principalType.name(), config.getPrincipalAttribute());
+//            default:
+//                return null;
+//        }
+//    }
 
     protected final NameIDType getSubjectNameID(final AssertionType assertion) {
         SubjectType subject = assertion.getSubject();
@@ -1051,7 +1082,7 @@ public class SAMLEndpoint {
 
         // We are expecting a request ID so we are in SP-initiated login, attribute InResponseTo must be present
         if (responseType.getInResponseTo() == null) {
-            logger.error("Response Validation Error: InResponseTo attribute was expected but not present in received response");
+            logger.warn("Response Validation Error: InResponseTo attribute was expected but not present in received response");
             return false;
         }
 
@@ -1059,13 +1090,13 @@ public class SAMLEndpoint {
         // 1) Attribute Response > InResponseTo must not be empty
         String responseInResponseToValue = responseType.getInResponseTo();
         if (responseInResponseToValue.isEmpty()) {
-            logger.error("Response Validation Error: InResponseTo attribute was expected but it is empty in received response");
+            logger.warn("Response Validation Error: InResponseTo attribute was expected but it is empty in received response");
             return false;
         }
 
         // 2) Attribute Response > InResponseTo must match request ID
         if (!responseInResponseToValue.equals(expectedRequestId)) {
-            logger.error("Response Validation Error: received InResponseTo attribute does not match the expected request ID");
+            logger.warn("Response Validation Error: received InResponseTo attribute does not match the expected request ID");
             return false;
         }
 

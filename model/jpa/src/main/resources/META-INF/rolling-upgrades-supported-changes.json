@@ -755,6 +755,42 @@
     "id" : "26.6.0-48716-create-mssql-idp-index",
     "author" : "keycloak",
     "filename" : "META-INF/jpa-changelog-26.6.0.xml"
-  } ],
+   , {
+    "id" : "federation-indexes",
+    "author" : "cgeorgilakis@grnet.gr",
+    "filename" : "META-INF/jpa-changelog-indexes.xml"
+  }, {
+    "id" : "federation-indexes-2",
+    "author" : "laskarisn@grnet.gr",
+    "filename" : "META-INF/jpa-changelog-indexes.xml"
+  }, {
+    "id" : "federation-rename",
+    "author" : "cgeorgilakis@grnet.gr",
+    "filename" : "META-INF/jpa-changelog-saml-fed2.xml"
+  }, {
+    "id" : "federation-initial",
+    "author" : "cgeorgilakis@grnet.gr",
+    "filename" : "META-INF/jpa-changelog-saml-fed-initial.xml"
+  }, {
+    "id" : "federation-1.0.0",
+    "author" : "cgeorgilakis@grnet.gr",
+    "filename" : "META-INF/jpa-changelog-saml-fed-initial.xml"
+  }, {
+    "id" : "federation-1.1.0",
+    "author" : "cgeorgilakis@grnet.gr",
+    "filename" : "META-INF/jpa-changelog-saml-fed-initial.xml"
+  }, {
+    "id" : "fed-clients",
+    "author" : "keycloak",
+    "filename" : "META-INF/jpa-changelog-saml-fed-clients.xml"
+  }, {
+    "id" : "federation-client-connection",
+    "author" : "keycloak",
+    "filename" : "META-INF/jpa-changelog-saml-fed-clients.xml"
+  }, {
+    "id" : "idp-fed-index",
+    "author" : "keycloak",
+    "filename" : "META-INF/jpa-changelog-saml-fed-initial.xml"
+   }],
   "migrations" : [ ]
 }

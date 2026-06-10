@@ -40,6 +40,8 @@ import org.keycloak.models.CibaConfig;
 import org.keycloak.models.ClientInitialAccessModel;
 import org.keycloak.models.ClientModel;
 import org.keycloak.models.ClientScopeModel;
+import org.keycloak.models.FederationMapperModel;
+import org.keycloak.models.FederationModel;
 import org.keycloak.models.GroupModel;
 import org.keycloak.models.IdentityProviderMapperModel;
 import org.keycloak.models.IdentityProviderModel;
@@ -976,7 +978,7 @@ public class RealmAdapter implements CachedRealmModel {
         updated.setSmtpConfig(smtpConfig);
     }
 
-
+    
     @Override
     public Stream<IdentityProviderModel> getIdentityProvidersStream() {
         return runOnRealm(session, this, (session) -> session.identityProviders().getAllStream(IdentityProviderQuery.userAuthentication()));
@@ -1005,6 +1007,85 @@ public class RealmAdapter implements CachedRealmModel {
         runOnRealm(session, this, (session) -> session.identityProviders().remove(alias));
     }
 
+
+    @Override
+    public List<FederationModel> getSAMLFederations() {
+        if (isUpdated()) return updated.getSAMLFederations();
+        return cached.getFederations();
+    }
+    
+    @Override
+    public FederationModel getSAMLFederationById(String id) {
+    	if (isUpdated()) return updated.getSAMLFederationById(id);
+    	return cached.getFederations().stream().filter(federation -> federation.getInternalId().equals(id)).findAny().orElse(null);
+    }
+    
+    @Override
+    public FederationModel getSAMLFederationByAlias(String alias) {
+    	if (isUpdated()) return updated.getSAMLFederationByAlias(alias);
+    	return cached.getFederations().stream().filter(federation -> federation.getAlias().equals(alias)).findAny().orElse(null);
+    }
+    
+    
+    @Override
+	public void addSAMLFederation(FederationModel federationModel) {
+    	 getDelegateForUpdate();
+         updated.addSAMLFederation(federationModel);
+	}
+	
+	@Override
+	public void updateSAMLFederation(FederationModel federationModel) {
+		getDelegateForUpdate();
+        updated.updateSAMLFederation(federationModel);
+	}
+
+    @Override
+	public void removeSAMLFederation(String internalId) {
+		getDelegateForUpdate();
+		updated.removeSAMLFederation(internalId);
+	}
+	
+	@Override
+	public List<FederationMapperModel> getIdentityProviderFederationMappers(String federationId){
+	    FederationModel federation = getSAMLFederationById(federationId);
+	    if ( federation != null) {
+	        return federation.getFederationMapperModels();
+	    } else {
+	        throw new IllegalStateException("Federation not found: " + federationId);
+	    }
+	};
+	
+	@Override
+    public FederationMapperModel getIdentityProviderFederationMapper(String federationId, String id) {
+        FederationModel federation = getSAMLFederationById(federationId);
+        if (federation != null) {
+            return federation.getFederationMapperModels().stream().filter(mapper -> Objects.equals(mapper.getId(), id))
+                .findFirst().orElse(null);
+        } else {
+            throw new IllegalStateException("Federation not found: " + federationId);
+        }
+
+    };
+	
+	@Override
+	public void addIdentityProvidersFederationMapper(FederationMapperModel federationMapperModel) {
+	    getDelegateForUpdate();
+        updated.addIdentityProvidersFederationMapper( federationMapperModel);
+	};
+	
+	@Override
+	public  void updateIdentityProvidersFederationMapper(FederationMapperModel federationMapperModel) {
+	    getDelegateForUpdate();
+        updated.updateIdentityProvidersFederationMapper(federationMapperModel);
+	};
+	
+	@Override
+	public void removeIdentityProvidersFederationMapper(String id,String federationId) {
+	    getDelegateForUpdate();
+        updated.removeIdentityProvidersFederationMapper(id, federationId);
+	};
+	
+	
     @Override
     public String getLoginTheme() {
         if (isUpdated()) return updated.getLoginTheme();

@@ -16,6 +16,10 @@
  */
 package org.keycloak.broker.saml;
 
+import java.io.IOException;
+import java.util.LinkedList;
+import java.util.List;
+
 import org.keycloak.common.Profile;
 import org.keycloak.common.enums.SslRequired;
 import org.keycloak.dom.saml.v2.protocol.AuthnContextComparisonType;
@@ -24,8 +28,12 @@ import org.keycloak.models.RealmModel;
 import org.keycloak.protocol.saml.SamlPrincipalType;
 import org.keycloak.saml.common.constants.JBossSAMLURIConstants;
 import org.keycloak.saml.common.util.XmlKeyInfoKeyNameTransformer;
+import org.keycloak.util.JsonSerialization;
 import org.keycloak.utils.StringUtil;
 
+import com.fasterxml.jackson.core.type.TypeReference;
+
+import static org.keycloak.common.util.UriUtils.checkUri;
 import static org.keycloak.common.util.UriUtils.checkUrl;
 
 /**
@@ -44,6 +52,7 @@ public class SAMLIdentityProviderConfig extends IdentityProviderModel {
     public static final String NAME_ID_POLICY_FORMAT = "nameIDPolicyFormat";
     public static final String POST_BINDING_AUTHN_REQUEST = "postBindingAuthnRequest";
     public static final String POST_BINDING_LOGOUT = "postBindingLogout";
+    public static final String POST_BINDING_LOGOUT_RECEIVING_REQUEST = "postBindingLogoutReceivingRequest";
     public static final String POST_BINDING_RESPONSE = "postBindingResponse";
     public static final String ARTIFACT_BINDING_RESPONSE = "artifactBindingResponse";
     public static final String SIGNATURE_ALGORITHM = "signatureAlgorithm";
@@ -53,11 +62,13 @@ public class SAMLIdentityProviderConfig extends IdentityProviderModel {
     public static final String SINGLE_SIGN_ON_SERVICE_URL = "singleSignOnServiceUrl";
     public static final String ARTIFACT_RESOLUTION_SERVICE_URL = "artifactResolutionServiceUrl";
     public static final String VALIDATE_SIGNATURE = "validateSignature";
-    public static final String PRINCIPAL_TYPE = "principalType";
-    public static final String PRINCIPAL_ATTRIBUTE = "principalAttribute";
+//    public static final String PRINCIPAL_TYPE = "principalType";
+//    public static final String PRINCIPAL_ATTRIBUTE = "principalAttribute";
+    public static final String MULTIPLE_PRINCIPALS = "multiplePrincipals";
     public static final String WANT_ASSERTIONS_ENCRYPTED = "wantAssertionsEncrypted";
     public static final String WANT_ASSERTIONS_SIGNED = "wantAssertionsSigned";
     public static final String WANT_AUTHN_REQUESTS_SIGNED = "wantAuthnRequestsSigned";
+    public static final String WANT_LOGOUT_REQUESTS_SIGNED = "wantLogoutRequestsSigned";
     public static final String XML_SIG_KEY_INFO_KEY_NAME_TRANSFORMER = "xmlSigKeyInfoKeyNameTransformer";
     public static final String ENABLED_FROM_METADATA  = "enabledFromMetadata";
     public static final String AUTHN_CONTEXT_COMPARISON_TYPE = "authnContextComparisonType";
@@ -69,6 +80,7 @@ public class SAMLIdentityProviderConfig extends IdentityProviderModel {
     public static final String ATTRIBUTE_CONSUMING_SERVICE_NAME = "attributeConsumingServiceName";
     public static final String USE_METADATA_DESCRIPTOR_URL = "useMetadataDescriptorUrl";
     public static final String DESCRIPTOR_CACHE_SECONDS = "descriptorCacheSeconds";
+    public static final String ENTITY_ATTRIBUTES = "entityAttributes";
 
     public SAMLIdentityProviderConfig() {
     }
@@ -186,6 +198,14 @@ public class SAMLIdentityProviderConfig extends IdentityProviderModel {
         getConfig().put(WANT_AUTHN_REQUESTS_SIGNED, String.valueOf(wantAuthnRequestsSigned));
     }
 
+    public boolean isWantLogoutRequestsSigned() {
+        return Boolean.valueOf(getConfig().get(WANT_LOGOUT_REQUESTS_SIGNED));
+    }
+
+    public void setWantLogoutRequestsSigned(boolean wantLogoutRequestsSigned) {
+        getConfig().put(WANT_LOGOUT_REQUESTS_SIGNED, String.valueOf(wantLogoutRequestsSigned));
+    }
+
     public boolean isWantAssertionsSigned() {
         return Boolean.valueOf(getConfig().get(WANT_ASSERTIONS_SIGNED));
     }
@@ -264,6 +284,19 @@ public class SAMLIdentityProviderConfig extends IdentityProviderModel {
         getConfig().put(POST_BINDING_LOGOUT, String.valueOf(postBindingLogout));
     }
 
+    public boolean isPostBindingLogoutReceivingRequest() {
+        String postBindingLogoutReceivingRequest = getConfig().get(POST_BINDING_LOGOUT_RECEIVING_REQUEST);
+        if (postBindingLogoutReceivingRequest == null) {
+            // if null, default value equal to postBindingAuthnRequest (previous Keycloak behaviour)
+            return isPostBindingResponse();
+        }
+        return Boolean.valueOf(postBindingLogoutReceivingRequest);
+    }
+
+    public void setPostBindingLogoutReceivingRequest(boolean postBindingLogoutReceivingRequest) {
+        getConfig().put(POST_BINDING_LOGOUT_RECEIVING_REQUEST, String.valueOf(postBindingLogoutReceivingRequest));
+    }
+
     public boolean isBackchannelSupported() {
         return Boolean.valueOf(getConfig().get(BACKCHANNEL_SUPPORTED));
     }
@@ -319,23 +352,45 @@ public class SAMLIdentityProviderConfig extends IdentityProviderModel {
         }
     }
 
-    public SamlPrincipalType getPrincipalType() {
-        return SamlPrincipalType.from(getConfig().get(PRINCIPAL_TYPE), SamlPrincipalType.SUBJECT);
+    public LinkedList<Principal> getMultiplePrincipals() throws IOException {
+        String principalsJson =getConfig().get(MULTIPLE_PRINCIPALS);
+        if (principalsJson != null ) {
+            return JsonSerialization.readValue(principalsJson, new TypeReference<LinkedList<Principal>>() {
+            });
+        } else {
+            return new LinkedList<>();
+        }
     }
 
-    public void setPrincipalType(SamlPrincipalType principalType) {
-        getConfig().put(PRINCIPAL_TYPE,
-            principalType == null
-                ? null
-                : principalType.name());
+    public void setMultiplePrincipals(LinkedList<Principal> multiplePrincipals) {
+        try {
+            getConfig().put(MULTIPLE_PRINCIPALS, JsonSerialization.writeValueAsString(multiplePrincipals));
+        } catch (IOException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
     }
 
-    public String getPrincipalAttribute() {
-        return getConfig().get(PRINCIPAL_ATTRIBUTE);
+    public List<EntityAttributes> getEntityAttributes() throws IOException {
+        String principalsJson =getConfig().get(ENTITY_ATTRIBUTES);
+        if (principalsJson != null ) {
+            return JsonSerialization.readValue(principalsJson, new TypeReference<List<EntityAttributes>>() {
+            });
+        } else {
+            return new LinkedList<>();
+        }
     }
 
-    public void setPrincipalAttribute(String principalAttribute) {
-        getConfig().put(PRINCIPAL_ATTRIBUTE, principalAttribute);
+    public void setEntityAttributes(List<EntityAttributes> entityAttributes) {
+        try {
+            if (entityAttributes == null || entityAttributes.isEmpty())
+                getConfig().remove(ENTITY_ATTRIBUTES);
+
+            getConfig().put(ENTITY_ATTRIBUTES, JsonSerialization.writeValueAsString(entityAttributes));
+        } catch (IOException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
     }
 
     public boolean isEnabledFromMetadata() {
@@ -457,6 +512,7 @@ public class SAMLIdentityProviderConfig extends IdentityProviderModel {
     public void validate(RealmModel realm) {
         SslRequired sslRequired = realm.getSslRequired();
 
+        checkUri(getIdpEntityId(), ENTITY_ID);
         checkUrl(sslRequired, getSingleLogoutServiceUrl(), SINGLE_LOGOUT_SERVICE_URL);
         checkUrl(sslRequired, getSingleSignOnServiceUrl(), SINGLE_SIGN_ON_SERVICE_URL);
         if (StringUtil.isNotBlank(getMetadataDescriptorUrl())) {
@@ -471,8 +527,16 @@ public class SAMLIdentityProviderConfig extends IdentityProviderModel {
             checkUrl(sslRequired, getArtifactResolutionServiceUrl(), ARTIFACT_RESOLUTION_SERVICE_URL);
         }
         //transient name id format is not accepted together with principaltype SubjectnameId
-        if (JBossSAMLURIConstants.NAMEID_FORMAT_TRANSIENT.get().equals(getNameIDPolicyFormat()) && SamlPrincipalType.SUBJECT == getPrincipalType())
-            throw new IllegalArgumentException("Can not have Transient NameID Policy Format together with SUBJECT Principal Type");
+        if ( JBossSAMLURIConstants.NAMEID_FORMAT_TRANSIENT.get().equals(getConfig().get(NAME_ID_POLICY_FORMAT))) {
+            try {
+                LinkedList<Principal> principals = JsonSerialization.readValue(getConfig().get(MULTIPLE_PRINCIPALS), new TypeReference<LinkedList<Principal>>() {
+                });
+                if (principals.stream().allMatch(pr -> SamlPrincipalType.SUBJECT.equals(pr.getPrincipalType())))
+                    throw new IllegalArgumentException("Can not have Transient NameID Policy Format together with SUBJECT Principal Type");
+            } catch (IOException e) {
+                throw new IllegalArgumentException("Can not have Transient NameID Policy Format together with SUBJECT Principal Type");
+            }
+        }
 
     }
 
@@ -481,5 +545,64 @@ public class SAMLIdentityProviderConfig extends IdentityProviderModel {
         // for saml is false by default
         return Profile.isFeatureEnabled(Profile.Feature.IDENTITY_BROKERING_API_V2)
                 & Boolean.parseBoolean(getConfig().get(STORE_TOKEN_IN_SESSION));
+    }
+
+    public static class Principal {
+        private SamlPrincipalType principalType;
+        private String principalAttribute;
+        private String nameIDPolicyFormat;
+
+        public Principal() {
+
+        }
+
+        public SamlPrincipalType getPrincipalType() {
+            return principalType;
+        }
+
+        public void setPrincipalType(SamlPrincipalType principalType) {
+            this.principalType = principalType;
+        }
+
+        public String getPrincipalAttribute() {
+            return principalAttribute;
+        }
+
+        public void setPrincipalAttribute(String principalAttribute) {
+            this.principalAttribute = principalAttribute;
+        }
+
+        public String getNameIDPolicyFormat() {
+            return nameIDPolicyFormat;
+        }
+
+        public void setNameIDPolicyFormat(String nameIDPolicyFormat) {
+            this.nameIDPolicyFormat = nameIDPolicyFormat;
+        }
+    }
+
+    public static class EntityAttributes {
+        private String name;
+        private List<Object> values;
+
+        public EntityAttributes(){
+
+        }
+
+        public String getName() {
+            return name;
+        }
+
+        public void setName(String name) {
+            this.name = name;
+        }
+
+        public List<Object> getValues() {
+            return values;
+        }
+
+        public void setValues(List<Object> values) {
+            this.values = values;
+        }
     }
 }

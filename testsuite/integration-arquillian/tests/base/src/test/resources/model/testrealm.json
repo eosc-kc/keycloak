@@ -24,6 +24,25 @@
         "host": "localhost",
         "port":"3025"
     },
+    "samlFederations": [
+    	{
+      		"internalId": "1dc40e23-e9d0-41de-9324-62e600fab855",
+      		"providerId": "saml",
+      		"alias": "saml-edugain",
+            "category": "Identity Providers",
+      		"url": "http://cappakleis1.aai-dev.grnet.gr:5000/edugain-sample-test.xml",
+      		"updateFrequencyInMins": 300,
+      		"validUntilTimestamp": 1670647735000,
+      		"lastMetadataRefreshTimestamp": 1589265940790,
+            "config" : {
+                "nameIDPolicyFormat" : "urn:oasis:names:tc:SAML:2.0:nameid-format:persistent",
+                "wantAssertionsEncrypted" : "false",
+                "wantAssertionsSigned" : "false",
+                "principalType" : "ATTRIBUTE",
+                "principalAttribute": "subject-id"
+            }
+    	}
+ 	 ],
     "identityProviders" : [
         {
             "providerId" : "google",
@@ -64,7 +83,73 @@
                 "clientId": "twitterId",
                 "clientSecret": "twitterSecret"
             }
-        }
+        },
+        {
+    		"alias" : "00092d0295bee88b7b381b7c662cb0cc5919fe2d37b29896fa59923e107afda1",
+    		"displayName" : "Albanian Academic Network - RASH IdP",
+    		"internalId" : "1d499086-da33-46e5-a82a-b78ed8e5aaa8",
+    		"providerId" : "saml",
+    		"enabled" : true,
+    		"updateProfileFirstLoginMode" : "on",
+    		"trustEmail" : false,
+    		"storeToken" : false,
+    		"addReadTokenRoleOnCreate" : false,
+    		"authenticateByDefault" : false,
+    		"linkOnly" : false,
+    		"firstBrokerLoginFlowAlias" : "first broker login",
+    		"config" : {
+      			"validateSignature" : "false",
+      			"samlXmlKeyNameTranformer" : "KEY_ID",
+      			"signingCertificate" : "MIIE2TCCA0GgAwIBAgIJAK5F+P5BK3Z4MA0GCSqGSIb3DQEBCwUAMIGCMQswCQYDVQQGEwJBTDEQMA4GA1UECAwHQWxiYW5pYTEPMA0GA1UEBwwGVElyYW5lMQ0wCwYDVQQKDARSQVNIMQ0wCwYDVQQLDARSQVNIMRQwEgYDVQQDDAtpZHAucmFzaC5hbDEcMBoGCSqGSIb3DQEJARYNa21hbGlAcmFzaC5hbDAeFw0xOTA2MTgxNDE5MzhaFw0yOTA2MTcxNDE5MzhaMIGCMQswCQYDVQQGEwJBTDEQMA4GA1UECAwHQWxiYW5pYTEPMA0GA1UEBwwGVElyYW5lMQ0wCwYDVQQKDARSQVNIMQ0wCwYDVQQLDARSQVNIMRQwEgYDVQQDDAtpZHAucmFzaC5hbDEcMBoGCSqGSIb3DQEJARYNa21hbGlAcmFzaC5hbDCCAaIwDQYJKoZIhvcNAQEBBQADggGPADCCAYoCggGBAMHMkjIVD7FRljv50yZaK8mdfudzmmBiex8xww/TiGTVaP2/feXmmo8FMJrWtrPWIgZwvQ7Y4nUe9+CphRNaVT5g1dNkHB6IVy2wqvQNbz87hsu0qw075ypNj7dMd3Bhb1s8SH+9WkCCzxf1yo+ozqshH8JSCjZ0J7LGEogVyFhxZhQmbRBBPoy8rU+BapnhD+7R74jPT/9RndXsvO9UEsrLRnI0mWj1ob6a+0pY0DvKNPFkjsfoXOClAkXi+YUf8buIXUpocHc9TAnx8kKi0hDwn9t4RvE0wJXVPRrnua83/CnvgKZ39GAVijNxXrn7HC2DV+FI+GRYjSmcwf/2Z0TByEesKuLAmLiOyEhHB9ZVT6IVhlTnq4saykbSRBsByeprfUUJABsgB/t/JSxoXmsAVfve2sZEnUXZQvX6AnbHnn3+1PSH/1qFWyH/Ed1fSibKErsiaUHONAMUB4cIruAvGq0ji5BmdzIYGTgBbOaYKvCRP4sdnl74NlD03d6DfwIDAQABo1AwTjAdBgNVHQ4EFgQU/Jboe19ubhGd/fSss9xTPmhBH7AwHwYDVR0jBBgwFoAU/Jboe19ubhGd/fSss9xTPmhBH7AwDAYDVR0TBAUwAwEB/zANBgkqhkiG9w0BAQsFAAOCAYEAHeznYvUVXKq0ZgXdjiEjEyyZ+2dDgZwWWxte9phmmDwIOAkyivZbaU0ZSTSM2sVHojs261/DcFj4SQ+QVlDNdQFnv7Sya8n3944P+7yDZ1Y8PnCxSXAn0RRW1qyRyec/vEg/iPeZmBsdPQ/gcCn86gXnm0vbc21phwq/QEkzOVuWWtqrkJywxtY3a9ah2+ZcYXvf6AgnLTOOdyx4zJbO6xhceXiSVMaSEcy/bq5R3s91jTr24BDf22KPdJGBICgwyhP0TmTZQwgZVBebDi6yehXU2bAdI5y7wgYYnYyw6QIqBaPkqqLHjqZt87GEnrXOyLWw8VaSPW8zoLfz5IatwZ2tn5HE8XBnHr7e+3yWsGTcnpLCxainGqtXkN4d9E75f3fG6mn5NHDwe1ZdmtUu1QVQVrLPuDJuE7sLl2xCiXQxnl1MfsiFO/MUsQnhz/yw2fsb66ZcGYzpGNZQ2TtZvSzDpIurDvXUg02MzC9KmjGEPb+255DCoeh6OkG3CIIp",
+      			"postBindingLogout" : "false",
+      			"nameIDPolicyFormat" : "urn:oasis:names:tc:SAML:2.0:nameid-format:persistent",
+      			"postBindingResponse" : "false",
+      			"singleLogoutServiceUrl" : "https://idp.rash.al/simplesaml/saml2/idp/SingleLogoutService.php",
+      			"signatureAlgorithm" : "RSA_SHA256",
+      			"postBindingAuthnRequest" : "false",
+      			"singleSignOnServiceUrl" : "https://idp.rash.al/simplesaml/saml2/idp/SSOService.php",
+      			"wantAuthnRequestsSigned" : "false",
+      			"addExtensionsElementWithKeyInfo" : "false",
+     			"encryptionPublicKey" : "MIIE2TCCA0GgAwIBAgIJAK5F+P5BK3Z4MA0GCSqGSIb3DQEBCwUAMIGCMQswCQYDVQQGEwJBTDEQMA4GA1UECAwHQWxiYW5pYTEPMA0GA1UEBwwGVElyYW5lMQ0wCwYDVQQKDARSQVNIMQ0wCwYDVQQLDARSQVNIMRQwEgYDVQQDDAtpZHAucmFzaC5hbDEcMBoGCSqGSIb3DQEJARYNa21hbGlAcmFzaC5hbDAeFw0xOTA2MTgxNDE5MzhaFw0yOTA2MTcxNDE5MzhaMIGCMQswCQYDVQQGEwJBTDEQMA4GA1UECAwHQWxiYW5pYTEPMA0GA1UEBwwGVElyYW5lMQ0wCwYDVQQKDARSQVNIMQ0wCwYDVQQLDARSQVNIMRQwEgYDVQQDDAtpZHAucmFzaC5hbDEcMBoGCSqGSIb3DQEJARYNa21hbGlAcmFzaC5hbDCCAaIwDQYJKoZIhvcNAQEBBQADggGPADCCAYoCggGBAMHMkjIVD7FRljv50yZaK8mdfudzmmBiex8xww/TiGTVaP2/feXmmo8FMJrWtrPWIgZwvQ7Y4nUe9+CphRNaVT5g1dNkHB6IVy2wqvQNbz87hsu0qw075ypNj7dMd3Bhb1s8SH+9WkCCzxf1yo+ozqshH8JSCjZ0J7LGEogVyFhxZhQmbRBBPoy8rU+BapnhD+7R74jPT/9RndXsvO9UEsrLRnI0mWj1ob6a+0pY0DvKNPFkjsfoXOClAkXi+YUf8buIXUpocHc9TAnx8kKi0hDwn9t4RvE0wJXVPRrnua83/CnvgKZ39GAVijNxXrn7HC2DV+FI+GRYjSmcwf/2Z0TByEesKuLAmLiOyEhHB9ZVT6IVhlTnq4saykbSRBsByeprfUUJABsgB/t/JSxoXmsAVfve2sZEnUXZQvX6AnbHnn3+1PSH/1qFWyH/Ed1fSibKErsiaUHONAMUB4cIruAvGq0ji5BmdzIYGTgBbOaYKvCRP4sdnl74NlD03d6DfwIDAQABo1AwTjAdBgNVHQ4EFgQU/Jboe19ubhGd/fSss9xTPmhBH7AwHwYDVR0jBBgwFoAU/Jboe19ubhGd/fSss9xTPmhBH7AwDAYDVR0TBAUwAwEB/zANBgkqhkiG9w0BAQsFAAOCAYEAHeznYvUVXKq0ZgXdjiEjEyyZ+2dDgZwWWxte9phmmDwIOAkyivZbaU0ZSTSM2sVHojs261/DcFj4SQ+QVlDNdQFnv7Sya8n3944P+7yDZ1Y8PnCxSXAn0RRW1qyRyec/vEg/iPeZmBsdPQ/gcCn86gXnm0vbc21phwq/QEkzOVuWWtqrkJywxtY3a9ah2+ZcYXvf6AgnLTOOdyx4zJbO6xhceXiSVMaSEcy/bq5R3s91jTr24BDf22KPdJGBICgwyhP0TmTZQwgZVBebDi6yehXU2bAdI5y7wgYYnYyw6QIqBaPkqqLHjqZt87GEnrXOyLWw8VaSPW8zoLfz5IatwZ2tn5HE8XBnHr7e+3yWsGTcnpLCxainGqtXkN4d9E75f3fG6mn5NHDwe1ZdmtUu1QVQVrLPuDJuE7sLl2xCiXQxnl1MfsiFO/MUsQnhz/yw2fsb66ZcGYzpGNZQ2TtZvSzDpIurDvXUg02MzC9KmjGEPb+255DCoeh6OkG3CIIp",
+                "multiplePrincipals": "[{\"principalType\":\"SUBJECT\"}]"
+   	 		},
+    		"federations": [
+      			  "1dc40e23-e9d0-41de-9324-62e600fab855"
+      		]
+  		}, 
+  		{
+    		"alias" : "6b6b716bef3c495083e31e1a71e8622e07d69b955cc3d9764fe28be5d0e8fb02",
+    		"displayName" : "National Infrastructures for Research and Technology - GRNET",
+    		"internalId" : "4aed49b1-fd75-4aaf-85cd-1f590e11186d",
+   		 	"providerId" : "saml",
+    		"enabled" : true,
+    		"updateProfileFirstLoginMode" : "on",
+    		"trustEmail" : false,
+    		"storeToken" : false,
+    		"addReadTokenRoleOnCreate" : false,
+    		"authenticateByDefault" : false,
+    		"linkOnly" : false,
+    		"firstBrokerLoginFlowAlias" : "first broker login",
+    		"config" : {
+      			"validateSignature" : "false",
+      			"samlXmlKeyNameTranformer" : "KEY_ID",
+      			"signingCertificate" : "MIIDKDCCAhCgAwIBAgIJAJzvjilzprtbMA0GCSqGSIb3DQEBBQUAMB0xGzAZBgNV\n                            BAMTEmlkcC5hZG1pbi5ncm5ldC5ncjAeFw0xNDA0MDgxNjUyNDhaFw0xOTA0MDcx\n                            NjUyNDhaMB0xGzAZBgNVBAMTEmlkcC5hZG1pbi5ncm5ldC5ncjCCASIwDQYJKoZI\n                            hvcNAQEBBQADggEPADCCAQoCggEBAOzRbV+pz5RuGqwAOzI4jUXUSQXHFy6IYlLr\n                            VjisR2+7ZI24GybJAstcpmmNCtFQsM1CKte1x7TFHZFfDWCVv4IVGqtx9lLw+Jhg\n                            VjV8DzX0EYVIKyJimKWwIEn2BuEKWAcTUMdGehiYVeI4sxS+FgbiJxcWiMgq4bB5\n                            QV4gBoglEbI/S1vfoBBOEdKoEUamM+MAWCR83E2+JrhMXL+BrK+ojunyq/qyoL21\n                            GLTKL8jHTUgYMidSOx0oeMzTly8LzTONRDSs6ABxgQODU+b7qgjIqoCwY/kA1mUk\n                            ziqX/eQkxhK/ycf3HMrUVSwHLyOl5SMfpKWPcPuryTTTuFczmBsCAwEAAaNrMGkw\n                            SAYDVR0RBEEwP4ISaWRwLmFkbWluLmdybmV0LmdyhilodHRwczovL2lkcC5hZG1p\n                            bi5ncm5ldC5nci9pZHAvc2hpYmJvbGV0aDAdBgNVHQ4EFgQUb4DIDVDxNLIg4MDr\n                            gAyL+erDTzkwDQYJKoZIhvcNAQEFBQADggEBAED8EAttcxvYdQGcE8UpuDYyMqZ1\n                            gH0fSBbs61hh/bv4NjT/2ycWik/xtdiQj5foFcDNRBDD0Z09NteURUqqwaMXZrFX\n                            0YVUlIIZ6Pi7bTFRD4Rv+uX3edLVOZekPL9H28Rkk1ndCHsFLm2cQYd9Rd+DxjS4\n                            KRtNmyH8BYTzE8YKdX173kc2gdYKTAPNpt2Vj1+ctB9OgFybzIoEKwVtGA4upU5Z\n                            9vSsXQxRZQaYacBoPMBhUgU0dY+d7cA1pAwVsMbeXqPigEnmpMHapquvrzfO/a/m\n                            WuVAvsoC7QBvZa5PSfIqJ5NAA5IfvScAfYCKRZ0xEQudPJZ0SjEo44ZsMWo=",
+      			"postBindingLogout" : "true",
+      			"nameIDPolicyFormat" : "urn:oasis:names:tc:SAML:2.0:nameid-format:persistent",
+      			"postBindingResponse" : "true",
+      			"singleLogoutServiceUrl" : "https://idp.admin.grnet.gr/idp/profile/SAML2/POST/SLO",
+      			"signatureAlgorithm" : "RSA_SHA256",
+      			"postBindingAuthnRequest" : "true",
+      			"singleSignOnServiceUrl" : "https://idp.admin.grnet.gr/idp/profile/SAML2/POST/SSO",
+      			"wantAuthnRequestsSigned" : "false",
+      			"addExtensionsElementWithKeyInfo" : "false",
+      			"encryptionPublicKey" : "MIIDMzCCAhugAwIBAgIUe5nQPyaB8umX6usqdap9CxjvkI0wDQYJKoZIhvcNAQEL\n                            BQAwHTEbMBkGA1UEAwwSaWRwLmFkbWluLmdybmV0LmdyMB4XDTE3MDExNzEzNTA1\n                            MVoXDTM3MDExNzEzNTA1MVowHTEbMBkGA1UEAwwSaWRwLmFkbWluLmdybmV0Lmdy\n                            MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAhcVligXekUGmCkamOVMn\n                            mTpRorQTGJ1Ivo0mWvyFP+0QoK99X6GxyMH9KYBkVsO54KYWYzpR/pr4ORB1ruK9\n                            CGT0PWPBES4jNBzYnm0M/lZioIJ4eNBU7H1n114Jw4rveFbM2HoIvMfuve3NRjfp\n                            dkt+0si8NoMJcw6hTLxoEfz9Ekw1mxijTlbvEneU5rtD5NE2HNRb2jOiDepMFOY6\n                            swlonvL+BmotCOsXd1Q9p4m3M3GpAANpDdDuizCLAHCyCdUmfVRHSFv+sFFeSECw\n                            v9sB/3C57leOHTox/XZPAMHuv9Z/vjOH0GreaQr+8RyLtYop58kA/jdkLb+PR8c5\n                            LwIDAQABo2swaTAdBgNVHQ4EFgQUNbf4/cgy0pgvEJw3t3oB1L3JL6swSAYDVR0R\n                            BEEwP4ISaWRwLmFkbWluLmdybmV0LmdyhilodHRwczovL2lkcC5hZG1pbi5ncm5l\n                            dC5nci9pZHAvc2hpYmJvbGV0aDANBgkqhkiG9w0BAQsFAAOCAQEAPaTsz1b7fMPu\n                            rTHSc8sHxNZ6zXAnSYkFVMFW/YMf34ap9tTsMEjWSOmGJjwwwJg5vaTpkd5W+xyn\n                            Dn03uWbX11ussggWwRh0dQfLOpUQc1dwPKUEaQ0Jz+hJsRzXBw7/isHAj/77xBKE\n                            Kc/NysIbHdL6VpBkgAvuYXNBQAXlWntMXAaPohSkl3Bwq/V5PiJzwLoSWC7/Sxwu\n                            FcY6wMUW8/DTMWRW4zAaujQ6EqI5uYXx9GKWr1RrNoGsw5+ksOfZwIrnpxs1rhMa\n                            FHAIdXt9R9nljEY0qx9u41mHXqY2Asay6OpSG1UMNpYv+JCwtmZ+2AiceUmAHsVx\n                            P+fEVz9vow==",
+                "multiplePrincipals": "[{\"principalType\":\"SUBJECT\"}]"
+    		},
+    		"federations": [
+      			  "1dc40e23-e9d0-41de-9324-62e600fab855"
+      		]
+  		}
     ],
     "userFederationProviders": [
         {

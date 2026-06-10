@@ -189,6 +189,9 @@ public class RealmEntity {
     protected String defaultRoleId;
 
     @OneToMany(cascade ={CascadeType.REMOVE}, orphanRemoval = true, mappedBy = "realm")
+    protected List<FederationEntity> samlFederations = new LinkedList<>();
+
+    @OneToMany(cascade ={CascadeType.REMOVE}, orphanRemoval = true, mappedBy = "realm")
     Collection<AuthenticatorConfigEntity> authenticators = new LinkedList<>();
 
     @OneToMany(cascade ={CascadeType.REMOVE}, orphanRemoval = true, mappedBy = "realm")
@@ -609,6 +612,22 @@ public class RealmEntity {
 
     public void setAttributes(Collection<RealmAttributeEntity> attributes) {
         this.attributes = attributes;
+    }
+
+    
+    public List<FederationEntity> getSamlFederations() {
+       return this.samlFederations;
+    }
+
+    public void setSamlFederations(List<FederationEntity> samlFederations) {
+        this.samlFederations = samlFederations;
+    }
+
+    
+    
+    public void addIdentityProvidersFederation(FederationEntity entity) {
+        entity.setRealm(this);
+        getSamlFederations().add(entity);
     }
 
     public boolean isInternationalizationEnabled() {

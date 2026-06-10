@@ -642,3 +642,9 @@ ul#kc-totp-supported-apps {
     overflow-wrap: break-word
 }
 /* End Recovery codes */
+
+.login-pf-list-scrollable {
+	max-height: 40vh;
+    overflow: hidden;
+    overflow-y: auto;
+}

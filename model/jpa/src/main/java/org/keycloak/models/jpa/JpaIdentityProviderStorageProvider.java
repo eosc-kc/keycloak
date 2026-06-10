@@ -21,6 +21,7 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import jakarta.persistence.EntityManager;
@@ -29,6 +30,7 @@ import jakarta.persistence.TypedQuery;
 import jakarta.persistence.criteria.CriteriaBuilder;
 import jakarta.persistence.criteria.CriteriaDelete;
 import jakarta.persistence.criteria.CriteriaQuery;
+import jakarta.persistence.criteria.Join;
 import jakarta.persistence.criteria.JoinType;
 import jakarta.persistence.criteria.MapJoin;
 import jakarta.persistence.criteria.Path;
@@ -49,6 +51,7 @@ import org.keycloak.models.IdentityProviderType;
 import org.keycloak.models.KeycloakSession;
 import org.keycloak.models.ModelException;
 import org.keycloak.models.RealmModel;
+import org.keycloak.models.jpa.entities.FederationEntity;
 import org.keycloak.models.jpa.entities.IdentityProviderEntity;
 import org.keycloak.models.jpa.entities.IdentityProviderMapperEntity;
 import org.keycloak.models.utils.KeycloakModelUtils;
@@ -62,6 +65,7 @@ import static org.keycloak.models.IdentityProviderModel.ALIAS_NOT_IN;
 import static org.keycloak.models.IdentityProviderModel.AUTHENTICATE_BY_DEFAULT;
 import static org.keycloak.models.IdentityProviderModel.DISPLAY_NAME;
 import static org.keycloak.models.IdentityProviderModel.ENABLED;
+import static org.keycloak.models.IdentityProviderModel.FEDERATION_ID;
 import static org.keycloak.models.IdentityProviderModel.FIRST_BROKER_LOGIN_FLOW_ID;
 import static org.keycloak.models.IdentityProviderModel.HIDE_ON_LOGIN;
 import static org.keycloak.models.IdentityProviderModel.LINK_ONLY;
@@ -114,6 +118,13 @@ public class JpaIdentityProviderStorageProvider implements IdentityProviderStora
         entity.setConfig(identityProvider.getConfig());
         entity.setLinkOnly(identityProvider.isLinkOnly());
         entity.setHideOnLogin(identityProvider.isHideOnLogin());
+        if (identityProvider.getFederations() != null) {
+            entity.setFederations(identityProvider.getFederations().stream().map(id -> {
+                FederationEntity fed = new FederationEntity();
+                fed.setInternalId(id);
+                return fed;
+            }).collect(Collectors.toSet()));
+        }
         em.persist(entity);
         // flush so that constraint violations are flagged and converted into model exception now rather than at the end of the tx.
         em.flush();
@@ -139,6 +150,13 @@ public class JpaIdentityProviderStorageProvider implements IdentityProviderStora
         entity.setConfig(identityProvider.getConfig());
         entity.setLinkOnly(identityProvider.isLinkOnly());
         entity.setHideOnLogin(identityProvider.isHideOnLogin());
+        if (identityProvider.getFederations() != null) {
+            entity.setFederations(identityProvider.getFederations().stream().map(id -> {
+                FederationEntity fed = new FederationEntity();
+                fed.setInternalId(id);
+                return fed;
+            }).collect(Collectors.toSet()));
+        }
 
         // flush so that constraint violations are flagged and converted into model exception now rather than at the end of the tx.
         em.flush();
@@ -289,6 +307,11 @@ public class JpaIdentityProviderStorageProvider implements IdentityProviderStora
                             List<String> aliases = Arrays.asList(value.split(","));
                             predicates.add(builder.not(idp.get(ALIAS).in(aliases)));
                         }
+                        break;
+                    }
+                    case FEDERATION_ID: {
+                        Join<IdentityProviderEntity, FederationEntity> federationJoin = idp.join("federations");
+                        predicates.add(builder.equal(federationJoin.get("internalId"), value));
                         break;
                     }
                     default: {
@@ -582,6 +605,7 @@ public class JpaIdentityProviderStorageProvider implements IdentityProviderStora
         identityProviderModel.setOrganizationId(entity.getOrganizationId());
         identityProviderModel.setStoreToken(entity.isStoreToken());
         identityProviderModel.setAddReadTokenRoleOnCreate(entity.isAddReadTokenRoleOnCreate());
+        identityProviderModel.setFederations(entity.getFederations().stream().map(fe -> fe.getInternalId()).collect(Collectors.toSet()));
 
         return identityProviderModel;
     }

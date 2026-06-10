@@ -953,6 +953,15 @@ public class JpaRealmProvider implements RealmProvider, ClientProvider, ClientSc
     }
 
     @Override
+    public List<ClientModel> getFederationClientsStream(RealmModel realm, String federationId) {
+        TypedQuery<String> query = em.createNamedQuery("getFederationClients", String.class);
+        query.setParameter("federationId", federationId);
+        Stream<String> clientStream = query.getResultStream();
+
+        return clientStream.map(c -> session.clients().getClientById(realm, c)).filter(Objects::nonNull).collect(Collectors.toList());
+    }
+
+    @Override
     public ClientModel getClientById(RealmModel realm, String id) {
         logger.tracef("getClientById(%s, %s)%s", realm, id, getShortStackTrace());
 

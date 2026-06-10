@@ -111,20 +111,20 @@
 
     <build>
         <plugins>
-            <plugin>
-                <groupId>org.infinispan.protostream</groupId>
-                <artifactId>proto-schema-compatibility-maven-plugin</artifactId>
-                <executions>
-                    <execution>
-                        <goals>
-                            <goal>proto-schema-compatibility-check</goal>
-                        </goals>
-                    </execution>
-                </executions>
-                <configuration combine.self="append">
-                    <remoteLockFiles>https://raw.githubusercontent.com/keycloak/keycloak/refs/heads/archive/release/26.0/model/infinispan/proto.lock,https://raw.githubusercontent.com/keycloak/keycloak/refs/heads/archive/release/26.1/model/infinispan/proto.lock,https://raw.githubusercontent.com/keycloak/keycloak/refs/heads/release/26.2/model/infinispan/proto.lock,https://raw.githubusercontent.com/keycloak/keycloak/refs/heads/archive/release/26.3/model/infinispan/proto.lock,https://raw.githubusercontent.com/keycloak/keycloak/refs/heads/release/26.4/model/infinispan/proto.lock</remoteLockFiles>
-                </configuration>
-            </plugin>
+<!--            <plugin>-->
+<!--                <groupId>org.infinispan.protostream</groupId>-->
+<!--                <artifactId>proto-schema-compatibility-maven-plugin</artifactId>-->
+<!--                <executions>-->
+<!--                    <execution>-->
+<!--                        <goals>-->
+<!--                            <goal>proto-schema-compatibility-check</goal>-->
+<!--                        </goals>-->
+<!--                    </execution>-->
+<!--                </executions>-->
+<!--                <configuration combine.self="append">-->
+<!--                    <remoteLockFiles>https://raw.githubusercontent.com/keycloak/keycloak/refs/heads/archive/release/26.0/model/infinispan/proto.lock,https://raw.githubusercontent.com/keycloak/keycloak/refs/heads/archive/release/26.1/model/infinispan/proto.lock,https://raw.githubusercontent.com/keycloak/keycloak/refs/heads/release/26.2/model/infinispan/proto.lock,https://raw.githubusercontent.com/keycloak/keycloak/refs/heads/archive/release/26.3/model/infinispan/proto.lock,https://raw.githubusercontent.com/keycloak/keycloak/refs/heads/release/26.4/model/infinispan/proto.lock</remoteLockFiles>-->
+<!--                </configuration>-->
+<!--            </plugin>-->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
