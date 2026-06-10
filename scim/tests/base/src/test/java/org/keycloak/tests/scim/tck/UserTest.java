@@ -1133,7 +1133,7 @@ public class UserTest extends AbstractScimTest {
 
     @Test
     public void testGetCustomAttribute() {
-        UserRepresentation existing = UserBuilder.create()
+        UserRepresentation existing = UserConfigBuilder.create()
                 .username(KeycloakModelUtils.generateId())
                 .email(KeycloakModelUtils.generateId() + "@keycloak.org")
                 .firstName("f")
@@ -1180,7 +1180,7 @@ public class UserTest extends AbstractScimTest {
 
     @Test
     public void testSearchCustomAttribute() {
-        UserRepresentation existing = UserBuilder.create()
+        UserRepresentation existing = UserConfigBuilder.create()
                 .username(KeycloakModelUtils.generateId())
                 .email(KeycloakModelUtils.generateId() + "@keycloak.org")
                 .firstName("f")
