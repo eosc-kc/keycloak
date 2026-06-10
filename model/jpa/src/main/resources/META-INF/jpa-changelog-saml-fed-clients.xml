@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!--
+  ~ * Copyright 2020 Red Hat, Inc. and/or its affiliates
+  ~ * and other contributors as indicated by the @author tags.
+  ~ *
+  ~ * Licensed under the Apache License, Version 2.0 (the "License");
+  ~ * you may not use this file except in compliance with the License.
+  ~ * You may obtain a copy of the License at
+  ~ *
+  ~ * http://www.apache.org/licenses/LICENSE-2.0
+  ~ *
+  ~ * Unless required by applicable law or agreed to in writing, software
+  ~ * distributed under the License is distributed on an "AS IS" BASIS,
+  ~ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  ~ * See the License for the specific language governing permissions and
+  ~ * limitations under the License.
+  -->
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.1.xsd">
+
+    <!-- change datatype of field REALM_LOCALIZATIONS.TEXTS to NCLOB (instead of CLOB) -->
+    <changeSet author="keycloak" id="fed-clients">
+        <addColumn tableName="FEDERATION">
+            <column name="CATEGORY" type="VARCHAR(36)" defaultValue="Identity Providers">
+                <constraints nullable="false"/>
+            </column>
+        </addColumn>
+    </changeSet>
+
+    <changeSet author="keycloak" id="federation-client-connection">
+        <createTable tableName="FEDERATION_CLIENT">
+            <column name="FEDERATION_ID" type="VARCHAR(36)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="CLIENT_ID" type="VARCHAR(36)">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+        <addForeignKeyConstraint baseColumnNames="FEDERATION_ID" baseTableName="FEDERATION_CLIENT" constraintName="FED_CLIENT_FOREIGN_KEY" referencedColumnNames="INTERNAL_ID" referencedTableName="FEDERATION" />
+        <addForeignKeyConstraint baseColumnNames="CLIENT_ID" baseTableName="FEDERATION_CLIENT" constraintName="FED_CLIENT_FOREIGN_KEY2" referencedColumnNames="ID" referencedTableName="CLIENT" />
+
+        <createIndex indexName="IDX_FED_CLIENT" tableName="FEDERATION_CLIENT">
+            <column name="CLIENT_ID" type="VARCHAR(36)"/>
+        </createIndex>
+        <createIndex indexName="IDX_FED_CLIENT2" tableName="FEDERATION_CLIENT">
+            <column name="FEDERATION_ID" type="VARCHAR(36)"/>
+        </createIndex>
+    </changeSet>
+
+</databaseChangeLog>

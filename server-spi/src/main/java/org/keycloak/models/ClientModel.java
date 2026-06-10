@@ -17,6 +17,7 @@
 
 package org.keycloak.models;
 
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
@@ -280,6 +281,14 @@ public interface ClientModel extends ClientScopeModel, RoleContainerModel,  Prot
     void registerNode(String nodeHost, int registrationTime);
 
     void unregisterNode(String nodeHost);
+
+    List<String> getFederations();
+
+    void setFederations(List<String> federations);
+
+    void addFederation(String federation);
+
+    void removeFederation(String federation);
 
 
     // Clients are not displayed on consent screen by default

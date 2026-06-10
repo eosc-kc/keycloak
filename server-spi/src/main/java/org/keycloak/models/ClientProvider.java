@@ -16,6 +16,7 @@
  */
 package org.keycloak.models;
 
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Stream;
@@ -87,6 +88,13 @@ public interface ClientProvider extends ClientLookupProvider, Provider {
      * @return Stream of the clients. Never returns {@code null}.
      */
     Stream<ClientModel> getAlwaysDisplayInConsoleClientsStream(RealmModel realm);
+
+    /**
+     * Returns a List of clients that belongs to this federation
+     * @param federationId federation id
+     * @return
+     */
+    List<ClientModel> getFederationClientsStream(RealmModel realm, String federationId);
 
     /**
      * Removes given client from the given realm.

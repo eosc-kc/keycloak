@@ -139,9 +139,9 @@ public class SAMLIdentityProvider extends AbstractIdentityProvider<SAMLIdentityP
             String destinationUrl = getConfig().getSingleSignOnServiceUrl();
             String nameIDPolicyFormat = getConfig().getNameIDPolicyFormat();
 
-            if (nameIDPolicyFormat == null) {
-                nameIDPolicyFormat =  JBossSAMLURIConstants.NAMEID_FORMAT_PERSISTENT.get();
-            }
+//            if (nameIDPolicyFormat == null) {
+//                nameIDPolicyFormat =  JBossSAMLURIConstants.NAMEID_FORMAT_PERSISTENT.get();
+//            }
 
             String protocolBinding = JBossSAMLURIConstants.SAML_HTTP_REDIRECT_BINDING.get();
 
@@ -179,12 +179,14 @@ public class SAMLIdentityProvider extends AbstractIdentityProvider<SAMLIdentityP
                     .issuer(issuerURL)
                     .forceAuthn(forceAuthn)
                     .protocolBinding(protocolBinding)
-                    .nameIdPolicy(SAML2NameIDPolicyBuilder
-                        .format(nameIDPolicyFormat)
-                        .setAllowCreate(allowCreate))
                     .attributeConsumingServiceIndex(attributeConsumingServiceIndex)
                     .requestedAuthnContext(requestedAuthnContext)
                     .subject(loginHint);
+
+            if (nameIDPolicyFormat != null)
+                authnRequestBuilder.nameIdPolicy(SAML2NameIDPolicyBuilder
+                        .format(nameIDPolicyFormat)
+                        .setAllowCreate(allowCreate));
 
             JaxrsSAML2BindingBuilder binding = new JaxrsSAML2BindingBuilder(session)
                     .relayState(request.getState().getEncoded());
@@ -374,7 +376,7 @@ public class SAMLIdentityProvider extends AbstractIdentityProvider<SAMLIdentityP
     private JaxrsSAML2BindingBuilder buildLogoutBinding(KeycloakSession session, UserSessionModel userSession, RealmModel realm) {
         JaxrsSAML2BindingBuilder binding = new JaxrsSAML2BindingBuilder(session)
                 .relayState(userSession.getId());
-        if (getConfig().isWantAuthnRequestsSigned()) {
+        if (getConfig().isWantLogoutRequestsSigned()) {
             KeyManager.ActiveRsaKey keys = session.keys().getActiveRsaKey(realm);
             String keyName = getConfig().getXmlSigKeyInfoKeyNameTransformer().getKeyName(keys.getKid(), keys.getCertificate());
             binding.signWith(keyName, keys.getPrivateKey(), keys.getPublicKey(), keys.getCertificate())
@@ -410,6 +412,7 @@ public class SAMLIdentityProvider extends AbstractIdentityProvider<SAMLIdentityP
                             new EndpointType(JBossSAMLURIConstants.SAML_HTTP_POST_BINDING.getUri(), endpoint));
 
             boolean wantAuthnRequestsSigned = getConfig().isWantAuthnRequestsSigned();
+            boolean wantLogoutRequestsSigned = getConfig().isWantLogoutRequestsSigned();
             boolean wantAssertionsSigned = getConfig().isWantAssertionsSigned();
             boolean wantAssertionsEncrypted = getConfig().isWantAssertionsEncrypted();
             String entityId = getEntityId(uriInfo, realm);
@@ -454,7 +457,7 @@ public class SAMLIdentityProvider extends AbstractIdentityProvider<SAMLIdentityP
 
             EntityDescriptorType entityDescriptor = SPMetadataDescriptor.buildSPDescriptor(
                 assertionConsumerServices, singleLogoutServices,
-                wantAuthnRequestsSigned, wantAssertionsSigned, wantAssertionsEncrypted,
+                wantAuthnRequestsSigned,wantLogoutRequestsSigned, wantAssertionsSigned, wantAssertionsEncrypted,
                 entityId, nameIDPolicyFormat, signingKeys, encryptionKeys, getConfig().getDescriptorCacheSeconds());
 
             // Create the AttributeConsumingService if at least one attribute importer mapper exists
@@ -606,4 +609,9 @@ public class SAMLIdentityProvider extends AbstractIdentityProvider<SAMLIdentityP
         }
         return binding;
     }
+
+    public DestinationValidator getDestinationValidator() {
+        return destinationValidator;
+    }
+
 }

@@ -191,6 +191,8 @@ public final class Marshalling {
 
     /** see {@link org.keycloak.models.workflow.WorkflowScheduleClusterEvent} */
     public static final int WORKFLOW_SCHEDULE_CLUSTER_EVENT = 65621;
+    //org.keycloak.services.scheduled.TaskCancellationEvent
+    public static final int TASK_CANCELLATION = 65622;
 
     public static void configure(GlobalConfigurationBuilder builder) {
         getSchemas().forEach(builder.serialization()::addContextInitializer);

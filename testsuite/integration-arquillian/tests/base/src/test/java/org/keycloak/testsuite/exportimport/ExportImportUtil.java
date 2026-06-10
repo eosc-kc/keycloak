@@ -62,6 +62,7 @@ import org.keycloak.representations.idm.IdentityProviderRepresentation;
 import org.keycloak.representations.idm.ProtocolMapperRepresentation;
 import org.keycloak.representations.idm.RealmRepresentation;
 import org.keycloak.representations.idm.RoleRepresentation;
+import org.keycloak.representations.idm.SAMLFederationRepresentation;
 import org.keycloak.representations.idm.UserFederationProviderRepresentation;
 import org.keycloak.representations.idm.UserRepresentation;
 import org.keycloak.representations.idm.authorization.PolicyRepresentation;
@@ -90,6 +91,8 @@ import static org.hamcrest.MatcherAssert.assertThat;
  * @author Stan Silvert ssilvert@redhat.com (C) 2016 Red Hat Inc.
  */
 public class ExportImportUtil {
+
+    private static final String samlIdpAlias = "6b6b716bef3c495083e31e1a71e8622e07d69b955cc3d9764fe28be5d0e8fb02";
 
     // In the old testsuite, this method exists as a public method of ImportTest from the model package.
     // However, model package is not ready to be migrated yet.
@@ -295,10 +298,16 @@ public class ExportImportUtil {
 
         // Test identity providers
         List<IdentityProviderRepresentation> identityProviders = realmRsc.identityProviders().findAll();
-        Assert.assertEquals(4, identityProviders.size());
+        Assert.assertEquals(6, identityProviders.size());
         IdentityProviderRepresentation google = null;
+        IdentityProviderRepresentation samlIdp = null;
         for (IdentityProviderRepresentation idpRep : identityProviders) {
             if (idpRep.getAlias().equals("google1")) google = idpRep;
+            if (idpRep.getAlias().equals("google1")) {
+                google = idpRep;
+            } else  if (idpRep.getAlias().equals(samlIdpAlias)) {
+                samlIdp = idpRep;
+            }
         }
         Assert.assertNotNull(google);
         Assert.assertEquals("google1", google.getAlias());
@@ -306,6 +315,23 @@ public class ExportImportUtil {
         Assert.assertTrue(google.isEnabled());
         Assert.assertEquals("googleId", google.getConfig().get("clientId"));
         Assert.assertEquals("**********", google.getConfig().get("clientSecret")); // secret is masked in GET call
+
+        //check Idp from saml metadata aggregate
+        Assert.assertNotNull(samlIdp);
+        Assert.assertEquals(samlIdpAlias, samlIdp.getAlias());
+        Assert.assertEquals("saml", samlIdp.getProviderId());
+        Assert.assertTrue(samlIdp.isEnabled());
+        Assert.assertEquals("true", samlIdp.getConfig().get("postBindingResponse"));
+        Assert.assertEquals("https://idp.admin.grnet.gr/idp/profile/SAML2/POST/SSO", samlIdp.getConfig().get("singleSignOnServiceUrl"));
+        Assert.assertNotNull(samlIdp.getFederations());
+        Assert.assertEquals(1, samlIdp.getFederations().size());
+        Assert.assertTrue(samlIdp.getFederations().contains("1dc40e23-e9d0-41de-9324-62e600fab855"));
+
+        //check saml metadata aggregate
+        Assert.assertEquals(1, realm.getSamlFederations().size());
+        SAMLFederationRepresentation metadataAggregate = realm.getSamlFederations().get(0);
+        Assert.assertEquals("saml-edugain",metadataAggregate.getAlias());
+        Assert.assertEquals("saml",metadataAggregate.getProviderId());
 
         //////////////////
         // Test federation providers

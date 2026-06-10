@@ -54,6 +54,12 @@ public class Urls {
                 .path(IdentityBrokerService.class, "getEndpoint")
                 .build(realmName, providerAlias);
     }
+    
+    public static URI identityProviderAuthnResponse(URI baseUri, String realmName) {
+        return realmBase(baseUri).path(RealmsResource.class, "getBrokerService")
+                .path(IdentityBrokerService.ENDPOINT_PATH)
+                .build(realmName);
+    }
 
     public static URI identityProviderAuthnResponse(URI baseUri, String providerAlias, String realmName, String client_id) {
         return realmBase(baseUri).path(RealmsResource.class, "getBrokerService")

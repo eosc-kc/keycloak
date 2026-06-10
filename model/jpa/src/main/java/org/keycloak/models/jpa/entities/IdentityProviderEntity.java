@@ -17,7 +17,9 @@
 
 package org.keycloak.models.jpa.entities;
 
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 
 import jakarta.persistence.Access;
 import jakarta.persistence.AccessType;
@@ -27,6 +29,8 @@ import jakarta.persistence.ElementCollection;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
+import jakarta.persistence.JoinTable;
+import jakarta.persistence.ManyToMany;
 import jakarta.persistence.MapKeyColumn;
 import jakarta.persistence.Table;
 
@@ -89,6 +93,13 @@ public class IdentityProviderEntity {
     @Column(name="VALUE", columnDefinition = "TEXT")
     @CollectionTable(name="IDENTITY_PROVIDER_CONFIG", joinColumns={ @JoinColumn(name="IDENTITY_PROVIDER_ID") })
     private Map<String, String> config;
+    
+    @ManyToMany
+    @JoinTable(
+    	name = "federation_idps", 
+		joinColumns = @JoinColumn(name = "identityprovider_id"), 
+		inverseJoinColumns = @JoinColumn(name = "federation_id"))
+    Set<FederationEntity> federations = new HashSet<FederationEntity>();
 
     public String getInternalId() {
         return this.internalId;
@@ -218,7 +229,24 @@ public class IdentityProviderEntity {
         this.displayName = displayName;
     }
 
-    @Override
+	public Set<FederationEntity> getFederations() {
+		return federations;
+	}
+
+	public void setFederations(Set<FederationEntity> federations) {
+		this.federations = federations;
+	}
+
+	public void addToFederation(FederationEntity federation) {
+		this.federations.add(federation);
+	}
+	
+	public void removeFromFederation(FederationEntity federation) {
+		this.federations.remove(federation);
+	}
+	
+	
+	@Override
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null) return false;

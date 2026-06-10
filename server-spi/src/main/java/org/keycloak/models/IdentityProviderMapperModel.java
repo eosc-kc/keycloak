@@ -38,6 +38,17 @@ public class IdentityProviderMapperModel implements Serializable {
     protected String identityProviderMapper;
     protected Map<String, String> config;
 
+    public IdentityProviderMapperModel (){
+
+    }
+
+    public IdentityProviderMapperModel ( FederationMapperModel fedMapper, String identityProviderAlias){
+        this.identityProviderAlias = identityProviderAlias;
+        this.name = fedMapper.getName();
+        this.identityProviderMapper = fedMapper.getIdentityProviderMapper();
+        this.config = fedMapper.getConfig();
+    }
+
 
     public String getId() {
         return id;

@@ -40,6 +40,7 @@ import org.keycloak.admin.client.resource.RoleByIdResource;
 import org.keycloak.admin.client.resource.RoleMappingResource;
 import org.keycloak.admin.client.resource.RoleResource;
 import org.keycloak.admin.client.resource.RolesResource;
+import org.keycloak.admin.client.resource.SAMLFederationResource;
 import org.keycloak.admin.client.resource.UserResource;
 import org.keycloak.admin.client.resource.UsersResource;
 
@@ -304,6 +305,25 @@ public class AdminEventPaths {
         URI uri = UriBuilder.fromUri(identityProviderPath(idpAlias)).path(IdentityProviderResource.class, "getMapperById").build(idpMapperId);
         return uri.toString();
     }
+    
+    // IDENTITY PROVIDERS FEDERATIONS
+    
+    public static String identityProvidersFederationPath() {
+        URI uri = UriBuilder.fromUri("").path(RealmResource.class, "samlFederation").build();
+        return uri.toString();
+    }
+
+    
+    public static String identityProvidersFederationCreatePath() {
+        URI uri = UriBuilder.fromUri(identityProvidersFederationPath()).path(SAMLFederationResource.class, "create").build();
+        return uri.toString();
+    }
+    
+    public static String identityProvidersFederationPath(String alias) {
+        URI uri = UriBuilder.fromUri(identityProvidersFederationPath()).path(SAMLFederationResource.class, "getSAMLFederation").build(alias);
+        return uri.toString();
+    }
+
 
     // COMPONENTS
     public static String componentsPath() {

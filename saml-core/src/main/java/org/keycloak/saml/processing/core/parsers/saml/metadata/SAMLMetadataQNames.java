@@ -54,16 +54,20 @@ public enum SAMLMetadataQNames implements HasQName {
     SP_SSO_DESCRIPTOR("SPSSODescriptor"),
     SURNAME("SurName"),
     TELEPHONE_NUMBER("TelephoneNumber"),
-
     //mdui elements
-    DESCRIPTION(JBossSAMLURIConstants.METADATA_UI, "Description"),
+    SCOPE(JBossSAMLURIConstants.SHIBBOLETH_METADATA_NSURI, "Scope"),
+    UIINFO(JBossSAMLURIConstants.METADATA_UI, "UIInfo"),
     DISPLAY_NAME(JBossSAMLURIConstants.METADATA_UI, "DisplayName"),
-    INFORMATION_URL(JBossSAMLURIConstants.METADATA_UI, "InformationURL"),
+    DESCRIPTION(JBossSAMLURIConstants.METADATA_UI, "Description"),
     KEYWORDS(JBossSAMLURIConstants.METADATA_UI, "Keywords"),
     LOGO(JBossSAMLURIConstants.METADATA_UI, "Logo"),
+    INFORMATION_URL(JBossSAMLURIConstants.METADATA_UI, "InformationURL"),
     PRIVACY_STATEMENT_URL(JBossSAMLURIConstants.METADATA_UI, "PrivacyStatementURL"),
-    UIINFO(JBossSAMLURIConstants.METADATA_UI, "UIInfo"),
-
+    //mdrpi elemetns METADATA_RPI
+    REGISTRATION_INFO(JBossSAMLURIConstants.METADATA_RPI, "RegistrationInfo"),
+    REGISTRATION_POLICY(JBossSAMLURIConstants.METADATA_RPI, "RegistrationPolicy"),
+    
+    
     // Attribute names
     ATTR_ENTITY_ID(null, "entityID"),
     ATTR_ID(null, "ID"),
@@ -88,6 +92,10 @@ public enum SAMLMetadataQNames implements HasQName {
     ATTR_NAME_FORMAT(null, "NameFormat"),
     ATTR_WIDTH(null, "width"),
     ATTR_HEIGHT(null, "height"),
+    ATTR_REGEXP(null, "regexp"),
+    ATTR_REGISTRATION_AUTHORITY(null, "registrationAuthority"),
+    ATTR_REGISTRATION_INSTANT(null, "registrationInstant"),
+    
     // Elements from other namespaces that can be direct subelements of this namespace's elements
     SIGNATURE(XmlDSigQNames.SIGNATURE),
     KEY_INFO(XmlDSigQNames.KEY_INFO),

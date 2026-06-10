@@ -29,6 +29,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.function.Predicate;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import jakarta.persistence.EntityManager;
@@ -51,6 +52,8 @@ import org.keycloak.models.ClientInitialAccessModel;
 import org.keycloak.models.ClientModel;
 import org.keycloak.models.ClientScopeModel;
 import org.keycloak.models.Constants;
+import org.keycloak.models.FederationMapperModel;
+import org.keycloak.models.FederationModel;
 import org.keycloak.models.GroupModel;
 import org.keycloak.models.GroupModel.GroupUpdatedEvent;
 import org.keycloak.models.IdentityProviderMapperModel;
@@ -80,6 +83,8 @@ import org.keycloak.models.jpa.entities.ClientInitialAccessEntity;
 import org.keycloak.models.jpa.entities.ComponentConfigEntity;
 import org.keycloak.models.jpa.entities.ComponentEntity;
 import org.keycloak.models.jpa.entities.DefaultClientScopeRealmMappingEntity;
+import org.keycloak.models.jpa.entities.FederationEntity;
+import org.keycloak.models.jpa.entities.FederationMapperEntity;
 import org.keycloak.models.jpa.entities.RealmAttributeEntity;
 import org.keycloak.models.jpa.entities.RealmAttributes;
 import org.keycloak.models.jpa.entities.RealmEntity;
@@ -1400,6 +1405,223 @@ public class RealmAdapter implements StorageProviderRealmModel, JpaModel<RealmEn
     public void updateIdentityProvider(IdentityProviderModel identityProvider) {
         session.identityProviders().update(identityProvider);
     }
+
+    private FederationModel entityToModel(FederationEntity entity) {
+    	FederationModel federationModel = new FederationModel();
+    	federationModel.setInternalId(entity.getInternalId());
+    	federationModel.setAlias(entity.getAlias());
+    	federationModel.setDisplayName(entity.getDisplayName());
+        federationModel.setCategory(entity.getCategory());
+    	federationModel.setLastMetadataRefreshTimestamp(entity.getLastMetadataRefreshTimestamp());
+    	federationModel.setProviderId(entity.getProviderId());
+    	federationModel.setUpdateFrequencyInMins(entity.getUpdateFrequencyInMins());
+    	federationModel.setValidUntilTimestamp(entity.getValidUntilTimestamp());
+    	Set<String> denyList = new HashSet<>();
+        if (entity.getEntityIdDenyList() != null)
+    	  denyList.addAll(entity.getEntityIdDenyList());
+    	federationModel.setEntityIdDenyList(denyList);
+    	Set<String> allowList = new HashSet<>();
+        if (entity.getEntityIdAllowList() != null)
+    	  allowList.addAll(entity.getEntityIdAllowList());
+        federationModel.setEntityIdAllowList(allowList);
+        Set<String> registrationAuthorityDenyList = new HashSet<>();
+        if (entity.getRegistrationAuthorityDenyList() != null)
+          registrationAuthorityDenyList.addAll(entity.getRegistrationAuthorityDenyList());
+        federationModel.setRegistrationAuthorityDenyList(registrationAuthorityDenyList);
+        Set<String> registrationAuthorityAllowList = new HashSet<>();
+        if (entity.getRegistrationAuthorityAllowList() != null)
+          registrationAuthorityAllowList.addAll(entity.getRegistrationAuthorityAllowList());
+        federationModel.setRegistrationAuthorityAllowList(registrationAuthorityAllowList);
+        Map<String,List<String>> categoryDenyList = new HashMap<>();
+        if (entity.getCategoryDenyList() != null)
+          categoryDenyList.putAll(entity.getCategoryDenyList());
+        federationModel.setCategoryDenyList(categoryDenyList);
+        Map<String,List<String>> categoryAllowList = new HashMap<>();
+        if (entity.getCategoryAllowList() != null)
+          categoryAllowList.putAll(entity.getCategoryAllowList());
+        federationModel.setCategoryAllowList(categoryAllowList);
+    	federationModel.setUrl(entity.getUrl());
+    	Map<String, String> copy = new HashMap<>();
+        copy.putAll(entity.getConfig());
+    	federationModel.setConfig(copy);
+    	List<FederationMapperModel> mappers = entity.getFederationMapperEntities().stream().map(this::entityToModel).collect(Collectors.toList());
+        federationModel.setFederationMapperModels(mappers);
+    	return federationModel;
+    }
+
+    private FederationMapperModel entityToModel(FederationMapperEntity entity) {
+        FederationMapperModel model = new FederationMapperModel();
+        Map<String, String> copy = new HashMap<>();
+        copy.putAll(entity.getConfig());
+        model.setId(entity.getId());
+        model.setConfig(copy);
+        model.setFederationId(entity.getFederation().getInternalId());
+        model.setIdentityProviderMapper(entity.getIdentityProviderMapper());
+        model.setName(entity.getName());
+        return model;
+    }
+
+    @Override
+    public List<FederationModel> getSAMLFederations() {
+        return realm.getSamlFederations().stream().map(idp -> entityToModel(idp)).collect(Collectors.toList());
+    }
+
+    @Override
+    public FederationModel getSAMLFederationById(String id) {
+        FederationEntity fe = em.find(FederationEntity.class, id);
+        return fe != null ? entityToModel(fe) : null;
+    }
+
+    @Override
+    public FederationModel getSAMLFederationByAlias(String alias) {
+        TypedQuery<FederationEntity> query = em.createNamedQuery("findFederationByAliasAndRealm", FederationEntity.class);
+        query.setParameter("alias", alias);
+        query.setParameter("realmId", realm.getId());
+        FederationEntity fe = query.getSingleResult();
+        return fe != null ? entityToModel(fe) : null;
+    }
+
+    /**
+     * This should be used for the creation of a new idp federation
+     */
+    @Override
+    public void addSAMLFederation(FederationModel federationModel) {
+
+        logger.info("Creating an IdP federation with id: " + federationModel.getInternalId());
+
+        FederationEntity federationEntity = new FederationEntity();
+
+		federationEntity.setInternalId(federationModel.getInternalId());
+		federationEntity.setAlias(federationModel.getAlias());
+		federationEntity.setProviderId(federationModel.getProviderId());
+        federationEntity.setCategory(federationModel.getCategory());
+		
+		//federationEntity.setLastMetadataRefreshTimestamp(new Date().getTime());
+		federationEntity.setUrl(federationModel.getUrl());
+        federationEntity.setEntityIdDenyList(federationModel.getEntityIdDenyList());
+        federationEntity.setEntityIdAllowList(federationModel.getEntityIdAllowList());
+        federationEntity.setRegistrationAuthorityDenyList(federationModel.getRegistrationAuthorityDenyList());
+        federationEntity.setRegistrationAuthorityAllowList(federationModel.getRegistrationAuthorityAllowList());
+        federationEntity.setCategoryDenyList(federationModel.getCategoryDenyList());
+        federationEntity.setCategoryAllowList(federationModel.getCategoryAllowList());
+        federationEntity.setUpdateFrequencyInMins(federationModel.getUpdateFrequencyInMins());
+        federationEntity.setValidUntilTimestamp(federationModel.getValidUntilTimestamp());
+        federationEntity.setConfig(federationModel.getConfig());
+
+        realm.addIdentityProvidersFederation(federationEntity);
+
+
+        em.persist(federationEntity);
+        em.flush();
+
+    }
+
+    /**
+     * This should be used for updating an existing idp federation
+     */
+    @Override
+    public void updateSAMLFederation(FederationModel federationModel) {
+
+        logger.info("Updating the IdP federation with id: " + federationModel.getInternalId());
+
+        if (federationModel.getInternalId() == null) {
+            logger.info("Trying to update a federation with no id... skipping...");
+            return;
+        }
+
+        FederationEntity federationEntity = realm.getSamlFederations().stream().filter(idpf -> idpf.getInternalId().equals(federationModel.getInternalId())).findAny().orElse(null);
+
+        if (federationEntity == null) {
+            logger.infov("The federation with id={} and alias={} could now be found! Skipping the update...", federationModel.getInternalId(), federationModel.getAlias());
+            return; //cannot update a non-existent federation
+        }
+
+        //should not change alias, providerid, and creation date, since those attributes are immutable
+        //lastMetadataRefreshTimestamp field should be updated only related to idps refresh
+        //and not if user change some federation fields
+        federationEntity.setLastMetadataRefreshTimestamp(federationModel.getLastMetadataRefreshTimestamp());
+        federationEntity.setCategory(federationModel.getCategory());
+        federationEntity.setUrl(federationModel.getUrl());
+        federationEntity.setCategory(federationModel.getCategory());
+        federationEntity.setEntityIdDenyList(federationModel.getEntityIdDenyList());
+        federationEntity.setEntityIdAllowList(federationModel.getEntityIdAllowList());
+        federationEntity.setRegistrationAuthorityDenyList(federationModel.getRegistrationAuthorityDenyList());
+        federationEntity.setRegistrationAuthorityAllowList(federationModel.getRegistrationAuthorityAllowList());
+        federationEntity.setCategoryDenyList(federationModel.getCategoryDenyList());
+        federationEntity.setCategoryAllowList(federationModel.getCategoryAllowList());
+        federationEntity.setUpdateFrequencyInMins(federationModel.getUpdateFrequencyInMins());
+        federationEntity.setValidUntilTimestamp(federationModel.getValidUntilTimestamp());
+        federationEntity.setConfig(federationModel.getConfig());
+    }
+
+    @Override
+    public void removeSAMLFederation(String internalId) {
+        logger.info("Removing the IdP federation entry with id: " + internalId);
+
+        FederationEntity federationEntity = realm.getSamlFederations().stream().filter(idpf -> idpf.getInternalId().equals(internalId)).findAny().orElse(null);
+
+        em.remove(federationEntity);
+        em.flush();
+    }
+
+    @Override
+    public List<FederationMapperModel> getIdentityProviderFederationMappers(String federationId) {
+        TypedQuery<FederationMapperEntity> query = em.createNamedQuery("findByFederation", FederationMapperEntity.class);
+        query.setParameter("federationId", federationId);
+        List<FederationMapperEntity> list = query.getResultList();
+        return list.stream().map(this::entityToModel).collect(Collectors.toList());
+    }
+
+    @Override
+    public FederationMapperModel getIdentityProviderFederationMapper(String federationId, String id) {
+        FederationMapperEntity fe = em.find(FederationMapperEntity.class, id);
+        return fe != null ? entityToModel(fe) : null;
+
+    }
+
+    private boolean existsMapperWithSameName(String federationId, String name) {
+        TypedQuery<Long> query = em.createNamedQuery("countByFederationAndName", Long.class);
+        query.setParameter("federationId", federationId);
+        query.setParameter("name", name);
+        return query.getSingleResult() > 0;
+    }
+
+    @Override
+    public void addIdentityProvidersFederationMapper(FederationMapperModel federationMapperModel) {
+        if (existsMapperWithSameName(federationMapperModel.getFederationId(), federationMapperModel.getName())) {
+            throw new RuntimeException("Federation mapper name must be unique per federation");
+        }
+        FederationMapperEntity mapper = new  FederationMapperEntity();
+        mapper.setId(KeycloakModelUtils.generateId());
+        mapper.setConfig(federationMapperModel.getConfig());
+        mapper.setIdentityProviderMapper(federationMapperModel.getIdentityProviderMapper());
+        mapper.setName(federationMapperModel.getName());
+        FederationEntity federation = em.find(FederationEntity.class, federationMapperModel.getFederationId());
+        mapper.setFederation(federation);
+        federationMapperModel.setId(mapper.getId());
+        em.persist(mapper);
+        em.flush();
+    };
+
+    @Override
+    public  void updateIdentityProvidersFederationMapper(FederationMapperModel federationMapperModel) {
+
+        FederationMapperEntity mapper = em.find(FederationMapperEntity.class, federationMapperModel.getId());
+        if(mapper == null) {
+            logger.infov("The FederationMapper with id={} could now be found! Skipping the update...", federationMapperModel.getId());
+            return; //cannot update a non-existent federation
+        }
+        mapper.setConfig(federationMapperModel.getConfig());
+
+    };
+
+    @Override
+    public void removeIdentityProvidersFederationMapper(String id, String federationId) {
+        FederationMapperEntity mapper = em.find(FederationMapperEntity.class, id);
+        em.remove(mapper);
+        em.flush();
+    };
+
 
     @Override
     public boolean isIdentityFederationEnabled() {

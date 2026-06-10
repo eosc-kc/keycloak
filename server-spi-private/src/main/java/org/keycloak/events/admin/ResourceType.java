@@ -77,6 +77,10 @@ public enum ResourceType {
      *
      */
     , IDENTITY_PROVIDER
+    /**
+    *
+    */
+   , IDENTITY_PROVIDERS_FEDERATION
 
     /**
      *

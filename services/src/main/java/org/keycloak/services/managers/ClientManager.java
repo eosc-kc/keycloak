@@ -125,6 +125,20 @@ public class ClientManager {
         }
     }
 
+    public boolean removeFederatedClient(RealmModel realm, ClientModel client) {
+        UserSessionProvider sessions = realmManager.getSession().sessions();
+        if (sessions != null) {
+            sessions.onClientRemoved(realm, client);
+        }
+
+        AuthenticationSessionProvider authSessions = realmManager.getSession().authenticationSessions();
+        if (authSessions != null) {
+            authSessions.onClientRemoved(realm, client);
+        }
+
+        return  realm.removeClient(client.getId());
+    }
+
     public Set<String> validateRegisteredNodes(ClientModel client) {
         Map<String, Integer> registeredNodes = client.getRegisteredNodes();
         if (registeredNodes == null || registeredNodes.isEmpty()) {

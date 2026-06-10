@@ -51,23 +51,23 @@ import static org.keycloak.saml.common.constants.JBossSAMLURIConstants.XMLDSIG_N
 public class SPMetadataDescriptor {
 
     public static EntityDescriptorType buildSPDescriptor(URI loginBinding, URI logoutBinding, URI assertionEndpoint, URI logoutEndpoint,
-            boolean wantAuthnRequestsSigned, boolean wantAssertionsSigned, boolean wantAssertionsEncrypted,
+            boolean wantAuthnRequestsSigned, boolean wantLogoutRequestsSigned, boolean wantAssertionsSigned, boolean wantAssertionsEncrypted,
             String entityId, String nameIDPolicyFormat, List<KeyDescriptorType> signingCerts, List<KeyDescriptorType> encryptionCerts) {
         return buildSPDescriptor(Collections.singletonList(new EndpointType(loginBinding, assertionEndpoint)),
                 Collections.singletonList(new EndpointType(logoutBinding, logoutEndpoint)),
-                wantAuthnRequestsSigned, wantAssertionsSigned, wantAssertionsEncrypted, entityId, nameIDPolicyFormat, signingCerts, encryptionCerts, null);
+                wantAuthnRequestsSigned, wantLogoutRequestsSigned, wantAssertionsSigned, wantAssertionsEncrypted, entityId, nameIDPolicyFormat, signingCerts, encryptionCerts, null);
     }
 
     public static EntityDescriptorType buildSPDescriptor(List<EndpointType> assertionConsumerServices, List<EndpointType> singleLogoutServices,
-            boolean wantAuthnRequestsSigned, boolean wantAssertionsSigned, boolean wantAssertionsEncrypted,
+            boolean wantAuthnRequestsSigned, boolean wantLogoutRequestsSigned, boolean wantAssertionsSigned, boolean wantAssertionsEncrypted,
             String entityId, String nameIDPolicyFormat, List<KeyDescriptorType> signingCerts,
             List<KeyDescriptorType> encryptionCerts) {
-        return buildSPDescriptor(assertionConsumerServices, singleLogoutServices, wantAuthnRequestsSigned, wantAssertionsSigned, wantAssertionsEncrypted,
+        return buildSPDescriptor(assertionConsumerServices, singleLogoutServices, wantAuthnRequestsSigned, wantLogoutRequestsSigned, wantAssertionsSigned, wantAssertionsEncrypted,
                 entityId, nameIDPolicyFormat, signingCerts, encryptionCerts, null);
     }
 
     public static EntityDescriptorType buildSPDescriptor(List<EndpointType> assertionConsumerServices, List<EndpointType> singleLogoutServices,
-            boolean wantAuthnRequestsSigned, boolean wantAssertionsSigned, boolean wantAssertionsEncrypted,
+            boolean wantAuthnRequestsSigned, boolean wantLogoutRequestsSigned, boolean wantAssertionsSigned, boolean wantAssertionsEncrypted,
             String entityId, String nameIDPolicyFormat, List<KeyDescriptorType> signingCerts,
             List<KeyDescriptorType> encryptionCerts, Long expiration) {
         EntityDescriptorType entityDescriptor = new EntityDescriptorType(entityId);
@@ -84,10 +84,11 @@ public class SPMetadataDescriptor {
         SPSSODescriptorType spSSODescriptor = new SPSSODescriptorType(Arrays.asList(PROTOCOL_NSURI.get()));
         spSSODescriptor.setAuthnRequestsSigned(wantAuthnRequestsSigned);
         spSSODescriptor.setWantAssertionsSigned(wantAssertionsSigned);
-        spSSODescriptor.addNameIDFormat(nameIDPolicyFormat);
+        if ( nameIDPolicyFormat!= null)
+            spSSODescriptor.addNameIDFormat(nameIDPolicyFormat);
         singleLogoutServices.forEach(spSSODescriptor::addSingleLogoutService);
 
-        if (wantAuthnRequestsSigned && signingCerts != null) {
+        if ((wantAuthnRequestsSigned || wantLogoutRequestsSigned) && signingCerts != null) {
             for (KeyDescriptorType key: signingCerts) {
                 spSSODescriptor.addKeyDescriptor(key);
             }

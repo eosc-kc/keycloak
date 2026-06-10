@@ -26,6 +26,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import jakarta.persistence.EntityManager;
@@ -40,6 +41,7 @@ import org.keycloak.models.RealmModel;
 import org.keycloak.models.RoleModel;
 import org.keycloak.models.jpa.entities.ClientAttributeEntity;
 import org.keycloak.models.jpa.entities.ClientEntity;
+import org.keycloak.models.jpa.entities.FederationEntity;
 import org.keycloak.models.jpa.entities.ProtocolMapperEntity;
 import org.keycloak.models.utils.KeycloakModelUtils;
 import org.keycloak.models.utils.RoleUtils;
@@ -165,6 +167,37 @@ public class ClientAdapter implements ClientModel, JpaModel<ClientEntity> {
     @Override
     public void removeWebOrigin(String webOrigin) {
         entity.getWebOrigins().remove(webOrigin);
+    }
+
+    @Override
+    public List<String> getFederations() {
+        return entity.getFederations().stream().map(FederationEntity::getInternalId).collect(Collectors.toList());
+    }
+
+    @Override
+    public void setFederations(List<String> federations) {
+        if (federations != null) {
+            Set<FederationEntity> federationEntities = federations.stream().map(id -> {
+                FederationEntity fed = new FederationEntity();
+                fed.setInternalId(id);
+                return fed;
+            }).collect(Collectors.toSet());
+            entity.setFederations(federationEntities);
+        } else {
+            entity.setFederations(null);
+        }
+    }
+
+    @Override
+    public void addFederation(String federation) {
+        FederationEntity fed = new FederationEntity();
+        fed.setInternalId(federation);
+        entity.getFederations().add(fed);
+    }
+
+    @Override
+    public void removeFederation(String federation) {
+        entity.getFederations().removeIf(fed -> federation.equals(fed.getInternalId()));
     }
 
     @Override
