@@ -52,6 +52,7 @@ Our Keycloak version is working well with PostgreSQL database. For using other S
 - Terms and Conditions - periodic reset for all realm users. [EOSC-KC-49](https://github.com/eosc-kc/keycloak/issues/49)
 - Debug logs for OTP request and success
 - iShare implementation
+- Support for custom user scim extension
 
 ### Changed
 - Change emailVerified User field with UserAttributeMappers (conditional trust email). [EOSC-KC-70](https://github.com/eosc-kc/keycloak/issues/70)
