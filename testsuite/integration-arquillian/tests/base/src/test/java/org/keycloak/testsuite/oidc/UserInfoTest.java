@@ -751,7 +751,7 @@ public class UserInfoTest extends AbstractKeycloakTest {
                     .user(Matchers.nullValue(String.class))
                     .session(Matchers.nullValue(String.class))
                     .detail(Details.AUTH_METHOD, Details.VALIDATE_ACCESS_TOKEN)
-                    .client((String) null)
+                    .client("test-app")
                     .assertEvent();
 
             rep.setNotBefore(0);
