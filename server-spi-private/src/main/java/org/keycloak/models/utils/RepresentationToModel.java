@@ -1010,6 +1010,7 @@ public class RepresentationToModel {
         OpenIdFederationConfig fedConfig = new OpenIdFederationConfig();
         fedConfig.setInternalId(representation.getInternalId());
         fedConfig.setTrustAnchor(representation.getTrustAnchor());
+        fedConfig.setIdpConfiguration(representation.getIdpConfiguration());
         return fedConfig;
     }
 
