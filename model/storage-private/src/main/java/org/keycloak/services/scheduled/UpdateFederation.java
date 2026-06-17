@@ -29,14 +29,13 @@ public class UpdateFederation implements ScheduledTask {
 		RealmModel realm = session.realms().getRealm(realmId);
 		if ( realm != null) {
 			session.getContext().setRealm(realm);
-                        FederationModel federationModel = realm.getSAMLFederationById(federationId);
+            FederationModel federationModel = realm.getSAMLFederationById(federationId);
 			try {
 				SAMLFederationProviderFactory samlFederationProviderFactory = SAMLFederationProviderFactory.getSAMLFederationProviderFactoryById(session, federationModel.getProviderId());
 				FederationProvider federationProvider = samlFederationProviderFactory.create(session, federationModel, realmId);
 				federationProvider.updateSamlEntities();
 			} catch(Exception e){
-					e.printStackTrace();
-					logger.warn("Problem during updating IdPs of federation (id): " + federationModel.getInternalId());
+                logger.errorf("Problem during updating IdPs of federation %s: %s", federationModel.getInternalId(), e);
 			}
 		} else {
 			//realm has been removed. remove this task
