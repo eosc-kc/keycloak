@@ -151,9 +151,9 @@ export default function IdentityFederationForm({
             realm,
           }),
         );
-      } catch (error) {
+      } catch (error: any) {
         setMapperLoading("");
-        addError("deleteErrorError", error);
+        addError(`${mapperAction}MapperError`, error);
       }
     },
   });
