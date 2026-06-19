@@ -91,7 +91,7 @@ public class DefaultTokenManager implements TokenManager {
         ClientModel client = session.getContext().getClient();
         JWSBuilder jwsBuilder = new JWSBuilder();
         if (realm.getAttribute(Constants.ISHARE_ENABLED, false) && token instanceof JsonWebToken jwt ){
-            logger.infof("trying to add x5c for ishare. Token issuer is : %s and session client is : %s", jwt.getIssuedFor(), client != null ? client.getClientId() : "empty");
+            logger.debugf("trying to add x5c for ishare. Token issuer is : %s and session client is : %s", jwt.getIssuedFor(), client != null ? client.getClientId() : "empty");
         }
         if (realm.getAttribute(Constants.ISHARE_ENABLED, false) && client != null && client.getAttribute(Constants.ISHARE_ENABLED) != null &&
                 Boolean.valueOf(client.getAttribute(Constants.ISHARE_ENABLED)) && signer.getCertificateChain() != null && !signer.getCertificateChain().isEmpty()) {
