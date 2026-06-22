@@ -125,7 +125,7 @@ public class LinkedAccountsResource {
             @QueryParam("first") Integer firstResult,
             @QueryParam("max") Integer maxResults
     ) {
-        auth.requireOneOf(AccountRoles.MANAGE_ACCOUNT, AccountRoles.VIEW_PROFILE);
+        auth.requireOneOf(AccountRoles.MANAGE_ACCOUNT, AccountRoles.MANAGE_ACCOUNT_LINKS);
 
         // TODO: remove this statement once the console and the LinkedAccountsRestServiceTest are updated - this is only here for backwards compatibility
         if (linked == null) {
@@ -286,7 +286,7 @@ public class LinkedAccountsResource {
     @Path("/{providerAlias}")
     @Produces(MediaType.APPLICATION_JSON)
     public Response removeLinkedAccount(@PathParam("providerAlias") String providerAlias) {
-        auth.require(AccountRoles.MANAGE_ACCOUNT);
+        auth.requireOneOf(AccountRoles.MANAGE_ACCOUNT, AccountRoles.MANAGE_ACCOUNT_LINKS);
 
         String errorMessage = checkCommonPreconditions(providerAlias);
         if (errorMessage != null) {
@@ -325,8 +325,6 @@ public class LinkedAccountsResource {
     }
 
     private String checkCommonPreconditions(String providerAlias) {
-        auth.require(AccountRoles.MANAGE_ACCOUNT);
-
         if (Validation.isEmpty(providerAlias)) {
             return Messages.MISSING_IDENTITY_PROVIDER;
         }
