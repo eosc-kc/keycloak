@@ -68,16 +68,18 @@ public class ClientScopesClientRegistrationPolicy implements ClientRegistrationP
             //if requested scopes list is not empty and add-default-scopes is true, add realm default scopes
             List<String> defaultRealmScopes = realm.getDefaultClientScopesStream(true).map(ClientScopeModel::getName).filter(allowedDefaultScopeNames::contains).collect(Collectors.toList());
             if (!defaultRealmScopes.isEmpty()) {
-                List<String> currentDefaultScopes = requestedDefaultScopeNames == null ? new ArrayList<>() : requestedDefaultScopeNames;
+                List<String> newDefaultScopes = requestedDefaultScopeNames == null ? new LinkedList<>() : new LinkedList<>(requestedDefaultScopeNames);
                 for (String s : defaultRealmScopes) {
-                    if (!currentDefaultScopes.contains(s)) {
-                        currentDefaultScopes.add(s);
+                    if (!newDefaultScopes.contains(s)) {
+                        newDefaultScopes.add(s);
                     }
                 }
-                context.getClient().setDefaultClientScopes(currentDefaultScopes);
+                context.getClient().setDefaultClientScopes(newDefaultScopes);
 
                 if (requestedOptionalScopeNames != null) {
-                    context.getClient().getOptionalClientScopes().removeIf(x -> defaultRealmScopes.contains(x));
+                    List<String> newOptionalScopes = new LinkedList<>(requestedOptionalScopeNames);
+                    newOptionalScopes.removeIf(defaultRealmScopes::contains);
+                    context.getClient().setOptionalClientScopes(newOptionalScopes);
                 }
             }
         }
