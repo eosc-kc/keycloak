@@ -13,7 +13,7 @@ import { FormFields } from "./ClientDetails";
 import { convertAttributeNameToForm } from "../util";
 import { FormGroup } from "@patternfly/react-core";
 import { TimeSelector } from "../components/time-selector/TimeSelector";
-import useFormatDate from "../utils/useFormatDate";
+import useFormatDate, { FORMAT_DATE_AND_TIME } from "../utils/useFormatDate";
 
 type ClientDescriptionProps = {
   protocol?: string;
@@ -147,7 +147,10 @@ export const ClientDescription = ({
                 />
               }
             >
-              {new Date(parseInt(lastRefreshed)).toLocaleString()}
+              {formatDate(
+                new Date(parseInt(lastRefreshed)),
+                FORMAT_DATE_AND_TIME,
+              )}
             </FormGroup>
           )}
         </>
@@ -184,7 +187,7 @@ export const ClientDescription = ({
             />
           }
         >
-          {formatDate(new Date(expirationTime * 1000))}
+          {formatDate(new Date(expirationTime * 1000), FORMAT_DATE_AND_TIME)}
         </FormGroup>
       )}
     </FormAccess>

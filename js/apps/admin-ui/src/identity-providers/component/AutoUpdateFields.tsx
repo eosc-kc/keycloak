@@ -10,6 +10,7 @@ import {
 import "../add/discovery-settings.css";
 import { DefaultSwitchControl } from "../../components/SwitchControl";
 import { TimeSelector } from "../../components/time-selector/TimeSelector";
+import useFormatDate, { FORMAT_DATE_AND_TIME } from "../../utils/useFormatDate";
 
 type AutoUpdateFieldsProps = {
   hideMetadata?: boolean;
@@ -21,7 +22,7 @@ export const AutoUpdateFields = ({
   protocol,
 }: AutoUpdateFieldsProps) => {
   const { t } = useTranslation();
-
+  const formatDate = useFormatDate();
   const {
     watch,
     control,
@@ -99,7 +100,10 @@ export const AutoUpdateFields = ({
           </FormGroup>
           {!!lastRefreshed && (
             <FormGroup label={t("lastRefresh")}>
-              {new Date(parseInt(lastRefreshed)).toLocaleString()}
+              {formatDate(
+                new Date(parseInt(lastRefreshed)),
+                FORMAT_DATE_AND_TIME,
+              )}
             </FormGroup>
           )}
         </>

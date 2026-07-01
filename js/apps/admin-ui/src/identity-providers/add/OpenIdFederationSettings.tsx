@@ -1,6 +1,6 @@
 import type IdentityProviderRepresentation from "@keycloak/keycloak-admin-client/lib/defs/identityProviderRepresentation";
 
-import { FormGroup, Title, ValidatedOptions } from "@patternfly/react-core";
+import { FormGroup, Title } from "@patternfly/react-core";
 import {
   Select,
   SelectOption,
@@ -15,9 +15,8 @@ import {
   FormErrorText,
   TextControl,
 } from "@keycloak/keycloak-ui-shared";
-
+import useFormatDate, { FORMAT_DATE_AND_TIME } from "../../utils/useFormatDate";
 import { convertAttributeNameToForm } from "../../util";
-import useFormatDate from "../../utils/useFormatDate";
 
 type OpenIdFederationSettingsProps = {
   readOnly: boolean;
@@ -67,12 +66,15 @@ export const OpenIdFederationSettings = ({
 
           <FormGroup label={t("expirationTime")}>
             {expirationSeconds
-              ? formatDate(new Date(expirationSeconds * 1000))
+              ? formatDate(
+                  new Date(expirationSeconds * 1000),
+                  FORMAT_DATE_AND_TIME,
+                )
               : ""}
           </FormGroup>
           {!!lastRefreshedSeconds && (
             <FormGroup label={t("lastRefresh")}>
-               {new Date(lastRefreshedSeconds).toLocaleString()}
+              {formatDate(new Date(lastRefreshedSeconds), FORMAT_DATE_AND_TIME)}
             </FormGroup>
           )}
         </>
