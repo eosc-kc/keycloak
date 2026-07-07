@@ -79,7 +79,7 @@ public class UserExtensionModelSchema extends AbstractUserModelSchema {
 
             AttributeMetadata metadata = profile.getAttributes().getMetadata(name);
 
-            if (metadata == null) {
+            if (metadata == null || metadata.getAnnotations() == null) {
                 continue;
             }
 
