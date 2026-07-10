@@ -1,5 +1,6 @@
 package org.keycloak.scim.model.user;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -123,7 +124,7 @@ public class UserExtensionModelSchema extends AbstractUserModelSchema {
             return null;
         }
 
-        return createCustomAttribute(scimName);
+        return createCustomAttribute(name, scimName);
     }
 
     @Override
@@ -134,36 +135,13 @@ public class UserExtensionModelSchema extends AbstractUserModelSchema {
         return schema != null && !List.of(USER_CORE_SCHEMA, ENTERPRISE_USER_SCHEMA).contains(schema);
     }
 
-    private Attribute<UserModel,  User> createCustomAttribute(Object scimName) {
+    private Attribute<UserModel,  User> createCustomAttribute(String boundModelName, Object scimName) {
         return Attribute.<UserModel, User>simple(scimName.toString())
                 .modelAttributeResolver(attribute -> {
                     if (isCore()) {
                         return null;
                     }
-                    UserProfile profile = getUserProfile();
-                    Attributes attributes = profile.getAttributes();
-
-                    for (String modelName : attributes.nameSet()) {
-                        AttributeMetadata metadata = attributes.getMetadata(modelName);
-
-                        if (metadata == null) {
-                            return null;
-                        }
-
-                        Map<String, Object> annotations = metadata.getAnnotations();
-
-                        if (annotations == null) {
-                            return null;
-                        }
-
-                        Object modelScimAttributeName = annotations.get(ANNOTATION_SCIM_SCHEMA_ATTRIBUTE);
-
-                        if (attribute.getName().equals(modelScimAttributeName)) {
-                            return modelName;
-                        }
-                    }
-
-                    return null;
+                    return boundModelName;
                 })
                 .withSetters((model, name, value) -> {
                     if (isCore()) {
@@ -209,10 +187,24 @@ public class UserExtensionModelSchema extends AbstractUserModelSchema {
                         // Handle multivalued attributes annotated as "<parent>.value"
                         // so that SCIM gets: "<parent>": [ { "value": "..." }, ... ]
                         if ("value".equals(attributeName) && value instanceof Collection<?> values) {
-                            subAttributes.put(parentAttributeName, values.stream()
+                            List<Map<String, Object>> newValues = values.stream()
                                     .filter(Objects::nonNull)
                                     .map(v -> Map.<String, Object>of("value", v))
-                                    .toList());
+                                    .toList();
+
+                            if (subAttributes.containsKey(parentAttributeName)) {
+                                Object existing = subAttributes.get(parentAttributeName);
+                                if (existing instanceof Collection) {
+                                    // Merge the existing values with the new values
+                                    List<Map<String, Object>> mergedValues = new ArrayList<>((Collection<Map<String, Object>>) existing);
+                                    mergedValues.addAll(newValues);
+                                    subAttributes.put(parentAttributeName, mergedValues);
+                                } else {
+                                    subAttributes.put(parentAttributeName, newValues);
+                                }
+                            } else {
+                                subAttributes.put(parentAttributeName, newValues);
+                            }
                             return;
                         }
 
@@ -220,7 +212,18 @@ public class UserExtensionModelSchema extends AbstractUserModelSchema {
 
                     }
 
-                    subAttributes.put(attributeName, value);
+                    if (subAttributes.containsKey(attributeName)) {
+                        Object existing = subAttributes.get(attributeName);
+                        if (existing instanceof Collection<?> && value instanceof Collection<?>) {
+                            List<Object> mergedValues = new ArrayList<>((Collection<?>) existing);
+                            mergedValues.addAll((Collection<?>) value);
+                            subAttributes.put(attributeName, mergedValues);
+                        } else {
+                            subAttributes.put(attributeName, value);
+                        }
+                    } else {
+                        subAttributes.put(attributeName, value);
+                    }
                 }).build().get(0);
     }
 }
