@@ -1,9 +1,11 @@
 package org.keycloak.scim.model.user;
 
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 
 import org.keycloak.models.KeycloakSession;
@@ -202,8 +204,20 @@ public class UserExtensionModelSchema extends AbstractUserModelSchema {
 
                     if (subSubAttribute != -1) {
                         String parentAttributeName = attributeName.substring(0, subSubAttribute);
-                        subAttributes = (Map<String, Object>) subAttributes.computeIfAbsent(parentAttributeName, k -> new HashMap<>());
                         attributeName = attributeName.substring(parentAttributeName.length() + 1);
+
+                        // Handle multivalued attributes annotated as "<parent>.value"
+                        // so that SCIM gets: "<parent>": [ { "value": "..." }, ... ]
+                        if ("value".equals(attributeName) && value instanceof Collection<?> values) {
+                            subAttributes.put(parentAttributeName, values.stream()
+                                    .filter(Objects::nonNull)
+                                    .map(v -> Map.<String, Object>of("value", v))
+                                    .toList());
+                            return;
+                        }
+
+                        subAttributes = (Map<String, Object>) subAttributes.computeIfAbsent(parentAttributeName, k -> new HashMap<>());
+
                     }
 
                     subAttributes.put(attributeName, value);

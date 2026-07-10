@@ -168,6 +168,23 @@ public class UserTest extends AbstractScimTest {
     }
 
     @Test
+    public void testCreateWithRegularNameFormatted() {
+        User expected = new User();
+        expected.setUserName(KeycloakModelUtils.generateId());
+        Name name = new Name();
+        name.setGivenName("John");
+        name.setFamilyName("Doe");
+        expected.setName(name);
+
+        User actual = client.users().create(expected);
+        actual = client.users().get(actual.getId());
+
+        assertRootAttributes(actual, expected);
+        assertNotNull(actual.getName());
+        assertEquals("John Doe", actual.getName().getFormatted());
+    }
+
+    @Test
     public void testLocale() {
         RealmRepresentation realm = this.realm.admin().toRepresentation();
         realm.setInternationalizationEnabled(true);
@@ -1219,6 +1236,69 @@ public class UserTest extends AbstractScimTest {
         } finally {
             client.users().delete(user.getId());
         }
+    }
+
+    @Test
+    public void testGetMultivaluedCustomAttributesWithAndWithoutValueSubAttribute() {
+        String customSchema = "urn:my:params:scim:schemas:extension:custom-multi:1.0:User";
+
+        UPConfig upConfig = realm.admin().users().userProfile().getConfiguration();
+
+        UPAttribute assuranceAttribute = new UPAttribute("scim.assurance", Map.of(
+                ANNOTATION_SCIM_SCHEMA_ATTRIBUTE, customSchema + ":assurance.value"));
+        assuranceAttribute.setMultivalued(true);
+        assuranceAttribute.setPermissions(new UPAttributePermissions(Set.of(UPConfigUtils.ROLE_ADMIN), Set.of(UPConfigUtils.ROLE_ADMIN)));
+        upConfig.addOrReplaceAttribute(assuranceAttribute);
+
+        UPAttribute affiliationAttribute = new UPAttribute("scim.affiliation", Map.of(
+                ANNOTATION_SCIM_SCHEMA_ATTRIBUTE, customSchema + ":affiliation"));
+        affiliationAttribute.setMultivalued(true);
+        affiliationAttribute.setPermissions(new UPAttributePermissions(Set.of(UPConfigUtils.ROLE_ADMIN), Set.of(UPConfigUtils.ROLE_ADMIN)));
+        upConfig.addOrReplaceAttribute(affiliationAttribute);
+
+        realm.admin().users().userProfile().update(upConfig);
+
+        UserRepresentation existing = UserConfigBuilder.create()
+                .username(KeycloakModelUtils.generateId())
+                .email(KeycloakModelUtils.generateId() + "@keycloak.org")
+                .firstName("f")
+                .lastName("l")
+                .enabled(true)
+                .build();
+        try (Response response = realm.admin().users().create(existing)) {
+            String id = ApiUtil.getCreatedId(response);
+            existing.setId(id);
+        }
+
+        existing = realm.admin().users().get(existing.getId()).toRepresentation();
+        Map<String, List<String>> attributes = new HashMap<>(ofNullable(existing.getAttributes()).orElse(Map.of()));
+        List<String> expectedAssuranceValues = List.of(
+                "https://refeds.org/assurance/ID/unique",
+                "https://refeds.org/assurance/IAP/low",
+                "https://aarc-project.eu/policy/authn-assurance/assam");
+        List<String> expectedAffiliationValues = List.of("member", "faculty");
+        attributes.put(assuranceAttribute.getName(), expectedAssuranceValues);
+        attributes.put(affiliationAttribute.getName(), expectedAffiliationValues);
+        existing.setAttributes(attributes);
+        realm.admin().users().get(existing.getId()).update(existing);
+
+        User user = client.users().get(existing.getId());
+        Object extension = ofNullable(user.getExtensions()).orElse(Map.of()).get(customSchema);
+        assertInstanceOf(Map.class, extension);
+        assertTrue(user.getSchemas().contains(customSchema));
+
+        Object assurance = ((Map<?, ?>) extension).get("assurance");
+        assertInstanceOf(List.class, assurance);
+        assertEquals(expectedAssuranceValues.size(), ((List<?>) assurance).size());
+        for (int i = 0; i < expectedAssuranceValues.size(); i++) {
+            Object valueNode = ((List<?>) assurance).get(i);
+            assertInstanceOf(Map.class, valueNode);
+            assertEquals(expectedAssuranceValues.get(i), ((Map<?, ?>) valueNode).get("value"));
+        }
+
+        Object affiliation = ((Map<?, ?>) extension).get("affiliation");
+        assertInstanceOf(List.class, affiliation);
+        assertEquals(expectedAffiliationValues, affiliation);
     }
 
     private static void assertGroup(List<GroupMembership> groups, GroupRepresentation group, String type) {

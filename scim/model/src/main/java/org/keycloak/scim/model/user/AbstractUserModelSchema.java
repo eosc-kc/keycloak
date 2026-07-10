@@ -70,6 +70,13 @@ public abstract class AbstractUserModelSchema extends AbstractModelSchema<UserMo
         }
         UserProfile profile = session.getProvider(UserProfileProvider.class).create(UserProfileContext.SCIM, model);
         Attributes attributes = profile.getAttributes();
+        AttributeMetadata metadata = attributes.getMetadata(name);
+
+        //support multivalued user attribute to scim as array
+        if (metadata != null && metadata.isMultivalued()) {
+            return attributes.get(name);
+        }
+
         return attributes.getFirst(name);
     }
 
