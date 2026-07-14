@@ -911,7 +911,7 @@ public class TokenManager {
     }
 
     public static Stream<String> parseScopeParameter(String scopeParam) {
-        return Arrays.stream(scopeParam.split(" ")).filter(String::isEmpty).distinct();
+        return Arrays.stream(scopeParam.split(" ")).distinct();
     }
 
     // Check if user still has granted consents to all requested client scopes
