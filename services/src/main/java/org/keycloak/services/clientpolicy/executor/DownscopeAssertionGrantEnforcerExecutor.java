@@ -123,7 +123,7 @@ public class DownscopeAssertionGrantEnforcerExecutor implements ClientPolicyExec
                 : Collections.emptySet();
         Set<String> existingScopes = tokenScopes;
 
-        if (scopeParam != null && configuration.isGrantValidScopeSubset()) {
+        if (scopeParam != null && (configuration == null || configuration.isGrantValidScopeSubset())) {
             // the user requested specific scopes, check they are allowed
             Set<String> requestedScopes = TokenManager.parseScopeParameter(scopeParam).collect(Collectors.toSet());
 
