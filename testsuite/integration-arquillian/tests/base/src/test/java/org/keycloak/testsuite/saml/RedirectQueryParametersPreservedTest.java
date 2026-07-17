@@ -2,7 +2,7 @@ package org.keycloak.testsuite.saml;
 
 import java.io.IOException;
 
-import org.keycloak.testsuite.saml.federation.SamlFederationIdpTest;
+import org.keycloak.testsuite.federation.saml.SamlFederationIdpTest;
 
 import org.junit.Test;
 
