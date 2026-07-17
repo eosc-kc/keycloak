@@ -1,4 +1,4 @@
-package org.keycloak.testsuite.saml.federation;
+package org.keycloak.testsuite.federation.saml;
 
 import java.io.IOException;
 import java.net.URI;

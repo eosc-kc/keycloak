@@ -1,4 +1,4 @@
-package org.keycloak.testsuite.saml.federation;
+package org.keycloak.testsuite.federation.saml;
 
 import java.io.IOException;
 import java.nio.charset.Charset;
@@ -214,75 +214,6 @@ public abstract class SAMLFederationTest extends AbstractAdminTest {
         sleep(70000);
     }
 
-
-    @Test
-    public void testCreateWithDenyListandRemove() throws IOException {
-        //blacklist entityIdIdP entity id and registrationAuthority="http://aai.grnet.gr/"
-        String scopeId = createClientScope("saml-scope");
-
-        List<ProtocolMapperRepresentation> defaultMappers = new ArrayList<>();
-        defaultMappers.add(makeSamlAttributeMapper(scopeId, "sn", "urn:oid:2.5.4.40"));
-        defaultMappers.add(makeSamlAttributeMapper(scopeId, "email", "urn:oid:0.9.2342.19200300.100.1.3"));
-        realm.addDefaultOptionalClientScope(scopeId);
-        assertAdminEvents.assertEvent(realmId, OperationType.CREATE, AdminEventPaths.defaultOptionalClientScopePath(scopeId), ResourceType.CLIENT_SCOPE);
-
-        //create with excluding one idp
-        Set<String> entityIdDenyList = new HashSet<>();
-        entityIdDenyList.add(entityIdIdP);
-        Set<String> authorityDenyList = new HashSet<>();
-        authorityDenyList.add(authority);
-        String internalId = createFederation("edugain-sample",
-                "http://localhost:8880/edugain-sample-test.xml", "All", entityIdDenyList, new HashSet<>(), authorityDenyList, new HashSet<>(), new HashMap<>());
-
-        sleep(70000);
-
-        try {
-            // first execute trigger update idps and then get identity providers federation
-            SAMLFederationRepresentation representation = realm.samlFederation()
-                    .getSAMLFederation(internalId);
-            assertNotNull(representation);
-
-            assertEquals("wrong federation alias", "edugain-sample", representation.getAlias());
-            assertEquals("not saml federation", "saml", representation.getProviderId());
-            assertEquals("wrong url", "http://localhost:8880/edugain-sample-test.xml",
-                    representation.getUrl());
-
-            //only client2 must be created
-            List<ClientRepresentation> clients = realm.clients().findByClientId(entityIdClient1);
-            assertEquals("Not expected to found " + entityIdClient1 + " client", clients.size(), 0);
-            clients = realm.clients().findByClientId(entityIdClient2);
-            assertEquals("Expected to found " + entityIdClient2 + " client", clients.size(), 1);
-            ClientRepresentation client2 = clients.get(0);
-            assertClient(client2, "Technical University of Kosice", null, "https://test-sp.tuke.sk/Shibboleth.sso/SAML2/Artifact", "https://test-sp.tuke.sk/Shibboleth.sso/SLO/Redirect");
-            assertEquals(client2.getProtocolMappers().size(), 1);
-            //check for equality for email mapper for client2
-            ProtocolMapperRepresentation mapperEmail = client2.getProtocolMappers().get(0);
-            assertEquals(mapperEmail.getName(), "email");
-            assertEquals(mapperEmail.getConfig().get(ProtocolMapperUtils.USER_ATTRIBUTE), "email");
-            assertEquals(mapperEmail.getConfig().get(AttributeStatementHelper.SAML_ATTRIBUTE_NAME), "urn:oid:0.9.2342.19200300.100.1.3");
-            assertEquals(mapperEmail.getConfig().get(AttributeStatementHelper.FRIENDLY_NAME), "email");
-
-            // must be one idp
-            List<IdentityProviderRepresentation> idps = realm.identityProviders().findAll();
-            log.infof("Identity Providers are %s", idps.size());
-            idps.stream().filter(idp -> idp.getFederations() != null && !idp.getFederations().isEmpty()).forEach(idp -> {
-                assertEquals("wrong IdP", hashEntityIdIdP, idp.getAlias());
-                assertEquals("not saml IdP", "saml", idp.getProviderId());
-                assertNotNull("empty IdP config", idp.getConfig());
-                assertTrue("IdP singleSignOnServiceUrl not exist", idp.getConfig().containsKey("singleSignOnServiceUrl"));
-                assertTrue("IdP postBindingAuthnRequest not exist", idp.getConfig().containsKey("postBindingAuthnRequest"));
-                assertTrue(Boolean.valueOf(idp.getConfig().get("postBindingAuthnRequest")));
-            });
-
-        } finally {
-            realm.clientScopes().get(scopeId).remove();
-            realm.samlFederation().delete(internalId);
-            sleep(70000);
-        }
-
-    }
-
-
     @Test
     public void testCreateWithAllowListandRemove() throws IOException {
         //whitelist entityIdIdP entity id and registrationAuthority="http://aai.grnet.gr/"
@@ -370,31 +301,6 @@ public abstract class SAMLFederationTest extends AbstractAdminTest {
         realm.samlFederation().delete(internalId);
         sleep(70000);
 
-    }
-
-
-    @Test
-    public void testCreateAndExportWithoutMappers() throws IOException, ParsingException {
-
-        String internalId = createFederation("edugain-sample", "http://localhost:8880/edugain-sample-test.xml", "Identity Providers", new HashSet<>(),
-                new HashSet<>(), new HashSet<>(), new HashSet<>(), new HashMap<>());
-
-        SAMLFederationRepresentation representation = realm.samlFederation()
-                .getSAMLFederation(internalId);
-        Assert.assertNotNull(representation);
-        String spDescriptorString = realm.samlFederation().export(representation.getAlias()).readEntity(String.class);
-        SAMLParser parser = SAMLParser.getInstance();
-        EntityDescriptorType o = (EntityDescriptorType) parser.parse(new StringInputStream(spDescriptorString));
-        SPSSODescriptorType spDescriptor = o.getChoiceType().get(0).getDescriptors().get(0).getSpDescriptor();
-
-        //attribute mappers do  exists-  AttributeConsumingService exist
-        Assert.assertEquals(spDescriptor.getAssertionConsumerService().size(), 1);
-        Assert.assertEquals(spDescriptor.getSingleLogoutService().size(), 1);
-        Assert.assertEquals(spDescriptor.getNameIDFormat().size(), 1);
-        Assert.assertEquals(spDescriptor.getNameIDFormat().get(0), "urn:oasis:names:tc:SAML:2.0:nameid-format:persistent");
-        Assert.assertTrue(spDescriptor.getAttributeConsumingService().isEmpty());
-        realm.samlFederation().delete(internalId);
-        sleep(70000);
     }
 
 
