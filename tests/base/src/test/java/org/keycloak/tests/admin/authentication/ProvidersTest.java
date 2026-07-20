@@ -94,6 +94,8 @@ public class ProvidersTest extends AbstractAuthenticationTest {
                 "Validates client based on signed JWT issued by client and signed with the Client Secret", true);
         addClientAuthenticatorProviderInfo(expected, "federated-jwt", "Signed JWT - Federated",
                 "Validates client based on signed JWT issued and signed by an external identity provider", false);
+        addClientAuthenticatorProviderInfo(expected, "client-ishare", "iSHARE",
+                "iSHARE Client Authenticator", false);
 
         compareProviders(expected, result);
     }

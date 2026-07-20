@@ -437,6 +437,10 @@ public class IdentityProviderSamlTest extends AbstractIdentityProviderTest {
                 "entityAttributes"
         ));
 
+        if (isHideOnLoginPage){
+            keys.add("hideOnLoginPage");
+        }
+
         assertThat(config.keySet(), containsInAnyOrder(keys.toArray()));
         assertThat(config, hasEntry("validateSignature", "true"));
         assertThat(config, hasEntry("singleLogoutServiceUrl", "http://localhost:8080/auth/realms/master/protocol/saml"));
