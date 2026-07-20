@@ -85,6 +85,7 @@ Our Keycloak version is working well with PostgreSQL database. For using other S
 - Continue client browser flow after User login from Identity Provider [RCIAM-1038](https://jira.argo.grnet.gr/browse/RCIAM-1038)
 - Client Signature Required true requires also AuthnRequestsSigned be true[Keycloak requires signed authN requests when WantAuthNSigned=false](https://trello.com/c/XpLOXiz2/2177-keycloak-requires-signed-authn-requests-when-wantauthnsignedfalse)
 - Dynamic scopes( default enabled): bug corrections, filtering and consent [RCIAM-848](https://jira.argo.grnet.gr/browse/RCIAM-848)
+- Token Exchange work with dynamic scopes enabled
 - Update changes related to service account with Client registration 
 - Being possible to accept terms and conditions before User is saved in Keycloak during first broker login. Follow GDPR.
 - Being possible to add realm default scopes during Dynamic Client Registration/ OpenID Federation when scopes are including in client representation

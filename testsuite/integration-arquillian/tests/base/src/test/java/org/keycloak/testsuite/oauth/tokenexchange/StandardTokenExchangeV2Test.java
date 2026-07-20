@@ -1085,12 +1085,12 @@ public class StandardTokenExchangeV2Test extends AbstractClientPoliciesTest {
         // only those should be there, even default-scope1 is supressed
         oauth.scope("email profile optional-scope2");
         AccessTokenResponse response = tokenExchange(accessToken, "requester-client", "secret", null, null);
-        assertAudiencesAndScopes(response, john, List.of("target-client2"), List.of("email", "profile", "optional-scope2", "default-scope1"));
+        assertAudiencesAndScopes(response, john, List.of("target-client2"), List.of("email", "profile", "optional-scope2"));
 
         // exchange with downscope to only optional-scope2
         oauth.scope("optional-scope2");
         response = tokenExchange(accessToken, "requester-client", "secret", null, null);
-        assertAudiencesAndScopes(response, john, List.of("target-client2"), List.of("optional-scope2", "default-scope1"));
+        assertAudiencesAndScopes(response, john, List.of("target-client2"), List.of("optional-scope2"));
 
         // exchange for a invisible scope returns error although it is added by default
         oauth.scope("basic");
@@ -1144,17 +1144,17 @@ public class StandardTokenExchangeV2Test extends AbstractClientPoliciesTest {
         // only those should be there, even default-scope1 is supressed
         oauth.scope("email profile optional-scope2");
         AccessTokenResponse response = tokenExchange(accessToken, "requester-client", "secret", null, null);
-        assertAudiencesAndScopes(response, john, List.of("target-client2"), List.of("email", "profile", "optional-scope2", "default-scope1"));
+        assertAudiencesAndScopes(response, john, List.of("target-client2"), List.of("email", "profile", "optional-scope2"));
 
         // exchange with downscope to only optional-scope2
         oauth.scope("optional-scope2");
         response = tokenExchange(accessToken, "requester-client", "secret", null, null);
-        assertAudiencesAndScopes(response, john, List.of("target-client2"), List.of("optional-scope2", "default-scope1"));
+        assertAudiencesAndScopes(response, john, List.of("target-client2"), List.of("optional-scope2"));
 
         // exchange for another optional that is not in the token
         oauth.scope("optional-requester-scope email optional-scope2");
         response = tokenExchange(accessToken, "requester-client", "secret", null, null);
-        assertAudiencesAndScopes(response, john, List.of("target-client2"), List.of("email","optional-scope2", "default-scope1"));
+        assertAudiencesAndScopes(response, john, List.of("target-client2"), List.of("email","optional-scope2"));
 
 
     }
