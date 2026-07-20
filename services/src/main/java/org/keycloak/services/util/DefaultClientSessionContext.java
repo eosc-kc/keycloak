@@ -143,8 +143,7 @@ public class DefaultClientSessionContext implements ClientSessionContext {
         if (offlineAccessRequested != null) return offlineAccessRequested;
 
         ClientScopeModel offlineAccessScope = KeycloakModelUtils.getClientScopeByName(clientSession.getRealm(), OAuth2Constants.OFFLINE_ACCESS);
-        offlineAccessRequested = offlineAccessScope == null ? false :
-                (Profile.isFeatureEnabled(Profile.Feature.DYNAMIC_SCOPES) ? buildScopesStringFromAuthorizationRequest(true).contains(OAuth2Constants.OFFLINE_ACCESS) : getClientScopeIds().contains(offlineAccessScope.getId()) );
+        offlineAccessRequested = offlineAccessScope == null ? false : getClientScopeIds().contains(offlineAccessScope.getId());
         setAttribute(OAuth2Constants.OFFLINE_ACCESS, offlineAccessRequested);
         return offlineAccessRequested;
     }
@@ -226,7 +225,7 @@ public class DefaultClientSessionContext implements ClientSessionContext {
         return AuthorizationContextUtil.getAuthorizationRequestContextFromScopes(session, clientSession.getClient(), requestedScopeString).getAuthorizationDetailEntries().stream()
                 .filter(authorizationDetails -> authorizationDetails.getSource().equals(AuthorizationRequestSource.SCOPE))
                 .filter(authorizationDetails -> authorizationDetails.getClientScope().isIncludeInTokenScope() || ignoreIncludeInTokenScope)
-                .filter(authorizationDetails -> isClientScopePermittedForUser(authorizationDetails.getClientScope()))
+                .filter(authorizationDetails -> isAllowed(authorizationDetails.getClientScope()))
                 .map(authorizationDetails -> authorizationDetails.getAuthorizationDetails().getScopeNameFromCustomData())
                 .collect(Collectors.joining(" "));
     }
