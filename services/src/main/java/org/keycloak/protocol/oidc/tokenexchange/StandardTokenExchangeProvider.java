@@ -210,6 +210,10 @@ public class StandardTokenExchangeProvider extends AbstractTokenExchangeProvider
             throw new CorsErrorResponseException(cors, OAuthErrorException.INVALID_SCOPE, errorMessage, Response.Status.BAD_REQUEST);
         }
 
+        if (scope == null) {
+            scope = token.getScope();
+        }
+
         return TokenManager.clientScopePolicy(scope, targetUser, realm.getClientScopesStream().collect(Collectors.toList()));
     }
 
