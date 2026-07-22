@@ -10,7 +10,7 @@ Full Keycloak upstream jira issue can be shown if filtered by Fix version.
 
 Our Keycloak version is working well with PostgreSQL database. For using other SQL databases, text field in database need to be evaluated.
 
-## [UNRELEASED] 
+## [26.6.3-1.0] -2026-07-22
 
 ### Added
 - SAML Federation implementation
