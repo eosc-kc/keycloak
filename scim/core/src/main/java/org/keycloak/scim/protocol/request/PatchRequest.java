@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
+import org.keycloak.scim.resource.group.Member;
 import org.keycloak.util.JsonSerialization;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -118,6 +119,23 @@ public class PatchRequest {
 
         public Builder add(String path, String value) {
             operation("add", path, value);
+            return this;
+        }
+
+        public Builder addMember(String type, String memberId) {
+            Member member = new Member();
+            member.setValue(memberId);
+            member.setType(type);
+            return add("members", List.of(member));
+        }
+
+        public Builder add(String path, Object objectValue) {
+            try {
+                String json = JsonSerialization.writeValueAsString(objectValue);
+                operation("add", path, json);
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
             return this;
         }
 
