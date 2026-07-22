@@ -10,6 +10,11 @@ Full Keycloak upstream jira issue can be shown if filtered by Fix version.
 
 Our Keycloak version is working well with PostgreSQL database. For using other SQL databases, text field in database need to be evaluated.
 
+## [UNRELEASED]
+
+### Added
+- SCIM : Support type "Group" in "members" field for child groups
+
 ## [26.6.3-1.0] -2026-07-22
 
 ### Added
