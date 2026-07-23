@@ -223,8 +223,10 @@ public class TokenIntrospectionTest extends AbstractTestRealmKeycloakTest {
         oauth.client("confidential-cli", "bad_credential");
         IntrospectionResponse tokenResponse = oauth.doIntrospectionAccessTokenRequest(accessTokenResponse.getAccessToken());
 
-        Assert.assertEquals("Authentication failed.", tokenResponse.getErrorDescription());
-        Assert.assertEquals(OAuthErrorException.INVALID_REQUEST, tokenResponse.getError());
+
+        assertEquals(401, tokenResponse.getStatusCode());
+        assertEquals(OAuthErrorException.INVALID_CLIENT, tokenResponse.getError());
+        assertEquals("Client authentication failed.", tokenResponse.getErrorDescription());
     }
 
     @Test
