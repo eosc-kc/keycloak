@@ -15,6 +15,9 @@ Our Keycloak version is working well with PostgreSQL database. For using other S
 ### Added
 - SCIM : Support type "Group" in "members" field for child groups
 
+### Fixed
+- Fix location of SCIM resources so IDs don't appear twice in the URL
+
 ## [26.6.3-1.0] -2026-07-22
 
 ### Added
