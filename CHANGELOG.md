@@ -17,6 +17,7 @@ Our Keycloak version is working well with PostgreSQL database. For using other S
 
 ### Fixed
 - Fix location of SCIM resources so IDs don't appear twice in the URL
+- Fix introspection error for invalid client authentication
 
 ## [26.6.3-1.0] -2026-07-22
 
