@@ -40,7 +40,7 @@ import "./realm-settings-section.css";
 
 type IndexedAnnotations = {
   key: string;
-  value?: Record<string, unknown>;
+  value?: unknown;
 };
 
 export type IndexedValidations = {
@@ -174,7 +174,7 @@ export default function NewAttributeSettings() {
         "annotations",
         Object.entries(annotations || {}).map(([key, value]) => ({
           key,
-          value: value as Record<string, unknown>,
+          value,
         })),
       );
       form.setValue(
