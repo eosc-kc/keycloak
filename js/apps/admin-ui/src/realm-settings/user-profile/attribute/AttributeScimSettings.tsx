@@ -1,18 +1,23 @@
-import { FormGroup, SelectGroup, SelectOption } from "@patternfly/react-core";
-import { useFieldArray, useFormContext, useWatch } from "react-hook-form";
-import { useTranslation } from "react-i18next";
-import { FormAccess } from "../../../components/form/FormAccess";
+import {
+  Button,
+  FormGroup,
+  SelectGroup,
+  SelectOption,
+} from "@patternfly/react-core";
 import {
   HelpItem,
   KeycloakSelect,
   SelectVariant,
 } from "@keycloak/keycloak-ui-shared";
+import { useState } from "react";
+import { useFieldArray, useFormContext, useWatch } from "react-hook-form";
+import { useTranslation } from "react-i18next";
+import { FormAccess } from "../../../components/form/FormAccess";
 import { useParams } from "../../../utils/useParams";
 import type { AttributeParams } from "../../routes/Attribute";
 import { useUserProfile } from "../UserProfileContext";
 
 import "../../realm-settings-section.css";
-import { useState } from "react";
 
 const SCIM_CORE_ATTRIBUTES = [
   "name.middleName",
@@ -54,6 +59,10 @@ const SCIM_ATTRIBUTE_GROUPS: ScimAttributeGroup[] = [
   },
 ];
 
+const PREDEFINED_SCIM_ATTRIBUTES = SCIM_ATTRIBUTE_GROUPS.flatMap(
+  (group) => group.attributes,
+);
+
 export const SCIM_ANNOTATION_KEY = "kc.scim.schema.attribute";
 
 export const normalizeScimAnnotationValue = (value: unknown): string[] => {
@@ -77,17 +86,27 @@ export const AttributeScimSettings = () => {
   const { control } = useFormContext();
   const { attributeName } = useParams<AttributeParams>();
   const { config } = useUserProfile();
+  const [selectKey, setSelectKey] = useState(0);
+
   const [open, setOpen] = useState(false);
   const [filterValue, setFilterValue] = useState("");
+
   const { append, update } = useFieldArray({
     control,
     name: "annotations",
   });
+
   const annotationValues: Array<{ key: string; value?: unknown }> =
-    useWatch({ name: "annotations", control, defaultValue: [] }) ?? [];
+    useWatch({
+      name: "annotations",
+      control,
+      defaultValue: [],
+    }) ?? [];
+
   const scimIndex = annotationValues.findIndex(
-    (a) => a.key === SCIM_ANNOTATION_KEY,
+    (annotation) => annotation.key === SCIM_ANNOTATION_KEY,
   );
+
   const scimValues = normalizeScimAnnotationValue(
     scimIndex >= 0 ? annotationValues[scimIndex]?.value : undefined,
   );
@@ -97,30 +116,40 @@ export const AttributeScimSettings = () => {
 
     if (values.length === 0) {
       if (scimIndex >= 0) {
-        update(scimIndex, { key: SCIM_ANNOTATION_KEY, value: undefined });
+        update(scimIndex, {
+          key: SCIM_ANNOTATION_KEY,
+          value: undefined,
+        });
       }
+
       return;
     }
 
     if (scimIndex >= 0) {
-      update(scimIndex, { key: SCIM_ANNOTATION_KEY, value });
+      update(scimIndex, {
+        key: SCIM_ANNOTATION_KEY,
+        value,
+      });
     } else {
-      append({ key: SCIM_ANNOTATION_KEY, value });
+      append({
+        key: SCIM_ANNOTATION_KEY,
+        value,
+      });
     }
   };
 
   const takenScimAttributes = (config?.attributes ?? [])
-    .filter((attr) => attr.name !== attributeName)
-    .flatMap((attr) => {
-      const annotationValue = attr.annotations?.[SCIM_ANNOTATION_KEY];
-      return normalizeScimAnnotationValue(annotationValue);
-    })
-    .filter(Boolean);
+    .filter((attribute) => attribute.name !== attributeName)
+    .flatMap((attribute) =>
+      normalizeScimAnnotationValue(
+        attribute.annotations?.[SCIM_ANNOTATION_KEY],
+      ),
+    );
 
   const availableGroups = SCIM_ATTRIBUTE_GROUPS.map((group) => ({
     ...group,
     attributes: group.attributes.filter(
-      (attr) => !takenScimAttributes.includes(attr),
+      (attribute) => !takenScimAttributes.includes(attribute),
     ),
   }));
 
@@ -128,14 +157,31 @@ export const AttributeScimSettings = () => {
     .map((group) => ({
       ...group,
       attributes: filterValue
-        ? group.attributes.filter((attr) =>
-            attr.toLowerCase().includes(filterValue.toLowerCase()),
+        ? group.attributes.filter((attribute) =>
+            attribute.toLowerCase().includes(filterValue.toLowerCase()),
           )
         : group.attributes,
     }))
     .filter((group) => group.attributes.length > 0);
 
-  const hasOptions = filteredGroups.some((g) => g.attributes.length > 0);
+  const customValue = filterValue.trim();
+
+  const canAddCustomValue =
+    customValue.length > 0 &&
+    !scimValues.includes(customValue) &&
+    !takenScimAttributes.includes(customValue) &&
+    !PREDEFINED_SCIM_ATTRIBUTES.includes(customValue);
+
+  const handleAddCustomValue = () => {
+    if (!canAddCustomValue) {
+      return;
+    }
+
+    handleScimChange([...scimValues, customValue]);
+    setFilterValue("");
+    setSelectKey((currentKey) => currentKey + 1);
+    setOpen(false);
+  };
 
   return (
     <FormAccess role="manage-realm" isHorizontal>
@@ -151,9 +197,18 @@ export const AttributeScimSettings = () => {
       >
         <KeycloakSelect
           isOpen={open}
-          onToggle={(b) => setOpen(b)}
+          onToggle={setOpen}
+          key={selectKey}
           onSelect={(value) => {
             const selectedValue = String(value);
+
+            // TypeaheadSelect uses an empty selection to clear its filter.
+            // It must not be stored as a SCIM annotation value.
+            if (!selectedValue) {
+              setFilterValue("");
+              return;
+            }
+
             const nextValues = scimValues.includes(selectedValue)
               ? scimValues.filter((item) => item !== selectedValue)
               : [...scimValues, selectedValue];
@@ -169,19 +224,28 @@ export const AttributeScimSettings = () => {
             expandedText: t("hide"),
             collapsedText: t("showRemaining"),
           }}
-          onFilter={(value) => {
-            setFilterValue(value);
-          }}
-          onClear={() => {
-            handleScimChange([]);
-          }}
+          onFilter={setFilterValue}
+          footer={
+            canAddCustomValue ? (
+              <Button
+                variant="link"
+                isInline
+                onClick={(event) => {
+                  event.stopPropagation();
+                  handleAddCustomValue();
+                }}
+              >
+                {t("add")} &quot;{customValue}&quot;
+              </Button>
+            ) : undefined
+          }
         >
-          {hasOptions ? (
+          {filteredGroups.length > 0 ? (
             filteredGroups.map((group) => (
               <SelectGroup key={group.labelKey} label={t(group.labelKey)}>
-                {group.attributes.map((attr) => (
-                  <SelectOption key={attr} value={attr}>
-                    {attr}
+                {group.attributes.map((attribute) => (
+                  <SelectOption key={attribute} value={attribute}>
+                    {attribute}
                   </SelectOption>
                 ))}
               </SelectGroup>

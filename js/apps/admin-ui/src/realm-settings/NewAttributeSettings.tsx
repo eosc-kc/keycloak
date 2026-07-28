@@ -97,20 +97,36 @@ const CreateAttributeFormContent = ({
   const { t } = useTranslation();
   const form = useFormContext();
   const { realm, attributeName } = useParams<AttributeParams>();
-  const editMode = attributeName ? true : false;
+  const editMode = Boolean(attributeName);
 
   return (
     <UserProfileProvider>
       <ScrollForm
         label={t("jumpToSection")}
         sections={[
-          { title: t("generalSettings"), panel: <AttributeGeneralSettings /> },
-          { title: t("permission"), panel: <AttributePermission /> },
-          { title: t("validations"), panel: <AttributeValidations /> },
-          { title: t("annotations"), panel: <AttributeAnnotations /> },
-          { title: t("scimSettings"), panel: <AttributeScimSettings /> },
+          {
+            title: t("generalSettings"),
+            panel: <AttributeGeneralSettings />,
+          },
+          {
+            title: t("permission"),
+            panel: <AttributePermission />,
+          },
+          {
+            title: t("validations"),
+            panel: <AttributeValidations />,
+          },
+          {
+            title: t("annotations"),
+            panel: <AttributeAnnotations />,
+          },
+          {
+            title: t("scimSettings"),
+            panel: <AttributeScimSettings />,
+          },
         ]}
       />
+
       <Form onSubmit={form.handleSubmit(save)}>
         <FixedButtonsGroup name="attribute-settings">
           <Button
@@ -120,8 +136,12 @@ const CreateAttributeFormContent = ({
           >
             {editMode ? t("save") : t("create")}
           </Button>
+
           <Link
-            to={toUserProfile({ realm, tab: "attributes" })}
+            to={toUserProfile({
+              realm,
+              tab: "attributes",
+            })}
             data-testid="attribute-cancel"
             className="kc-attributeCancel"
           >
@@ -136,17 +156,20 @@ const CreateAttributeFormContent = ({
 export default function NewAttributeSettings() {
   const { adminClient } = useAdminClient();
   const { realm: realmName, attributeName } = useParams<AttributeParams>();
+
   const form = useForm<UserProfileAttributeFormFields>();
   const { t, i18n } = useTranslation();
   const navigate = useNavigate();
   const { addAlert, addError } = useAlerts();
+
   const [config, setConfig] = useState<UserProfileConfig | null>(null);
-  const editMode = attributeName ? true : false;
+  const editMode = Boolean(attributeName);
 
   useFetch(
     () => adminClient.users.getProfile(),
     (config) => {
       setConfig(config);
+
       const {
         annotations,
         validations,
@@ -156,9 +179,14 @@ export default function NewAttributeSettings() {
         multivalued,
         defaultValue,
         ...values
-      } = config.attributes!.find(
+      } = config.attributes?.find(
         (attribute) => attribute.name === attributeName,
-      ) || { permissions: { edit: ["admin"] } };
+      ) || {
+        permissions: {
+          edit: ["admin"],
+        },
+      };
+
       convertToFormValues(
         {
           ...values,
@@ -167,9 +195,22 @@ export default function NewAttributeSettings() {
         },
         form.setValue,
       );
+
       Object.entries(
-        flatten<any, any>({ permissions, selector, required }, { safe: true }),
-      ).map(([key, value]) => form.setValue(key as any, value));
+        flatten<any, any>(
+          {
+            permissions,
+            selector,
+            required,
+          },
+          {
+            safe: true,
+          },
+        ),
+      ).forEach(([key, value]) => {
+        form.setValue(key as any, value);
+      });
+
       form.setValue(
         "annotations",
         Object.entries(annotations || {}).map(([key, value]) => ({
@@ -177,6 +218,7 @@ export default function NewAttributeSettings() {
           value,
         })),
       );
+
       form.setValue(
         "validations",
         Object.entries(validations || {}).map(([key, value]) => ({
@@ -184,6 +226,7 @@ export default function NewAttributeSettings() {
           value: value as Record<string, unknown>,
         })),
       );
+
       form.setValue("isRequired", required !== undefined);
       form.setValue("multivalued", multivalued === true);
       form.setValue("defaultValue", defaultValue);
@@ -205,19 +248,26 @@ export default function NewAttributeSettings() {
     }
 
     const validations = formFields.validations.reduce(
-      (prevValidations, currentValidations) => {
-        prevValidations[currentValidations.key] =
-          currentValidations.value || {};
-        return prevValidations;
+      (previousValidations, currentValidation) => {
+        previousValidations[currentValidation.key] =
+          currentValidation.value || {};
+
+        return previousValidations;
       },
       {} as Record<string, unknown>,
     );
 
     const annotations = formFields.annotations
-      .filter((item) => !(item.key === SCIM_ANNOTATION_KEY && !item.value))
+      .filter(
+        (annotation) =>
+          !(annotation.key === SCIM_ANNOTATION_KEY && !annotation.value),
+      )
       .reduce(
-        (obj, item) => Object.assign(obj, { [item.key]: item.value }),
-        {},
+        (result, annotation) =>
+          Object.assign(result, {
+            [annotation.key]: annotation.value,
+          }),
+        {} as Record<string, unknown>,
       );
 
     const patchAttributes = () =>
@@ -227,6 +277,7 @@ export default function NewAttributeSettings() {
         }
 
         delete attribute.required;
+
         return Object.assign(
           {
             ...attribute,
@@ -239,10 +290,24 @@ export default function NewAttributeSettings() {
             validations,
           },
           formFields.defaultValue
-            ? { defaultValue: formFields.defaultValue }
-            : { defaultValue: null },
-          formFields.isRequired ? { required: formFields.required } : undefined,
-          formFields.group ? { group: formFields.group } : { group: null },
+            ? {
+                defaultValue: formFields.defaultValue,
+              }
+            : {
+                defaultValue: null,
+              },
+          formFields.isRequired
+            ? {
+                required: formFields.required,
+              }
+            : undefined,
+          formFields.group
+            ? {
+                group: formFields.group,
+              }
+            : {
+                group: null,
+              },
         );
       });
 
@@ -260,10 +325,22 @@ export default function NewAttributeSettings() {
             validations,
           },
           formFields.defaultValue
-            ? { defaultValue: formFields.defaultValue }
-            : { defaultValue: null },
-          formFields.isRequired ? { required: formFields.required } : undefined,
-          formFields.group ? { group: formFields.group } : undefined,
+            ? {
+                defaultValue: formFields.defaultValue,
+              }
+            : {
+                defaultValue: null,
+              },
+          formFields.isRequired
+            ? {
+                required: formFields.required,
+              }
+            : undefined,
+          formFields.group
+            ? {
+                group: formFields.group,
+              }
+            : undefined,
         ),
       ] as UserProfileAttribute);
 
@@ -285,12 +362,19 @@ export default function NewAttributeSettings() {
               translation: formFields.translation,
             },
           });
+
           await i18n.reloadResources();
         } catch (error) {
           addError(t("errorSavingTranslations"), error);
         }
       }
-      navigate(toUserProfile({ realm: realmName, tab: "attributes" }));
+
+      navigate(
+        toUserProfile({
+          realm: realmName,
+          tab: "attributes",
+        }),
+      );
 
       addAlert(t("createAttributeSuccess"), AlertVariant.success);
     } catch (error) {
@@ -304,6 +388,7 @@ export default function NewAttributeSettings() {
         titleKey={editMode ? attributeName : t("createAttribute")}
         subKey={editMode ? "" : t("createAttributeSubTitle")}
       />
+
       <PageSection variant="light">
         <CreateAttributeFormContent save={() => form.handleSubmit(save)()} />
       </PageSection>
