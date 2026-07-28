@@ -2,7 +2,11 @@ import { FormGroup, SelectGroup, SelectOption } from "@patternfly/react-core";
 import { useFieldArray, useFormContext, useWatch } from "react-hook-form";
 import { useTranslation } from "react-i18next";
 import { FormAccess } from "../../../components/form/FormAccess";
-import { HelpItem, KeycloakSelect } from "@keycloak/keycloak-ui-shared";
+import {
+  HelpItem,
+  KeycloakSelect,
+  SelectVariant,
+} from "@keycloak/keycloak-ui-shared";
 import { useParams } from "../../../utils/useParams";
 import type { AttributeParams } from "../../routes/Attribute";
 import { useUserProfile } from "../UserProfileContext";
@@ -52,6 +56,22 @@ const SCIM_ATTRIBUTE_GROUPS: ScimAttributeGroup[] = [
 
 export const SCIM_ANNOTATION_KEY = "kc.scim.schema.attribute";
 
+export const normalizeScimAnnotationValue = (value: unknown): string[] => {
+  if (Array.isArray(value)) {
+    return value.filter((item): item is string => typeof item === "string");
+  }
+
+  return typeof value === "string" ? [value] : [];
+};
+
+export const serializeScimAnnotationValue = (values: string[]) => {
+  if (values.length === 0) {
+    return undefined;
+  }
+
+  return values.length === 1 ? values[0] : values;
+};
+
 export const AttributeScimSettings = () => {
   const { t } = useTranslation();
   const { control } = useFormContext();
@@ -68,20 +88,33 @@ export const AttributeScimSettings = () => {
   const scimIndex = annotationValues.findIndex(
     (a) => a.key === SCIM_ANNOTATION_KEY,
   );
-  const scimValue =
-    scimIndex >= 0 ? String(annotationValues[scimIndex]?.value ?? "") : "";
+  const scimValues = normalizeScimAnnotationValue(
+    scimIndex >= 0 ? annotationValues[scimIndex]?.value : undefined,
+  );
 
-  const handleScimChange = (value: string) => {
+  const handleScimChange = (values: string[]) => {
+    const value = serializeScimAnnotationValue(values);
+
+    if (values.length === 0) {
+      if (scimIndex >= 0) {
+        update(scimIndex, { key: SCIM_ANNOTATION_KEY, value: undefined });
+      }
+      return;
+    }
+
     if (scimIndex >= 0) {
       update(scimIndex, { key: SCIM_ANNOTATION_KEY, value });
-    } else if (value) {
+    } else {
       append({ key: SCIM_ANNOTATION_KEY, value });
     }
   };
 
   const takenScimAttributes = (config?.attributes ?? [])
     .filter((attr) => attr.name !== attributeName)
-    .map((attr) => attr.annotations?.[SCIM_ANNOTATION_KEY] as string)
+    .flatMap((attr) => {
+      const annotationValue = attr.annotations?.[SCIM_ANNOTATION_KEY];
+      return normalizeScimAnnotationValue(annotationValue);
+    })
     .filter(Boolean);
 
   const availableGroups = SCIM_ATTRIBUTE_GROUPS.map((group) => ({
@@ -120,17 +153,27 @@ export const AttributeScimSettings = () => {
           isOpen={open}
           onToggle={(b) => setOpen(b)}
           onSelect={(value) => {
-            handleScimChange(String(value));
+            const selectedValue = String(value);
+            const nextValues = scimValues.includes(selectedValue)
+              ? scimValues.filter((item) => item !== selectedValue)
+              : [...scimValues, selectedValue];
+
+            handleScimChange(nextValues);
             setFilterValue("");
             setOpen(false);
           }}
-          selections={scimValue}
-          variant={"typeahead"}
+          selections={scimValues}
+          variant={SelectVariant.typeaheadMulti}
+          chipGroupProps={{
+            numChips: 3,
+            expandedText: t("hide"),
+            collapsedText: t("showRemaining"),
+          }}
           onFilter={(value) => {
-            if (value) {
-              handleScimChange(value);
-            }
             setFilterValue(value);
+          }}
+          onClear={() => {
+            handleScimChange([]);
           }}
         >
           {hasOptions ? (
