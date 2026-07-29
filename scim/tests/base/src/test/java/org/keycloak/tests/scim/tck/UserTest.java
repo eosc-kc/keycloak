@@ -46,6 +46,7 @@ import org.keycloak.testframework.util.ApiUtil;
 import org.keycloak.userprofile.config.UPConfigUtils;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.databind.node.TextNode;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
@@ -135,6 +136,130 @@ public class UserTest extends AbstractScimTest {
         actual = client.users().get(actual.getId());
         assertRootAttributes(actual, expected);
         assertEquals(expected.getExternalId(), actual.getExternalId());
+    }
+
+    @Test
+    public void testMultipleScimAttributesForMultivaluedField() {
+        // Tests mapping a Keycloak list attribute to both a complex array (.value)
+        String fooSchema = "urn:my:params:scim:schemas:extension:foo:1.0:User";
+        UPConfig configuration = realm.admin().users().userProfile().getConfiguration();
+        UPAttribute upAttribute = new UPAttribute("entitlements", Map.of(
+                ANNOTATION_SCIM_SCHEMA_ATTRIBUTE, List.of(
+                        KEYCLOAK_USER_SCHEMA + ":entitlements.value",
+                        fooSchema + ":entitlements"
+                )));
+        upAttribute.setMultivalued(true);
+        upAttribute.setPermissions(new UPAttributePermissions(Set.of(UPConfigUtils.ROLE_ADMIN), Set.of(UPConfigUtils.ROLE_ADMIN)));
+        configuration.addOrReplaceAttribute(upAttribute);
+        realm.admin().users().userProfile().update(configuration);
+
+        User expected = new User();
+        expected.setUserName(KeycloakModelUtils.generateId());
+
+        User actual = client.users().create(expected);
+        UserRepresentation existing = realm.admin().users().get(actual.getId()).toRepresentation();
+
+        Map<String, List<String>> attributes = new HashMap<>(ofNullable(existing.getAttributes()).orElse(Map.of()));
+        List<String> expectedEntitlementValues = List.of("admin", "user");
+        attributes.put("entitlements", expectedEntitlementValues);
+        existing.setAttributes(attributes);
+        realm.admin().users().get(existing.getId()).update(existing);
+
+        User user = client.users().get(existing.getId());
+        // 1. Verify Complex SCIM field (.value array generation)
+        Object extension = ofNullable(user.getExtensions()).orElse(Map.of()).get(KEYCLOAK_USER_SCHEMA);
+        assertInstanceOf(Map.class, extension);
+        assertTrue(user.getSchemas().contains(KEYCLOAK_USER_SCHEMA));
+
+
+        Object entitlements = ((Map<?, ?>) extension).get("entitlements");
+        assertInstanceOf(List.class, entitlements);
+        assertEquals(expectedEntitlementValues.size(), ((List<?>) entitlements).size());
+        for (int i = 0; i < expectedEntitlementValues.size(); i++) {
+            Object valueNode = ((List<?>) entitlements).get(i);
+            assertInstanceOf(Map.class, valueNode);
+            assertEquals(expectedEntitlementValues.get(i), ((Map<?, ?>) valueNode).get("value"));
+        }
+
+        // 1. Verify Complex SCIM field (without .value array generation)
+        extension = ofNullable(user.getExtensions()).orElse(Map.of()).get(fooSchema);
+        assertInstanceOf(Map.class, extension);
+        assertTrue(user.getSchemas().contains(fooSchema));
+
+        entitlements = ((Map<?, ?>) extension).get("entitlements");
+        assertInstanceOf(List.class, entitlements);
+        assertEquals(expectedEntitlementValues, entitlements);
+
+    }
+
+    @Test
+    public void testMultipleScimCoreAttributesForExternalId() {
+        UPConfig configuration = realm.admin().users().userProfile().getConfiguration();
+        UPAttribute upAttribute = new UPAttribute("externalId", Map.of(
+                ANNOTATION_SCIM_SCHEMA_ATTRIBUTE, List.of("externalId", KEYCLOAK_USER_SCHEMA + ":externalId")));
+        upAttribute.setPermissions(new UPAttributePermissions(Set.of(UPConfigUtils.ROLE_ADMIN), Set.of(UPConfigUtils.ROLE_ADMIN)));
+        upAttribute.setMultivalued(false);
+        configuration.addOrReplaceAttribute(upAttribute);
+        realm.admin().users().userProfile().update(configuration);
+
+        User expected = new User();
+        expected.setUserName(KeycloakModelUtils.generateId());
+
+        User actual = client.users().create(expected);
+        UserRepresentation existing = realm.admin().users().get(actual.getId()).toRepresentation();
+
+        existing.singleAttribute(upAttribute.getName(), "ext-123");
+        realm.admin().users().get(existing.getId()).update(existing);
+
+        User user = client.users().get(existing.getId());
+
+        assertNotNull(user.getExternalId());
+        assertEquals("ext-123", user.getExternalId());
+
+        Object extension = ofNullable(user.getExtensions()).orElse(Map.of()).get(KEYCLOAK_USER_SCHEMA);
+        assertInstanceOf(Map.class, extension);
+        assertTrue(user.getSchemas().contains(KEYCLOAK_USER_SCHEMA));
+        assertEquals("ext-123", ((Map<?, ?>) extension).get("externalId"));
+    }
+
+    @Test
+    public void testExternalIdDefaultMappingOverriddenByScimPatch() {
+        UPConfig configuration = realm.admin().users().userProfile().getConfiguration();
+
+        UPAttribute upAttribute = new UPAttribute("externalId", Map.of(
+                ANNOTATION_SCIM_SCHEMA_ATTRIBUTE, List.of("externalId", KEYCLOAK_USER_SCHEMA + ":externalId")));
+        upAttribute.setPermissions(new UPAttributePermissions(Set.of(UPConfigUtils.ROLE_ADMIN), Set.of(UPConfigUtils.ROLE_ADMIN)));
+        upAttribute.setMultivalued(false);
+        configuration.addOrReplaceAttribute(upAttribute);
+        realm.admin().users().userProfile().update(configuration);
+
+        User expected = new User();
+        expected.setUserName(KeycloakModelUtils.generateId());
+        User actual = client.users().create(expected);
+
+        // Perform a PATCH operation targeting the extension attribute
+        PatchRequest patchRequest = new PatchRequest();
+        PatchRequest.PatchOperation operation = new PatchRequest.PatchOperation();
+        operation.setOp("add");
+        operation.setPath(KEYCLOAK_USER_SCHEMA + ":externalId");
+
+        operation.setValue(TextNode.valueOf("ext-123"));
+
+        patchRequest.setOperations(List.of(operation));
+
+        client.users().patch(actual.getId(), patchRequest);
+
+        // Fetch and verify in get
+        User user = client.users().get(actual.getId());
+
+        assertNotNull(user.getExternalId());
+        assertEquals("ext-123", user.getExternalId());
+
+        // The extension attribute should contain the patched value
+        Object extension = ofNullable(user.getExtensions()).orElse(Map.of()).get(KEYCLOAK_USER_SCHEMA);
+        assertInstanceOf(Map.class, extension);
+        assertTrue(user.getSchemas().contains(KEYCLOAK_USER_SCHEMA));
+        assertEquals("ext-123", ((Map<?, ?>) extension).get("externalId"));
     }
 
     @Test

@@ -86,9 +86,9 @@ public class UserExtensionModelSchema extends AbstractUserModelSchema {
                 continue;
             }
 
-            String scimName = (String) metadata.getAnnotations().get(ANNOTATION_SCIM_SCHEMA_ATTRIBUTE);
+            List<String> scimNames = getScimAttributeValue(metadata.getAnnotations().get(ANNOTATION_SCIM_SCHEMA_ATTRIBUTE));
 
-            if (scimName == null || !scimName.contains(":")) {
+            if (scimNames == null || scimNames.isEmpty() || scimNames.stream().noneMatch(n -> n.contains(":"))) {
                 continue;
             }
 
@@ -96,6 +96,36 @@ public class UserExtensionModelSchema extends AbstractUserModelSchema {
         }
 
         return names;
+    }
+
+    @Override
+    protected Map<String, Attribute<UserModel, User>> getAttributeMappers() {
+        Map<String, Attribute<UserModel, User>> mappers = new HashMap<>();
+        Attributes attributes = getUserProfile().getAttributes();
+
+        for (String name : getModelAttributeNames()) {
+            AttributeMetadata metadata = attributes.getMetadata(name);
+
+            if (metadata == null || metadata.getAnnotations() == null) {
+                continue;
+            }
+
+            List<String> scimNames = getScimAttributeValue(metadata.getAnnotations().get(ANNOTATION_SCIM_SCHEMA_ATTRIBUTE));
+
+            if (scimNames == null) {
+                continue;
+            }
+
+            for (String scimName : scimNames) {
+                if (hasSchema(scimName)) {
+                    // Using name + "/" + scimName allows multiple Keycloak attributes to map to the same SCIM field.
+                    // For PATCH, AbstractModelSchema will pick the first matched SCIM path it finds.
+                    mappers.put(name + "/" + scimName, createCustomAttribute(name, scimName));
+                }
+            }
+        }
+
+        return mappers;
     }
 
     @Override
@@ -114,17 +144,19 @@ public class UserExtensionModelSchema extends AbstractUserModelSchema {
             return null;
         }
 
-        String scimName = (String) annotations.get(ANNOTATION_SCIM_SCHEMA_ATTRIBUTE);
+        List<String> scimNames = getScimAttributeValue(annotations.get(ANNOTATION_SCIM_SCHEMA_ATTRIBUTE));
 
-        if (scimName == null) {
+        if (scimNames == null) {
             return null;
         }
 
-        if (!hasSchema(scimName)) {
-            return null;
+        for (String scimName : scimNames) {
+            if (hasSchema(scimName)) {
+                return createCustomAttribute(name, scimName);
+            }
         }
 
-        return createCustomAttribute(name, scimName);
+        return null;
     }
 
     @Override
@@ -160,6 +192,10 @@ public class UserExtensionModelSchema extends AbstractUserModelSchema {
                         return;
                     }
 
+                    if (value == null || (value instanceof Collection && ((Collection<?>) value).isEmpty()) || (value instanceof String && ((String) value).isEmpty())) {
+                        return;
+                    }
+
                     String schema = attribute.getSchema();
 
                     if (schema == null) {
@@ -185,7 +221,6 @@ public class UserExtensionModelSchema extends AbstractUserModelSchema {
                         attributeName = attributeName.substring(parentAttributeName.length() + 1);
 
                         // Handle multivalued attributes annotated as "<parent>.value"
-                        // so that SCIM gets: "<parent>": [ { "value": "..." }, ... ]
                         if ("value".equals(attributeName) && value instanceof Collection<?> values) {
                             List<Map<String, Object>> newValues = values.stream()
                                     .filter(Objects::nonNull)
@@ -195,9 +230,13 @@ public class UserExtensionModelSchema extends AbstractUserModelSchema {
                             if (subAttributes.containsKey(parentAttributeName)) {
                                 Object existing = subAttributes.get(parentAttributeName);
                                 if (existing instanceof Collection) {
-                                    // Merge the existing values with the new values
                                     List<Map<String, Object>> mergedValues = new ArrayList<>((Collection<Map<String, Object>>) existing);
-                                    mergedValues.addAll(newValues);
+
+                                    for (Map<String, Object> nv : newValues) {
+                                        if (!mergedValues.contains(nv)) {
+                                            mergedValues.add(nv);
+                                        }
+                                    }
                                     subAttributes.put(parentAttributeName, mergedValues);
                                 } else {
                                     subAttributes.put(parentAttributeName, newValues);
@@ -216,7 +255,12 @@ public class UserExtensionModelSchema extends AbstractUserModelSchema {
                         Object existing = subAttributes.get(attributeName);
                         if (existing instanceof Collection<?> && value instanceof Collection<?>) {
                             List<Object> mergedValues = new ArrayList<>((Collection<?>) existing);
-                            mergedValues.addAll((Collection<?>) value);
+
+                            for (Object v : (Collection<?>) value) {
+                                if (!mergedValues.contains(v)) {
+                                    mergedValues.add(v);
+                                }
+                            }
                             subAttributes.put(attributeName, mergedValues);
                         } else {
                             subAttributes.put(attributeName, value);
