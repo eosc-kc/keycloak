@@ -44,17 +44,22 @@ public abstract class AbstractUserModelSchema extends AbstractModelSchema<UserMo
 
     @Override
     protected String getAttributeSchemaName(String name) {
-        if ("groups".equals(name)) {
-            return name;
-        }
+        List<String> schemas = getAttributeSchemaNames(name);
 
-        Object schema = getAttributeAnnotations(name).get(ANNOTATION_SCIM_SCHEMA_ATTRIBUTE);
-
-        if (schema == null) {
+        if (schemas == null || schemas.isEmpty()) {
             return null;
         }
 
-        return String.valueOf(schema);
+        // For CRUD/PATCH, the first configured SCIM attribute is enough
+        return schemas.get(0);
+    }
+
+    protected List<String> getAttributeSchemaNames(String name) {
+        if ("groups".equals(name)) {
+            return List.of(name);
+        }
+
+        return getScimAttributeValue(getAttributeAnnotations(name).get(ANNOTATION_SCIM_SCHEMA_ATTRIBUTE));
     }
 
     @Override
@@ -97,9 +102,9 @@ public abstract class AbstractUserModelSchema extends AbstractModelSchema<UserMo
 
     protected String createModelAttributeResolver(Attribute<UserModel, User> attribute) {
         for (String name : getModelAttributeNames()) {
-            String scimName = getAttributeSchemaName(name);
+            List<String> scimNames = getAttributeSchemaNames(name);
 
-            if (hasPath(attribute, scimName)) {
+            if (scimNames != null && scimNames.stream().anyMatch(scimName -> hasPath(attribute, scimName))) {
                 return name;
             }
         }
@@ -113,5 +118,15 @@ public abstract class AbstractUserModelSchema extends AbstractModelSchema<UserMo
 
     protected UserProfile getUserProfile() {
         return session.getProvider(UserProfileProvider.class).create(UserProfileContext.SCIM, Map.of());
+    }
+
+    protected List<String> getScimAttributeValue(Object value) {
+        if (value instanceof String stringValue) {
+            return List.of(stringValue);
+        }
+        if (value instanceof List<?> listValue) {
+            return (List<String>) listValue;
+        }
+        return null;
     }
 }
