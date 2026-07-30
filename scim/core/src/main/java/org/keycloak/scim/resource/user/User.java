@@ -55,6 +55,9 @@ public class User extends ResourceTypeRepresentation {
     @JsonProperty("groups")
     private List<GroupMembership> groups;
 
+    @JsonProperty("entitlements")
+    private List<Value> entitlements;
+
     // Enterprise User Extension
     @JsonProperty("urn:ietf:params:scim:schemas:extension:enterprise:2.0:User")
     private EnterpriseUser enterpriseUser;
@@ -169,6 +172,14 @@ public class User extends ResourceTypeRepresentation {
 
     public void setEnterpriseUser(EnterpriseUser enterpriseUser) {
         this.enterpriseUser = enterpriseUser;
+    }
+
+    public List<Value> getEntitlements() {
+        return entitlements;
+    }
+
+    public void setEntitlements(List<Value> entitlements) {
+        this.entitlements = entitlements;
     }
 
     @JsonIgnore

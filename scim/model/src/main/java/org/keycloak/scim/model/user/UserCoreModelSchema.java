@@ -25,6 +25,7 @@ import org.keycloak.scim.resource.user.Email;
 import org.keycloak.scim.resource.user.GroupMembership;
 import org.keycloak.scim.resource.user.Name;
 import org.keycloak.scim.resource.user.User;
+import org.keycloak.scim.resource.user.Value;
 import org.keycloak.utils.GroupUtils;
 import org.keycloak.utils.KeycloakSessionUtil;
 
@@ -132,6 +133,48 @@ public final class UserCoreModelSchema extends AbstractUserModelSchema {
         attributes.addAll(Attribute.<UserModel, User>simple("profileUrl")
                 .modelAttributeResolver(this::createModelAttributeResolver)
                 .withModelSetter(UserModel::setSingleAttribute)
+                .build());
+        attributes.addAll(Attribute.<UserModel, User>complex("entitlements", Value.class)
+                .multivalued()
+                .modelAttributeResolver(this::createModelAttributeResolver)
+                .withModelSetter(
+                        (TriConsumer<UserModel, String, Set<Value>>) (model, name, values) -> {
+                            if (values == null || values.isEmpty()) {
+                                model.removeAttribute(name);
+                            } else {
+                                List<String> stringValues = values.stream().map(Value::getValue).toList();
+                                model.setAttribute(name, stringValues);
+                            }
+                        },
+                        (BiConsumer<User, Collection<String>>) (user, values) -> {
+                            if (values == null || values.isEmpty()) {
+                                return;
+                            }
+                            user.setEntitlements(values.stream().map(Value::new).toList());
+                        }
+                )
+                .withModelAdder((TriConsumer<UserModel, String, Set<Value>>) (model, name, values) -> {
+                    if (values != null && !values.isEmpty()) {
+                        List<String> existing = model.getAttributeStream(name).toList();
+                        for (Value val : values) {
+                            if (val.getValue() != null && !existing.contains(val.getValue())) {
+                                existing.add(val.getValue());
+                            }
+                        }
+                        model.setAttribute(name, existing);
+                    }
+                })
+                .withModelRemover((TriConsumer<UserModel, String, Set<Value>>) (model, name, values) -> {
+                    List<String> existing = model.getAttributeStream(name).toList();
+                    if (values != null && !values.isEmpty() && !existing.isEmpty()) {
+                        existing.removeAll(values.stream().map(Value::getValue).toList());
+                        if (existing.isEmpty()) {
+                            model.removeAttribute(name);
+                        } else {
+                            model.setAttribute(name, existing);
+                        }
+                    }
+                })
                 .build());
         attributes.addAll(Attribute.<UserModel, User>simple("active")
                 .modelAttributeResolver(this::createModelAttributeResolver)
