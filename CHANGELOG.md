@@ -14,6 +14,7 @@ Our Keycloak version is working well with PostgreSQL database. For using other S
 
 ### Added
 - SCIM : Support type "Group" in "members" field for child groups [RCIAM-788](https://tts.grnet.gr/jira/browse/RCIAM-788)
+- Add entitlements claim support in core User SCIM profile
 
 ### Changed
 - Extend SCIM User Profile for supporting duplicate attributes. Not including names. [RCIAM-837](https://tts.grnet.gr/jira/browse/RCIAM-837)
