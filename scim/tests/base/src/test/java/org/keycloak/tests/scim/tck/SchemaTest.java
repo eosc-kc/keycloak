@@ -94,7 +94,7 @@ public class SchemaTest extends AbstractScimTest {
                 .map(Schema.Attribute::getName)
                 .collect(Collectors.toSet());
 
-        assertEquals(14, attributeNames.size(), "User schema should have exactly 14 attributes");
+        assertEquals(15, attributeNames.size(), "User schema should have exactly 15 attributes");
 
         assertAttribute(findAttribute(schema, "userName"), "string", false, true, false, "readWrite", "server");
         assertAttribute(findAttribute(schema, "emails"), "complex", true, false, false, "readWrite", "global");
@@ -110,6 +110,7 @@ public class SchemaTest extends AbstractScimTest {
         assertAttribute(findAttribute(schema, "profileUrl"), "string", false, false, true, "readWrite", "none");
         assertAttribute(findAttribute(schema, "active"), "boolean", false, false, true, "readWrite", "none");
         assertAttribute(findAttribute(schema, "groups"), "complex", true, false, true, "readWrite", "none");
+        assertAttribute(findAttribute(schema, "entitlements"), "complex", true, false, true, "readWrite", "none");
 
         // Verify name sub-attributes
         Schema.Attribute name = findAttribute(schema, "name");
