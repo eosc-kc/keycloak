@@ -177,6 +177,11 @@ export const UserForm = ({
       addError("emailPendingVerificationUpdateError", error);
     }
   };
+  const termsAcceptedTimestamp = user?.attributes?.terms_and_conditions?.[0];
+
+  const termsAcceptedDate = termsAcceptedTimestamp
+    ? new Date(Number(termsAcceptedTimestamp) * 1000)
+    : undefined;
 
   return (
     <FormAccess
@@ -270,6 +275,19 @@ export const UserForm = ({
               label={t("emailVerified")}
               labelIcon={t("emailVerifiedHelp")}
             />
+            {termsAcceptedDate &&
+              !Number.isNaN(termsAcceptedDate.getTime()) && (
+                <FormGroup
+                  label={t("termsAndConditionsUserAttribute")}
+                  fieldId="terms-and-conditions-accepted"
+                >
+                  <TextInput
+                    id="terms-and-conditions-accepted"
+                    value={formatDate(termsAcceptedDate)}
+                    readOnly
+                  />
+                </FormGroup>
+              )}
             {user?.attributes?.["kc.email.pending"] && (
               <Alert
                 variant={AlertVariant.warning}
@@ -297,9 +315,9 @@ export const UserForm = ({
               userProfileMetadata={{
                 ...userProfileMetadata,
                 attributes: userProfileMetadata.attributes?.filter(
-                  (attribute: UserProfileAttributeMetadata) => {
-                    return attribute.name !== "kc.email.pending";
-                  },
+                  (attribute: UserProfileAttributeMetadata) =>
+                    attribute.name !== "kc.email.pending" &&
+                    attribute.name !== "terms_and_conditions",
                 ),
               }}
               hideReadOnly={!user}
