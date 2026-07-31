@@ -13,9 +13,6 @@ import { useState } from "react";
 import { useFieldArray, useFormContext, useWatch } from "react-hook-form";
 import { useTranslation } from "react-i18next";
 import { FormAccess } from "../../../components/form/FormAccess";
-import { useParams } from "../../../utils/useParams";
-import type { AttributeParams } from "../../routes/Attribute";
-import { useUserProfile } from "../UserProfileContext";
 
 import "../../realm-settings-section.css";
 
@@ -84,8 +81,6 @@ export const serializeScimAnnotationValue = (values: string[]) => {
 export const AttributeScimSettings = () => {
   const { t } = useTranslation();
   const { control } = useFormContext();
-  const { attributeName } = useParams<AttributeParams>();
-  const { config } = useUserProfile();
   const [selectKey, setSelectKey] = useState(0);
 
   const [open, setOpen] = useState(false);
@@ -138,29 +133,19 @@ export const AttributeScimSettings = () => {
     }
   };
 
-  const takenScimAttributes = (config?.attributes ?? [])
-    .filter((attribute) => attribute.name !== attributeName)
-    .flatMap((attribute) =>
-      normalizeScimAnnotationValue(
-        attribute.annotations?.[SCIM_ANNOTATION_KEY],
-      ),
-    );
-
-  const availableGroups = SCIM_ATTRIBUTE_GROUPS.map((group) => ({
+  const filteredGroups = SCIM_ATTRIBUTE_GROUPS.map((group) => ({
     ...group,
-    attributes: group.attributes.filter(
-      (attribute) => !takenScimAttributes.includes(attribute),
-    ),
-  }));
-
-  const filteredGroups = availableGroups
+    attributes: filterValue
+      ? group.attributes.filter((attribute) =>
+          attribute.toLowerCase().includes(filterValue.toLowerCase()),
+        )
+      : group.attributes,
+  }))
     .map((group) => ({
       ...group,
-      attributes: filterValue
-        ? group.attributes.filter((attribute) =>
-            attribute.toLowerCase().includes(filterValue.toLowerCase()),
-          )
-        : group.attributes,
+      attributes: group.attributes.filter(
+        (attribute) => !scimValues.includes(attribute),
+      ),
     }))
     .filter((group) => group.attributes.length > 0);
 
@@ -169,7 +154,6 @@ export const AttributeScimSettings = () => {
   const canAddCustomValue =
     customValue.length > 0 &&
     !scimValues.includes(customValue) &&
-    !takenScimAttributes.includes(customValue) &&
     !PREDEFINED_SCIM_ATTRIBUTES.includes(customValue);
 
   const handleAddCustomValue = () => {
@@ -196,14 +180,29 @@ export const AttributeScimSettings = () => {
         fieldId="kc-scim-attribute"
       >
         <KeycloakSelect
+          key={selectKey}
           isOpen={open}
           onToggle={setOpen}
-          key={selectKey}
           onSelect={(value) => {
+            // TypeaheadSelect passes undefined when Enter is pressed because
+            // the top-level options are SelectGroup components.
+            if (value === undefined || value === null) {
+              const firstAvailableValue = filteredGroups[0]?.attributes[0];
+
+              if (firstAvailableValue) {
+                handleScimChange([...scimValues, firstAvailableValue]);
+                setFilterValue("");
+                setOpen(false);
+                return;
+              }
+
+              handleAddCustomValue();
+              return;
+            }
+
             const selectedValue = String(value);
 
             // TypeaheadSelect uses an empty selection to clear its filter.
-            // It must not be stored as a SCIM annotation value.
             if (!selectedValue) {
               setFilterValue("");
               return;
