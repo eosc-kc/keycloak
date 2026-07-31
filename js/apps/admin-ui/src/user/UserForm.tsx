@@ -47,6 +47,8 @@ import { useNavigate } from "react-router-dom";
 import { CopyToClipboardButton } from "../components/copy-to-clipboard-button/CopyToClipboardButton";
 import { GroupResourceContext } from "../context/group-resource/GroupResourceContext";
 
+const TERMS_AND_CONDITIONS_ATTRIBUTE = "terms_and_conditions";
+
 export type BruteForced = {
   isBruteForceProtected?: boolean;
   isLocked?: boolean;
@@ -85,7 +87,9 @@ export const UserForm = ({
   const isManager = hasAccess("manage-users");
   const canViewFederationLink = hasAccess("view-realm");
   const { whoAmI } = useWhoAmI();
-
+  const termsAndConditionsAcceptedDate = toTermsAndConditionsAcceptedDate(
+    user?.attributes?.[TERMS_AND_CONDITIONS_ATTRIBUTE],
+  );
   const { handleSubmit, setValue, control, reset, formState } = form;
   const { errors } = formState;
 
@@ -177,11 +181,6 @@ export const UserForm = ({
       addError("emailPendingVerificationUpdateError", error);
     }
   };
-  const termsAcceptedTimestamp = user?.attributes?.terms_and_conditions?.[0];
-
-  const termsAcceptedDate = termsAcceptedTimestamp
-    ? new Date(Number(termsAcceptedTimestamp) * 1000)
-    : undefined;
 
   return (
     <FormAccess
@@ -275,19 +274,19 @@ export const UserForm = ({
               label={t("emailVerified")}
               labelIcon={t("emailVerifiedHelp")}
             />
-            {termsAcceptedDate &&
-              !Number.isNaN(termsAcceptedDate.getTime()) && (
-                <FormGroup
-                  label={t("termsAndConditionsUserAttribute")}
-                  fieldId="terms-and-conditions-accepted"
+            {termsAndConditionsAcceptedDate && (
+              <FormGroup
+                label={t("termsAndConditionsUserAttribute")}
+                fieldId={TERMS_AND_CONDITIONS_ATTRIBUTE}
+              >
+                <span
+                  id={TERMS_AND_CONDITIONS_ATTRIBUTE}
+                  data-testid={TERMS_AND_CONDITIONS_ATTRIBUTE}
                 >
-                  <TextInput
-                    id="terms-and-conditions-accepted"
-                    value={formatDate(termsAcceptedDate)}
-                    readOnly
-                  />
-                </FormGroup>
-              )}
+                  {formatDate(termsAndConditionsAcceptedDate)}
+                </span>
+              </FormGroup>
+            )}
             {user?.attributes?.["kc.email.pending"] && (
               <Alert
                 variant={AlertVariant.warning}
@@ -315,9 +314,13 @@ export const UserForm = ({
               userProfileMetadata={{
                 ...userProfileMetadata,
                 attributes: userProfileMetadata.attributes?.filter(
-                  (attribute: UserProfileAttributeMetadata) =>
-                    attribute.name !== "kc.email.pending" &&
-                    attribute.name !== "terms_and_conditions",
+                  (attribute: UserProfileAttributeMetadata) => {
+                    return (
+                      attribute.name !== "kc.email.pending" &&
+                      (attribute.name !== TERMS_AND_CONDITIONS_ATTRIBUTE ||
+                        !termsAndConditionsAcceptedDate)
+                    );
+                  },
                 ),
               }}
               hideReadOnly={!user}
@@ -448,3 +451,15 @@ export const UserForm = ({
     </FormAccess>
   );
 };
+
+function toTermsAndConditionsAcceptedDate(value: unknown): Date | undefined {
+  const timestamp = Number(Array.isArray(value) ? value[0] : value);
+
+  if (!Number.isFinite(timestamp) || timestamp <= 0) {
+    return undefined;
+  }
+
+  const date = new Date(timestamp * 1000);
+
+  return Number.isNaN(date.getTime()) ? undefined : date;
+}
