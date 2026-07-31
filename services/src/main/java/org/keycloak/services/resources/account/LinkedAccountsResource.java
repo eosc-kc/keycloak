@@ -128,7 +128,7 @@ public class LinkedAccountsResource {
             @QueryParam("first") Integer firstResult,
             @QueryParam("max") Integer maxResults
     ) {
-        auth.requireOneOf(AccountRoles.MANAGE_ACCOUNT, AccountRoles.MANAGE_ACCOUNT_LINKS);
+        auth.requireOneOf(AccountRoles.MANAGE_ACCOUNT, AccountRoles.VIEW_PROFILE, AccountRoles.MANAGE_ACCOUNT_LINKS);
 
         // TODO: remove this statement once the console and the LinkedAccountsRestServiceTest are updated - this is only here for backwards compatibility
         if (linked == null) {

@@ -24,6 +24,7 @@ Our Keycloak version is working well with PostgreSQL database. For using other S
 - Fix introspection error for invalid client authentication
 - IdP backchannel logout: read sid claim from ID token to support backchannel logout [#12142](https://github.com/keycloak/keycloak/issues/12142)
 - Handle missing UserInfo token algorithm [#49969](https://github.com/keycloak/keycloak/issues/49969)
+- Get linked account require one of manage-account, manage-account-links, or view-profile roles [RCIAM-915](https://tts.grnet.gr/jira/browse/RCIAM-915)
 
 ## [26.6.3-1.0] -2026-07-22
 
