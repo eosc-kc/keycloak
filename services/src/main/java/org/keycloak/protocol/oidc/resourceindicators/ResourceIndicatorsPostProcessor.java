@@ -77,7 +77,13 @@ public class ResourceIndicatorsPostProcessor implements TokenPostProcessor {
                 throw new TokenInterceptorException(OAuthErrorException.INVALID_TARGET, ResourceIndicatorConstants.ERROR_INVALID_RESOURCE);
             }
             context.accessToken().audience(audienceToSetList.toArray(String[]::new));
+        } else  if (! OAuth2Constants.TOKEN_EXCHANGE_GRANT_TYPE.equals(grantType)) {
+            context.accessToken().audience(requestedResources.toArray(String[]::new));
         } else {
+            List<String> audienceRequest = (List<String>) context.clientSessionCtx().getAttribute(Constants.REQUESTED_AUDIENCE, List.class);
+            if (audienceRequest != null) {
+                requestedResources.addAll(audienceRequest);
+            }
             context.accessToken().audience(requestedResources.toArray(String[]::new));
         }
 
