@@ -50,6 +50,7 @@ import org.keycloak.protocol.oidc.OIDCLoginProtocol;
 import org.keycloak.protocol.oidc.encode.AccessTokenContext;
 import org.keycloak.protocol.oidc.mappers.AudienceProtocolMapper;
 import org.keycloak.protocol.oidc.mappers.HardcodedClaim;
+import org.keycloak.protocol.oidc.resourceindicators.ResourceIndicatorsPostProcessor;
 import org.keycloak.representations.AccessToken;
 import org.keycloak.representations.IDToken;
 import org.keycloak.representations.idm.ClientScopeRepresentation;
@@ -110,6 +111,7 @@ import static org.junit.Assert.assertTrue;
  * @author <a href="mailto:mposolda@redhat.com">Marek Posolda</a>
  */
 @EnableFeature(value = Profile.Feature.DYNAMIC_SCOPES, skipRestart = true)
+@EnableFeature(value = Profile.Feature.RESOURCE_INDICATORS, skipRestart = true)
 public class StandardTokenExchangeV2Test extends AbstractClientPoliciesTest {
 
     @Page
@@ -797,7 +799,7 @@ public class StandardTokenExchangeV2Test extends AbstractClientPoliciesTest {
 
             oauth.client("requester-client", "secret");
             response = oauth.doRefreshTokenRequest(response.getRefreshToken());
-            AccessToken exchangedToken = assertAudiencesAndScopes(response, List.of("requester-client", "target-client1"), List.of("default-scope1", "optional-scope2"));
+            AccessToken exchangedToken = assertAudiencesAndScopes(response, List.of("requester-client", "target-client1"), List.of("default-scope1", "optional-scope2"), true);
             events.expect(EventType.REFRESH_TOKEN)
                     .detail(Details.TOKEN_ID, exchangedToken.getId())
                     .detail(Details.REFRESH_TOKEN_ID, AssertEvents.isTokenId())
@@ -807,7 +809,7 @@ public class StandardTokenExchangeV2Test extends AbstractClientPoliciesTest {
 
             oauth.client("requester-client", "secret");
             response = oauth.doRefreshTokenRequest(response.getRefreshToken());
-            exchangedToken = assertAudiencesAndScopes(response, List.of("requester-client", "target-client1"), List.of("default-scope1", "optional-scope2"));
+            exchangedToken = assertAudiencesAndScopes(response, List.of("requester-client", "target-client1"), List.of("default-scope1", "optional-scope2"), true);
             events.expect(EventType.REFRESH_TOKEN)
                     .detail(Details.TOKEN_ID, exchangedToken.getId())
                     .detail(Details.REFRESH_TOKEN_ID, AssertEvents.isTokenId())
@@ -1385,6 +1387,55 @@ public class StandardTokenExchangeV2Test extends AbstractClientPoliciesTest {
         isAccessTokenDisabled(response.getAccessToken(), "requester-client", "secret");
     }
 
+    @Test
+    public void testExchangeWithResourceParamAndNoAudienceParam() throws Exception {
+        final RealmResource realm = adminClient.realm(TEST);
+        final UserRepresentation john = ApiUtil.findUserByUsername(realm, "john");
+
+        try (RealmAttributeUpdater realmUpdater = new RealmAttributeUpdater(realm)
+                .setAttribute(ResourceIndicatorsPostProcessor.RESOURCE_CHECK_IN_TOKEN_AUDIENCE, "false")
+                .update()) {
+
+            oauth.realm(TEST);
+            String accessToken = resourceOwnerLogin("john", "password", "subject-client", "secret").getAccessToken();
+
+            // Token exchange with two resource parameters and NO audience parameter
+            AccessTokenResponse response = oauth.tokenExchangeRequest(accessToken)
+                    .client("requester-client", "secret")
+                    .resource("https://theservice", "https://otherservice")
+                    .send();
+
+            assertAudiencesAndScopes(response,
+                    List.of("https://theservice", "https://otherservice"),
+                    List.of("profile", "email", "default-scope1"), false);
+        }
+    }
+
+    @Test
+    public void testExchangeWithResourceParamAndAudienceParam() throws Exception {
+        final RealmResource realm = adminClient.realm(TEST);
+        final UserRepresentation john = ApiUtil.findUserByUsername(realm, "john");
+
+        try (RealmAttributeUpdater realmUpdater = new RealmAttributeUpdater(realm)
+                .setAttribute(ResourceIndicatorsPostProcessor.RESOURCE_CHECK_IN_TOKEN_AUDIENCE, "false")
+                .update()) {
+
+            oauth.realm(TEST);
+            String accessToken = resourceOwnerLogin("john", "password", "subject-client", "secret").getAccessToken();
+
+            // Token exchange with two resource parameters AND an audience parameter
+            AccessTokenResponse response = oauth.tokenExchangeRequest(accessToken)
+                    .client("requester-client", "secret")
+                    .audience("target-client1")
+                    .resource("https://theservice", "https://otherservice")
+                    .send();
+
+            assertAudiencesAndScopes(response,
+                    List.of("target-client1", "https://theservice", "https://otherservice"),
+                    List.of("profile", "email", "default-scope1"), false);
+        }
+    }
+
     private void isAccessTokenEnabled(String accessToken, String clientId, String secret) throws IOException {
         oauth.client(clientId, secret);
         TokenMetadataRepresentation rep = oauth.doIntrospectionAccessTokenRequest(accessToken).asTokenMetadata();
@@ -1417,25 +1468,27 @@ public class StandardTokenExchangeV2Test extends AbstractClientPoliciesTest {
         assertEquals(Response.Status.BAD_REQUEST.getStatusCode(), tokenRefreshResponse.getStatusCode());
     }
 
-    private void assertAudiences(AccessToken token, List<String> expectedAudiences) {
+    private void assertAudiences(AccessToken token, List<String> expectedAudiences, boolean checkResource) {
         MatcherAssert.assertThat("Incompatible audiences", token.getAudience() == null ? List.of() : List.of(token.getAudience()), containsInAnyOrder(expectedAudiences.toArray()));
-        List<String> audsWithoutAzp = new ArrayList<>(expectedAudiences);
-        audsWithoutAzp.remove(token.getIssuedFor());
-        MatcherAssert.assertThat("Incompatible resource access", token.getResourceAccess().keySet(), containsInAnyOrder(audsWithoutAzp.toArray()));
+        if (checkResource) {
+            List<String> audsWithoutAzp = new ArrayList<>(expectedAudiences);
+            audsWithoutAzp.remove(token.getIssuedFor());
+            MatcherAssert.assertThat("Incompatible resource access", token.getResourceAccess().keySet(), containsInAnyOrder(audsWithoutAzp.toArray()));
+        }
     }
 
     private void assertScopes(AccessToken token, List<String> expectedScopes) {
         MatcherAssert.assertThat("Incompatible scopes", token.getScope().isEmpty() ? List.of() : List.of(token.getScope().split(" ")), containsInAnyOrder(expectedScopes.toArray()));
     }
 
-    private AccessToken assertAudiencesAndScopes(AccessTokenResponse tokenExchangeResponse, List<String> expectedAudiences, List<String> expectedScopes) throws Exception {
+    private AccessToken assertAudiencesAndScopes(AccessTokenResponse tokenExchangeResponse, List<String> expectedAudiences, List<String> expectedScopes, boolean checkResource) throws Exception {
         assertEquals(Response.Status.OK.getStatusCode(), tokenExchangeResponse.getStatusCode());
         TokenVerifier<AccessToken> accessTokenVerifier = TokenVerifier.create(tokenExchangeResponse.getAccessToken(), AccessToken.class);
         AccessToken token = accessTokenVerifier.parse().getToken();
         if (expectedAudiences == null) {
             assertNull("Expected token to not contain audience", token.getAudience());
         } else {
-            assertAudiences(token, expectedAudiences);
+            assertAudiences(token, expectedAudiences, checkResource);
         }
         assertScopes(token, expectedScopes);
         return token;
@@ -1447,7 +1500,7 @@ public class StandardTokenExchangeV2Test extends AbstractClientPoliciesTest {
 
     private AccessToken assertAudiencesAndScopes(AccessTokenResponse tokenExchangeResponse, UserRepresentation user,
                                                  List<String> expectedAudiences, List<String> expectedScopes, String expectedTokenType, String expectedSubjectTokenClientId) throws Exception {
-        AccessToken token = assertAudiencesAndScopes(tokenExchangeResponse, expectedAudiences, expectedScopes);
+        AccessToken token = assertAudiencesAndScopes(tokenExchangeResponse, expectedAudiences, expectedScopes, true);
         events.expect(EventType.TOKEN_EXCHANGE)
                 .client(token.getIssuedFor())
                 .user(user.getId())
