@@ -18,7 +18,7 @@ Our Keycloak version is working well with PostgreSQL database. For using other S
 - Support Resource indicator in Token Exchange [RCIAM-858](https://tts.grnet.gr/jira/browse/RCIAM-858)
 
 ### Changed
-- Extend SCIM User Profile for supporting duplicate attributes. Not including names. [RCIAM-837](https://tts.grnet.gr/jira/browse/RCIAM-837)
+- Extend SCIM User Profile for supporting duplicate attributes. [RCIAM-837](https://tts.grnet.gr/jira/browse/RCIAM-837)
 
 ### Fixed
 - Fix location of SCIM resources so IDs don't appear twice in the URL

@@ -695,6 +695,46 @@ public class UserTest extends AbstractScimTest {
     }
 
     @Test
+    public void testNameAttributesOverriddenToExtension() {
+        String customSchema = "urn:my:params:scim:schemas:extension:custom-name:1.0:User";
+        UPConfig configuration = realm.admin().users().userProfile().getConfiguration();
+        UPAttribute firstNameAttr = configuration.getAttribute(UserModel.FIRST_NAME);
+        firstNameAttr.setAnnotations(Map.of(ANNOTATION_SCIM_SCHEMA_ATTRIBUTE, customSchema + ":name.myFirstName"));
+        UPAttribute lastNameAttr = configuration.getAttribute(UserModel.LAST_NAME);
+        lastNameAttr.setAnnotations(Map.of(ANNOTATION_SCIM_SCHEMA_ATTRIBUTE, customSchema + ":name.myLastName"));
+
+        realm.admin().users().userProfile().update(configuration);
+
+        User expected = new User();
+        expected.setUserName(KeycloakModelUtils.generateId());
+        User actual = client.users().create(expected);
+
+        client.users().patch(actual.getId(), PatchRequest.create()
+                .add(customSchema + ":name.myFirstName", "John")
+                .add(customSchema + ":name.myLastName", "TestName")
+                .build());
+
+        UserRepresentation existing = realm.admin().users().get(actual.getId()).toRepresentation();
+        assertEquals("John", existing.getFirstName());
+        assertEquals("TestName", existing.getLastName());
+
+        User user = client.users().get(actual.getId());
+        Object extension = ofNullable(user.getExtensions()).orElse(Map.of()).get(customSchema);
+        assertInstanceOf(Map.class, extension);
+        assertTrue(user.getSchemas().contains(customSchema));
+        Object nameNode = ((Map<?, ?>) extension).get("name");
+        assertNotNull(nameNode, "The nested 'name' object should exist in the extension");
+        assertInstanceOf(Map.class, nameNode);
+        Map<?, ?> nameMap = (Map<?, ?>) nameNode;
+        assertEquals("John", nameMap.get("myFirstName"));
+        assertEquals("TestName", nameMap.get("myLastName"));
+
+        assertNotNull(user.getName());
+        assertNull(user.getName().getGivenName(), "Core givenName should be null as it was overridden to extension");
+        assertNull(user.getName().getFamilyName(), "Core familyName should be null as it was overridden to extension");
+    }
+
+    @Test
     public void testPatchReplace() {
         User expected = client.users().create(createUser());
         addOrReplaceUPAttribute("name.middleName");
