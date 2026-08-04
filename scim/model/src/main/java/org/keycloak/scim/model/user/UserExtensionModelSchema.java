@@ -19,7 +19,6 @@ import org.keycloak.userprofile.UserProfile;
 
 import static org.keycloak.scim.resource.Scim.ENTERPRISE_USER_SCHEMA;
 import static org.keycloak.scim.resource.Scim.USER_CORE_SCHEMA;
-import static org.keycloak.userprofile.UserProfileUtil.isRootAttribute;
 
 public class UserExtensionModelSchema extends AbstractUserModelSchema {
 
@@ -76,10 +75,6 @@ public class UserExtensionModelSchema extends AbstractUserModelSchema {
         UserProfile profile = getUserProfile();
 
         for (String name : profile.getAttributes().nameSet()) {
-            if (isRootAttribute(name)) {
-                continue;
-            }
-
             AttributeMetadata metadata = profile.getAttributes().getMetadata(name);
 
             if (metadata == null || metadata.getAnnotations() == null) {
