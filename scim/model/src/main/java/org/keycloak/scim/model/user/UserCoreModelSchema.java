@@ -283,10 +283,10 @@ public final class UserCoreModelSchema extends AbstractUserModelSchema {
 
     @Override
     protected Object getAttributeValue(UserModel model, String name) {
-        List<String> scimNames = getAttributeSchemaNames(name);
+        Object schema = getAttributeAnnotations(name).get(ANNOTATION_SCIM_SCHEMA_ATTRIBUTE);
 
         // standard attributes
-        if (scimNames == null || !scimNames.contains("entitlements")) {
+        if (schema == null || !"entitlements".equals(schema)) {
             return super.getAttributeValue(model, name);
         }
 

@@ -84,7 +84,7 @@ public abstract class AbstractUserModelSchema extends AbstractModelSchema<UserMo
         return attributes.getFirst(name);
     }
 
-    private Map<String, Object> getAttributeAnnotations(String name) {
+    protected Map<String, Object> getAttributeAnnotations(String name) {
         AttributeMetadata metadata = getProfileAttributes().getMetadata(name);
 
         if (metadata == null) {
