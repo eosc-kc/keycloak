@@ -303,6 +303,14 @@ public final class UserCoreModelSchema extends AbstractUserModelSchema {
                 .toList();
     }
 
+    private boolean shouldExposeInCore(String kcName, String coreScimPath) {
+        List<String> configuredScimNames = getAttributeSchemaNames(kcName);
+        if (configuredScimNames == null || configuredScimNames.isEmpty()) {
+            return true;
+        }
+        return configuredScimNames.contains(coreScimPath);
+    }
+
     @Override
     public void populate(User resource, UserModel model) {
         super.populate(resource, model);
@@ -313,6 +321,28 @@ public final class UserCoreModelSchema extends AbstractUserModelSchema {
     public void populate(User resource, UserModel model, List<String> requestedAttributes, List<String> excludedAttributes) {
         super.populate(resource, model, requestedAttributes, excludedAttributes);
         setTimestamps(resource, model);
+    }
+
+    @Override
+    protected String createModelAttributeResolver(Attribute<UserModel, User> attribute) {
+        String resolved = super.createModelAttributeResolver(attribute);
+        if (resolved != null) {
+            return resolved;
+        }
+
+        String fullName = attribute.getParentName() != null ?
+                attribute.getParentName() + "." + attribute.getName() : attribute.getName();
+
+        return switch (fullName) {
+            case "userName" -> UserModel.USERNAME;
+            case "emails" -> UserModel.EMAIL;
+            case "active" -> UserModel.ENABLED;
+            case "groups" -> "groups";
+            case "name.givenName" -> shouldExposeInCore(UserModel.FIRST_NAME, "name.givenName") ? UserModel.FIRST_NAME : null;
+            case "name.familyName" -> shouldExposeInCore(UserModel.LAST_NAME, "name.familyName") ? UserModel.LAST_NAME : null;
+
+            default -> fullName;
+        };
     }
 
     private static void checkUserMembershipPermission(Permissions permissions, UserModel user) {
