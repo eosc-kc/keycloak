@@ -4,11 +4,13 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import org.keycloak.authorization.fgap.AdminPermissionsSchema;
 import org.keycloak.common.util.TriConsumer;
@@ -25,6 +27,7 @@ import org.keycloak.scim.resource.user.Email;
 import org.keycloak.scim.resource.user.GroupMembership;
 import org.keycloak.scim.resource.user.Name;
 import org.keycloak.scim.resource.user.User;
+import org.keycloak.scim.resource.user.Value;
 import org.keycloak.utils.GroupUtils;
 import org.keycloak.utils.KeycloakSessionUtil;
 
@@ -133,6 +136,48 @@ public final class UserCoreModelSchema extends AbstractUserModelSchema {
                 .modelAttributeResolver(this::createModelAttributeResolver)
                 .withModelSetter(UserModel::setSingleAttribute)
                 .build());
+        attributes.addAll(Attribute.<UserModel, User>complex("entitlements", Value.class)
+                .multivalued()
+                .modelAttributeResolver(this::createModelAttributeResolver)
+                .withModelSetter(
+                        (TriConsumer<UserModel, String, Set<Value>>) (model, name, values) -> {
+                            if (values == null || values.isEmpty()) {
+                                model.removeAttribute(name);
+                            } else {
+                                List<String> stringValues = values.stream().map(Value::getValue).toList();
+                                model.setAttribute(name, stringValues);
+                            }
+                        },
+                        (BiConsumer<User, Collection<String>>) (user, values) -> {
+                            if (values == null || values.isEmpty()) {
+                                return;
+                            }
+                            user.setEntitlements(values.stream().map(Value::new).toList());
+                        }
+                )
+                .withModelAdder((TriConsumer<UserModel, String, Set<Value>>) (model, name, values) -> {
+                    if (values != null && !values.isEmpty()) {
+                        List<String> existing = new ArrayList<>(model.getAttributeStream(name).toList());
+                        for (Value val : values) {
+                            if (val.getValue() != null && !existing.contains(val.getValue())) {
+                                existing.add(val.getValue());
+                            }
+                        }
+                        model.setAttribute(name, existing);
+                    }
+                })
+                .withModelRemover((TriConsumer<UserModel, String, Set<Value>>) (model, name, values) -> {
+                    List<String> existing = new ArrayList<>(model.getAttributeStream(name).toList());
+                    if (values != null && !values.isEmpty() && !existing.isEmpty()) {
+                        existing.removeAll(values.stream().map(Value::getValue).toList());
+                        if (existing.isEmpty()) {
+                            model.removeAttribute(name);
+                        } else {
+                            model.setAttribute(name, existing);
+                        }
+                    }
+                })
+                .build());
         attributes.addAll(Attribute.<UserModel, User>simple("active")
                 .modelAttributeResolver(this::createModelAttributeResolver)
                 .bool()
@@ -234,6 +279,28 @@ public final class UserCoreModelSchema extends AbstractUserModelSchema {
                 .build());
 
         return attributes.stream().collect(Collectors.toMap(Attribute::getName, Function.identity()));
+    }
+
+    @Override
+    protected Object getAttributeValue(UserModel model, String name) {
+        List<String> scimNames = getAttributeSchemaNames(name);
+
+        // standard attributes
+        if (scimNames == null || !scimNames.contains("entitlements")) {
+            return super.getAttributeValue(model, name);
+        }
+
+        // "entitlements" special case
+        return getModelAttributeNames().stream()
+                .filter(kcName -> getAttributeSchemaNames(kcName) != null && getAttributeSchemaNames(kcName).contains("entitlements"))
+                .map(kcName -> super.getAttributeValue(model, kcName))
+                .filter(Objects::nonNull)
+                // Flatten the mix of Collections and single Objects into one continuous stream
+                .flatMap(val -> val instanceof Collection<?> coll ? coll.stream() : Stream.of(val))
+                .filter(Objects::nonNull)
+                .map(Object::toString)
+                .distinct()
+                .toList();
     }
 
     @Override
