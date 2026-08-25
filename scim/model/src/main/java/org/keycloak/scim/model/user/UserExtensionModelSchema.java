@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -115,7 +116,7 @@ public class UserExtensionModelSchema extends AbstractUserModelSchema {
                 if (hasSchema(scimName)) {
                     // Using name + "/" + scimName allows multiple Keycloak attributes to map to the same SCIM field.
                     // For PATCH, AbstractModelSchema will pick the first matched SCIM path it finds.
-                    mappers.put(name + "/" + scimName, createCustomAttribute(name, scimName));
+                    mappers.put(name + "/" + scimName, createCustomAttribute(name, scimName, metadata.isMultivalued()));
                 }
             }
         }
@@ -147,7 +148,7 @@ public class UserExtensionModelSchema extends AbstractUserModelSchema {
 
         for (String scimName : scimNames) {
             if (hasSchema(scimName)) {
-                return createCustomAttribute(name, scimName);
+                return createCustomAttribute(name, scimName, metadata.isMultivalued());
             }
         }
 
@@ -162,8 +163,36 @@ public class UserExtensionModelSchema extends AbstractUserModelSchema {
         return schema != null && !List.of(USER_CORE_SCHEMA, ENTERPRISE_USER_SCHEMA).contains(schema);
     }
 
-    private Attribute<UserModel,  User> createCustomAttribute(String boundModelName, Object scimName) {
-        return Attribute.<UserModel, User>simple(scimName.toString())
+    private Attribute<UserModel, User> createCustomAttribute(String boundModelName, Object scimName, boolean isMultivalued) {
+        Attribute.Builder<UserModel, User> builder = Attribute.<UserModel, User>simple(scimName.toString());
+        if (isMultivalued) {
+            builder = builder.multivalued()
+                    .withModelRemover((model, name, values) -> {
+                        if (values == null || values.isEmpty()) {
+                            model.removeAttribute(name);
+                            return;
+                        }
+                        List<String> remaining = model.getAttributeStream(name)
+                                .filter(value -> !values.contains(value))
+                                .toList();
+                        if (remaining.isEmpty()) {
+                            model.removeAttribute(name);
+                        } else {
+                            model.setAttribute(name, remaining);
+                        }
+                    })
+                    .withModelAdder((model, name, values) -> {
+                        if (values == null || values.isEmpty()) {
+                            return;
+                        }
+                        Set<String> merged = new LinkedHashSet<>();
+                        model.getAttributeStream(name).forEach(merged::add);
+                        merged.addAll(values.stream().map(Object::toString).toList());
+                        model.setAttribute(name, List.copyOf(merged));
+                    });
+        }
+
+        return builder
                 .modelAttributeResolver(attribute -> {
                     if (isCore()) {
                         return null;
@@ -179,12 +208,18 @@ public class UserExtensionModelSchema extends AbstractUserModelSchema {
                     }
                     if (value == null) {
                         model.removeAttribute(name);
+                    } else if (value instanceof Collection<?> values) {
+                        model.setAttribute(name, values.stream().map(Object::toString).toList());
                     } else {
                         model.setSingleAttribute(name, value.toString());
                     }
                 }, (attribute, user, value) -> {
                     if (isCore()) {
                         return;
+                    }
+
+                    if (!isMultivalued && value instanceof Collection<?> values) {
+                        value = values.stream().filter(Objects::nonNull).findFirst().orElse(null);
                     }
 
                     if (value == null || (value instanceof Collection && ((Collection<?>) value).isEmpty()) || (value instanceof String && ((String) value).isEmpty())) {

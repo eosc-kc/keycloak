@@ -70,9 +70,6 @@ public abstract class AbstractUserModelSchema extends AbstractModelSchema<UserMo
         if ("groups".equals(name)) {
             return model.getGroupsStream().toList();
         }
-        if (UserModel.EMAIL.equals(name)) {
-            return model.getEmail() == null ? List.of() : List.of(model.getEmail());
-        }
         UserProfile profile = session.getProvider(UserProfileProvider.class).create(UserProfileContext.SCIM, model);
         Attributes attributes = profile.getAttributes();
         AttributeMetadata metadata = attributes.getMetadata(name);
