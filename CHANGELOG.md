@@ -19,6 +19,7 @@ Our Keycloak version is working well with PostgreSQL database. For using other S
 
 ### Changed
 - Extend SCIM User Profile for supporting duplicate attributes. [RCIAM-837](https://tts.grnet.gr/jira/browse/RCIAM-837)
+- SCIM : email as single value in SCIM extensions [RCIAM-912](https://tts.grnet.gr/jira/browse/RCIAM-912)
 
 ### Fixed
 - Fix location of SCIM resources so IDs don't appear twice in the URL

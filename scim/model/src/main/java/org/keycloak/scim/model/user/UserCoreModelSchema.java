@@ -283,6 +283,11 @@ public final class UserCoreModelSchema extends AbstractUserModelSchema {
 
     @Override
     protected Object getAttributeValue(UserModel model, String name) {
+        // Core SCIM `emails` is a multivalued complex attribute and expects a collection.
+        if (UserModel.EMAIL.equals(name)) {
+            return model.getEmail() == null ? List.of() : List.of(model.getEmail());
+        }
+
         List<String> scimNames = getAttributeSchemaNames(name);
 
         // standard attributes
