@@ -1538,6 +1538,54 @@ public class UserTest extends AbstractScimTest {
         assertTrue(actualValues.containsAll(allExpectedValues));
     }
 
+    @Test
+    public void testGetSingleValuedEmailMappedToExtension() {
+        String customSchema = "urn:geant:aarc-community:scim:schemas:core:1.0:User";
+        UPConfig configuration = realm.admin().users().userProfile().getConfiguration();
+
+        UPAttribute emailAttr = configuration.getAttribute(UserModel.EMAIL);
+        emailAttr.setAnnotations(Map.of(ANNOTATION_SCIM_SCHEMA_ATTRIBUTE, customSchema + ":email"));
+        emailAttr.setMultivalued(false);
+
+        UPAttribute displayNameAttr = new UPAttribute("displayName", Map.of(
+                ANNOTATION_SCIM_SCHEMA_ATTRIBUTE, customSchema + ":displayName"));
+        displayNameAttr.setPermissions(new UPAttributePermissions(Set.of(UPConfigUtils.ROLE_ADMIN), Set.of(UPConfigUtils.ROLE_ADMIN)));
+        configuration.addOrReplaceAttribute(displayNameAttr);
+        realm.admin().users().userProfile().update(configuration);
+
+        String email = KeycloakModelUtils.generateId() + "@keycloak.org";
+        UserRepresentation existing = UserConfigBuilder.create()
+                .username(KeycloakModelUtils.generateId())
+                .email(email)
+                .firstName("f")
+                .lastName("l")
+                .enabled(true)
+                .build();
+        try (Response response = realm.admin().users().create(existing)) {
+            String id = ApiUtil.getCreatedId(response);
+            existing.setId(id);
+        }
+
+        existing = realm.admin().users().get(existing.getId()).toRepresentation();
+        existing.singleAttribute(displayNameAttr.getName(), "The Display Name");
+        realm.admin().users().get(existing.getId()).update(existing);
+
+        User user = client.users().get(existing.getId());
+        Object extension = ofNullable(user.getExtensions()).orElse(Map.of()).get(customSchema);
+        assertInstanceOf(Map.class, extension);
+        assertTrue(user.getSchemas().contains(customSchema));
+
+        Object emailValue = ((Map<?, ?>) extension).get("email");
+        assertInstanceOf(String.class, emailValue);
+        assertEquals(email, emailValue);
+
+        Object displayName = ((Map<?, ?>) extension).get("displayName");
+        assertInstanceOf(String.class, displayName);
+        assertEquals("The Display Name", displayName);
+
+        assertEquals(email, user.getEmail());
+    }
+
     private static void assertGroup(List<GroupMembership> groups, GroupRepresentation group, String type) {
         assertTrue(groups.stream().anyMatch(membership -> {
             boolean found = group.getId().equals(membership.getValue()) && group.getName().equals(membership.getDisplay());
