@@ -107,7 +107,7 @@
 		<#if attribute.annotations.inputTypeMin??>min="${attribute.annotations.inputTypeMin}"</#if>
 		<#if attribute.annotations.inputTypeStep??>step="${attribute.annotations.inputTypeStep}"</#if>
 		<#list attribute.html5DataAnnotations as key, value>
-    		data-${key}="${value}"
+    		data-${key}="${value?is_sequence?then(value?join(' '), value)}"
 		</#list>
 	/>
 </#macro>
