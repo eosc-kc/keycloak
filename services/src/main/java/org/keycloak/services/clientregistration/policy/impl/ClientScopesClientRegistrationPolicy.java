@@ -66,7 +66,7 @@ public class ClientScopesClientRegistrationPolicy implements ClientRegistrationP
 
         if (componentModel.get(ClientScopesClientRegistrationPolicyFactory.ADD_DEFAULT_SCOPES, false) && (requestedDefaultScopeNames != null || requestedOptionalScopeNames != null)) {
             //if requested scopes list is not empty and add-default-scopes is true, add realm default scopes
-            List<String> defaultRealmScopes = realm.getDefaultClientScopesStream(true).map(ClientScopeModel::getName).filter(allowedDefaultScopeNames::contains).collect(Collectors.toList());
+            List<String> defaultRealmScopes = realm.getDefaultClientScopesStream(true).map(ClientScopeModel::getName).filter(allowedDefaultScopeNames::contains).toList();
             if (!defaultRealmScopes.isEmpty()) {
                 List<String> newDefaultScopes = requestedDefaultScopeNames == null ? new LinkedList<>() : new LinkedList<>(requestedDefaultScopeNames);
                 for (String s : defaultRealmScopes) {
@@ -148,7 +148,7 @@ public class ClientScopesClientRegistrationPolicy implements ClientRegistrationP
         // If allowDefaultScopes, then realm default scopes are allowed as default scopes (+ optional scopes are allowed as optional scopes)
         boolean allowDefaultScopes = componentModel.get(ClientScopesClientRegistrationPolicyFactory.ALLOW_DEFAULT_SCOPES, true);
         if (allowDefaultScopes) {
-            allAllowed.addAll(realm.getDefaultClientScopesStream(defaultScopes).map(ClientScopeModel::getName).collect(Collectors.toList()));
+            allAllowed.addAll(realm.getDefaultClientScopesStream(defaultScopes).map(ClientScopeModel::getName).toList());
         }
 
         return allAllowed;

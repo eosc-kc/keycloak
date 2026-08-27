@@ -18,7 +18,6 @@ public class RequiredActionsResetTask implements ScheduledTask {
 
     public static String INTERVAL_NUM = "reset_every";
     public static String UNIT_MULTIPLIER = "reset_every_multiplier";
-    //use 3600 for hours, 86400 for days, 2592000 for months
     protected final String realmId;
 
     public RequiredActionsResetTask(String realmId) {
