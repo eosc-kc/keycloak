@@ -14,6 +14,7 @@ Our Keycloak version is working well with PostgreSQL database. For using other S
 
 ### Fixed
 - Fix bugs in Patch and query of members (Group SCIM)
+- Support OID-Fed Automatic Client registration for client_credentials grant (Keycloak as OP)
 
 ## [26.6.3-1.1] -2026-08-26
 

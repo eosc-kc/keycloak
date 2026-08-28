@@ -36,6 +36,8 @@ import org.keycloak.authentication.ClientAuthenticationFlowContext;
 import org.keycloak.models.AuthenticationExecutionModel;
 import org.keycloak.models.ClientModel;
 import org.keycloak.models.KeycloakSession;
+import org.keycloak.models.enums.ClientRegistrationTypeEnum;
+import org.keycloak.models.enums.EntityTypeEnum;
 import org.keycloak.protocol.oidc.OIDCClientSecretConfigWrapper;
 import org.keycloak.protocol.oidc.OIDCLoginProtocol;
 import org.keycloak.provider.ProviderConfigProperty;
@@ -112,17 +114,24 @@ public class ClientIdAndSecretAuthenticator extends AbstractClientAuthenticator 
         context.getEvent().client(client_id);
 
         ClientModel client = context.getSession().clients().getClientByClientId(context.getRealm(), client_id);
-        if (client == null) {
+        if (client == null && !context.getRealm().isOpenIdFederationTypeRegistrationSupported(EntityTypeEnum.OPENID_PROVIDER, ClientRegistrationTypeEnum.AUTOMATIC)) {
             context.failure(AuthenticationFlowError.CLIENT_NOT_FOUND, null);
+            return;
+        } else if (client == null){
+            context.attempted();
             return;
         }
 
         context.setClient(client);
 
-        if (!client.isEnabled()) {
+        if (!client.isEnabled() && !context.getRealm().isOpenIdFederationTypeRegistrationSupported(EntityTypeEnum.OPENID_PROVIDER, ClientRegistrationTypeEnum.AUTOMATIC)) {
             context.failure(AuthenticationFlowError.CLIENT_DISABLED, null);
             return;
+        }  else if (!client.isEnabled()){
+            context.attempted();
+            return;
         }
+
 
         // Skip client_secret validation for public client
         if (client.isPublicClient()) {
