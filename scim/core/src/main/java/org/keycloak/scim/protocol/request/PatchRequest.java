@@ -130,12 +130,11 @@ public class PatchRequest {
         }
 
         public Builder add(String path, Object objectValue) {
-            try {
-                String json = JsonSerialization.writeValueAsString(objectValue);
-                operation("add", path, json);
-            } catch (IOException e) {
-                throw new RuntimeException(e);
-            }
+            PatchOperation operation = new PatchOperation();
+            operation.setOp("add");
+            operation.setPath(path);
+            operation.setValue(JsonSerialization.writeValueAsNode(objectValue));
+            operations.add(operation);
             return this;
         }
 
