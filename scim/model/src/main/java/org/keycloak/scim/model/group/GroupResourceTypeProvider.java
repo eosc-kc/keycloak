@@ -24,9 +24,11 @@ import jakarta.persistence.criteria.Expression;
 import jakarta.persistence.criteria.Join;
 import jakarta.persistence.criteria.Predicate;
 import jakarta.persistence.criteria.Root;
+import jakarta.persistence.criteria.Subquery;
 
 import org.keycloak.authorization.fgap.AdminPermissionsSchema;
 import org.keycloak.common.util.Time;
+import org.keycloak.common.util.TriFunction;
 import org.keycloak.connections.jpa.JpaConnectionProvider;
 import org.keycloak.models.GroupModel;
 import org.keycloak.models.KeycloakSession;
@@ -187,5 +189,38 @@ public class GroupResourceTypeProvider extends AbstractScimResourceTypeProvider<
             return join.get("user").get("id");
         }
         return null;
+    }
+
+    @Override
+    public Predicate createAttributePredicate(Attribute<?, ?> attribute, String operation, Object value,
+                                              CriteriaBuilder cb, Root<?> root,
+                                              BiFunction<Class<?>, Supplier<Join<?, ?>>, Join<?, ?>> joinResolver,
+                                              TriFunction<CriteriaBuilder, Expression, Object, Predicate> operator) {
+        if (!"members".equals(attribute.getName()) || operator == null) {
+            return null;
+        }
+
+        CriteriaQuery<?> query = cb.createQuery();
+
+        // 1. Subquery for User Members
+        Subquery<Integer> userSubquery = query.subquery(Integer.class);
+        Root<UserGroupMembershipEntity> userRoot = userSubquery.from(UserGroupMembershipEntity.class);
+        userSubquery.select(cb.literal(1));
+
+        Predicate userCorrelation = cb.equal(userRoot.get("groupId"), root.get("id"));
+        Predicate userCondition = operator.apply(cb, userRoot.get("user").get("id"), value);
+        userSubquery.where(cb.and(userCorrelation, userCondition));
+
+        // 2. Subquery for Child Groups (Subgroups)
+        Subquery<Integer> childGroupSubquery = query.subquery(Integer.class);
+        Root<GroupEntity> childGroupRoot = childGroupSubquery.from(GroupEntity.class);
+        childGroupSubquery.select(cb.literal(1));
+
+        Predicate childCorrelation = cb.equal(childGroupRoot.get("parentId"), root.get("id"));
+        Predicate childCondition = operator.apply(cb, childGroupRoot.get("id"), value);
+        childGroupSubquery.where(cb.and(childCorrelation, childCondition));
+
+        // 3. Combine with EXISTS
+        return cb.or(cb.exists(userSubquery), cb.exists(childGroupSubquery));
     }
 }

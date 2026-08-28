@@ -400,13 +400,27 @@ public class GroupTest extends AbstractScimTest {
                 .build());
 
         // GET parent group with members parameter
-        List<Member> members = client.groups().get(parentGroup.getId(), List.of("members"), null).getMembers();;
+        List<Member> members = client.groups().get(parentGroup.getId(), List.of("members"), null).getMembers();
         assertNotNull(members);
         assertEquals(2, members.size());
 
         // assert both User and Group member entries are correctly present
         assertMember(members, childGroupA.getId(), childGroupA.getDisplayName(), "Group");
         assertMember(members, userA.getId(), userA.getUserName(), "User");
+
+        String parentGroupId = parentGroup.getId();
+
+        // filter by child group id must return the parent (members.value includes subgroups)
+        String filter = ResourceFilter.filter().eq("members.value", childGroupA.getId()).build();
+        ListResponse<Group> response = client.groups().getAll(filter);
+        assertFalse(response.getResources().isEmpty());
+        assertTrue(response.getResources().stream().anyMatch(g -> g.getId().equals(parentGroupId)));
+
+        // filter by user member id must still return the parent
+        filter = ResourceFilter.filter().eq("members.value", userA.getId()).build();
+        response = client.groups().getAll(filter);
+        assertFalse(response.getResources().isEmpty());
+        assertTrue(response.getResources().stream().anyMatch(g -> g.getId().equals(parentGroupId)));
 
         // PATCH add childGroupB
         Member childMemberB = new Member();
@@ -435,6 +449,11 @@ public class GroupTest extends AbstractScimTest {
         assertTrue(members.stream().noneMatch(m -> childGroupA.getId().equals(m.getValue())));
         assertMember(members, childGroupB.getId(), childGroupB.getDisplayName(), "Group");
         assertMember(members, userA.getId(), userA.getUserName(), "User");
+
+        // after removal, filtering by childGroupA must no longer return the parent
+        filter = ResourceFilter.filter().eq("members.value", childGroupA.getId()).build();
+        response = client.groups().getAll(filter);
+        assertTrue(response.getResources().isEmpty() || response.getResources().stream().noneMatch(g -> g.getId().equals(parentGroupId)));
 
         // PATCH remove remaining members
         client.groups().patch(parentGroup.getId(), PatchRequest.create()

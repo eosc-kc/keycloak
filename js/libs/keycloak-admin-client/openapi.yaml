@@ -293,4 +293,4 @@ security:
 - bearer-auth: []
 info:
   title: Keycloak API
-  version: 26.6.3
+  version: 26.6.6

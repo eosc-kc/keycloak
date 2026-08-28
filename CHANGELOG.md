@@ -10,6 +10,11 @@ Full Keycloak upstream jira issue can be shown if filtered by Fix version.
 
 Our Keycloak version is working well with PostgreSQL database. For using other SQL databases, text field in database need to be evaluated.
 
+## [Unreleased]
+
+### Fixed
+- Fix bugs in Patch and query of members (Group SCIM)
+
 ## [26.6.3-1.1] -2026-08-26
 
 ### Added
