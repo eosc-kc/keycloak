@@ -66,6 +66,16 @@ public class RealmAttributeUpdater extends ServerResourceUpdater<RealmAttributeU
         return this;
     }
 
+    public RealmAttributeUpdater setOfflineSessionMaxLifespanEnabled(Boolean enabled) {
+        rep.setOfflineSessionMaxLifespanEnabled(enabled);
+        return this;
+    }
+
+    public RealmAttributeUpdater setOfflineSessionMaxLifespan(Integer timeout) {
+        rep.setOfflineSessionMaxLifespan(timeout);
+        return this;
+    }
+
     public RealmAttributeUpdater setSsoSessionIdleTimeoutRememberMe(Integer idleTimeout) {
         rep.setSsoSessionIdleTimeoutRememberMe(idleTimeout);
         return this;
