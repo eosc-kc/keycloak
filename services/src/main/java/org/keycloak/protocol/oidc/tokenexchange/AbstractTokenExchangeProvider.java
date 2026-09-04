@@ -191,7 +191,7 @@ public abstract class AbstractTokenExchangeProvider implements TokenExchangeProv
 
     }
 
-    protected abstract String getRequestedTokenType();
+    protected abstract String getRequestedTokenType(AccessToken accessToken);
 
     protected List<ClientModel> getTargetAudienceClients() {
         List<String> audienceParams = params.getAudience();
@@ -221,7 +221,7 @@ public abstract class AbstractTokenExchangeProvider implements TokenExchangeProv
     protected Response exchangeClientToClient(UserModel targetUser, UserSessionModel targetUserSession,
             AccessToken token, boolean disallowOnHolderOfTokenMismatch) {
 
-        String requestedTokenType = getRequestedTokenType();
+        String requestedTokenType = getRequestedTokenType(token);
         event.detail(Details.REQUESTED_TOKEN_TYPE, requestedTokenType);
         List<ClientModel> targetAudienceClients = getTargetAudienceClients();
         validateAudience(token, disallowOnHolderOfTokenMismatch, targetAudienceClients);
