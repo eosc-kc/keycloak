@@ -22,6 +22,7 @@ package org.keycloak.protocol.oidc.tokenexchange;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 import jakarta.ws.rs.core.MediaType;
@@ -40,6 +41,7 @@ import org.keycloak.models.ClientSessionContext;
 import org.keycloak.models.Constants;
 import org.keycloak.models.UserModel;
 import org.keycloak.models.UserSessionModel;
+import org.keycloak.models.utils.SessionExpirationUtils;
 import org.keycloak.protocol.oidc.OIDCAdvancedConfigWrapper;
 import org.keycloak.protocol.oidc.TokenExchangeContext;
 import org.keycloak.protocol.oidc.TokenManager;
@@ -48,6 +50,7 @@ import org.keycloak.protocol.oidc.encode.TokenContextEncoderProvider;
 import org.keycloak.rar.AuthorizationRequestContext;
 import org.keycloak.representations.AccessToken;
 import org.keycloak.representations.AccessTokenResponse;
+import org.keycloak.representations.RefreshToken;
 import org.keycloak.services.CorsErrorResponseException;
 import org.keycloak.services.managers.AuthenticationManager;
 import org.keycloak.services.managers.AuthenticationSessionManager;
@@ -224,19 +227,16 @@ public class StandardTokenExchangeProvider extends AbstractTokenExchangeProvider
         AuthenticationSessionModel authSession = createSessionModel(targetUserSession, rootAuthSession, targetUser, client, scope);
         boolean isOfflineSession = targetUserSession.isOffline();
 
-        if (targetUserSession.getPersistenceState() == UserSessionModel.SessionPersistenceState.TRANSIENT || isOfflineSession) {
-            // if no session is associated with the subject_token or it is offline, check no online session is needed
-            if (OAuth2Constants.REFRESH_TOKEN_TYPE.equals(requestedTokenType)) {
-                event.detail(Details.REASON, "Refresh token not valid as requested_token_type because creating a new session is needed");
-                event.error(Errors.INVALID_REQUEST);
-                throw new CorsErrorResponseException(cors, OAuthErrorException.INVALID_REQUEST,
-                        "Refresh token not valid as requested_token_type because creating a new session is needed", Response.Status.BAD_REQUEST);
-            }
+        if (targetUserSession.getPersistenceState() == UserSessionModel.SessionPersistenceState.TRANSIENT && OAuth2Constants.REFRESH_TOKEN_TYPE.equals(requestedTokenType)) {
+            event.detail(Details.REASON, "Refresh token not valid as requested_token_type because creating a new session is needed");
+            event.error(Errors.INVALID_REQUEST);
+            throw new CorsErrorResponseException(cors, OAuthErrorException.INVALID_REQUEST,
+                    "Refresh token not valid as requested_token_type because creating a new session is needed", Response.Status.BAD_REQUEST);
+        }
 
-            // create a transient session now for the token exchange
-            if (isOfflineSession) {
-                targetUserSession = UserSessionUtil.createTransientUserSession(session, targetUserSession);
-            }
+        // create a transient session now for the token exchange
+        if (targetUserSession.isOffline()) {
+            targetUserSession = UserSessionUtil.createTransientUserSession(session, targetUserSession);
         }
 
         final boolean newClientSessionCreated = targetUserSession.getPersistenceState() != UserSessionModel.SessionPersistenceState.TRANSIENT
@@ -247,13 +247,21 @@ public class StandardTokenExchangeProvider extends AbstractTokenExchangeProvider
                     context.getRestrictedScopes(), !OAuth2Constants.REFRESH_TOKEN_TYPE.equals(requestedTokenType)); // create transient session if needed except for refresh
             clientSessionCtx.setAttribute(OAuth2Constants.RESOURCE, formParams.get(OAuth2Constants.RESOURCE));
 
-            if (requestedTokenType.equals(OAuth2Constants.REFRESH_TOKEN_TYPE)
-                    && clientSessionCtx.getClientScopesStream().filter(s -> OAuth2Constants.OFFLINE_ACCESS.equals(s.getName())).findAny().isPresent()) {
-                event.detail(Details.REASON, "Scope offline_access not allowed for token exchange");
+            if (OAuth2Constants.REFRESH_TOKEN_TYPE.equals(requestedTokenType) && isOfflineSession && clientSessionCtx.isOfflineTokenRequested()) {
+                event.detail(Details.REASON, "Refresh token not valid as requested_token_type because creating a new session is needed");
                 event.error(Errors.INVALID_REQUEST);
                 throw new CorsErrorResponseException(cors, OAuthErrorException.INVALID_REQUEST,
-                        "Scope offline_access not allowed for token exchange", Response.Status.BAD_REQUEST);
+                        "Refresh token not valid as requested_token_type because creating a new session is needed", Response.Status.BAD_REQUEST);
             }
+
+            //upsteam behaviour : this + reject offline target user session
+//            if (requestedTokenType.equals(OAuth2Constants.REFRESH_TOKEN_TYPE)
+//                    && clientSessionCtx.getClientScopesStream().filter(s -> OAuth2Constants.OFFLINE_ACCESS.equals(s.getName())).findAny().isPresent()) {
+//                event.detail(Details.REASON, "Scope offline_access not allowed for token exchange");
+//                event.error(Errors.INVALID_REQUEST);
+//                throw new CorsErrorResponseException(cors, OAuthErrorException.INVALID_REQUEST,
+//                        "Scope offline_access not allowed for token exchange", Response.Status.BAD_REQUEST);
+//            }
 
             updateUserSessionFromClientAuth(targetUserSession);
 
@@ -303,6 +311,7 @@ public class StandardTokenExchangeProvider extends AbstractTokenExchangeProvider
 
             if (OAuth2Constants.REFRESH_TOKEN_TYPE.equals(requestedTokenType)) {
                 responseBuilder.generateRefreshToken();
+                bindExchangedOfflineRefreshTokenExpiration(responseBuilder.getRefreshToken(), targetUserSession);
             }
 
             AccessTokenResponse res;
@@ -362,7 +371,7 @@ public class StandardTokenExchangeProvider extends AbstractTokenExchangeProvider
     }
 
     @Override
-    protected String getRequestedTokenType() {
+    protected String getRequestedTokenType(AccessToken accessToken) {
         String requestedTokenType = params.getRequestedTokenType();
         if (requestedTokenType == null) {
             requestedTokenType = OAuth2Constants.ACCESS_TOKEN_TYPE;
@@ -375,14 +384,39 @@ public class StandardTokenExchangeProvider extends AbstractTokenExchangeProvider
         }
         OIDCAdvancedConfigWrapper oidcClient = OIDCAdvancedConfigWrapper.fromClientModel(client);
         if (requestedTokenType.equals(OAuth2Constants.REFRESH_TOKEN_TYPE)
-                && oidcClient.isUseRefreshToken()
-                && oidcClient.getStandardTokenExchangeRefreshEnabled() != OIDCAdvancedConfigWrapper.TokenExchangeRefreshTokenEnabled.NO) {
+                && ((oidcClient.isUseRefreshToken()
+                && oidcClient.getStandardTokenExchangeRefreshEnabled() != OIDCAdvancedConfigWrapper.TokenExchangeRefreshTokenEnabled.NO)
+                || TokenUtil.TOKEN_TYPE_OFFLINE.equals(accessToken.getType()))) {
             return requestedTokenType;
         }
 
         event.detail(Details.REASON, "requested_token_type unsupported");
         event.error(Errors.INVALID_REQUEST);
         throw new CorsErrorResponseException(cors, OAuthErrorException.INVALID_REQUEST, "requested_token_type unsupported", Response.Status.BAD_REQUEST);
+    }
+
+    /**
+     * Ensures an offline refresh token issued by token exchange cannot outlive the subject session /
+     * original refresh token lifetime (no lifetime escalation via token exchange).
+     */
+    private void bindExchangedOfflineRefreshTokenExpiration(RefreshToken refreshToken, UserSessionModel targetUserSession) {
+
+        if (refreshToken == null || !TokenUtil.TOKEN_TYPE_OFFLINE.equals(refreshToken.getType())) {
+            return;
+        }
+
+        long subjectExpiresMs = SessionExpirationUtils.calculateUserSessionMaxLifespanTimestamp(
+                targetUserSession.isOffline(), targetUserSession.isRememberMe(),
+                TimeUnit.SECONDS.toMillis(targetUserSession.getStarted()), realm);
+        if (subjectExpiresMs <= 0) {
+            return;
+        }
+
+        long subjectExpSeconds = TimeUnit.MILLISECONDS.toSeconds(subjectExpiresMs);
+        Long currentExp = refreshToken.getExp();
+        if (currentExp == null || currentExp > subjectExpSeconds) {
+            refreshToken.exp(subjectExpSeconds);
+        }
     }
 
     private static boolean isSenderConstrainedToken(AccessToken token) {
