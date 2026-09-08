@@ -947,6 +947,14 @@ public class RealmModelDelegate implements RealmModel {
         return delegate.getComponentsStream(parentId, providerType);
     }
 
+    public Stream<ComponentModel> getComponentsStream(String parentId, String providerType, String subType) {
+        return delegate.getComponentsStream(parentId, providerType, subType);
+    }
+
+    public Stream<ComponentModel> getComponentsStream(String providerType, Map<String, String> parentMap) {
+        return delegate.getComponentsStream(providerType, parentMap);
+    }
+
     public Stream<ComponentModel> getComponentsStream(String parentId) {
         return delegate.getComponentsStream(parentId);
     }
