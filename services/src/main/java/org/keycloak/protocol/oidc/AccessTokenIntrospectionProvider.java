@@ -34,6 +34,7 @@ import org.keycloak.broker.oidc.OIDCIdentityProvider;
 import org.keycloak.broker.oidc.OIDCIdentityProviderConfig;
 import org.keycloak.common.VerificationException;
 import org.keycloak.common.util.Time;
+import org.keycloak.component.ComponentModel;
 import org.keycloak.connections.httpclient.HttpClientProvider;
 import org.keycloak.crypto.CryptoUtils;
 import org.keycloak.crypto.SignatureVerifierContext;
@@ -425,18 +426,8 @@ public class AccessTokenIntrospectionProvider<T extends AccessToken> implements 
             IdentityProviderModel issuerIdp = realm.getIdentityProvidersStream().filter(idp -> issuer.equals(idp.getConfig().get("issuer")) && idp.isEnabled()).findAny().orElse(null);
             if (issuerIdp != null) {
                 OIDCIdentityProviderConfig oidcIssuerIdp = new OIDCIdentityProviderConfig(issuerIdp);
-                OIDCIdentityProvider oidcIssuerProvider = new OIDCIdentityProvider(session, oidcIssuerIdp);
                 if (oidcIssuerIdp.getTokenIntrospectionUrl() != null) {
-                    SimpleHttpResponse response = oidcIssuerProvider.authenticateTokenRequest(SimpleHttp.create(session).doPost(oidcIssuerIdp.getTokenIntrospectionUrl()).param(PARAM_TOKEN, token)).asResponse();
-                    if (response.getStatus() > 300) {
-                        logger.warn("Remote introspection Idp return http status " + response.getStatus() + " with body :");
-                        logger.warn(response.asString());
-                        ObjectNode tokenMetadata = JsonSerialization.createObjectNode();
-                        tokenMetadata.put("active", false);
-                        return Response.ok(JsonSerialization.writeValueAsBytes(tokenMetadata)).type(MediaType.APPLICATION_JSON_TYPE).build();
-                    }
-                    tokenRelayCache.put(new Key(token, realm.getName()), response.asString());
-                    return Response.status(response.getStatus()).type(MediaType.APPLICATION_JSON_TYPE).entity(response.asString()).build();
+                    return proxiedTokenIntrospectionResponse(token, oidcIssuerIdp, new OIDCIdentityProvider(session, oidcIssuerIdp));
                 }
             } else if (realm.getAttribute(PROXIED_TOKEN_INTROSPECTION_FALLBACK_PROVIDERS) != null){
                 //fallback IdP
@@ -446,16 +437,10 @@ public class AccessTokenIntrospectionProvider<T extends AccessToken> implements 
                     IdentityProviderModel idp = realm.getIdentityProviderByAlias(alias);
                     if (idp != null && idp.isEnabled() ) {
                         OIDCIdentityProviderConfig oidcIssuerIdp = new OIDCIdentityProviderConfig(idp);
-                        OIDCIdentityProvider oidcIssuerProvider = new OIDCIdentityProvider(session, oidcIssuerIdp);
                         InputStream inputStream = httpClientProvider.get(new String(oidcIssuerIdp.getIssuer() + wellKnown));
                         OIDCConfigurationRepresentation rep = JsonSerialization.readValue(inputStream, OIDCConfigurationRepresentation.class);
                         if (rep.getIntrospectionEndpoint() != null) {
-                            SimpleHttpResponse response = oidcIssuerProvider.authenticateTokenRequest(SimpleHttp.create(session).doPost(rep.getIntrospectionEndpoint()).param(PARAM_TOKEN, token)).asResponse();
-                            if (response.getStatus() < 300 && mapper.readTree(response.asString()).path("active").asBoolean(false)) {
-                                return Response.status(response.getStatus()).type(MediaType.APPLICATION_JSON_TYPE).entity(response.asString()).build();
-                            } else {
-                                logger.warnf("IdP with alias %s responde to token introspection with status %d and body : %s", alias, response.getStatus(), response.asString());
-                            }
+                            return proxiedTokenIntrospectionResponse(token, oidcIssuerIdp, new OIDCIdentityProvider(session, oidcIssuerIdp));
                         }
                     }
                 }
@@ -475,6 +460,64 @@ public class AccessTokenIntrospectionProvider<T extends AccessToken> implements 
                 eventBuilder.error(Errors.TOKEN_INTROSPECTION_FAILED);
             logger.warn("Error during remote introspection", e);
             throw new RuntimeException("Error creating token introspection response.", e);
+        }
+    }
+
+    private Response proxiedTokenIntrospectionResponse(String token, OIDCIdentityProviderConfig oidcIssuerIdp, OIDCIdentityProvider oidcIssuerProvider) throws IOException {
+        SimpleHttpResponse response = oidcIssuerProvider.authenticateTokenRequest(SimpleHttp.create(session).doPost(oidcIssuerIdp.getTokenIntrospectionUrl()).param(PARAM_TOKEN, token)).asResponse();
+        if (response.getStatus() > 300) {
+            logger.warn("Remote introspection Idp return http status " + response.getStatus() + " with body :");
+            logger.warn(response.asString());
+            ObjectNode tokenMetadata = JsonSerialization.createObjectNode();
+            tokenMetadata.put("active", false);
+            return Response.ok(JsonSerialization.writeValueAsBytes(tokenMetadata)).type(MediaType.APPLICATION_JSON_TYPE).build();
+        }
+        ObjectNode responseNode = (ObjectNode) JsonSerialization.mapper.readTree(response.asString());
+
+        // Only translate active tokens
+        if (responseNode.has("active") && responseNode.get("active").asBoolean()) {
+
+            // 2. Query translations for this specific IdP alias first
+            List<ComponentModel> translationComponents = realm.getComponentsStream(oidcIssuerIdp.getAlias(), ProxiedTokenIntrospectionTranslationsSpi.SPI_NAME)
+                    .toList();
+
+            // Fallback: If no IdP-specific rules exist, load realm-level global rules
+            if (translationComponents.isEmpty()) {
+                translationComponents = realm.getComponentsStream(realm.getId(), ProxiedTokenIntrospectionTranslationsSpi.SPI_NAME)
+                        .toList();
+            }
+
+            // 3. Instantiate and execute the translate() method for each configured component
+            for (ComponentModel model : translationComponents) {
+                ProxiedTokenIntrospectionTranslationsProvider provider = session.getProvider(
+                        ProxiedTokenIntrospectionTranslationsProvider.class,
+                        model
+                );
+                if (provider == null) {
+                    logger.warnf("Translation provider factory not found for component '%s' (providerId: '%s'). Skipping this rule.",
+                            model.getName(), model.getProviderId());
+                    continue;
+                }
+                try {
+                    provider.translate(responseNode);
+                } catch (Exception e) {
+                    logger.warnf(e, "An error occurred while executing translation rule '%s' (providerId: '%s'). Skipping this rule.",
+                            model.getName(), model.getProviderId());
+                } finally {
+                    provider.close();
+                }
+            }
+            String finalResponseString = JsonSerialization.writeValueAsString(responseNode);
+
+            // Cache and return transformed payload
+            tokenRelayCache.put(new Key(token, realm.getName()), finalResponseString);
+            return Response.status(response.getStatus())
+                    .type(MediaType.APPLICATION_JSON_TYPE)
+                    .entity(finalResponseString)
+                    .build();
+        } else {
+            tokenRelayCache.put(new Key(token, realm.getName()), response.asString());
+            return Response.status(response.getStatus()).type(MediaType.APPLICATION_JSON_TYPE).entity(response.asString()).build();
         }
     }
 
