@@ -7,6 +7,8 @@ import java.util.stream.Collectors;
 
 import org.keycloak.OAuth2Constants;
 import org.keycloak.OAuthErrorException;
+import org.keycloak.events.Details;
+import org.keycloak.events.Errors;
 import org.keycloak.models.ClientModel;
 import org.keycloak.models.Constants;
 import org.keycloak.models.KeycloakSession;
@@ -26,8 +28,10 @@ public class ResourceIndicatorsPostProcessor implements TokenPostProcessor {
     @Override
     public void process(TokenPostProcessorContext context) {
         List<String> requestedResources = (List<String>) context.clientSessionCtx().getAttribute(OAuth2Constants.RESOURCE, List.class);
+        if (requestedResources != null && !requestedResources.isEmpty())
+            context.event().detail(OAuth2Constants.RESOURCE, String.join(",", requestedResources));
         if (requestedResources != null && requestedResources.stream().anyMatch( requestedResource -> !ResourceIndicatorValidation.isValidResourceIndicator(requestedResource))) {
-            throw new TokenInterceptorException(OAuthErrorException.INVALID_TARGET, ResourceIndicatorConstants.ERROR_INVALID_RESOURCE);
+            throwInvalidResource(context);
         }
 
         String grantType = context.clientSessionCtx().getAttribute(Constants.GRANT_TYPE, String.class);
@@ -74,7 +78,7 @@ public class ResourceIndicatorsPostProcessor implements TokenPostProcessor {
                     }).filter(Objects::nonNull).collect(Collectors.toList());
 
             if (audienceToSetList.isEmpty()) {
-                throw new TokenInterceptorException(OAuthErrorException.INVALID_TARGET, ResourceIndicatorConstants.ERROR_INVALID_RESOURCE);
+                throwInvalidResource(context);
             }
             context.accessToken().audience(audienceToSetList.toArray(String[]::new));
         } else  if (! OAuth2Constants.TOKEN_EXCHANGE_GRANT_TYPE.equals(grantType)) {
@@ -91,6 +95,12 @@ public class ResourceIndicatorsPostProcessor implements TokenPostProcessor {
             context.refreshToken().getOtherClaims().put(OAuth2Constants.RESOURCE, requestedResources);
         }
 
+    }
+
+    private void throwInvalidResource(TokenPostProcessorContext context) {
+        context.event().detail(Details.REASON, ResourceIndicatorConstants.ERROR_INVALID_RESOURCE)
+                .error(Errors.INVALID_REQUEST);
+        throw new TokenInterceptorException(OAuthErrorException.INVALID_TARGET, ResourceIndicatorConstants.ERROR_INVALID_RESOURCE);
     }
 
     private boolean isClientUrn(String resource) {
