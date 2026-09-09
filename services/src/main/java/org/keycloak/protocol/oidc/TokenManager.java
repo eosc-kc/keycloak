@@ -1542,7 +1542,7 @@ public class TokenManager {
         }
 
         private void invokeTokenPostProcessors() {
-            TokenPostProcessorContext context = new TokenPostProcessorContext(code, requestRefreshToken, refreshToken, accessToken, clientSessionCtx);
+            TokenPostProcessorContext context = new TokenPostProcessorContext(code, requestRefreshToken, refreshToken, accessToken, clientSessionCtx, event);
             session.getAllProviders(TokenPostProcessor.class).forEach(processor -> processor.process(context));
         }
 

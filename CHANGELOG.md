@@ -14,10 +14,12 @@ Our Keycloak version is working well with PostgreSQL database. For using other S
 
 ### Added 
 - Token Exchange : Allow requested_token_type=urn:ietf:params:oauth:token-type:refresh_token with offline access token and created access token containing offline_access
+- Log resources in events
 
 ### Fixed
 - Fix bugs in Patch and query of members (Group SCIM)
 - Support OID-Fed Automatic Client registration for client_credentials grant (Keycloak as OP)
+- Log event error for failing resource validation
 
 ## [26.6.3-1.1] -2026-08-26
 
