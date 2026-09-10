@@ -478,12 +478,12 @@ public class AccessTokenIntrospectionProvider<T extends AccessToken> implements 
         if (responseNode.has("active") && responseNode.get("active").asBoolean()) {
 
             // 2. Query translations for this specific IdP alias first
-            List<ComponentModel> translationComponents = realm.getComponentsStream(oidcIssuerIdp.getAlias(), ProxiedTokenIntrospectionTranslationsSpi.SPI_NAME)
-                    .toList();
+            List<ComponentModel> translationComponents = realm.getComponentsStream(oidcIssuerIdp.getAlias(), ProxiedTokenIntrospectionTranslationsSpi.SPI_NAME).sorted(java.util.Comparator.comparingInt(this::getComponentOrder))
+                   .toList();
 
             // Fallback: If no IdP-specific rules exist, load realm-level global rules
             if (translationComponents.isEmpty()) {
-                translationComponents = realm.getComponentsStream(realm.getId(), ProxiedTokenIntrospectionTranslationsSpi.SPI_NAME)
+                translationComponents = realm.getComponentsStream(realm.getId(), ProxiedTokenIntrospectionTranslationsSpi.SPI_NAME).sorted(java.util.Comparator.comparingInt(this::getComponentOrder))
                         .toList();
             }
 
@@ -518,6 +518,14 @@ public class AccessTokenIntrospectionProvider<T extends AccessToken> implements 
         } else {
             tokenRelayCache.put(new Key(token, realm.getName()), response.asString());
             return Response.status(response.getStatus()).type(MediaType.APPLICATION_JSON_TYPE).entity(response.asString()).build();
+        }
+    }
+
+    private int getComponentOrder(ComponentModel component) {
+        try {
+            return Integer.parseInt(component.getConfig().getFirst("order"));
+        } catch (Exception e) {
+            return Integer.MAX_VALUE;
         }
     }
 

@@ -1,1 +1,2 @@
 org.keycloak.protocol.oidc.translators.ClaimRenamingTranslationProviderFactory
+org.keycloak.protocol.oidc.translators.ScalarValueNormalisationTranslationProviderFactory
