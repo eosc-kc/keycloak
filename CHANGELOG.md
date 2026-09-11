@@ -20,6 +20,8 @@ Our Keycloak version is working well with PostgreSQL database. For using other S
 - Fix bugs in Patch and query of members (Group SCIM)
 - Support OID-Fed Automatic Client registration for client_credentials grant (Keycloak as OP)
 - Log event error for failing resource validation
+- Allow getting access token in Device Flow when scope policy remove a scope from the requested scope list
+- Device flow : check valid scopes and resources
 
 ## [26.6.3-1.1] -2026-08-26
 

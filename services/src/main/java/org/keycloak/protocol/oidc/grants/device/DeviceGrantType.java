@@ -347,7 +347,7 @@ public class DeviceGrantType extends OAuth2GrantTypeBase {
 
         // Compute client scopes again from scope parameter. Check if user still has them granted
         // (but in device_code-to-token request, it could just theoretically happen that they are not available)
-        String scopeParam = deviceCodeModel.getScope();
+        String scopeParam = TokenManager.clientScopePolicy(deviceCodeModel.getScope(), user, realm.getClientScopesStream().collect(Collectors.toList()));
         if (!TokenManager.verifyConsentStillAvailable(session, user, client, TokenManager.getRequestedClientScopes(session, scopeParam, client, user))) {
             String errorMessage = "Client no longer has requested consent from user";
             event.detail(Details.REASON, errorMessage);
@@ -355,7 +355,7 @@ public class DeviceGrantType extends OAuth2GrantTypeBase {
             throw new CorsErrorResponseException(cors, OAuthErrorException.INVALID_SCOPE,
                     errorMessage, Response.Status.BAD_REQUEST);
         }
-        scopeParam = TokenManager.clientScopePolicy(scopeParam, user, realm.getClientScopesStream().collect(Collectors.toList()));
+
 
         ClientSessionContext clientSessionCtx = DefaultClientSessionContext.fromClientSessionAndScopeParameter(clientSession,
                 scopeParam, session);
