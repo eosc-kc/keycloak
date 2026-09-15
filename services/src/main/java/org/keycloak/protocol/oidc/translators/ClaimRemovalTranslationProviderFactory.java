@@ -12,14 +12,12 @@ import org.keycloak.protocol.oidc.ProxiedTokenIntrospectionTranslationsProviderF
 import org.keycloak.provider.ProviderConfigProperty;
 import org.keycloak.provider.ProviderConfigurationBuilder;
 
-public class ScalarValueNormalisationTranslationProviderFactory implements ProxiedTokenIntrospectionTranslationsProviderFactory {
+public class ClaimRemovalTranslationProviderFactory implements ProxiedTokenIntrospectionTranslationsProviderFactory {
 
-    public static final String PROVIDER_ID = "scalar-value-normalisation";
+    public static final String PROVIDER_ID = "claim-removal";
 
     public static final String IS_REGEX = "isRegex";
     public static final String CLAIM = "claim";
-    public static final String OLD_VALUE = "oldValue";
-    public static final String NEW_VALUE = "newValue";
 
     @Override
     public String getId() {
@@ -28,7 +26,7 @@ public class ScalarValueNormalisationTranslationProviderFactory implements Proxi
 
     @Override
     public ProxiedTokenIntrospectionTranslationsProvider create(KeycloakSession session, ComponentModel model) {
-        return new ScalarValueNormalisationTranslationProvider(model);
+        return new ClaimRemovalTranslationProvider(model);
     }
 
     @Override
@@ -45,7 +43,7 @@ public class ScalarValueNormalisationTranslationProviderFactory implements Proxi
 
     @Override
     public String getHelpText() {
-        return "Normalisation of single-value claims";
+        return "Translates or renames claims within a proxied remote token introspection response.";
     }
 
     @Override
@@ -58,29 +56,17 @@ public class ScalarValueNormalisationTranslationProviderFactory implements Proxi
                 .type(ProviderConfigProperty.INTEGER_TYPE)
                 .add()
                 .property()
+                .name(CLAIM)
+                .label("Claim Name")
+                .helpText("Claim name, or a regular expression if isRegex is true, to be removed.")
+                .type(ProviderConfigProperty.STRING_TYPE)
+                .add()
+                .property()
                 .name(IS_REGEX)
                 .label("Is Regular Expression")
                 .helpText("Whether oldClaim and newClaim should be evaluated as regex expressions.")
                 .type(ProviderConfigProperty.BOOLEAN_TYPE)
                 .defaultValue(false)
-                .add()
-                .property()
-                .name(CLAIM)
-                .label("Claim Name")
-                .helpText("Claim name to be normalised")
-                .type(ProviderConfigProperty.STRING_TYPE)
-                .add()
-                .property()
-                .name(OLD_VALUE)
-                .label("Old Value")
-                .helpText("The original value of the claim.")
-                .type(ProviderConfigProperty.STRING_TYPE)
-                .add()
-                .property()
-                .name(NEW_VALUE)
-                .label("New Value")
-                .helpText("The replacement value for the claim.")
-                .type(ProviderConfigProperty.STRING_TYPE)
                 .add()
                 .build();
     }

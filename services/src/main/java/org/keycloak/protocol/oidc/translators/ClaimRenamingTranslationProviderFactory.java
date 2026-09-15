@@ -6,6 +6,7 @@ import org.keycloak.Config;
 import org.keycloak.component.ComponentModel;
 import org.keycloak.models.KeycloakSession;
 import org.keycloak.models.KeycloakSessionFactory;
+import org.keycloak.protocol.oidc.AccessTokenIntrospectionProvider;
 import org.keycloak.protocol.oidc.ProxiedTokenIntrospectionTranslationsProvider;
 import org.keycloak.protocol.oidc.ProxiedTokenIntrospectionTranslationsProviderFactory;
 import org.keycloak.provider.ProviderConfigProperty;
@@ -50,6 +51,12 @@ public class ClaimRenamingTranslationProviderFactory implements ProxiedTokenIntr
     @Override
     public List<ProviderConfigProperty> getConfigProperties() {
         return ProviderConfigurationBuilder.create()
+                .property()
+                .name(AccessTokenIntrospectionProvider.ORDER)
+                .label("Order")
+                .helpText("Order of the translation provider.")
+                .type(ProviderConfigProperty.INTEGER_TYPE)
+                .add()
                 .property()
                 .name(OLD_CLAIM)
                 .label("Old Claim Name")
