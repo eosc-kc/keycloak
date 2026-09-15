@@ -13,7 +13,6 @@ Our Keycloak version is working well with PostgreSQL database. For using other S
 ## [26.6.6-1.2] -2026-09-15
 
 ### Added 
-- Token Exchange : Allow requested_token_type=urn:ietf:params:oauth:token-type:refresh_token with offline access token and created access token containing offline_access
 - Log resources in events
 
 ### Fixed
