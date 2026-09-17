@@ -204,7 +204,7 @@ public class V1TokenExchangeProvider extends AbstractTokenExchangeProvider {
     }
 
     @Override
-    protected String getRequestedTokenType(AccessToken accessToken) {
+    protected String getRequestedTokenType() {
         String requestedTokenType = context.getParams().getRequestedTokenType();
         if (requestedTokenType == null) {
             requestedTokenType = OAuth2Constants.REFRESH_TOKEN_TYPE;
