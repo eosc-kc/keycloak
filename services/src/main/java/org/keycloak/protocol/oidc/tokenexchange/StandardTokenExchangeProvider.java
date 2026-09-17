@@ -236,7 +236,7 @@ public class StandardTokenExchangeProvider extends AbstractTokenExchangeProvider
         }
 
         // create a transient session now for the token exchange
-        if (targetUserSession.isOffline()) {
+        if (isOfflineSession) {
             targetUserSession = UserSessionUtil.createTransientUserSession(session, targetUserSession);
         }
 
@@ -247,23 +247,25 @@ public class StandardTokenExchangeProvider extends AbstractTokenExchangeProvider
             ClientSessionContext clientSessionCtx = TokenManager.attachAuthenticationSession(this.session, targetUserSession, authSession,
                     context.getRestrictedScopes(), !OAuth2Constants.REFRESH_TOKEN_TYPE.equals(requestedTokenType)); // create transient session if needed except for refresh
             clientSessionCtx.setAttribute(OAuth2Constants.RESOURCE, formParams.get(OAuth2Constants.RESOURCE));
+            OIDCAdvancedConfigWrapper oidcClient = OIDCAdvancedConfigWrapper.fromClientModel(client);
 
-            if (OAuth2Constants.REFRESH_TOKEN_TYPE.equals(requestedTokenType) && ((isOfflineSession && !clientSessionCtx.isOfflineTokenRequested()) || (!isOfflineSession && clientSessionCtx.isOfflineTokenRequested()))) {
-                //Do not allow to change from bearer to offline and vice versa
+            if (OAuth2Constants.REFRESH_TOKEN_TYPE.equals(requestedTokenType) && isOfflineSession && !clientSessionCtx.isOfflineTokenRequested()) {
+                event.detail(Details.REASON, "Could not have requested_token_type as refresh token from offline user session and return no offline user session");
+                event.error(Errors.INVALID_REQUEST);
+                throw new CorsErrorResponseException(cors, OAuthErrorException.INVALID_REQUEST,
+                        "Could not have requested_token_type as refresh token from offline user session and return no offline user session", Response.Status.BAD_REQUEST);
+            } else if (OAuth2Constants.REFRESH_TOKEN_TYPE.equals(requestedTokenType) && !isOfflineSession &&
+                    (!oidcClient.isUseRefreshToken() || oidcClient.getStandardTokenExchangeRefreshEnabled() == OIDCAdvancedConfigWrapper.TokenExchangeRefreshTokenEnabled.NO)) {
+                event.detail(Details.REASON, "requested_token_type unsupported");
+                event.error(Errors.INVALID_REQUEST);
+                throw new CorsErrorResponseException(cors, OAuthErrorException.INVALID_REQUEST,
+                        "requested_token_type unsupported", Response.Status.BAD_REQUEST);
+            } else if (OAuth2Constants.REFRESH_TOKEN_TYPE.equals(requestedTokenType) && !isOfflineSession && clientSessionCtx.isOfflineTokenRequested()) {
                 event.detail(Details.REASON, "Refresh token not valid as requested_token_type because creating a new session is needed");
                 event.error(Errors.INVALID_REQUEST);
                 throw new CorsErrorResponseException(cors, OAuthErrorException.INVALID_REQUEST,
                         "Refresh token not valid as requested_token_type because creating a new session is needed", Response.Status.BAD_REQUEST);
             }
-
-            //upsteam behaviour : this + reject offline target user session
-//            if (requestedTokenType.equals(OAuth2Constants.REFRESH_TOKEN_TYPE)
-//                    && clientSessionCtx.getClientScopesStream().filter(s -> OAuth2Constants.OFFLINE_ACCESS.equals(s.getName())).findAny().isPresent()) {
-//                event.detail(Details.REASON, "Scope offline_access not allowed for token exchange");
-//                event.error(Errors.INVALID_REQUEST);
-//                throw new CorsErrorResponseException(cors, OAuthErrorException.INVALID_REQUEST,
-//                        "Scope offline_access not allowed for token exchange", Response.Status.BAD_REQUEST);
-//            }
 
             updateUserSessionFromClientAuth(targetUserSession);
 
@@ -373,7 +375,7 @@ public class StandardTokenExchangeProvider extends AbstractTokenExchangeProvider
     }
 
     @Override
-    protected String getRequestedTokenType(AccessToken accessToken) {
+    protected String getRequestedTokenType() {
         String requestedTokenType = params.getRequestedTokenType();
         if (requestedTokenType == null) {
             requestedTokenType = OAuth2Constants.ACCESS_TOKEN_TYPE;
@@ -381,14 +383,8 @@ public class StandardTokenExchangeProvider extends AbstractTokenExchangeProvider
         }
         if (requestedTokenType.equals(OAuth2Constants.ACCESS_TOKEN_TYPE)
                 || requestedTokenType.equals(OAuth2Constants.ID_TOKEN_TYPE)
-                || requestedTokenType.equals(OAuth2Constants.SAML2_TOKEN_TYPE)) {
-            return requestedTokenType;
-        }
-        OIDCAdvancedConfigWrapper oidcClient = OIDCAdvancedConfigWrapper.fromClientModel(client);
-        if (requestedTokenType.equals(OAuth2Constants.REFRESH_TOKEN_TYPE)
-                && ((oidcClient.isUseRefreshToken()
-                && oidcClient.getStandardTokenExchangeRefreshEnabled() != OIDCAdvancedConfigWrapper.TokenExchangeRefreshTokenEnabled.NO)
-                || TokenUtil.TOKEN_TYPE_OFFLINE.equals(accessToken.getType()))) {
+                || requestedTokenType.equals(OAuth2Constants.SAML2_TOKEN_TYPE)
+                || requestedTokenType.equals(OAuth2Constants.REFRESH_TOKEN_TYPE)) {
             return requestedTokenType;
         }
 
