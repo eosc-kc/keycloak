@@ -1240,6 +1240,16 @@ public class SamlProtocolTest {
         }
 
         @Override
+        public Stream<ComponentModel> getComponentsStream(String parentId, String providerType, String subType) {
+            return null;
+        }
+
+        @Override
+        public Stream<ComponentModel> getComponentsStream(String providerType, Map<String, String> parentMap) {
+            return null;
+        }
+
+        @Override
         public Stream<ComponentModel> getComponentsStream(String parentId) {
             return null;
         }

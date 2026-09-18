@@ -658,10 +658,28 @@ public interface RealmModel extends RoleContainerModel {
      */
     Stream<ComponentModel> getComponentsStream(String parentId, String providerType);
 
+
+    /**
+     * Returns stream of ComponentModels for specific parentId and providerType and subType .
+     * @param parentId {@code String} id of parent
+     * @param providerType {@code String} type of provider
+     * @param subType {@code String} sub-type of provider
+     * @return Stream of {@link ComponentModel}. Never returns {@code null}.
+     */
+    Stream<ComponentModel> getComponentsStream(String parentId, String providerType, String subType);
+
+    /**
+     * Returns stream of ComponentModels for specific providerType and all Map combintation of parentId and subType .
+     * @param providerType {@code String} type of provider
+     * @param parentMap {@code Map<String, String>} map of subType as key and parentId as value
+     * @return Stream of {@link ComponentModel}. Never returns {@code null}.
+     */
+    Stream<ComponentModel> getComponentsStream(String providerType, Map<String, String> parentMap);
+
+
     /**
      * Returns stream of ComponentModels for specific parentId.
      * @param parentId {@code String} id of parent
-     * @return Stream of {@link ComponentModel}. Never returns {@code null}.
      */
     Stream<ComponentModel> getComponentsStream(String parentId);
 

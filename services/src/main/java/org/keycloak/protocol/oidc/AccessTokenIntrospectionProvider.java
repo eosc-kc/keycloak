@@ -22,6 +22,7 @@ import java.io.InputStream;
 import java.util.Arrays;
 import java.util.Base64;
 import java.util.List;
+import java.util.Map;
 
 import jakarta.ws.rs.NotFoundException;
 import jakarta.ws.rs.core.HttpHeaders;
@@ -479,12 +480,12 @@ public class AccessTokenIntrospectionProvider<T extends AccessToken> implements 
         if (responseNode.has("active") && responseNode.get("active").asBoolean()) {
 
             // 2. Query translations for this specific IdP alias first
-            List<ComponentModel> translationComponents = realm.getComponentsStream(oidcIssuerIdp.getAlias(), ProxiedTokenIntrospectionTranslationsSpi.SPI_NAME).sorted(java.util.Comparator.comparingInt(this::getComponentOrder))
+            List<ComponentModel> translationComponents = realm.getComponentsStream(ProxiedTokenIntrospectionTranslationsSpi.SPI_NAME, Map.of(ProxiedTokenIntrospectionTranslationsSpi.IDP, oidcIssuerIdp.getAlias(), ProxiedTokenIntrospectionTranslationsSpi.GLOBAL, realm.getName(), ProxiedTokenIntrospectionTranslationsSpi.CLIENT, eventBuilder.getEvent().getClientId())).sorted(java.util.Comparator.comparingInt(this::getComponentOrder))
                     .toList();
 
             // Fallback: If no IdP-specific rules exist, load realm-level global rules
             if (translationComponents.isEmpty()) {
-                translationComponents = realm.getComponentsStream(realm.getId(), ProxiedTokenIntrospectionTranslationsSpi.SPI_NAME).sorted(java.util.Comparator.comparingInt(this::getComponentOrder))
+                translationComponents = realm.getComponentsStream(realm.getName(), ProxiedTokenIntrospectionTranslationsSpi.SPI_NAME, ProxiedTokenIntrospectionTranslationsSpi.DEFAULT).sorted(java.util.Comparator.comparingInt(this::getComponentOrder))
                         .toList();
             }
 

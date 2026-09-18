@@ -1912,6 +1912,27 @@ public class RealmAdapter implements CachedRealmModel {
     }
 
     @Override
+    public Stream<ComponentModel> getComponentsStream(String parentId, String providerType, String subType) {
+        if (isUpdated()) return updated.getComponentsStream(parentId, providerType, subType);
+        return cached.getComponentsByParentAndType().getList(parentId + providerType).stream().filter(c -> subType.equals(c.getSubType()));
+    }
+
+    @Override
+    public Stream<ComponentModel> getComponentsStream(String providerType, Map<String, String> parentMap) {
+        if (isUpdated()) return updated.getComponentsStream(providerType, parentMap);
+        return parentMap.entrySet().stream()
+                .flatMap(entry -> {
+                    String subType = entry.getKey();
+                    String parentId = entry.getValue();
+
+                    return cached.getComponentsByParentAndType()
+                            .getList(parentId + providerType)
+                            .stream()
+                            .filter(c -> java.util.Objects.equals(c.getSubType(), subType));
+                });
+    }
+
+    @Override
     public Stream<ComponentModel> getComponentsStream(String parentId) {
         if (isUpdated()) return updated.getComponentsStream(parentId);
         return cached.getComponentsByParent().getList(parentId).stream();

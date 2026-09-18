@@ -9,6 +9,10 @@ import org.keycloak.provider.Spi;
  */
 public class ProxiedTokenIntrospectionTranslationsSpi implements Spi {
     public static final String SPI_NAME = "proxied-token-introspection-translation";
+    public static final String IDP = "idp";
+    public static final String CLIENT = "client";
+    public static final String GLOBAL = "global";
+    public static final String DEFAULT = "default";
 
     @Override
     public boolean isInternal() {
