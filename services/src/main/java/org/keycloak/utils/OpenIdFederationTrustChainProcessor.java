@@ -12,7 +12,6 @@ import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -76,7 +75,6 @@ import org.keycloak.services.scheduled.OpenIdFederationIdPExpirationTask;
 import org.keycloak.timer.TimerProvider;
 import org.keycloak.urls.UrlType;
 import org.keycloak.util.JWKSUtils;
-import org.keycloak.util.JsonSerialization;
 import org.keycloak.util.TokenUtil;
 
 import org.apache.http.entity.ContentType;
@@ -229,13 +227,14 @@ public class OpenIdFederationTrustChainProcessor implements TrustChainProcessor 
         try {
             EntityStatement statement = parseAndValidateSelfSigned(encodedSubNodeSelf, EntityStatement.class, federationConfig.getJwks());
 
+            //TO BE CHECKED - ROLL OVER KEYS
             // Key rollover: accept updated keys only from an Entity Configuration verified with a trusted key.
-            if (statement.getJwks() != null && statement.getJwks().getKeys() != null && statement.getJwks().getKeys().length > 0
-                    && !jwksEquals(federationConfig.getJwks(), statement.getJwks())) {
-                federationConfig.setJwks(statement.getJwks());
-                session.getContext().getRealm().updateOpenIdFederation(federationConfig);
-                logger.debugf("Updated trusted keys for Trust Anchor %s after verified Entity Configuration (key rollover)", federationConfig.getTrustAnchor());
-            }
+//            if (statement.getJwks() != null && statement.getJwks().getKeys() != null && statement.getJwks().getKeys().length > 0
+//                    && !jwksEquals(federationConfig.getJwks(), statement.getJwks())) {
+//                federationConfig.setJwks(statement.getJwks());
+//                session.getContext().getRealm().updateOpenIdFederation(federationConfig);
+//                logger.debugf("Updated trusted keys for Trust Anchor %s after verified Entity Configuration (key rollover)", federationConfig.getTrustAnchor());
+//            }
             return statement;
         } catch (JWSInputException | VerificationException | IOException e) {
             throw new ErrorResponseException(Errors.INVALID_TRUST_CHAIN,
@@ -244,15 +243,15 @@ public class OpenIdFederationTrustChainProcessor implements TrustChainProcessor 
         }
     }
 
-    private static boolean jwksEquals(JSONWebKeySet a, JSONWebKeySet b) {
-        try {
-            return Objects.equals(
-                    JsonSerialization.writeValueAsString(a),
-                    JsonSerialization.writeValueAsString(b));
-        } catch (IOException e) {
-            return false;
-        }
-    }
+//    private static boolean jwksEquals(JSONWebKeySet a, JSONWebKeySet b) {
+//        try {
+//            return Objects.equals(
+//                    JsonSerialization.writeValueAsString(a),
+//                    JsonSerialization.writeValueAsString(b));
+//        } catch (IOException e) {
+//            return false;
+//        }
+//    }
 
     @Override
     public EntityStatement parseAndValidateSelfSigned(String token) throws InvalidTrustChainException {
