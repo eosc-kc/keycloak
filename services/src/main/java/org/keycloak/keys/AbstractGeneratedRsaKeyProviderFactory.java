@@ -48,7 +48,8 @@ public abstract class AbstractGeneratedRsaKeyProviderFactory extends AbstractRsa
         return ProviderConfigurationBuilder.create()
                 .property(Attributes.PRIORITY_PROPERTY)
                 .property(Attributes.ENABLED_PROPERTY)
-                .property(Attributes.ACTIVE_PROPERTY);
+                .property(Attributes.ACTIVE_PROPERTY)
+                .property(Attributes.KEY_CATEGORY_PROPERTY);
     }
 
     protected ProviderConfigurationBuilder generatedRsaKeyConfigurationBuilder() {

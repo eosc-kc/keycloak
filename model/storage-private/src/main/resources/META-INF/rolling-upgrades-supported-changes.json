@@ -96,5 +96,7 @@
     "class" : "org.keycloak.migration.migrators.MigrateTo26_6_1"
   }, {
     "class" : "org.keycloak.migration.migrators.MigrateTo26_6_2"
+  }, {
+    "class" : "org.keycloak.migration.migrators.MigrateTo26_6_6_1_2"
   } ]
 }

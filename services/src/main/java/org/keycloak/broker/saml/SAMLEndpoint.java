@@ -57,6 +57,7 @@ import org.keycloak.broker.provider.UserAuthenticationIdentityProvider;
 import org.keycloak.common.ClientConnection;
 import org.keycloak.common.Profile;
 import org.keycloak.common.VerificationException;
+import org.keycloak.crypto.KeyCategory;
 import org.keycloak.crypto.KeyUse;
 import org.keycloak.dom.saml.v2.assertion.AssertionType;
 import org.keycloak.dom.saml.v2.assertion.AttributeStatementType;
@@ -405,7 +406,7 @@ public class SAMLEndpoint {
                         .relayState(relayState);
             boolean postBinding = config.isPostBindingLogout();
             if (config.isWantLogoutRequestsSigned()) {
-                KeyManager.ActiveRsaKey keys = session.keys().getActiveRsaKey(realm);
+                KeyManager.ActiveRsaKey keys = session.keys().getActiveRsaKey(realm, KeyCategory.SAML);
                 String keyName = config.getXmlSigKeyInfoKeyNameTransformer().getKeyName(keys.getKid(), keys.getCertificate());
                 binding.signWith(keyName, keys.getPrivateKey(), keys.getPublicKey(), keys.getCertificate())
                         .signatureAlgorithm(provider.getSignatureAlgorithm())

@@ -49,6 +49,7 @@ import org.keycloak.broker.saml.SAMLIdentityProviderConfig;
 import org.keycloak.common.util.PemUtils;
 import org.keycloak.connections.httpclient.HttpClientProvider;
 import org.keycloak.crypto.Algorithm;
+import org.keycloak.crypto.KeyCategory;
 import org.keycloak.crypto.KeyUse;
 import org.keycloak.dom.saml.v2.assertion.AttributeType;
 import org.keycloak.dom.saml.v2.mdui.LogoType;
@@ -842,7 +843,7 @@ public class SAMLFederationProvider implements FederationProvider {
 
 			// We export all keys for algorithm RS256, both active and passive so IDP is able to verify signature even
 			//  if a key rotation happens in the meantime
-			List<KeyDescriptorType> signingKeys = session.keys().getKeysStream(realm, KeyUse.SIG, Algorithm.RS256)
+			List<KeyDescriptorType> signingKeys = session.keys().getKeysStream(realm, KeyUse.SIG, Algorithm.RS256, KeyCategory.SAML)
 					.filter(key -> key.getCertificate() != null)
 					.sorted(SamlService::compareKeys)
 					.map(key -> {
@@ -917,7 +918,7 @@ public class SAMLFederationProvider implements FederationProvider {
 
             // Metadata signing
             if (model.getConfig().get(SAMLIdentityProviderConfig.SIGN_SP_METADATA) != null && Boolean.parseBoolean(model.getConfig().get(SAMLIdentityProviderConfig.SIGN_SP_METADATA))) {
-                KeyManager.ActiveRsaKey activeKey = session.keys().getActiveRsaKey(realm);
+                KeyManager.ActiveRsaKey activeKey = session.keys().getActiveRsaKey(realm, KeyCategory.SAML);
                 String keyName = XmlKeyInfoKeyNameTransformer.NONE.getKeyName(activeKey.getKid(), activeKey.getCertificate());
                 KeyPair keyPair = new KeyPair(activeKey.getPublicKey(), activeKey.getPrivateKey());
 

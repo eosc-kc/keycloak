@@ -33,6 +33,7 @@ public abstract class AbstractEcKeyProviderFactory<T extends KeyProvider> implem
                 .property(Attributes.PRIORITY_PROPERTY)
                 .property(Attributes.ENABLED_PROPERTY)
                 .property(Attributes.ACTIVE_PROPERTY)
+                .property(Attributes.KEY_CATEGORY_PROPERTY)
                 .property(Attributes.EC_GENERATE_CERTIFICATE_PROPERTY);
     }
 

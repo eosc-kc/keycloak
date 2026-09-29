@@ -33,6 +33,7 @@ public class KeyWrapper {
     private String kid;
     private String algorithm;
     private String type;
+    private KeyCategory category = KeyCategory.GENERAL;
     private KeyUse use;
     private KeyStatus status;
     private SecretKey secretKey;
@@ -129,6 +130,17 @@ public class KeyWrapper {
         this.type = type;
     }
 
+    /**
+     * Returns the key category (general, oidc, saml, openid-federation). Defaults to {@link KeyCategory#GENERAL}.
+     */
+    public KeyCategory getCategory() {
+        return category == null ? KeyCategory.GENERAL : category;
+    }
+
+    public void setCategory(KeyCategory category) {
+        this.category = category == null ? KeyCategory.GENERAL : category;
+    }
+
     public KeyUse getUse() {
         return use;
     }
@@ -208,6 +220,7 @@ public class KeyWrapper {
         key.kid = this.kid;
         key.algorithm = this.algorithm;
         key.type = this.type;
+        key.category = this.category;
         key.use = this.use;
         key.status = this.status;
         key.secretKey = this.secretKey;

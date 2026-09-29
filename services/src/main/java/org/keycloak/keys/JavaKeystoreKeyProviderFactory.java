@@ -105,6 +105,7 @@ public class JavaKeystoreKeyProviderFactory implements KeyProviderFactory {
                 .property(Attributes.PRIORITY_PROPERTY)
                 .property(Attributes.ENABLED_PROPERTY)
                 .property(Attributes.ACTIVE_PROPERTY)
+                .property(Attributes.KEY_CATEGORY_PROPERTY)
                 .property(mergedAlgorithmProperties())
                 .property(KEYSTORE_PROPERTY)
                 .property(KEYSTORE_PASSWORD_PROPERTY)

@@ -66,6 +66,7 @@ public abstract class AbstractEcKeyProvider implements KeyProvider {
         key.setKid(KeyUtils.createKeyId(keyPair.getPublic()));
         key.setUse(keyUse);
         key.setType(KeyType.EC);
+        key.setCategory(Attributes.resolveKeyCategory(model));
         key.setAlgorithm(algorithm);
         key.setStatus(status);
         key.setPrivateKey(keyPair.getPrivate());

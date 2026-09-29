@@ -25,6 +25,8 @@ import java.util.List;
 import java.util.stream.Stream;
 import javax.crypto.SecretKey;
 
+import org.keycloak.crypto.Algorithm;
+import org.keycloak.crypto.KeyCategory;
 import org.keycloak.crypto.KeyUse;
 import org.keycloak.crypto.KeyWrapper;
 import org.keycloak.keys.RsaKeyMetadata;
@@ -35,7 +37,19 @@ import org.keycloak.keys.SecretKeyMetadata;
  */
 public interface KeyManager {
 
-    KeyWrapper getActiveKey(RealmModel realm, KeyUse use, String algorithm);
+    /**
+     * Returns the active key for the given use and algorithm, preferring {@link KeyCategory#GENERAL}.
+     */
+    default KeyWrapper getActiveKey(RealmModel realm, KeyUse use, String algorithm) {
+        return getActiveKey(realm, use, algorithm, KeyCategory.GENERAL);
+    }
+
+    /**
+     * Returns the active key for the given use, algorithm and category.
+     * When {@code category} is not {@link KeyCategory#GENERAL}, falls back to a general key if no
+     * category-specific key exists.
+     */
+    KeyWrapper getActiveKey(RealmModel realm, KeyUse use, String algorithm, KeyCategory category);
 
     KeyWrapper getKey(RealmModel realm, String kid, KeyUse use, String algorithm);
 
@@ -53,10 +67,22 @@ public interface KeyManager {
      * @param algorithm {@code String}.
      * @return Stream of all {@code KeyWrapper} in the realm. Never returns {@code null}.
      */
-    Stream<KeyWrapper> getKeysStream(RealmModel realm, KeyUse use, String algorithm);
+    default Stream<KeyWrapper> getKeysStream(RealmModel realm, KeyUse use, String algorithm) {
+        return getKeysStream(realm, use, algorithm, KeyCategory.GENERAL);
+    }
+
+    /**
+     * Returns enabled keys matching use and algorithm for the given category, including general keys as fallback.
+     */
+    Stream<KeyWrapper> getKeysStream(RealmModel realm, KeyUse use, String algorithm, KeyCategory category);
 
     @Deprecated
     ActiveRsaKey getActiveRsaKey(RealmModel realm);
+
+    @Deprecated
+    default ActiveRsaKey getActiveRsaKey(RealmModel realm, KeyCategory category) {
+        return new ActiveRsaKey(getActiveKey(realm, KeyUse.SIG, Algorithm.RS256, category));
+    }
 
     @Deprecated
     PublicKey getRsaPublicKey(RealmModel realm, String kid);

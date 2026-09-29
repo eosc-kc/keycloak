@@ -32,6 +32,7 @@ import javax.crypto.SecretKey;
 
 import org.keycloak.component.ComponentModel;
 import org.keycloak.crypto.Algorithm;
+import org.keycloak.crypto.KeyCategory;
 import org.keycloak.crypto.KeyUse;
 import org.keycloak.crypto.KeyWrapper;
 import org.keycloak.models.KeyManager;
@@ -56,14 +57,15 @@ public class DefaultKeyManager implements KeyManager {
     }
 
     @Override
-    public KeyWrapper getActiveKey(RealmModel realm, KeyUse use, String algorithm) {
-        KeyWrapper activeKey = getActiveKey(getProviders(realm), realm, use, algorithm);
+    public KeyWrapper getActiveKey(RealmModel realm, KeyUse use, String algorithm, KeyCategory category) {
+        KeyCategory effectiveCategory = category == null ? KeyCategory.GENERAL : category;
+        KeyWrapper activeKey = getActiveKey(getProviders(realm), realm, use, algorithm, effectiveCategory);
         if (activeKey != null) {
             return activeKey;
         }
 
-        logger.debugv("Failed to find active key for realm, trying fallback: realm={0} algorithm={1} use={2}",
-                realm.getName(), algorithm, use.name());
+        logger.debugv("Failed to find active key for realm, trying fallback: realm={0} algorithm={1} use={2} category={3}",
+                realm.getName(), algorithm, use.name(), effectiveCategory.getSpecName());
 
         Optional<KeyProviderFactory> keyProviderFactory = session.getKeycloakSessionFactory()
                 .getProviderFactoriesStream(KeyProvider.class)
@@ -73,7 +75,7 @@ public class DefaultKeyManager implements KeyManager {
         if (keyProviderFactory.isPresent()) {
             providersMap.remove(realm.getId());
             List<KeyProvider> providers = getProviders(realm);
-            activeKey = getActiveKey(providers, realm, use, algorithm);
+            activeKey = getActiveKey(providers, realm, use, algorithm, effectiveCategory);
             if (activeKey != null) {
                 logger.infov("No keys found for realm={0} and algorithm={1} for use={2}. Generating keys.",
                         realm.getName(), algorithm, use.name());
@@ -81,21 +83,35 @@ public class DefaultKeyManager implements KeyManager {
             }
         }
 
-        logger.errorv("Failed to create fallback key for realm: realm={0} algorithm={1} use={2}", realm.getName(), algorithm, use.name());
-        throw new RuntimeException("Failed to find key: realm=" + realm.getName() + " algorithm=" + algorithm + " use=" + use.name());
+        logger.errorv("Failed to create fallback key for realm: realm={0} algorithm={1} use={2} category={3}",
+                realm.getName(), algorithm, use.name(), effectiveCategory.getSpecName());
+        throw new RuntimeException("Failed to find key: realm=" + realm.getName() + " algorithm=" + algorithm
+                + " use=" + use.name() + " category=" + effectiveCategory.getSpecName());
     }
 
-    private KeyWrapper getActiveKey(List<KeyProvider> providers, RealmModel realm, KeyUse use, String algorithm) {
+    private KeyWrapper getActiveKey(List<KeyProvider> providers, RealmModel realm, KeyUse use, String algorithm,
+            KeyCategory category) {
+        KeyWrapper key = findActiveKey(providers, realm, use, algorithm, category);
+        if (key != null) {
+            return key;
+        } else if (category != KeyCategory.GENERAL) {
+            return findActiveKey(providers, realm, use, algorithm, KeyCategory.GENERAL);
+        }
+        return null;
+    }
+
+    private KeyWrapper findActiveKey(List<KeyProvider> providers, RealmModel realm, KeyUse use, String algorithm,
+            KeyCategory category) {
         Consumer<KeyWrapper> loggerConsumer = key -> {
             if (logger.isTraceEnabled()) {
-                logger.tracev("Active key found: realm={0} kid={1} algorithm={2} use={3}",
-                        realm.getName(), key.getKid(), algorithm, use.name());
+                logger.tracev("Active key found: realm={0} kid={1} algorithm={2} use={3} category={4}",
+                        realm.getName(), key.getKid(), algorithm, use.name(), key.getCategory().getSpecName());
             }
         };
 
         for (KeyProvider p : providers) {
             Optional<KeyWrapper> keyWrapper = p.getKeysStream()
-                    .filter(key -> key.getStatus().isActive() && matches(key, use, algorithm))
+                    .filter(key -> key.getStatus().isActive() && matches(key, use, algorithm, category, false))
                     .peek(loggerConsumer)
                     .findFirst();
             if (keyWrapper.isPresent()) {
@@ -121,7 +137,7 @@ public class DefaultKeyManager implements KeyManager {
 
         for (KeyProvider p : getProviders(realm)) {
             Optional<KeyWrapper> keyWrapper = p.getKeysStream()
-                    .filter(key -> Objects.equals(key.getKid(), kid) && key.getStatus().isEnabled() && matches(key, use, algorithm))
+                    .filter(key -> Objects.equals(key.getKid(), kid) && key.getStatus().isEnabled() && matches(key, use, algorithm, null, true))
                     .peek(loggerConsumer)
                     .findFirst();
 
@@ -138,10 +154,11 @@ public class DefaultKeyManager implements KeyManager {
     }
 
     @Override
-    public Stream<KeyWrapper> getKeysStream(RealmModel realm, KeyUse use, String algorithm) {
+    public Stream<KeyWrapper> getKeysStream(RealmModel realm, KeyUse use, String algorithm, KeyCategory category) {
+        KeyCategory effectiveCategory = category == null ? KeyCategory.GENERAL : category;
         return getProviders(realm).stream()
                 .flatMap(p -> p.getKeysStream()
-                                .filter(key -> key.getStatus().isEnabled() && matches(key, use, algorithm)));
+                        .filter(key -> key.getStatus().isEnabled() && matches(key, use, algorithm, effectiveCategory, true)));
     }
 
     @Override
@@ -152,21 +169,21 @@ public class DefaultKeyManager implements KeyManager {
     @Override
     @Deprecated
     public ActiveRsaKey getActiveRsaKey(RealmModel realm) {
-        KeyWrapper key = getActiveKey(realm, KeyUse.SIG, Algorithm.RS256);
+        KeyWrapper key = getActiveKey(realm, KeyUse.SIG, Algorithm.RS256, KeyCategory.GENERAL);
         return new ActiveRsaKey(key);
     }
 
     @Override
     @Deprecated
     public ActiveHmacKey getActiveHmacKey(RealmModel realm) {
-        KeyWrapper key = getActiveKey(realm, KeyUse.SIG, Algorithm.HS256);
+        KeyWrapper key = getActiveKey(realm, KeyUse.SIG, Algorithm.HS256, KeyCategory.GENERAL);
         return new ActiveHmacKey(key.getKid(), key.getSecretKey());
     }
 
     @Override
     @Deprecated
     public ActiveAesKey getActiveAesKey(RealmModel realm) {
-        KeyWrapper key = getActiveKey(realm, KeyUse.ENC, Algorithm.AES);
+        KeyWrapper key = getActiveKey(realm, KeyUse.ENC, Algorithm.AES, KeyCategory.GENERAL);
         return new ActiveAesKey(key.getKid(), key.getSecretKey());
     }
 
@@ -201,7 +218,7 @@ public class DefaultKeyManager implements KeyManager {
     @Override
     @Deprecated
     public List<RsaKeyMetadata> getRsaKeys(RealmModel realm) {
-        return getKeysStream(realm, KeyUse.SIG, Algorithm.RS256)
+        return getKeysStream(realm, KeyUse.SIG, Algorithm.RS256, KeyCategory.GENERAL)
                 .map(key -> {
                     RsaKeyMetadata m = new RsaKeyMetadata();
                     m.setCertificate(key.getCertificate());
@@ -217,7 +234,7 @@ public class DefaultKeyManager implements KeyManager {
 
     @Override
     public List<SecretKeyMetadata> getHmacKeys(RealmModel realm) {
-        return getKeysStream(realm, KeyUse.SIG, Algorithm.HS256)
+        return getKeysStream(realm, KeyUse.SIG, Algorithm.HS256, KeyCategory.GENERAL)
                 .map(key -> {
                     SecretKeyMetadata m = new SecretKeyMetadata();
                     m.setKid(key.getKid());
@@ -231,7 +248,7 @@ public class DefaultKeyManager implements KeyManager {
 
     @Override
     public List<SecretKeyMetadata> getAesKeys(RealmModel realm) {
-        return getKeysStream(realm, KeyUse.ENC, Algorithm.AES)
+        return getKeysStream(realm, KeyUse.ENC, Algorithm.AES, KeyCategory.GENERAL)
                 .map(key -> {
                     SecretKeyMetadata m = new SecretKeyMetadata();
                     m.setKid(key.getKid());
@@ -243,8 +260,19 @@ public class DefaultKeyManager implements KeyManager {
                 .collect(Collectors.toList());
     }
 
-    private boolean matches(KeyWrapper key, KeyUse use, String algorithm) {
-        return use.equals(key.getUse()) && key.getAlgorithmOrDefault().equals(algorithm);
+    /**
+     * @param includeGeneralFallback when {@code true} and category is not general, also match general keys
+     */
+    private boolean matches(KeyWrapper key, KeyUse use, String algorithm, KeyCategory category, boolean includeGeneralFallback) {
+        if (!use.equals(key.getUse()) || !key.getAlgorithmOrDefault().equals(algorithm)) {
+            return false;
+        }
+
+        KeyCategory keyCategory = key.getCategory();
+        if (category.equals(keyCategory)) {
+            return true;
+        }
+        return includeGeneralFallback && category != KeyCategory.GENERAL && keyCategory == KeyCategory.GENERAL;
     }
 
     private List<KeyProvider> getProviders(RealmModel realm) {

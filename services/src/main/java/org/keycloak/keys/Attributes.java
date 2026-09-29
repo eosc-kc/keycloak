@@ -21,6 +21,7 @@ import java.util.function.Supplier;
 
 import org.keycloak.common.crypto.CryptoIntegration;
 import org.keycloak.crypto.Algorithm;
+import org.keycloak.crypto.KeyCategory;
 import org.keycloak.crypto.KeyUse;
 import org.keycloak.jose.jwe.JWEConstants;
 import org.keycloak.provider.ProviderConfigProperty;
@@ -57,6 +58,17 @@ public interface Attributes {
     String KEY_USE = "keyUse";
     ProviderConfigProperty KEY_USE_PROPERTY = new ProviderConfigProperty(KEY_USE, "Key use", "Whether the key should be used for signing or encryption.", LIST_TYPE,
             KeyUse.SIG.getSpecName(), KeyUse.SIG.getSpecName(), KeyUse.ENC.getSpecName());
+
+    String KEY_CATEGORY = "keyCategory";
+    ProviderConfigProperty KEY_CATEGORY_PROPERTY = new ProviderConfigProperty(KEY_CATEGORY, "Key type",
+            "Protocol category for this key. Protocol-specific keys are preferred; otherwise general keys are used.", LIST_TYPE,
+            KeyCategory.GENERAL.getSpecName(),
+            KeyCategory.GENERAL.getSpecName(), KeyCategory.OIDC.getSpecName(), KeyCategory.SAML.getSpecName(),
+            KeyCategory.OPENID_FEDERATION.getSpecName());
+
+    static KeyCategory resolveKeyCategory(org.keycloak.component.ComponentModel model) {
+        return KeyCategory.fromSpecName(model.get(KEY_CATEGORY, KeyCategory.GENERAL.getSpecName()));
+    }
 
     String EC_GENERATE_CERTIFICATE_KEY = "ecGenerateCertificate";
     ProviderConfigProperty EC_GENERATE_CERTIFICATE_PROPERTY = new ProviderConfigProperty(

@@ -48,6 +48,7 @@ import org.keycloak.broker.provider.IdentityProviderDataMarshaller;
 import org.keycloak.broker.provider.IdentityProviderMapper;
 import org.keycloak.common.util.PemUtils;
 import org.keycloak.crypto.Algorithm;
+import org.keycloak.crypto.KeyCategory;
 import org.keycloak.crypto.KeyUse;
 import org.keycloak.crypto.KeyWrapper;
 import org.keycloak.dom.saml.v2.assertion.AssertionType;
@@ -208,7 +209,7 @@ public class SAMLIdentityProvider extends AbstractIdentityProvider<SAMLIdentityP
             boolean postBinding = getConfig().isPostBindingAuthnRequest();
 
             if (getConfig().isWantAuthnRequestsSigned()) {
-                KeyManager.ActiveRsaKey keys = session.keys().getActiveRsaKey(realm);
+                KeyManager.ActiveRsaKey keys = session.keys().getActiveRsaKey(realm, KeyCategory.SAML);
 
                 String keyName = getConfig().getXmlSigKeyInfoKeyNameTransformer().getKeyName(keys.getKid(), keys.getCertificate());
                 binding.signWith(keyName, keys.getPrivateKey(), keys.getPublicKey(), keys.getCertificate())
@@ -392,7 +393,7 @@ public class SAMLIdentityProvider extends AbstractIdentityProvider<SAMLIdentityP
         JaxrsSAML2BindingBuilder binding = new JaxrsSAML2BindingBuilder(session)
                 .relayState(userSession.getId());
         if (getConfig().isWantLogoutRequestsSigned()) {
-            KeyManager.ActiveRsaKey keys = session.keys().getActiveRsaKey(realm);
+            KeyManager.ActiveRsaKey keys = session.keys().getActiveRsaKey(realm, KeyCategory.SAML);
             String keyName = getConfig().getXmlSigKeyInfoKeyNameTransformer().getKeyName(keys.getKid(), keys.getCertificate());
             binding.signWith(keyName, keys.getPrivateKey(), keys.getPublicKey(), keys.getCertificate())
                     .signatureAlgorithm(getSignatureAlgorithm())
@@ -435,7 +436,7 @@ public class SAMLIdentityProvider extends AbstractIdentityProvider<SAMLIdentityP
 
             // We export all keys for algorithm RS256, both active and passive so IDP is able to verify signature even
             //  if a key rotation happens in the meantime
-            List<KeyDescriptorType> signingKeys = session.keys().getKeysStream(realm, KeyUse.SIG, Algorithm.RS256)
+            List<KeyDescriptorType> signingKeys = session.keys().getKeysStream(realm, KeyUse.SIG, Algorithm.RS256, KeyCategory.SAML)
                     .filter(key -> key.getCertificate() != null)
                     .sorted(SamlService::compareKeys)
                     .map(key -> {
@@ -516,7 +517,7 @@ public class SAMLIdentityProvider extends AbstractIdentityProvider<SAMLIdentityP
 
             // Metadata signing
             if (getConfig().isSignSpMetadata()) {
-                KeyWrapper keyWrapper = session.keys().getActiveKey(realm, KeyUse.SIG, Algorithm.RS256);
+                KeyWrapper keyWrapper = session.keys().getActiveKey(realm, KeyUse.SIG, Algorithm.RS256, KeyCategory.SAML);
                 X509Certificate certificate = keyWrapper.getCertificate();
                 String keyName = getConfig().getXmlSigKeyInfoKeyNameTransformer().getKeyName(keyWrapper.getKid(), certificate);
                 KeyPair keyPair = new KeyPair(certificate.getPublicKey(), (PrivateKey) keyWrapper.getPrivateKey());;
@@ -615,7 +616,7 @@ public class SAMLIdentityProvider extends AbstractIdentityProvider<SAMLIdentityP
     private JaxrsSAML2BindingBuilder buildArtifactResolveBinding(KeycloakSession session, String relayState, RealmModel realm) {
         JaxrsSAML2BindingBuilder binding = new JaxrsSAML2BindingBuilder(session).relayState(relayState);
         if (getConfig().isWantAuthnRequestsSigned()) {
-            KeyManager.ActiveRsaKey keys = session.keys().getActiveRsaKey(realm);
+            KeyManager.ActiveRsaKey keys = session.keys().getActiveRsaKey(realm, KeyCategory.SAML);
             String keyName = getConfig().getXmlSigKeyInfoKeyNameTransformer().getKeyName(keys.getKid(), keys.getCertificate());
             binding.signWith(keyName, keys.getPrivateKey(), keys.getPublicKey(), keys.getCertificate())
                     .signatureAlgorithm(getSignatureAlgorithm())

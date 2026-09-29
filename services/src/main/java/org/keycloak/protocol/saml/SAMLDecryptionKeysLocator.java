@@ -18,13 +18,16 @@
 package org.keycloak.protocol.saml;
 
 import java.security.PrivateKey;
+import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import org.keycloak.crypto.KeyCategory;
 import org.keycloak.crypto.KeyUse;
 import org.keycloak.crypto.KeyWrapper;
 import org.keycloak.models.KeycloakSession;
@@ -114,9 +117,12 @@ public class SAMLDecryptionKeysLocator implements XMLEncryptionUtil.DecryptionKe
             throw new IllegalStateException("EncryptedData does not contain KeyInfo");
         }
 
+        // Initialize the stream with base filters
         Stream<KeyWrapper> keysStream = session.keys().getKeysStream(realm)
-                .filter(key -> key.getStatus().isEnabled() && KeyUse.ENC.equals(key.getUse()));
+                .filter(key -> key.getStatus().isEnabled() && KeyUse.ENC.equals(key.getUse()))
+                .filter(key -> key.getCategory() == KeyCategory.GENERAL || key.getCategory() == KeyCategory.SAML);
 
+        // Apply conditional filters to the stream
         if (requestedAlgorithm != null && !requestedAlgorithm.trim().isEmpty()) {
             keysStream = keysStream.filter(keyWrapper -> Objects.equals(keyWrapper.getAlgorithmOrDefault(), requestedAlgorithm));
         }
@@ -147,8 +153,18 @@ public class SAMLDecryptionKeysLocator implements XMLEncryptionUtil.DecryptionKe
             throw new IllegalArgumentException("EncryptedData does not contain KeyInfo ", e);
         }
 
-        // Map keys to PrivateKey
-        return keysStream
+        // Collect the fully filtered stream into a Map grouped by Category
+        Map<KeyCategory, List<KeyWrapper>> keysByCategory = keysStream
+                .collect(Collectors.groupingBy(KeyWrapper::getCategory));
+
+        // Select SAML keys, fallback to GENERAL if SAML is empty
+        List<KeyWrapper> selectedKeys = keysByCategory.getOrDefault(KeyCategory.SAML, Collections.emptyList());
+        if (selectedKeys.isEmpty()) {
+            selectedKeys = keysByCategory.getOrDefault(KeyCategory.GENERAL, Collections.emptyList());
+        }
+
+        // Map the selected keys to PrivateKey
+        return selectedKeys.stream()
                 .map(KeyWrapper::getPrivateKey)
                 .filter(Objects::nonNull)
                 .map(PrivateKey.class::cast)

@@ -91,6 +91,7 @@ public class KeyResource {
         r.setKid(key.getKid());
         r.setStatus(key.getStatus() != null ? key.getStatus().name() : null);
         r.setType(key.getType());
+        r.setCategory(key.getCategory().getSpecName());
         r.setAlgorithm(key.getAlgorithmOrDefault());
         r.setPublicKey(key.getPublicKey() != null ? PemUtils.encodeKey(key.getPublicKey()) : null);
         if (key.getCertificate() != null ||

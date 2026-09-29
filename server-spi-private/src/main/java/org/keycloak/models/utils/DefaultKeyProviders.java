@@ -22,6 +22,7 @@ import java.util.Objects;
 import org.keycloak.common.util.MultivaluedHashMap;
 import org.keycloak.component.ComponentModel;
 import org.keycloak.crypto.Algorithm;
+import org.keycloak.crypto.KeyCategory;
 import org.keycloak.crypto.KeyUse;
 import org.keycloak.keys.KeyProvider;
 import org.keycloak.models.RealmModel;
@@ -32,6 +33,7 @@ import org.keycloak.models.RealmModel;
 public class DefaultKeyProviders {
 
     public static final String DEFAULT_PRIORITY = "100";
+    public static final String KEY_CATEGORY = "keyCategory";
 
     public static void createProviders(RealmModel realm) {
         if (!hasProvider(realm, "rsa-generated")) {
@@ -56,6 +58,7 @@ public class DefaultKeyProviders {
         MultivaluedHashMap<String, String> config = new MultivaluedHashMap<>();
         config.putSingle("priority", DEFAULT_PRIORITY);
         config.putSingle("keyUse", KeyUse.SIG.name());
+        config.putSingle(KEY_CATEGORY, KeyCategory.GENERAL.getSpecName());
         generated.setConfig(config);
 
         realm.addComponentModel(generated);
@@ -72,6 +75,7 @@ public class DefaultKeyProviders {
         config.putSingle("priority", DEFAULT_PRIORITY);
         config.putSingle("keyUse", KeyUse.ENC.name());
         config.putSingle("algorithm", Algorithm.RSA_OAEP);
+        config.putSingle(KEY_CATEGORY, KeyCategory.GENERAL.getSpecName());
         generated.setConfig(config);
 
         realm.addComponentModel(generated);
@@ -88,6 +92,7 @@ public class DefaultKeyProviders {
         MultivaluedHashMap<String, String> config = new MultivaluedHashMap<>();
         config.putSingle("priority", DEFAULT_PRIORITY);
         config.putSingle("algorithm", Algorithm.HS512);
+        config.putSingle(KEY_CATEGORY, KeyCategory.GENERAL.getSpecName());
         generated.setConfig(config);
 
         realm.addComponentModel(generated);
@@ -103,6 +108,7 @@ public class DefaultKeyProviders {
 
         MultivaluedHashMap<String, String> config = new MultivaluedHashMap<>();
         config.putSingle("priority", DEFAULT_PRIORITY);
+        config.putSingle(KEY_CATEGORY, KeyCategory.GENERAL.getSpecName());
         generated.setConfig(config);
 
         realm.addComponentModel(generated);
@@ -129,6 +135,7 @@ public class DefaultKeyProviders {
             MultivaluedHashMap<String, String> config = new MultivaluedHashMap<>();
             config.putSingle("keyUse", KeyUse.SIG.getSpecName());
             config.putSingle("priority", DEFAULT_PRIORITY);
+            config.putSingle(KEY_CATEGORY, KeyCategory.GENERAL.getSpecName());
             config.putSingle("privateKey", privateKeyPem);
             if (certificatePem != null) {
                 config.putSingle("certificate", certificatePem);
@@ -148,6 +155,7 @@ public class DefaultKeyProviders {
             MultivaluedHashMap<String, String> configEnc = new MultivaluedHashMap<>();
             configEnc.putSingle("keyUse", KeyUse.ENC.getSpecName());
             configEnc.putSingle("priority", "100");
+            configEnc.putSingle(KEY_CATEGORY, KeyCategory.GENERAL.getSpecName());
             configEnc.putSingle("privateKey", privateKeyPem);
             if (certificatePem != null) {
                 configEnc.putSingle("certificate", certificatePem);

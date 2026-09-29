@@ -31,7 +31,8 @@ public abstract class SecretKeyProviderUtils {
         return ProviderConfigurationBuilder.create()
                 .property(Attributes.PRIORITY_PROPERTY)
                 .property(Attributes.ENABLED_PROPERTY)
-                .property(Attributes.ACTIVE_PROPERTY);
+                .property(Attributes.ACTIVE_PROPERTY)
+                .property(Attributes.KEY_CATEGORY_PROPERTY);
     }
 
     public static ConfigurationValidationHelper validateConfiguration(ComponentModel model) throws ComponentValidationException {

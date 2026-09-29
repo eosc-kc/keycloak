@@ -19,10 +19,14 @@ package org.keycloak.protocol.oidc.utils;
 import java.security.cert.X509Certificate;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
+import org.keycloak.crypto.KeyCategory;
 import org.keycloak.crypto.KeyType;
+import org.keycloak.crypto.KeyWrapper;
 import org.keycloak.jose.jwk.JSONWebKeySet;
 import org.keycloak.jose.jwk.JWK;
 import org.keycloak.jose.jwk.JWKBuilder;
@@ -34,8 +38,19 @@ import org.keycloak.models.RealmModel;
  * @author <a href="mailto:francis.pouatcha@adorsys.com">Francis Pouatcha</a>
  */public class JWKSServerUtils {
     public static JSONWebKeySet getRealmJwks(KeycloakSession session, RealmModel realm){
-        JWK[] jwks = session.keys().getKeysStream(realm)
+        Map<KeyCategory, List<KeyWrapper>> keysByCategory = session.keys().getKeysStream(realm)
                 .filter(k -> k.getStatus().isEnabled() && k.getPublicKey() != null)
+                .filter(k -> k.getCategory() == KeyCategory.GENERAL || k.getCategory() == KeyCategory.OIDC)
+                .collect(Collectors.groupingBy(KeyWrapper::getCategory));
+
+        // 1. Select OIDC keys, and fallback to GENERAL if OIDC is empty
+        List<KeyWrapper> selectedKeys = keysByCategory.getOrDefault(KeyCategory.OIDC, Collections.emptyList());
+        if (selectedKeys.isEmpty()) {
+            selectedKeys = keysByCategory.getOrDefault(KeyCategory.GENERAL, Collections.emptyList());
+        }
+
+        // 2. Map the selected keys to JWKs
+        JWK[] jwks = selectedKeys.stream()
                 .map(k -> {
                     JWKBuilder b = JWKBuilder.create().kid(k.getKid()).algorithm(k.getAlgorithmOrDefault());
                     List<X509Certificate> certificates = Optional.ofNullable(k.getCertificateChain())

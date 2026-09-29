@@ -45,6 +45,7 @@ public abstract class AbstractImportedRsaKeyProviderFactory extends AbstractRsaK
                 .property(Attributes.PRIORITY_PROPERTY)
                 .property(Attributes.ENABLED_PROPERTY)
                 .property(Attributes.ACTIVE_PROPERTY)
+                .property(Attributes.KEY_CATEGORY_PROPERTY)
                 .property(Attributes.PRIVATE_KEY_PROPERTY)
                 .property(Attributes.CERTIFICATE_PROPERTY);
     }

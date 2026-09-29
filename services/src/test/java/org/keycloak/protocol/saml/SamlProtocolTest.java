@@ -103,6 +103,15 @@ public class SamlProtocolTest {
                 return new DefaultKeyManager(null) {
                     @Override
                     public ActiveRsaKey getActiveRsaKey(RealmModel realm) {
+                        return createDummyActiveRsaKey();
+                    }
+
+                    @Override
+                    public ActiveRsaKey getActiveRsaKey(RealmModel realm, org.keycloak.crypto.KeyCategory category) {
+                        return createDummyActiveRsaKey();
+                    }
+
+                    private ActiveRsaKey createDummyActiveRsaKey() {
                         KeyWrapper key = new KeyWrapper();
                         key.setProviderId("dummy");
                         key.setKid("1234");

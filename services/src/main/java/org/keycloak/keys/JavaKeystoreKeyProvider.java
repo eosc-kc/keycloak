@@ -241,6 +241,7 @@ public class JavaKeystoreKeyProvider implements KeyProvider {
         key.setKid(model.get(Attributes.KID_KEY) != null ? model.get(Attributes.KID_KEY) : KeyUtils.createKeyId(keyPair.getPublic()));
         key.setUse(keyUse);
         key.setType(type);
+        key.setCategory(Attributes.resolveKeyCategory(model));
         key.setAlgorithm(algorithm);
         key.setCurve(curve);
         key.setStatus(status);
@@ -274,6 +275,7 @@ public class JavaKeystoreKeyProvider implements KeyProvider {
         keyWrapper.setKid(kid);
         keyWrapper.setUse(use);
         keyWrapper.setType(KeyType.OCT);
+        keyWrapper.setCategory(Attributes.resolveKeyCategory(model));
         keyWrapper.setAlgorithm(algorithm);
         keyWrapper.setStatus(status);
         keyWrapper.setSecretKey(secretKey);

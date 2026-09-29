@@ -34,6 +34,7 @@ public abstract class AbstractRsaKeyProviderFactory implements KeyProviderFactor
                 .property(Attributes.PRIORITY_PROPERTY)
                 .property(Attributes.ENABLED_PROPERTY)
                 .property(Attributes.ACTIVE_PROPERTY)
+                .property(Attributes.KEY_CATEGORY_PROPERTY)
                 .property(Attributes.RS_ALGORITHM_PROPERTY);
     }
 

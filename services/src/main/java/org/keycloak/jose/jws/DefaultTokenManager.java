@@ -33,6 +33,7 @@ import org.keycloak.crypto.Algorithm;
 import org.keycloak.crypto.CekManagementProvider;
 import org.keycloak.crypto.ClientSignatureVerifierProvider;
 import org.keycloak.crypto.ContentEncryptionProvider;
+import org.keycloak.crypto.KeyCategory;
 import org.keycloak.crypto.KeyUse;
 import org.keycloak.crypto.KeyWrapper;
 import org.keycloak.crypto.SignatureProvider;
@@ -130,7 +131,7 @@ public class DefaultTokenManager implements TokenManager {
             // Backwards compatibility. Old offline tokens and cookies didn't have KID in the header
             if (kid == null) {
                 logger.debugf("KID is null in token. Using the realm active key to verify token signature.");
-                kid = session.keys().getActiveKey(session.getContext().getRealm(), KeyUse.SIG, signatureAlgorithm).getKid();
+                kid = session.keys().getActiveKey(session.getContext().getRealm(), KeyUse.SIG, signatureAlgorithm, KeyCategory.OIDC).getKid();
             }
 
             boolean valid = signatureProvider.verifier(kid).verify(jws.getEncodedSignatureInput().getBytes(StandardCharsets.UTF_8), jws.getSignature());

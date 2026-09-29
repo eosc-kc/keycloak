@@ -101,6 +101,7 @@ public abstract class AbstractRsaKeyProvider implements KeyProvider {
         key.setKid(model.get(Attributes.KID_KEY) != null ? model.get(Attributes.KID_KEY) : KeyUtils.createKeyId(keyPair.getPublic()));
         key.setUse(keyUse == null ? KeyUse.SIG : keyUse);
         key.setType(KeyType.RSA);
+        key.setCategory(Attributes.resolveKeyCategory(model));
         key.setAlgorithm(algorithm);
         key.setStatus(status);
         key.setPrivateKey(keyPair.getPrivate());

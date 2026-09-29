@@ -290,7 +290,7 @@ public class SamlProtocol implements LoginProtocol {
                 .statusMessage(samlError.errorDescription());
         KeyManager keyManager = session.keys();
         if (samlClient.requiresRealmSignature()) {
-            KeyManager.ActiveRsaKey keys = keyManager.getActiveRsaKey(realm);
+            KeyManager.ActiveRsaKey keys = keyManager.getActiveRsaKey(realm, org.keycloak.crypto.KeyCategory.SAML);
             String keyName = samlClient.getXmlSigKeyInfoKeyNameTransformer().getKeyName(keys.getKid(), keys.getCertificate());
             String canonicalization = samlClient.getCanonicalizationMethod();
             if (canonicalization != null) {
@@ -541,7 +541,7 @@ public class SamlProtocol implements LoginProtocol {
         Document samlDocument = null;
         ResponseType samlModel = null;
         KeyManager keyManager = session.keys();
-        KeyWrapper keyPair = keyManager.getActiveKey(realm, KeyUse.SIG, Algorithm.RS256);
+        KeyWrapper keyPair = keyManager.getActiveKey(realm, KeyUse.SIG, Algorithm.RS256, org.keycloak.crypto.KeyCategory.SAML);
         boolean postBinding = isPostBinding(authSession);
         String keyName = samlClient.getXmlSigKeyInfoKeyNameTransformer().getKeyName(keyPair.getKid(), keyPair.getCertificate());
         String nameId = getSAMLNameId(samlNameIdMappers, nameIdFormat, session, userSession, clientSession);
@@ -724,7 +724,7 @@ public class SamlProtocol implements LoginProtocol {
             NodeGenerator[] extensions = new NodeGenerator[]{};
             if (!SAML_POST_BINDING.equals(logoutBindingType)) {
                 if (samlClient.requiresRealmSignature() && samlClient.addExtensionsElementWithKeyInfo()) {
-                    KeyManager.ActiveRsaKey keys = session.keys().getActiveRsaKey(realm);
+                    KeyManager.ActiveRsaKey keys = session.keys().getActiveRsaKey(realm, org.keycloak.crypto.KeyCategory.SAML);
                     String keyName = samlClient.getXmlSigKeyInfoKeyNameTransformer().getKeyName(keys.getKid(), keys.getCertificate());
                     extensions = new NodeGenerator[]{new KeycloakKeySamlExtensionGenerator(keyName)};
                 }
@@ -775,7 +775,7 @@ public class SamlProtocol implements LoginProtocol {
             if (canonicalization != null) {
                 binding.canonicalizationMethod(canonicalization);
             }
-            KeyManager.ActiveRsaKey keys = session.keys().getActiveRsaKey(realm);
+            KeyManager.ActiveRsaKey keys = session.keys().getActiveRsaKey(realm, org.keycloak.crypto.KeyCategory.SAML);
             XmlKeyInfoKeyNameTransformer transformer = XmlKeyInfoKeyNameTransformer.from(
                     userSession.getNote(SAML_SERVER_SIGNATURE_KEYINFO_KEY_NAME_TRANSFORMER),
                     SamlClient.DEFAULT_XML_KEY_INFO_KEY_NAME_TRANSFORMER);
@@ -967,7 +967,7 @@ public class SamlProtocol implements LoginProtocol {
     private JaxrsSAML2BindingBuilder createBindingBuilder(SamlClient samlClient, boolean skipRealmSignature) {
         JaxrsSAML2BindingBuilder binding = new JaxrsSAML2BindingBuilder(session);
         if (!skipRealmSignature && samlClient.requiresRealmSignature()) {
-            KeyManager.ActiveRsaKey keys = session.keys().getActiveRsaKey(realm);
+            KeyManager.ActiveRsaKey keys = session.keys().getActiveRsaKey(realm, org.keycloak.crypto.KeyCategory.SAML);
             String keyName = samlClient.getXmlSigKeyInfoKeyNameTransformer().getKeyName(keys.getKid(), keys.getCertificate());
             binding.signatureAlgorithm(samlClient.getSignatureAlgorithm()).signWith(keyName, keys.getPrivateKey(), keys.getPublicKey(), keys.getCertificate()).signDocument();
         }

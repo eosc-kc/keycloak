@@ -29,7 +29,7 @@ public class ServerMacSignatureSignerContext extends MacSignatureSignerContext {
     }
 
     private static KeyWrapper getKey(KeycloakSession session, String algorithm) {
-        KeyWrapper key = session.keys().getActiveKey(session.getContext().getRealm(), KeyUse.SIG, algorithm);
+        KeyWrapper key = session.keys().getActiveKey(session.getContext().getRealm(), KeyUse.SIG, algorithm, KeyCategory.OIDC);
         if (key == null) {
             throw new SignatureException("Active key for " + algorithm + " not found");
         }

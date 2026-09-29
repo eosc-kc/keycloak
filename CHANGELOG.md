@@ -14,6 +14,8 @@ Our Keycloak version is working well with PostgreSQL database. For using other S
 
 ### Added
 - Token Exchange : Allow requested_token_type=urn:ietf:params:oauth:token-type:refresh_token with offline client session and created access token containing offline_access
+- Support for different key uses by authentication protocol
+
 
 ### Changed
 - Support trusted public keys for each OpenID Federation Trust Anchor

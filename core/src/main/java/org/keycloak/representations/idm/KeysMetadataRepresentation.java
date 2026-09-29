@@ -56,6 +56,7 @@ public class KeysMetadataRepresentation {
         private String status;
 
         private String type;
+        private String category;
         private String algorithm;
 
         private String publicKey;
@@ -101,6 +102,14 @@ public class KeysMetadataRepresentation {
 
         public void setType(String type) {
             this.type = type;
+        }
+
+        public String getCategory() {
+            return category;
+        }
+
+        public void setCategory(String category) {
+            this.category = category;
         }
 
         public String getAlgorithm() {

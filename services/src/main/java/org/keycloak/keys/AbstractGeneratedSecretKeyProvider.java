@@ -67,6 +67,7 @@ public abstract class AbstractGeneratedSecretKeyProvider implements KeyProvider 
         key.setKid(kid);
         key.setUse(use);
         key.setType(type);
+        key.setCategory(Attributes.resolveKeyCategory(model));
         key.setAlgorithm(algorithm);
         key.setStatus(status);
         key.setSecretKey(secretKey);

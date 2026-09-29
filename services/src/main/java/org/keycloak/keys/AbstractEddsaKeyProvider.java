@@ -67,6 +67,7 @@ public abstract class AbstractEddsaKeyProvider implements KeyProvider {
         key.setKid(KeyUtils.createKeyId(keyPair.getPublic()));
         key.setUse(KeyUse.SIG);
         key.setType(KeyType.OKP);
+        key.setCategory(Attributes.resolveKeyCategory(model));
         key.setAlgorithm(Algorithm.EdDSA);
         key.setCurve(curveName);
         key.setStatus(status);

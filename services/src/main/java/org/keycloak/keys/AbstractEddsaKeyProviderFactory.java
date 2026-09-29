@@ -45,7 +45,8 @@ public abstract class AbstractEddsaKeyProviderFactory implements KeyProviderFact
         return ProviderConfigurationBuilder.create()
                 .property(Attributes.PRIORITY_PROPERTY)
                 .property(Attributes.ENABLED_PROPERTY)
-                .property(Attributes.ACTIVE_PROPERTY);
+                .property(Attributes.ACTIVE_PROPERTY)
+                .property(Attributes.KEY_CATEGORY_PROPERTY);
     }
 
     @Override
