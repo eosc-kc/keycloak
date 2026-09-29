@@ -21,7 +21,6 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.keycloak.common.enums.SslRequired;
@@ -363,10 +362,6 @@ public interface RealmModel extends RoleContainerModel {
 
     default List<OpenIdFederationConfig> getOpenIdFederations() {
         return List.of();
-    }
-
-    default Set<String> getOpenIdFederationsTrustAnchors() {
-        return getOpenIdFederations().stream().map(OpenIdFederationConfig::getTrustAnchor).collect(Collectors.toSet());
     }
 
     default void addOpenIdFederation(OpenIdFederationConfig fedConfig) {

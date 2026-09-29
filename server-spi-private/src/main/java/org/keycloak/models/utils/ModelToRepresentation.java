@@ -1111,6 +1111,7 @@ public class ModelToRepresentation {
         OpenIdFederationRepresentation federationRep = new OpenIdFederationRepresentation();
         federationRep.setInternalId(model.getInternalId());
         federationRep.setTrustAnchor(model.getTrustAnchor());
+        federationRep.setJwks(model.getJwks());
         federationRep.setIdpConfiguration(model.getIdpConfiguration());
         return federationRep;
     }
