@@ -2652,8 +2652,27 @@ public class RealmAdapter implements StorageProviderRealmModel, JpaModel<RealmEn
     }
 
     @Override
+    public Stream<ComponentModel> getComponentsStream(String parentId, final String providerType, String subType) {
+        return realm.getComponents().stream()
+                .filter(c -> Objects.equals(parentId, c.getParentId()))
+                .filter(c -> Objects.equals(providerType, c.getProviderType()))
+                .filter(c -> Objects.equals(subType, c.getSubType()))
+                .map(this::entityToModel);
+    }
+
+    @Override
+    public Stream<ComponentModel> getComponentsStream(String providerType, Map<String, String> parentMap) {
+        return realm.getComponents().stream()
+                .filter(c -> Objects.equals(providerType, c.getProviderType()))
+                .filter(c -> parentMap.containsKey(c.getSubType()) &&
+                        Objects.equals(parentMap.get(c.getSubType()), c.getParentId()))
+                .map(this::entityToModel);
+    }
+
+
+    @Override
     public Stream<ComponentModel> getComponentsStream(final String parentId) {
-        return getComponentsStream(parentId, null);
+        return getComponentsStream(parentId, (String) null);
     }
 
     protected ComponentModel entityToModel(ComponentEntity c) {
