@@ -64,7 +64,7 @@ public class ClaimRemovalTranslationProviderFactory implements ProxiedTokenIntro
                 .property()
                 .name(IS_REGEX)
                 .label("Is Regular Expression")
-                .helpText("Whether oldClaim and newClaim should be evaluated as regex expressions.")
+                .helpText("Whether claim to be removed should be evaluated as regex expressions.")
                 .type(ProviderConfigProperty.BOOLEAN_TYPE)
                 .defaultValue(false)
                 .add()
