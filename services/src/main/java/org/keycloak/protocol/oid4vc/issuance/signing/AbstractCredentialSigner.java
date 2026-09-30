@@ -17,6 +17,7 @@
 
 package org.keycloak.protocol.oid4vc.issuance.signing;
 
+import org.keycloak.crypto.KeyCategory;
 import org.keycloak.crypto.KeyUse;
 import org.keycloak.crypto.KeyWrapper;
 import org.keycloak.crypto.SignatureProvider;
@@ -98,6 +99,6 @@ public abstract class AbstractCredentialSigner<T> implements CredentialSigner<T>
             return keys.getActiveKey(realm, KeyUse.SIG, algorithm);
         }
 
-        return keys.getKey(realm, keyId, KeyUse.SIG, algorithm);
+        return keys.getKey(realm, keyId, KeyUse.SIG, algorithm, KeyCategory.OIDC);
     }
 }

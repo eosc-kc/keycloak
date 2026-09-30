@@ -30,7 +30,7 @@ public class ServerAsymmetricSignatureVerifierContext extends AsymmetricSignatur
     }
 
     static KeyWrapper getKey(KeycloakSession session, String kid, String algorithm) throws VerificationException {
-        KeyWrapper key = session.keys().getKey(session.getContext().getRealm(), kid, KeyUse.SIG, algorithm);
+        KeyWrapper key = session.keys().getKey(session.getContext().getRealm(), kid, KeyUse.SIG, algorithm, KeyCategory.OIDC);
         if (key == null) {
             throw new VerificationException("Key not found");
         }

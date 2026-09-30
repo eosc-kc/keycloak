@@ -26,6 +26,7 @@ import org.keycloak.Token;
 import org.keycloak.TokenCategory;
 import org.keycloak.cookie.CookieProvider;
 import org.keycloak.cookie.CookieType;
+import org.keycloak.crypto.KeyCategory;
 import org.keycloak.crypto.KeyUse;
 import org.keycloak.crypto.KeyWrapper;
 import org.keycloak.jose.jwe.JWE;
@@ -183,7 +184,7 @@ public class RestartLoginCookie implements Token {
                 // new way using kid
                 String algAlgorithm = session.tokens().cekManagementAlgorithm(TokenCategory.INTERNAL);
                 RealmModel realm = session.getContext().getRealm();
-                KeyWrapper encKey = session.keys().getKey(realm, kid, KeyUse.ENC, algAlgorithm);
+                KeyWrapper encKey = session.keys().getKey(realm, kid, KeyUse.ENC, algAlgorithm, KeyCategory.GENERAL);
                 if (encKey == null) {
                     return null;
                 }

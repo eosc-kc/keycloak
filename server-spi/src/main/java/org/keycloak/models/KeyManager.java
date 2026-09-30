@@ -51,7 +51,7 @@ public interface KeyManager {
      */
     KeyWrapper getActiveKey(RealmModel realm, KeyUse use, String algorithm, KeyCategory category);
 
-    KeyWrapper getKey(RealmModel realm, String kid, KeyUse use, String algorithm);
+    KeyWrapper getKey(RealmModel realm, String kid, KeyUse use, String algorithm, KeyCategory category);
 
     /**
      * Returns all {@code KeyWrapper} for the given realm.

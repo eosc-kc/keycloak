@@ -60,6 +60,7 @@ import org.keycloak.common.Profile;
 import org.keycloak.common.util.SecretGenerator;
 import org.keycloak.common.util.Time;
 import org.keycloak.crypto.Algorithm;
+import org.keycloak.crypto.KeyCategory;
 import org.keycloak.crypto.KeyType;
 import org.keycloak.crypto.KeyUse;
 import org.keycloak.crypto.KeyWrapper;
@@ -654,7 +655,7 @@ public abstract class AbstractOAuth2IdentityProvider<C extends OAuth2IdentityPro
             String sha1x509Thumbprint = null;
             SignatureSignerContext signer = getSignatureContext();
             if (getConfig().isJwtX509HeadersEnabled()) {
-                KeyWrapper key = session.keys().getKey(session.getContext().getRealm(), signer.getKid(), KeyUse.SIG, signer.getAlgorithm());
+                KeyWrapper key = session.keys().getKey(session.getContext().getRealm(), signer.getKid(), KeyUse.SIG, signer.getAlgorithm(), KeyCategory.OIDC);
                 if (key != null
                         && key.getStatus().isEnabled()
                         && key.getPublicKey() != null

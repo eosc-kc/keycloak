@@ -122,22 +122,36 @@ public class DefaultKeyManager implements KeyManager {
     }
 
     @Override
-    public KeyWrapper getKey(RealmModel realm, String kid, KeyUse use, String algorithm) {
+    public KeyWrapper getKey(RealmModel realm, String kid, KeyUse use, String algorithm, KeyCategory category) {
         if (kid == null) {
             logger.warnv("kid is null, can't find public key: realm={0}", realm.getName());
             return null;
         }
 
+        List<KeyProvider> providers = getProviders(realm);
+        KeyWrapper keyWrapper = getKey(providers, realm.getName(), kid, use, algorithm, category);
+        if (keyWrapper == null && category != KeyCategory.GENERAL) {
+            return getKey(providers, realm.getName(), kid, use, algorithm, KeyCategory.GENERAL);
+        }
+
+        if (keyWrapper == null && logger.isTraceEnabled()) {
+            logger.tracev("Failed to find public key: realm={0} kid={1} algorithm={2} use={3} category={4}", realm.getName(), kid, algorithm, use.name(), category.getSpecName());
+        }
+
+        return keyWrapper;
+    }
+
+    private KeyWrapper getKey(List<KeyProvider> providers, String realmName, String kid, KeyUse use, String algorithm, KeyCategory category) {
         Consumer<KeyWrapper> loggerConsumer = key -> {
             if (logger.isTraceEnabled()) {
-                logger.tracev("Found key: realm={0} kid={1} algorithm={2} use={3}",
-                        realm.getName(), key.getKid(), algorithm, use.name());
+                logger.tracev("Found key: realm={0} kid={1} algorithm={2} use={3} category={4}",
+                        realmName, key.getKid(), algorithm, use.name(), category.getSpecName());
             }
         };
 
-        for (KeyProvider p : getProviders(realm)) {
+        for (KeyProvider p : providers) {
             Optional<KeyWrapper> keyWrapper = p.getKeysStream()
-                    .filter(key -> Objects.equals(key.getKid(), kid) && key.getStatus().isEnabled() && matches(key, use, algorithm, null, true))
+                    .filter(key -> Objects.equals(key.getKid(), kid) && key.getStatus().isEnabled() && matches(key, use, algorithm, category, false))
                     .peek(loggerConsumer)
                     .findFirst();
 
@@ -145,11 +159,6 @@ public class DefaultKeyManager implements KeyManager {
                 return keyWrapper.get();
             }
         }
-
-        if (logger.isTraceEnabled()) {
-            logger.tracev("Failed to find public key: realm={0} kid={1} algorithm={2} use={3}", realm.getName(), kid, algorithm, use.name());
-        }
-
         return null;
     }
 
@@ -190,29 +199,29 @@ public class DefaultKeyManager implements KeyManager {
     @Override
     @Deprecated
     public PublicKey getRsaPublicKey(RealmModel realm, String kid) {
-        KeyWrapper key = getKey(realm, kid, KeyUse.SIG, Algorithm.RS256);
+        KeyWrapper key = getKey(realm, kid, KeyUse.SIG, Algorithm.RS256, KeyCategory.GENERAL);
         return key != null ? (PublicKey) key.getPublicKey() : null;
     }
 
     @Override
     @Deprecated
     public Certificate getRsaCertificate(RealmModel realm, String kid) {
-        KeyWrapper key = getKey(realm, kid, KeyUse.SIG, Algorithm.RS256);
+        KeyWrapper key = getKey(realm, kid, KeyUse.SIG, Algorithm.RS256, KeyCategory.GENERAL);
         return key != null ? key.getCertificate() : null;
     }
 
     @Override
     @Deprecated
     public SecretKey getHmacSecretKey(RealmModel realm, String kid) {
-        KeyWrapper key = getKey(realm, kid, KeyUse.SIG, Algorithm.HS256);
+        KeyWrapper key = getKey(realm, kid, KeyUse.SIG, Algorithm.HS256, KeyCategory.GENERAL);
         return key != null ? key.getSecretKey() : null;
     }
 
     @Override
     @Deprecated
     public SecretKey getAesSecretKey(RealmModel realm, String kid) {
-        KeyWrapper key = getKey(realm, kid, KeyUse.ENC, Algorithm.AES);
-        return key.getSecretKey();
+        KeyWrapper key = getKey(realm, kid, KeyUse.ENC, Algorithm.AES, KeyCategory.GENERAL);
+        return key != null ? key.getSecretKey() : null;
     }
 
     @Override
@@ -269,7 +278,7 @@ public class DefaultKeyManager implements KeyManager {
         }
 
         KeyCategory keyCategory = key.getCategory();
-        if (category.equals(keyCategory)) {
+        if (keyCategory.equals(category)) {
             return true;
         }
         return includeGeneralFallback && category != KeyCategory.GENERAL && keyCategory == KeyCategory.GENERAL;
