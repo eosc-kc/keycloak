@@ -1,0 +1,6 @@
+package org.keycloak.protocol.oidc;
+
+import org.keycloak.component.ComponentFactory;
+
+public interface ProxiedTokenIntrospectionTranslationsProviderFactory extends ComponentFactory<ProxiedTokenIntrospectionTranslationsProvider, ProxiedTokenIntrospectionTranslationsProvider> {
+}

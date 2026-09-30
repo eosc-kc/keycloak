@@ -105,7 +105,8 @@ public class ComponentResource {
     public Stream<ComponentRepresentation> getComponents(@QueryParam("parent") String parent,
                                                        @QueryParam("type") String type,
                                                        @QueryParam("name") String name,
-                                                       @QueryParam("providerId") String providerId) {
+                                                       @QueryParam("providerId") String providerId,
+                                                       @QueryParam("subType") String subType) {
         auth.realm().requireViewRealm();
         Stream<ComponentModel> components;
         if (parent == null && type == null) {
@@ -115,8 +116,10 @@ public class ComponentResource {
             components = realm.getComponentsStream(parent);
         } else if (parent == null) {
             components = realm.getComponentsStream(realm.getId(), type);
-        } else {
+        } else if (subType == null) {
             components = realm.getComponentsStream(parent, type);
+        } else {
+            components = realm.getComponentsStream(parent, type, subType);
         }
 
         return components
