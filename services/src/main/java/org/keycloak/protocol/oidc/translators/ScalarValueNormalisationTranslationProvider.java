@@ -1,11 +1,12 @@
 package org.keycloak.protocol.oidc.translators;
 
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
 import org.keycloak.component.ComponentModel;
 import org.keycloak.protocol.oidc.ProxiedTokenIntrospectionTranslationsProvider;
 
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 public class ScalarValueNormalisationTranslationProvider implements ProxiedTokenIntrospectionTranslationsProvider {
 
