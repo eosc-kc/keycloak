@@ -9,7 +9,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -29,6 +28,7 @@ import org.keycloak.broker.oidc.OIDCIdentityProviderFactory;
 import org.keycloak.broker.oidc.federation.OpenIdFederationIdentityProviderConfig;
 import org.keycloak.common.VerificationException;
 import org.keycloak.common.util.Time;
+import org.keycloak.crypto.KeyCategory;
 import org.keycloak.crypto.KeyType;
 import org.keycloak.crypto.KeyUse;
 import org.keycloak.crypto.PublicKeysWrapper;
@@ -312,23 +312,31 @@ public class OpenIdFederationTrustChainProcessor implements TrustChainProcessor 
     @Override
     public JSONWebKeySet getKeySet(RealmModel realm) {
         session.getContext().setRealm(realm);
-        List<JWK> keys = new LinkedList<>();
+
+        List<JWK> federationKeys = new ArrayList<>();
+        List<JWK> generalKeys = new ArrayList<>();
+
         session.keys().getKeysStream(realm)
-                .filter(k -> k.getStatus().isEnabled() && k.getUse().equals(KeyUse.SIG) && k.getPublicKey() != null && k.getAlgorithm().equals(session.tokens().signatureAlgorithm(TokenCategory.ENTITY_STATEMENT)))
+                .filter(k -> k.getStatus().isEnabled()
+                        && k.getUse().equals(KeyUse.SIG)
+                        && k.getPublicKey() != null
+                        && k.getAlgorithm().equals(session.tokens().signatureAlgorithm(TokenCategory.ENTITY_STATEMENT)))
                 .forEach(k -> {
-                    JWKBuilder b = JWKBuilder.create().kid(k.getKid()).algorithm(k.getAlgorithm());
-                    if (k.getType().equals(KeyType.RSA)) {
-                        keys.add(b.rsa(k.getPublicKey(), k.getCertificate()));
-                    } else if (k.getType().equals(KeyType.EC)) {
-                        keys.add(b.ec(k.getPublicKey()));
+                    if (KeyCategory.OPENID_FEDERATION.equals(k.getCategory()) && k.getType().equals(KeyType.RSA)) {
+                        federationKeys.add(JWKBuilder.create().kid(k.getKid()).algorithm(k.getAlgorithm()).rsa(k.getPublicKey(), k.getCertificate()));
+                    } else if (KeyCategory.GENERAL.equals(k.getCategory()) && k.getType().equals(KeyType.RSA)) {
+                        generalKeys.add(JWKBuilder.create().kid(k.getKid()).algorithm(k.getAlgorithm()).rsa(k.getPublicKey(), k.getCertificate()));
+                    } else if (KeyCategory.OPENID_FEDERATION.equals(k.getCategory()) && k.getType().equals(KeyType.EC)) {
+                        federationKeys.add(JWKBuilder.create().kid(k.getKid()).algorithm(k.getAlgorithm()).ec(k.getPublicKey()));
+                    } else if (KeyCategory.GENERAL.equals(k.getCategory()) && k.getType().equals(KeyType.EC)) {
+                        generalKeys.add(JWKBuilder.create().kid(k.getKid()).algorithm(k.getAlgorithm()).ec(k.getPublicKey()));
                     }
                 });
 
+        // Use federation keys if they exist; otherwise, use general keys
+        List<JWK> finalKeys = !federationKeys.isEmpty() ? federationKeys : generalKeys;
         JSONWebKeySet keySet = new JSONWebKeySet();
-
-        JWK[] k = new JWK[keys.size()];
-        k = keys.toArray(k);
-        keySet.setKeys(k);
+        keySet.setKeys(finalKeys.toArray(new JWK[0]));
         return keySet;
     }
 

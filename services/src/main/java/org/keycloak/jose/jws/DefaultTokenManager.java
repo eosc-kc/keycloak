@@ -105,10 +105,16 @@ public class DefaultTokenManager implements TokenManager {
     public String encodeForOpenIdFederation(EntityStatement token) {
         String signatureAlgorithm = signatureAlgorithm(token.getCategory());
 
-        SignatureSignerContext signer = session.getProvider(SignatureProvider.class, signatureAlgorithm).signer();
+        RealmModel realm = session.getContext().getRealm();
+        //find key for OpenId Federation, otherwise general
+        KeyWrapper federationKey = session.keys().getActiveKey(realm, KeyUse.SIG, signatureAlgorithm, KeyCategory.OPENID_FEDERATION);
+        //throw error or use .signer()?
+        if (federationKey == null) {
+            throw new RuntimeException("Federation Entity Key not found for signing OpenID Federation Entity Statement");
+        }
+        SignatureSignerContext signer = session.getProvider(SignatureProvider.class, signatureAlgorithm).signer(federationKey);
 
-        String encodedToken = new JWSBuilder().type(token.getType()).jsonContent(token).sign(signer);
-        return encodedToken;
+        return new JWSBuilder().type(token.getType()).jsonContent(token).sign(signer);
     }
 
     @Override
