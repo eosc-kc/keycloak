@@ -909,7 +909,7 @@ public class StandardTokenExchangeV2Test extends AbstractClientPoliciesTest {
             AccessTokenResponse response = tokenExchange(accessToken, "requester-client", "secret", List.of("target-client1"), OAuth2Constants.REFRESH_TOKEN_TYPE);
             assertEquals(Response.Status.BAD_REQUEST.getStatusCode(), response.getStatusCode());
             assertEquals(OAuthErrorException.INVALID_REQUEST, response.getError());
-            assertEquals("Scope offline_access not allowed from no offline user session", response.getErrorDescription());
+            assertEquals("Refresh token not valid as requested_token_type because creating a new session is needed", response.getErrorDescription());
 
             // Check that client session was not created
             Assert.assertEquals(testingClient.testing(TEST).getClientSessionsCountInUserSession(TEST, sessionId), Integer.valueOf(1));

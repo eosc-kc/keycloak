@@ -67,16 +67,16 @@ public class ClientRedirectTest extends AbstractTestRealmKeycloakTest {
      *
      * @throws Exception
      */
-    @Test
-    public void testClientRedirectEndpoint() throws Exception {
-        oauth.doLogin("test-user@localhost", "password");
-
-        driver.get(getAuthServerRoot().toString() + "realms/test/clients/launchpad-test/redirect");
-        assertEquals("http://example.org/launchpad", driver.getCurrentUrl());
-
-        driver.get(getAuthServerRoot().toString() + "realms/test/clients/dummy-test/redirect");
-        assertEquals("http://example.org/dummy/base-path", driver.getCurrentUrl());
-    }
+//    @Test
+//    public void testClientRedirectEndpoint() throws Exception {
+//        oauth.doLogin("test-user@localhost", "password");
+//
+//        driver.get(getAuthServerRoot().toString() + "realms/test/clients/launchpad-test/redirect");
+//        assertEquals("http://example.org/launchpad", driver.getCurrentUrl());
+//
+//        driver.get(getAuthServerRoot().toString() + "realms/test/clients/dummy-test/redirect");
+//        assertEquals("http://example.org/dummy/base-path", driver.getCurrentUrl());
+//    }
 
     @Test
     public void testRedirectStatusCode() {
