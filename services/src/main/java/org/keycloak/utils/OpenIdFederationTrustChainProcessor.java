@@ -94,13 +94,13 @@ public class OpenIdFederationTrustChainProcessor implements TrustChainProcessor 
      * This should construct all possible trust chains from a given leaf node self-signed and encoded JWT to a set of trust anchor urls
      *
      * @param leafEs this is the EntityStatement of a leaf node (Relay party or Openid Provider)
-     * @param trustAnchorIds this should hold the trust anchor ids
+     * @param openIdFederationList this should hold the openid federations configured in realm
      * @return any valid trust chains from the leaf node JWT to the trust anchor.
      */
     @Override
-    public TrustChainResolution constructTrustChains(EntityStatement leafEs, Set<String> trustAnchorIds, boolean forRp) {
+    public TrustChainResolution constructTrustChains(EntityStatement leafEs, List<OpenIdFederationConfig> openIdFederationList, boolean forRp) {
 
-        List<TrustChainResolution> trustChainResolutions = subTrustChains(leafEs.getSubject(), leafEs, trustAnchorIds, new HashSet<>(), forRp);
+        List<TrustChainResolution> trustChainResolutions = subTrustChains(leafEs.getSubject(), leafEs, openIdFederationList, new HashSet<>(), forRp);
 
         for (TrustChainResolution trustChainResolution : trustChainResolutions) {
 
@@ -130,10 +130,11 @@ public class OpenIdFederationTrustChainProcessor implements TrustChainProcessor 
         return null;
     }
 
-    private List<TrustChainResolution> subTrustChains(String initialEntity, EntityStatement leafEs, Set<String> trustAnchorIds, Set<String> visitedNodes, boolean forRp) {
+    private List<TrustChainResolution> subTrustChains(String initialEntity, EntityStatement leafEs, List<OpenIdFederationConfig> openIdFederationList, Set<String> visitedNodes, boolean forRp) {
 
         List<TrustChainResolution> chainsList = new ArrayList<>();
         visitedNodes.add(leafEs.getSubject());
+        Set<String> trustAnchorIds = openIdFederationList.stream().map(OpenIdFederationConfig::getTrustAnchor).collect(Collectors.toSet());
 
         if (leafEs.getAuthorityHints() != null && !leafEs.getAuthorityHints().isEmpty()) {
             leafEs.getAuthorityHints().forEach(authHint -> {
@@ -141,7 +142,8 @@ public class OpenIdFederationTrustChainProcessor implements TrustChainProcessor 
                     if (visitedNodes.contains(authHint) && !trustAnchorIds.contains(authHint))
                         return;
                     String encodedSubNodeSelf = OpenIdFederationUtils.getSelfSignedToken(authHint, session);
-                    EntityStatement subNodeSelfES = parseAndValidateSelfSigned(encodedSubNodeSelf);
+                    OpenIdFederationConfig trustAnchorConfig = openIdFederationList.stream().filter(x -> authHint.equals(x.getTrustAnchor())).findAny().orElse(null);
+                    EntityStatement subNodeSelfES = trustAnchorConfig != null ? parseAndValidateTrustAnchorEntityConfiguration(trustAnchorConfig, encodedSubNodeSelf) : parseAndValidateSelfSigned(encodedSubNodeSelf);
                     if (!validateEntityStatementFields(subNodeSelfES, authHint, authHint)) {
                         throw new ErrorResponseException(Errors.INVALID_TRUST_CHAIN, "Trust chain is not valid", Response.Status.BAD_REQUEST);
                     }
@@ -162,13 +164,13 @@ public class OpenIdFederationTrustChainProcessor implements TrustChainProcessor 
                     logger.debug(String.format("EntityStatement of %s about %s. AuthHints: %s", subNodeSubordinateES.getIssuer(), subNodeSubordinateES.getSubject(), subNodeSubordinateES.getAuthorityHints()));
 
                     visitedNodes.add(subNodeSelfES.getSubject());
-                    if (trustAnchorIds.contains(authHint)) {
+                    if (trustAnchorConfig != null ) {
                         TrustChainResolution trustAnchor = new TrustChainResolution();
                         trustAnchor.getParsedChain().add(0, subNodeSelfES);
                         trustAnchor.setTrustAnchorId(authHint);
                         chainsList.add(trustAnchor);
                     } else {
-                        List<TrustChainResolution> subList = subTrustChains(initialEntity, subNodeSelfES, trustAnchorIds, visitedNodes, forRp);
+                        List<TrustChainResolution> subList = subTrustChains(initialEntity, subNodeSelfES, openIdFederationList, visitedNodes, forRp);
                         for (TrustChainResolution tcr : subList) {
                             tcr.getParsedChain().add(0, subNodeSelfES);
                             chainsList.add(tcr);
@@ -209,6 +211,47 @@ public class OpenIdFederationTrustChainProcessor implements TrustChainProcessor 
 
         return statement;
     }
+
+    /**
+     * Validate a Trust Anchor Entity Configuration.
+     * When trusted keys are configured for the Trust Anchor, those keys are used for initial trust.
+     * On successful verification, keys from the Entity Configuration replace the stored trusted keys
+     * (key rollover per OpenID Federation §11.2). Unverifiable updates leave trusted keys unchanged.
+     * When no trusted keys are configured, falls back to validating with keys embedded in the statement.
+     */
+    EntityStatement parseAndValidateTrustAnchorEntityConfiguration(OpenIdFederationConfig federationConfig, String encodedSubNodeSelf) throws InvalidTrustChainException {
+        if (federationConfig.getJwks() == null || federationConfig.getJwks().getKeys() == null || federationConfig.getJwks().getKeys().length == 0) {
+            return parseAndValidateSelfSigned(encodedSubNodeSelf);
+        }
+
+        try {
+            EntityStatement statement = parseAndValidateSelfSigned(encodedSubNodeSelf, EntityStatement.class, federationConfig.getJwks());
+
+            //TO BE CHECKED - ROLL OVER KEYS
+            // Key rollover: accept updated keys only from an Entity Configuration verified with a trusted key.
+//            if (statement.getJwks() != null && statement.getJwks().getKeys() != null && statement.getJwks().getKeys().length > 0
+//                    && !jwksEquals(federationConfig.getJwks(), statement.getJwks())) {
+//                federationConfig.setJwks(statement.getJwks());
+//                session.getContext().getRealm().updateOpenIdFederation(federationConfig);
+//                logger.debugf("Updated trusted keys for Trust Anchor %s after verified Entity Configuration (key rollover)", federationConfig.getTrustAnchor());
+//            }
+            return statement;
+        } catch (JWSInputException | VerificationException | IOException e) {
+            throw new ErrorResponseException(Errors.INVALID_TRUST_CHAIN,
+                    "Trust Anchor Entity Configuration could not be verified with configured trusted keys",
+                    Response.Status.BAD_REQUEST);
+        }
+    }
+
+//    private static boolean jwksEquals(JSONWebKeySet a, JSONWebKeySet b) {
+//        try {
+//            return Objects.equals(
+//                    JsonSerialization.writeValueAsString(a),
+//                    JsonSerialization.writeValueAsString(b));
+//        } catch (IOException e) {
+//            return false;
+//        }
+//    }
 
     @Override
     public EntityStatement parseAndValidateSelfSigned(String token) throws InvalidTrustChainException {
@@ -308,7 +351,7 @@ public class OpenIdFederationTrustChainProcessor implements TrustChainProcessor 
         if (!validateEntityStatementFields(opStatement, opIssuer, opIssuer) || opStatement.getMetadata().getOpenIdProviderMetadata() == null || !opStatement.getMetadata().getOpenIdProviderMetadata().getClientRegistrationTypesSupported().contains("explicit") || opStatement.getMetadata().getOpenIdProviderMetadata().getFederationRegistrationEndpoint() == null) {
             throw new BadRequestException("No valid OP Entity Statement");
         }
-        TrustChainResolution trustChainResolution = constructTrustChains(opStatement, Stream.of(federationConfig.getTrustAnchor()).collect(Collectors.toSet()), false);
+        TrustChainResolution trustChainResolution = constructTrustChains(opStatement, Stream.of(federationConfig).toList(), false);
         if (trustChainResolution == null) {
             throw new BadRequestException("No common trust chain found");
         }
@@ -366,79 +409,5 @@ public class OpenIdFederationTrustChainProcessor implements TrustChainProcessor 
     public void close() {
 
     }
-
-    //nimbus implementation - to be removed
-//    public EntityStatement parseAndValidateSelfSigned(String token) throws InvalidTrustChainException {
-//        EntityStatement statement = parse(token, EntityStatement.class);
-//        validateToken(token, statement.getJwks());
-//        return statement;
-//    }
-//
-//    public <T extends EntityStatement> T parseAndValidateSelfSigned(String token, Class<T> clazz, JSONWebKeySet jwks) throws InvalidTrustChainException {
-//        T statement = parse(token, clazz);
-//        validateToken(token, jwks);
-//        return statement;
-//    }
-//
-//    private void validateToken(String token, JSONWebKeySet jwks){
-//        try{
-//            ConfigurableJWTProcessor<SecurityContext> jwtProcessor = produceJwtProcessor(jwks);
-//            jwtProcessor.process(token, null);
-//
-//        } catch(IOException | ParseException | BadJOSEException | JOSEException ex) {
-//            ex.printStackTrace();
-//            throw new ErrorResponseException(Errors.INVALID_TRUST_CHAIN, "Trust chain is not valid", Response.Status.BAD_REQUEST);
-//        }
-//    }
-//
-//    private ConfigurableJWTProcessor<SecurityContext> produceJwtProcessor(JSONWebKeySet jwks) throws IOException, ParseException {
-//        String jsonKey = JsonSerialization.writeValueAsString(jwks);
-//        JWKSet jwkSet = JWKSet.load(new ByteArrayInputStream(jsonKey.getBytes()));
-//        JWKSource<SecurityContext> keySource = new ImmutableJWKSet<>(jwkSet);
-//        ConfigurableJWTProcessor<SecurityContext> jwtProcessor = new DefaultJWTProcessor<>();
-//
-//        Set<JWSAlgorithm> algs = jwkSet.getKeys().stream()
-//                .map(key -> {
-//                    Object alg = key.getAlgorithm();
-//                    if (alg instanceof JWSAlgorithm) {
-//                        return (JWSAlgorithm) alg;
-//                    } else if (alg instanceof Algorithm) {
-//                        try {
-//                            return JWSAlgorithm.parse(((Algorithm) alg).getName());
-//                        } catch (IllegalArgumentException e) {
-//                            // Not a valid JWSAlgorithm
-//                            return null;
-//                        }
-//                    } else {
-//                        return null;
-//                    }
-//                })
-//                .filter(Objects::nonNull)
-//                .collect(Collectors.toSet());
-//
-//        if (algs.isEmpty()) {
-//            algs = Collections.singleton(JWSAlgorithm.RS256); // Default to RS256
-//        }
-//
-//        JWSKeySelector<SecurityContext> keySelector = new JWSVerificationKeySelector<>(algs, keySource);
-//        jwtProcessor.setJWSKeySelector(keySelector);
-//        jwtProcessor.setJWSTypeVerifier(new DefaultJOSEObjectTypeVerifier<>(Stream.of(new JOSEObjectType(TokenUtil.ENTITY_STATEMENT_JWT), new JOSEObjectType(TokenUtil.EXPLICIT_REGISTRATION_RESPONSE_JWT)).collect(Collectors.toSet())));
-//        return jwtProcessor;
-//    }
-//
-//
-//
-//    public <T extends EntityStatement> T parse(String token, Class<T> clazz) throws InvalidTrustChainException {
-//        String[] splits = token.split("\\.");
-//        if (splits.length != 3)
-//            throw new InvalidTrustChainException("Trust chain contains a chain-link which does not abide to the dot-delimited format of xxx.yyy.zzz");
-//        try {
-//            return JsonSerialization.readValue(Base64.getUrlDecoder().decode(splits[1]), clazz);
-//        } catch (IOException e) {
-//            throw new InvalidTrustChainException("Trust chain does not contain a valid Entity Statement");
-//        }
-//    }
-
-
 
 }

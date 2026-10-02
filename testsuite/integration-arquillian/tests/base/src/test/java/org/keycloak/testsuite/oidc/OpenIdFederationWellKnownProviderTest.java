@@ -13,6 +13,8 @@ import jakarta.ws.rs.core.UriBuilder;
 
 import org.keycloak.OAuth2Constants;
 import org.keycloak.admin.client.resource.RealmResource;
+import org.keycloak.jose.jwk.JSONWebKeySet;
+import org.keycloak.jose.jwk.JWK;
 import org.keycloak.protocol.oidc.federation.OpenIdFederationWellKnownProviderFactory;
 import org.keycloak.representations.idm.OpenIdFederationRepresentation;
 import org.keycloak.representations.idm.RealmRepresentation;
@@ -56,6 +58,14 @@ public class OpenIdFederationWellKnownProviderTest extends AbstractWellKnownProv
 
             OpenIdFederationRepresentation openIdFederationRepresentation = new OpenIdFederationRepresentation();
             openIdFederationRepresentation.setTrustAnchor("https://edugain.org/trust-anchor");
+            JSONWebKeySet jwks = new JSONWebKeySet();
+            JWK jwk = new JWK();
+            jwk.setKeyId("test-ta-key");
+            jwk.setKeyType("RSA");
+            jwk.setPublicKeyUse("sig");
+            jwk.setAlgorithm("RS256");
+            jwks.setKeys(new JWK[]{jwk});
+            openIdFederationRepresentation.setJwks(jwks);
             Map<String, String> idpConfiguration = Map.of(OpenIdFederationUtils.SUBJECT_TYPES_SUPPORTED, "public");
             openIdFederationRepresentation.setIdpConfiguration(idpConfiguration);
             testRealm.openIdFederationsResource().create(openIdFederationRepresentation);

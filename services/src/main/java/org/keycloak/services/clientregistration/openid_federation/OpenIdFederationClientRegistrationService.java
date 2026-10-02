@@ -86,7 +86,7 @@ public class OpenIdFederationClientRegistrationService extends AbstractClientReg
 
     private Response commonExplicitRegistrationProcess(EntityStatement statement, RealmModel realm){
         logger.info("starting validating trust chains");
-        TrustChainResolution validChain = trustChainProcessor.constructTrustChains(statement, realm.getOpenIdFederationsTrustAnchors(), true);
+        TrustChainResolution validChain = trustChainProcessor.constructTrustChains(statement, realm.getOpenIdFederations(), true);
         if (validChain == null) {
             throw new ErrorResponseException(Errors.INVALID_TRUST_ANCHOR, "No trusted trust anchor could be found", Response.Status.NOT_FOUND);
         }

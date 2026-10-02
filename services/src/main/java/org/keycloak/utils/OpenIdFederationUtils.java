@@ -171,7 +171,7 @@ public class OpenIdFederationUtils {
         EntityStatement rpEntityStatement = trustChainProcessor.parseAndValidateSelfSigned(rpMetadata);
         trustChainProcessor.validationRules(rpEntityStatement, false);
         logger.info("starting validating trust chains");
-        TrustChainResolution validChain = trustChainProcessor.constructTrustChains(rpEntityStatement, realm.getOpenIdFederationsTrustAnchors(), true);
+        TrustChainResolution validChain = trustChainProcessor.constructTrustChains(rpEntityStatement, realm.getOpenIdFederations(), true);
 
         if (validChain == null) {
             throw new ErrorResponseException(Errors.INVALID_TRUST_ANCHOR, "No trusted trust anchor could be found", Response.Status.NOT_FOUND);
