@@ -3,10 +3,13 @@ package org.keycloak.representations.idm;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.keycloak.jose.jwk.JSONWebKeySet;
+
 public class OpenIdFederationRepresentation {
 
     private String internalId;
     private String trustAnchor;
+    private JSONWebKeySet jwks;
     private Map<String, String> idpConfiguration  = new HashMap<>();
 
     public OpenIdFederationRepresentation(){}
@@ -27,6 +30,13 @@ public class OpenIdFederationRepresentation {
         this.trustAnchor = trustAnchor;
     }
 
+    public JSONWebKeySet getJwks() {
+        return jwks;
+    }
+
+    public void setJwks(JSONWebKeySet jwks) {
+        this.jwks = jwks;
+    }
 
     public Map<String, String> getIdpConfiguration() {
         return idpConfiguration;

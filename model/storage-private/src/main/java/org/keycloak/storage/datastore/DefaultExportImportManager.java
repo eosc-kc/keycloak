@@ -1552,6 +1552,7 @@ public class DefaultExportImportManager implements ExportImportManager {
         OpenIdFederationConfig fedConfig = new OpenIdFederationConfig();
         fedConfig.setInternalId(representation.getInternalId());
         fedConfig.setTrustAnchor(representation.getTrustAnchor());
+        fedConfig.setJwks(representation.getJwks());
         fedConfig.setIdpConfiguration(representation.getIdpConfiguration());
         return fedConfig;
     }

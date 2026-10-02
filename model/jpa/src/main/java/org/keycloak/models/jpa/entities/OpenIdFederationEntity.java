@@ -27,6 +27,13 @@ public class OpenIdFederationEntity {
     @Column(name = "TRUST_ANCHOR")
     private String trustAnchor;
 
+    /**
+     * Optional JSON-serialized public JWK Set trusted for this Trust Anchor.
+     * Nullable for existing Trust Anchors that relied on keys from .well-known.
+     */
+    @Column(name = "JWKS")
+    private String jwks;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "REALM_ID")
     private RealmEntity realm;
@@ -57,6 +64,14 @@ public class OpenIdFederationEntity {
 
     public void setTrustAnchor(String trustAnchor) {
         this.trustAnchor = trustAnchor;
+    }
+
+    public String getJwks() {
+        return jwks;
+    }
+
+    public void setJwks(String jwks) {
+        this.jwks = jwks;
     }
 
     public RealmEntity getRealm() {

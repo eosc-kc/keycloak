@@ -17,6 +17,7 @@
 
 package org.keycloak.models.jpa;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -46,6 +47,7 @@ import org.keycloak.common.util.MultivaluedHashMap;
 import org.keycloak.common.util.Time;
 import org.keycloak.component.ComponentFactory;
 import org.keycloak.component.ComponentModel;
+import org.keycloak.jose.jwk.JSONWebKeySet;
 import org.keycloak.models.AuthenticationExecutionModel;
 import org.keycloak.models.AuthenticationFlowModel;
 import org.keycloak.models.AuthenticatorConfigModel;
@@ -102,6 +104,7 @@ import org.keycloak.models.utils.ComponentUtil;
 import org.keycloak.models.utils.KeycloakModelUtils;
 import org.keycloak.provider.ProviderConfigProperty;
 import org.keycloak.representations.idm.RealmRepresentation;
+import org.keycloak.util.JsonSerialization;
 
 import org.jboss.logging.Logger;
 
@@ -588,12 +591,12 @@ public class RealmAdapter implements StorageProviderRealmModel, JpaModel<RealmEn
     // KEYCLOAK-7688 Offline Session Max for Offline Token
     @Override
     public boolean isOfflineSessionMaxLifespanEnabled() {
-    	return getAttribute(RealmAttributes.OFFLINE_SESSION_MAX_LIFESPAN_ENABLED, false);
+        return getAttribute(RealmAttributes.OFFLINE_SESSION_MAX_LIFESPAN_ENABLED, false);
     }
 
     @Override
     public void setOfflineSessionMaxLifespanEnabled(boolean offlineSessionMaxLifespanEnabled) {
-    	setAttribute(RealmAttributes.OFFLINE_SESSION_MAX_LIFESPAN_ENABLED, offlineSessionMaxLifespanEnabled);
+        setAttribute(RealmAttributes.OFFLINE_SESSION_MAX_LIFESPAN_ENABLED, offlineSessionMaxLifespanEnabled);
     }
 
     @Override
@@ -1312,6 +1315,7 @@ public class RealmAdapter implements StorageProviderRealmModel, JpaModel<RealmEn
             OpenIdFederationConfig fedConfig = new OpenIdFederationConfig();
             fedConfig.setInternalId(fedEntity.getInternalId());
             fedConfig.setTrustAnchor(fedEntity.getTrustAnchor());
+            fedConfig.setJwks(deserializeJwks(fedEntity.getJwks()));
             fedConfig.setIdpConfiguration(fedEntity.getIdpConfiguration());
             return fedConfig;
         }).collect(Collectors.toList());
@@ -1337,8 +1341,31 @@ public class RealmAdapter implements StorageProviderRealmModel, JpaModel<RealmEn
 
     private void transformToOpenIdFederationEntity(OpenIdFederationEntity fedEntity, OpenIdFederationConfig fedConfig){
         fedEntity.setTrustAnchor(fedConfig.getTrustAnchor());
+        fedEntity.setJwks(serializeJwks(fedConfig.getJwks()));
         fedEntity.setIdpConfiguration(fedConfig.getIdpConfiguration());
         fedEntity.setRealm(realm);
+    }
+
+    private static String serializeJwks(JSONWebKeySet jwks) {
+        if (jwks == null) {
+            return null;
+        }
+        try {
+            return JsonSerialization.writeValueAsString(jwks);
+        } catch (IOException e) {
+            throw new RuntimeException("Failed to serialize Trust Anchor JWKS", e);
+        }
+    }
+
+    private static JSONWebKeySet deserializeJwks(String jwks) {
+        if (jwks == null || jwks.isBlank()) {
+            return null;
+        }
+        try {
+            return JsonSerialization.readValue(jwks, JSONWebKeySet.class);
+        } catch (IOException e) {
+            throw new RuntimeException("Failed to deserialize Trust Anchor JWKS", e);
+        }
     }
 
     @Override
@@ -1610,46 +1637,46 @@ public class RealmAdapter implements StorageProviderRealmModel, JpaModel<RealmEn
     }
 
     private FederationModel entityToModel(FederationEntity entity) {
-    	FederationModel federationModel = new FederationModel();
-    	federationModel.setInternalId(entity.getInternalId());
-    	federationModel.setAlias(entity.getAlias());
-    	federationModel.setDisplayName(entity.getDisplayName());
+        FederationModel federationModel = new FederationModel();
+        federationModel.setInternalId(entity.getInternalId());
+        federationModel.setAlias(entity.getAlias());
+        federationModel.setDisplayName(entity.getDisplayName());
         federationModel.setCategory(entity.getCategory());
-    	federationModel.setLastMetadataRefreshTimestamp(entity.getLastMetadataRefreshTimestamp());
-    	federationModel.setProviderId(entity.getProviderId());
-    	federationModel.setUpdateFrequencyInMins(entity.getUpdateFrequencyInMins());
-    	federationModel.setValidUntilTimestamp(entity.getValidUntilTimestamp());
-    	Set<String> denyList = new HashSet<>();
+        federationModel.setLastMetadataRefreshTimestamp(entity.getLastMetadataRefreshTimestamp());
+        federationModel.setProviderId(entity.getProviderId());
+        federationModel.setUpdateFrequencyInMins(entity.getUpdateFrequencyInMins());
+        federationModel.setValidUntilTimestamp(entity.getValidUntilTimestamp());
+        Set<String> denyList = new HashSet<>();
         if (entity.getEntityIdDenyList() != null)
-    	  denyList.addAll(entity.getEntityIdDenyList());
-    	federationModel.setEntityIdDenyList(denyList);
-    	Set<String> allowList = new HashSet<>();
+            denyList.addAll(entity.getEntityIdDenyList());
+        federationModel.setEntityIdDenyList(denyList);
+        Set<String> allowList = new HashSet<>();
         if (entity.getEntityIdAllowList() != null)
-    	  allowList.addAll(entity.getEntityIdAllowList());
+            allowList.addAll(entity.getEntityIdAllowList());
         federationModel.setEntityIdAllowList(allowList);
         Set<String> registrationAuthorityDenyList = new HashSet<>();
         if (entity.getRegistrationAuthorityDenyList() != null)
-          registrationAuthorityDenyList.addAll(entity.getRegistrationAuthorityDenyList());
+            registrationAuthorityDenyList.addAll(entity.getRegistrationAuthorityDenyList());
         federationModel.setRegistrationAuthorityDenyList(registrationAuthorityDenyList);
         Set<String> registrationAuthorityAllowList = new HashSet<>();
         if (entity.getRegistrationAuthorityAllowList() != null)
-          registrationAuthorityAllowList.addAll(entity.getRegistrationAuthorityAllowList());
+            registrationAuthorityAllowList.addAll(entity.getRegistrationAuthorityAllowList());
         federationModel.setRegistrationAuthorityAllowList(registrationAuthorityAllowList);
-        Map<String,List<String>> categoryDenyList = new HashMap<>();
+        Map<String, List<String>> categoryDenyList = new HashMap<>();
         if (entity.getCategoryDenyList() != null)
-          categoryDenyList.putAll(entity.getCategoryDenyList());
+            categoryDenyList.putAll(entity.getCategoryDenyList());
         federationModel.setCategoryDenyList(categoryDenyList);
-        Map<String,List<String>> categoryAllowList = new HashMap<>();
+        Map<String, List<String>> categoryAllowList = new HashMap<>();
         if (entity.getCategoryAllowList() != null)
-          categoryAllowList.putAll(entity.getCategoryAllowList());
+            categoryAllowList.putAll(entity.getCategoryAllowList());
         federationModel.setCategoryAllowList(categoryAllowList);
-    	federationModel.setUrl(entity.getUrl());
-    	Map<String, String> copy = new HashMap<>();
+        federationModel.setUrl(entity.getUrl());
+        Map<String, String> copy = new HashMap<>();
         copy.putAll(entity.getConfig());
-    	federationModel.setConfig(copy);
-    	List<FederationMapperModel> mappers = entity.getFederationMapperEntities().stream().map(this::entityToModel).collect(Collectors.toList());
+        federationModel.setConfig(copy);
+        List<FederationMapperModel> mappers = entity.getFederationMapperEntities().stream().map(this::entityToModel).collect(Collectors.toList());
         federationModel.setFederationMapperModels(mappers);
-    	return federationModel;
+        return federationModel;
     }
 
     private FederationMapperModel entityToModel(FederationMapperEntity entity) {
@@ -1694,13 +1721,13 @@ public class RealmAdapter implements StorageProviderRealmModel, JpaModel<RealmEn
 
         FederationEntity federationEntity = new FederationEntity();
 
-		federationEntity.setInternalId(federationModel.getInternalId());
-		federationEntity.setAlias(federationModel.getAlias());
-		federationEntity.setProviderId(federationModel.getProviderId());
+        federationEntity.setInternalId(federationModel.getInternalId());
+        federationEntity.setAlias(federationModel.getAlias());
+        federationEntity.setProviderId(federationModel.getProviderId());
         federationEntity.setCategory(federationModel.getCategory());
-		
-		//federationEntity.setLastMetadataRefreshTimestamp(new Date().getTime());
-		federationEntity.setUrl(federationModel.getUrl());
+
+        //federationEntity.setLastMetadataRefreshTimestamp(new Date().getTime());
+        federationEntity.setUrl(federationModel.getUrl());
         federationEntity.setEntityIdDenyList(federationModel.getEntityIdDenyList());
         federationEntity.setEntityIdAllowList(federationModel.getEntityIdAllowList());
         federationEntity.setRegistrationAuthorityDenyList(federationModel.getRegistrationAuthorityDenyList());
