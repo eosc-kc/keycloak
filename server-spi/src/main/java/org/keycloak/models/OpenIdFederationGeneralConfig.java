@@ -25,6 +25,7 @@ public class OpenIdFederationGeneralConfig implements Serializable {
     private Integer maxHops;
     private Integer totalTimeout;
     private List<OpenIdFederationConfig> openIdFederationList = List.of();
+    private List<TrustMarkModel> trustMarkList = List.of();
     private List<EntityTypeEnum> entityTypes;
     private List<ClientRegistrationTypeEnum> opClientRegistrationTypesSupported;
     private List<ClientRegistrationTypeEnum> rpClientRegistrationTypesSupported;
@@ -157,6 +158,14 @@ public class OpenIdFederationGeneralConfig implements Serializable {
 
     public void setOpenIdFederationList(List<OpenIdFederationConfig> openIdFederationList) {
         this.openIdFederationList = openIdFederationList == null ? List.of() : List.copyOf(openIdFederationList);
+    }
+
+    public List<TrustMarkModel> getTrustMarkList() {
+        return trustMarkList;
+    }
+
+    public void setTrustMarkList(List<TrustMarkModel> trustMarkList) {
+        this.trustMarkList = trustMarkList == null ? List.of() : List.copyOf(trustMarkList);
     }
 
     public List<EntityTypeEnum> getEntityTypes() {

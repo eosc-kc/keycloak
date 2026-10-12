@@ -225,5 +225,6 @@ public enum ResourceType {
      *
      */
     , ORGANIZATION_GROUP_MEMBERSHIP
-    , OPENID_FEDERATION;
+    , OPENID_FEDERATION,
+    TRUST_MARK;
 }

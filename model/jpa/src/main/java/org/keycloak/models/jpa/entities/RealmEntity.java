@@ -154,6 +154,9 @@ public class RealmEntity {
     @OneToMany(cascade ={CascadeType.PERSIST, CascadeType.REMOVE}, mappedBy = "realm")
     List<OpenIdFederationEntity> openIdFederationList = new ArrayList<>();
 
+    @OneToMany(cascade ={CascadeType.PERSIST, CascadeType.REMOVE}, mappedBy = "realm")
+    List<TrustMarkEntity> trustMarkList = new ArrayList<>();
+
     @ElementCollection
     @MapKeyColumn(name="NAME")
     @Column(name="VALUE")
@@ -615,6 +618,17 @@ public class RealmEntity {
         this.openIdFederationList.clear();
         if (openIdFederationList != null && !openIdFederationList.isEmpty()) {
             this.openIdFederationList.addAll(openIdFederationList);
+        }
+    }
+
+    public List<TrustMarkEntity> getTrustMarkList() {
+        return trustMarkList;
+    }
+
+    public void setTrustMarkList(List<TrustMarkEntity> trustMarkList) {
+        this.trustMarkList.clear();
+        if (trustMarkList != null && !trustMarkList.isEmpty()) {
+            this.trustMarkList.addAll(trustMarkList);
         }
     }
 

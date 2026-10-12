@@ -78,6 +78,7 @@ import org.keycloak.models.RequiredActionProviderModel;
 import org.keycloak.models.RequiredCredentialModel;
 import org.keycloak.models.RoleModel;
 import org.keycloak.models.StorageProviderRealmModel;
+import org.keycloak.models.TrustMarkModel;
 import org.keycloak.models.WebAuthnPolicy;
 import org.keycloak.models.WebAuthnPolicyPasswordlessDefaults;
 import org.keycloak.models.WebAuthnPolicyTwoFactorDefaults;
@@ -100,6 +101,7 @@ import org.keycloak.models.jpa.entities.RealmEntity;
 import org.keycloak.models.jpa.entities.RealmLocalizationTextsEntity;
 import org.keycloak.models.jpa.entities.RequiredActionProviderEntity;
 import org.keycloak.models.jpa.entities.RequiredCredentialEntity;
+import org.keycloak.models.jpa.entities.TrustMarkEntity;
 import org.keycloak.models.utils.ComponentUtil;
 import org.keycloak.models.utils.KeycloakModelUtils;
 import org.keycloak.provider.ProviderConfigProperty;
@@ -1255,6 +1257,7 @@ public class RealmAdapter implements StorageProviderRealmModel, JpaModel<RealmEn
             }
 
             config.setOpenIdFederationList(getOpenIdFederationList(realm.getOpenIdFederationList()));
+            config.setTrustMarkList(getTrustMarkList(realm.getTrustMarkList()));
             return config;
         } else {
             return null;
@@ -1314,6 +1317,15 @@ public class RealmAdapter implements StorageProviderRealmModel, JpaModel<RealmEn
                     return fedEntity;
                 }).collect(Collectors.toList()));
             }
+
+            if (!generalConfig.getTrustMarkList().isEmpty()) {
+                realm.setTrustMarkList(generalConfig.getTrustMarkList().stream().map(trustMarkModel -> {
+                    TrustMarkEntity trustMarkEntity = new TrustMarkEntity();
+                    trustMarkEntity.setId(trustMarkModel.getId() != null ? trustMarkModel.getId() : KeycloakModelUtils.generateId());
+                    transformToTrustMarkEntity(trustMarkEntity, trustMarkModel);
+                    return trustMarkEntity;
+                }).collect(Collectors.toList()));
+            }
         }
     }
 
@@ -1333,7 +1345,6 @@ public class RealmAdapter implements StorageProviderRealmModel, JpaModel<RealmEn
         }).collect(Collectors.toList());
     }
 
-
     @Override
     public void addOpenIdFederation(OpenIdFederationConfig fedConfig) {
         OpenIdFederationEntity fedEntity = new OpenIdFederationEntity();
@@ -1351,11 +1362,68 @@ public class RealmAdapter implements StorageProviderRealmModel, JpaModel<RealmEn
         transformToOpenIdFederationEntity(fedEntity, fedConfig);
     }
 
+    private List<TrustMarkModel> getTrustMarkList(List<TrustMarkEntity> trustMarkList){
+        return trustMarkList.stream().map(trustMarkEntity -> {
+            TrustMarkModel trustMarkModel = new TrustMarkModel();
+            trustMarkModel.setId(trustMarkEntity.getId());
+            trustMarkModel.setTrustMarkType(trustMarkEntity.getTrustMarkType());
+            trustMarkModel.setSelfSigned(trustMarkEntity.isSelfSigned());
+            trustMarkModel.setIat(trustMarkEntity.getIat());
+            trustMarkModel.setExp(trustMarkEntity.getExp());
+            trustMarkModel.setLogoUri(trustMarkEntity.getLogoUri());
+            trustMarkModel.setRef(trustMarkEntity.getRef());
+            trustMarkModel.setDelegation(trustMarkEntity.getDelegation());
+            trustMarkModel.setJwt(trustMarkEntity.getJwt());
+            return trustMarkModel;
+        }).collect(Collectors.toList());
+    }
+
+    @Override
+    public List<TrustMarkModel> getTrustMarks() {
+        return getTrustMarkList(realm.getTrustMarkList());
+    }
+
+    @Override
+    public void addTrustMark(TrustMarkModel trustMarkModel) {
+        TrustMarkEntity trustMarkEntity = new TrustMarkEntity();
+        trustMarkEntity.setId(KeycloakModelUtils.generateId());
+        transformToTrustMarkEntity(trustMarkEntity, trustMarkModel);
+        realm.getTrustMarkList().add(trustMarkEntity);
+        em.persist(trustMarkEntity);
+        em.flush();
+        trustMarkModel.setId(trustMarkEntity.getId());
+    }
+
+    @Override
+    public void updateTrustMark(TrustMarkModel trustMarkModel) {
+        TrustMarkEntity trustMarkEntity = realm.getTrustMarkList().stream().filter(x -> trustMarkModel.getId().equals(x.getId())).findAny().orElseThrow(() -> new EntityNotFoundException("TrustMark not found"));
+        transformToTrustMarkEntity(trustMarkEntity, trustMarkModel);
+    }
+
+    @Override
+    public void removeTrustMark(String id) {
+        TrustMarkEntity entity = realm.getTrustMarkList().stream().filter(x -> id.equals(x.getId())).findAny().orElseThrow(NotFoundException::new);
+        this.realm.getTrustMarkList().remove(entity);
+        em.remove(entity);
+    }
+
     private void transformToOpenIdFederationEntity(OpenIdFederationEntity fedEntity, OpenIdFederationConfig fedConfig){
         fedEntity.setTrustAnchor(fedConfig.getTrustAnchor());
         fedEntity.setJwks(serializeJwks(fedConfig.getJwks()));
         fedEntity.setIdpConfiguration(fedConfig.getIdpConfiguration());
         fedEntity.setRealm(realm);
+    }
+
+    private void transformToTrustMarkEntity(TrustMarkEntity trustMarkEntity, TrustMarkModel trustMarkModel){
+        trustMarkEntity.setJwt(trustMarkModel.getJwt());
+        trustMarkEntity.setExp(trustMarkModel.getExp());
+        trustMarkEntity.setIat(trustMarkModel.getIat());
+        trustMarkEntity.setLogoUri(trustMarkModel.getLogoUri());
+        trustMarkEntity.setRef(trustMarkModel.getRef());
+        trustMarkEntity.setDelegation(trustMarkModel.getDelegation());
+        trustMarkEntity.setTrustMarkType(trustMarkModel.getTrustMarkType());
+        trustMarkEntity.setSelfSigned(trustMarkModel.isSelfSigned());
+        trustMarkEntity.setRealm(realm);
     }
 
     private static String serializeJwks(JSONWebKeySet jwks) {
