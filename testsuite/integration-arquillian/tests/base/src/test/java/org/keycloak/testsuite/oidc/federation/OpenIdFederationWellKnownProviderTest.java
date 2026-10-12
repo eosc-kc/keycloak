@@ -1,4 +1,4 @@
-package org.keycloak.testsuite.oidc;
+package org.keycloak.testsuite.oidc.federation;
 
 import java.io.IOException;
 import java.net.URI;
@@ -24,6 +24,7 @@ import org.keycloak.representations.openid_federation.RPMetadata;
 import org.keycloak.services.resources.IdentityBrokerService;
 import org.keycloak.services.resources.RealmsResource;
 import org.keycloak.testsuite.Assert;
+import org.keycloak.testsuite.oidc.AbstractWellKnownProviderTest;
 import org.keycloak.testsuite.util.AdminClientUtil;
 import org.keycloak.testsuite.util.oauth.OAuthClient;
 import org.keycloak.util.TokenUtil;

@@ -1206,6 +1206,11 @@ public class RealmAdminResource {
     public OpenIdFederationsResource getOpenIdFederationsResource() {
         return new OpenIdFederationsResource(realm, session, this.auth, adminEvent);
     }
+
+    @Path("trust-marks")
+    public TrustMarksResource getTrustMarksResource() {
+        return new TrustMarksResource(realm, session, this.auth, adminEvent);
+    }
     
     
     /**

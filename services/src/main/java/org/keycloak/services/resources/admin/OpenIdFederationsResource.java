@@ -98,7 +98,7 @@ public class OpenIdFederationsResource {
     @Produces(MediaType.APPLICATION_JSON)
     @Operation(summary = "Get an OpenId Federation")
     public OpenIdFederationRepresentation getOpenIdFederation(@PathParam("id") String internalId) {
-        this.auth.realm().requireViewIdentityProviders();
+        this.auth.realm().requireViewRealm();
 
         OpenIdFederationConfig config = realm.getOpenIdFederations().stream().filter(x -> internalId.equals(x.getInternalId())).findAny().orElseThrow(NotFoundException::new);
         return ModelToRepresentation.toRepresentation(config);
