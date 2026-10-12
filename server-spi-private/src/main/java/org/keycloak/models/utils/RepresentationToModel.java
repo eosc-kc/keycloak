@@ -94,6 +94,7 @@ import org.keycloak.models.OrganizationModel;
 import org.keycloak.models.ProtocolMapperModel;
 import org.keycloak.models.RealmModel;
 import org.keycloak.models.RoleModel;
+import org.keycloak.models.TrustMarkModel;
 import org.keycloak.models.UserConsentModel;
 import org.keycloak.models.UserCredentialModel;
 import org.keycloak.models.UserModel;
@@ -128,6 +129,7 @@ import org.keycloak.representations.idm.RealmRepresentation;
 import org.keycloak.representations.idm.RoleRepresentation;
 import org.keycloak.representations.idm.RolesRepresentation;
 import org.keycloak.representations.idm.SAMLFederationRepresentation;
+import org.keycloak.representations.idm.TrustMarkRepresentation;
 import org.keycloak.representations.idm.UserConsentRepresentation;
 import org.keycloak.representations.idm.UserRepresentation;
 import org.keycloak.representations.idm.authorization.AbstractPolicyRepresentation;
@@ -1020,6 +1022,20 @@ public class RepresentationToModel {
         fedConfig.setJwks(representation.getJwks());
         fedConfig.setIdpConfiguration(representation.getIdpConfiguration());
         return fedConfig;
+    }
+
+    public static TrustMarkModel toModel(TrustMarkRepresentation representation ) {
+        TrustMarkModel trustMarkModel = new TrustMarkModel();
+        trustMarkModel.setId(representation.getId());
+        trustMarkModel.setTrustMarkType(representation.getTrustMarkType());
+        trustMarkModel.setSelfSigned(representation.isSelfSigned());
+        trustMarkModel.setIat(representation.getIat());
+        trustMarkModel.setExp(representation.getExp());
+        trustMarkModel.setLogoUri(representation.getLogoUri());
+        trustMarkModel.setRef(representation.getRef());
+        trustMarkModel.setDelegation(representation.getDelegation());
+        trustMarkModel.setJwt(representation.getJwt());
+        return trustMarkModel;
     }
 
 

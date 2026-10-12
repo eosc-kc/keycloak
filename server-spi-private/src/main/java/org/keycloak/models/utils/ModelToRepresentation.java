@@ -87,6 +87,7 @@ import org.keycloak.models.RequiredActionConfigModel;
 import org.keycloak.models.RequiredActionProviderModel;
 import org.keycloak.models.RequiredCredentialModel;
 import org.keycloak.models.RoleModel;
+import org.keycloak.models.TrustMarkModel;
 import org.keycloak.models.UserConsentModel;
 import org.keycloak.models.UserCredentialModel;
 import org.keycloak.models.UserModel;
@@ -128,6 +129,7 @@ import org.keycloak.representations.idm.RequiredActionConfigRepresentation;
 import org.keycloak.representations.idm.RequiredActionProviderRepresentation;
 import org.keycloak.representations.idm.RoleRepresentation;
 import org.keycloak.representations.idm.SAMLFederationRepresentation;
+import org.keycloak.representations.idm.TrustMarkRepresentation;
 import org.keycloak.representations.idm.UserConsentRepresentation;
 import org.keycloak.representations.idm.UserRepresentation;
 import org.keycloak.representations.idm.UserSessionRepresentation;
@@ -672,6 +674,9 @@ public class ModelToRepresentation {
             if (internal && openIdFederationConfig.getOpenIdFederationList() != null) {
                 rep.setOpenIdFederationList(openIdFederationConfig.getOpenIdFederationList().stream().map(x -> toRepresentation(x)).collect(Collectors.toList()));
             }
+            if (internal && openIdFederationConfig.getTrustMarkList() != null) {
+                rep.setTrustMarkList(openIdFederationConfig.getTrustMarkList().stream().map(x -> toRepresentation(x)).collect(Collectors.toList()));
+            }
         }
 
         CibaConfig cibaPolicy = realm.getCibaPolicy();
@@ -1126,6 +1131,20 @@ public class ModelToRepresentation {
         federationRep.setJwks(model.getJwks());
         federationRep.setIdpConfiguration(model.getIdpConfiguration());
         return federationRep;
+    }
+
+    public static TrustMarkRepresentation toRepresentation(TrustMarkModel model) {
+        TrustMarkRepresentation trustMarkRep = new TrustMarkRepresentation();
+        trustMarkRep.setId(model.getId());
+        trustMarkRep.setTrustMarkType(model.getTrustMarkType());
+        trustMarkRep.setSelfSigned(model.isSelfSigned());
+        trustMarkRep.setIat(model.getIat());
+        trustMarkRep.setExp(model.getExp());
+        trustMarkRep.setLogoUri(model.getLogoUri());
+        trustMarkRep.setRef(model.getRef());
+        trustMarkRep.setDelegation(model.getDelegation());
+        trustMarkRep.setJwt(model.getJwt());
+        return trustMarkRep;
     }
 
     public static FederationMapperRepresentation toRepresentation(FederationMapperModel model) {

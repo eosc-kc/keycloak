@@ -180,6 +180,7 @@ public class RealmRepresentation {
     private Integer openIdFederationMaxHops;
     private Integer openIdFederationTotalTimeout;
     private List<OpenIdFederationRepresentation> openIdFederationList;
+    private List<TrustMarkRepresentation> trustMarkList;
     private List<String> openIdFederationEntityTypes;
     private List<String> openIdFederationOPClientRegistrationTypesSupported;
     private List<String> openIdFederationRPClientRegistrationTypesSupported;
@@ -1471,6 +1472,14 @@ public class RealmRepresentation {
 
     public void setOpenIdFederationList(List<OpenIdFederationRepresentation> openIdFederationList) {
         this.openIdFederationList = openIdFederationList;
+    }
+
+    public List<TrustMarkRepresentation> getTrustMarkList() {
+        return trustMarkList;
+    }
+
+    public void setTrustMarkList(List<TrustMarkRepresentation> trustMarkList) {
+        this.trustMarkList = trustMarkList;
     }
 
     public List<String> getOpenIdFederationEntityTypes() {

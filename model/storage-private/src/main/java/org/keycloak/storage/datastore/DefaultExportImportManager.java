@@ -1536,17 +1536,20 @@ public class DefaultExportImportManager implements ExportImportManager {
             config.setMaxHops(rep.getOpenIdFederationMaxHops());
             config.setTotalTimeout(rep.getOpenIdFederationTotalTimeout());
             if (rep.getOpenIdFederationEntityTypes() != null) {
-                config.setEntityTypes(rep.getOpenIdFederationEntityTypes().stream().map(EntityTypeEnum::valueOf).collect(Collectors.toList()));
+                config.setEntityTypes(rep.getOpenIdFederationEntityTypes().stream().map(EntityTypeEnum::valueOf).toList());
             }
             if (rep.getOpenIdFederationOPClientRegistrationTypesSupported() != null) {
-                config.setOpClientRegistrationTypesSupported(rep.getOpenIdFederationOPClientRegistrationTypesSupported().stream().map(ClientRegistrationTypeEnum::valueOf).collect(Collectors.toList()));
+                config.setOpClientRegistrationTypesSupported(rep.getOpenIdFederationOPClientRegistrationTypesSupported().stream().map(ClientRegistrationTypeEnum::valueOf).toList());
             }
             if (rep.getOpenIdFederationRPClientRegistrationTypesSupported() != null) {
-                config.setRpClientRegistrationTypesSupported(rep.getOpenIdFederationRPClientRegistrationTypesSupported().stream().map(ClientRegistrationTypeEnum::valueOf).collect(Collectors.toList()));
+                config.setRpClientRegistrationTypesSupported(rep.getOpenIdFederationRPClientRegistrationTypesSupported().stream().map(ClientRegistrationTypeEnum::valueOf).toList());
             }
 
             if (withFederationList && rep.getOpenIdFederationList() != null && !rep.getOpenIdFederationList().isEmpty()) {
-                config.setOpenIdFederationList(rep.getOpenIdFederationList().stream().map(fedRep -> RepresentationToModel.toModel(fedRep)).collect(Collectors.toList()));
+                config.setOpenIdFederationList(rep.getOpenIdFederationList().stream().map(fedRep -> RepresentationToModel.toModel(fedRep)).toList());
+            }
+            if (withFederationList && rep.getTrustMarkList() != null && !rep.getTrustMarkList().isEmpty()) {
+                config.setTrustMarkList(rep.getTrustMarkList().stream().map(trustMarkRep -> RepresentationToModel.toModel(trustMarkRep)).toList());
             }
             return config;
         } else {

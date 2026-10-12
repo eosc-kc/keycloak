@@ -300,6 +300,9 @@ public interface RealmResource {
     @Path("openid-federations")
     public OpenIdFederationsResource openIdFederationsResource();
 
+    @Path("trust-marks")
+    TrustMarksResource trustMarksResource();
+
     @DELETE
     void remove();
 

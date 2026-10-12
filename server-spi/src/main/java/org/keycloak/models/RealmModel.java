@@ -373,6 +373,23 @@ public interface RealmModel extends RoleContainerModel {
     default void removeOpenIdFederation(String internalId) {
     }
 
+    default List<TrustMarkModel> getTrustMarks() {
+        return List.of();
+    }
+
+    default void addTrustMark(TrustMarkModel trustMark) {
+    }
+
+    default void updateTrustMark(TrustMarkModel trustMark) {
+    }
+
+    default void removeTrustMark(String id) {
+    }
+
+    default TrustMarkModel getTrustMark(String id) {
+        return getTrustMarks().stream().filter(tm -> id.equals(tm.getId())).findFirst().orElse(null);
+    }
+
     RoleModel getRoleById(String id);
 
     /**

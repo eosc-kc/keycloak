@@ -59,6 +59,7 @@ import org.keycloak.models.RequiredActionConfigModel;
 import org.keycloak.models.RequiredActionProviderModel;
 import org.keycloak.models.RequiredCredentialModel;
 import org.keycloak.models.RoleModel;
+import org.keycloak.models.TrustMarkModel;
 import org.keycloak.models.UserLoginFailureProvider;
 import org.keycloak.models.WebAuthnPolicy;
 import org.keycloak.models.cache.CachedRealmModel;
@@ -934,6 +935,30 @@ public class RealmAdapter implements CachedRealmModel {
     public void removeOpenIdFederation(String internalId) {
         getDelegateForUpdate();
         updated.removeOpenIdFederation(internalId);
+    }
+
+    @Override
+    public List<TrustMarkModel> getTrustMarks() {
+        if (isUpdated()) return updated.getTrustMarks();
+        return isOpenIdFederationEnabled() ? cached.getOpenIdFederationConfig().getTrustMarkList() : List.of();
+    }
+
+    @Override
+    public void addTrustMark(TrustMarkModel trustMark) {
+        getDelegateForUpdate();
+        updated.addTrustMark(trustMark);
+    }
+
+    @Override
+    public void updateTrustMark(TrustMarkModel trustMark) {
+        getDelegateForUpdate();
+        updated.updateTrustMark(trustMark);
+    }
+
+    @Override
+    public void removeTrustMark(String internalId) {
+        getDelegateForUpdate();
+        updated.removeTrustMark(internalId);
     }
 
     @Override
