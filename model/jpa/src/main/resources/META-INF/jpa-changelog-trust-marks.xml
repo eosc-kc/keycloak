@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+                   http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.19.xsd">
+
+    <changeSet id="trust-marks" author="cgeorgilakis">
+        <createTable tableName="TRUST_MARK">
+            <column name="ID" type="VARCHAR(36)">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="REALM_ID" type="VARCHAR(36)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="TRUST_MARK_TYPE" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="SUBJECT" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="ISSUER" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="ISSUED_AT" type="timestamp">
+                <constraints nullable="false"/>
+            </column>
+            <column name="EXPIRATION" type="timestamp">
+                <constraints nullable="true"/>
+            </column>
+            <column name="LOGO_URI" type="VARCHAR(2000)">
+                <constraints nullable="true"/>
+            </column>
+            <column name="REFERENCE" type="VARCHAR(2000)">
+                <constraints nullable="true"/>
+            </column>
+            <column name="DELEGATION" type="VARCHAR(4000)">
+                <constraints nullable="true"/>
+            </column>
+            <column name="TRUST_MARK_JWT" type="VARCHAR(4000)">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+        <addForeignKeyConstraint baseTableName="TRUST_MARK"
+                                 baseColumnNames="REALM_ID"
+                                 constraintName="FK_TRUST_MARK_REALM"
+                                 referencedTableName="REALM"
+                                 referencedColumnNames="ID"/>
+        <createIndex tableName="TRUST_MARK" indexName="IDX_TRUST_MARK_REALM">
+            <column name="REALM_ID"/>
+        </createIndex>
+    </changeSet>
+
+</databaseChangeLog>
