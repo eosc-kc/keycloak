@@ -19,6 +19,9 @@ Our Keycloak version is working well with PostgreSQL database. For using other S
 ### Changed
 - Support trusted public keys for each OpenID Federation Trust Anchor
 
+### Added
+- Add Keycloak upstream method buildSPDescriptor of SPMetadataDescriptor class 
+
 ## [26.6.6-1.2] -2026-09-15
 
 ### Added 
