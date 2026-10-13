@@ -58,6 +58,18 @@ public class SPMetadataDescriptor {
                 wantAuthnRequestsSigned, wantLogoutRequestsSigned, wantAssertionsSigned, wantAssertionsEncrypted, entityId, nameIDPolicyFormat, signingCerts, encryptionCerts, null);
     }
 
+    /**
+     * Keycloak upstream method buildSPDescriptor() used for extensions like eidas
+     * wantLogoutRequestsSigned value is put equal to wantAuthnRequestsSigned
+     */
+    public static EntityDescriptorType buildSPDescriptor(URI loginBinding, URI logoutBinding, URI assertionEndpoint, URI logoutEndpoint,
+                                                         boolean wantAuthnRequestsSigned, boolean wantAssertionsSigned, boolean wantAssertionsEncrypted,
+                                                         String entityId, String nameIDPolicyFormat, List<KeyDescriptorType> signingCerts, List<KeyDescriptorType> encryptionCerts) {
+        return buildSPDescriptor(Collections.singletonList(new EndpointType(loginBinding, assertionEndpoint)),
+                Collections.singletonList(new EndpointType(logoutBinding, logoutEndpoint)),
+                wantAuthnRequestsSigned, wantAuthnRequestsSigned, wantAssertionsSigned, wantAssertionsEncrypted, entityId, nameIDPolicyFormat, signingCerts, encryptionCerts, null);
+    }
+
     public static EntityDescriptorType buildSPDescriptor(List<EndpointType> assertionConsumerServices, List<EndpointType> singleLogoutServices,
             boolean wantAuthnRequestsSigned, boolean wantLogoutRequestsSigned, boolean wantAssertionsSigned, boolean wantAssertionsEncrypted,
             String entityId, String nameIDPolicyFormat, List<KeyDescriptorType> signingCerts,
