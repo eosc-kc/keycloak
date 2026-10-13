@@ -483,15 +483,9 @@ public class AccessTokenIntrospectionProvider<T extends AccessToken> implements 
         // Only translate active tokens
         if (responseNode.has("active") && responseNode.get("active").asBoolean()) {
 
-            // 2. Query translations for this specific IdP alias first
+            // 2. Query translations
             List<ComponentModel> translationComponents = realm.getComponentsStream(ProxiedTokenIntrospectionTranslationsSpi.SPI_NAME, Map.of(ProxiedTokenIntrospectionTranslationsSpi.IDP, oidcIssuerIdp.getAlias(), ProxiedTokenIntrospectionTranslationsSpi.GLOBAL, realm.getName(), ProxiedTokenIntrospectionTranslationsSpi.CLIENT, eventBuilder.getEvent().getClientId())).sorted(java.util.Comparator.comparingInt(this::getComponentOrder))
                     .toList();
-
-            // Fallback: If no IdP-specific rules exist, load realm-level global rules
-            if (translationComponents.isEmpty()) {
-                translationComponents = realm.getComponentsStream(realm.getName(), ProxiedTokenIntrospectionTranslationsSpi.SPI_NAME, ProxiedTokenIntrospectionTranslationsSpi.DEFAULT).sorted(java.util.Comparator.comparingInt(this::getComponentOrder))
-                        .toList();
-            }
 
             // 3. Instantiate and execute the translate() method for each configured component
             for (ComponentModel model : translationComponents) {
