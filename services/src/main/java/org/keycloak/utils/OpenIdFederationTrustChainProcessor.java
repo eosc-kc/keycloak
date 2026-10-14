@@ -183,10 +183,24 @@ public class OpenIdFederationTrustChainProcessor implements TrustChainProcessor 
             });
 
         } else if (trustAnchorIds.contains(leafEs.getSubject())) {
-            TrustChainResolution trustAnchor = new TrustChainResolution();
-            trustAnchor.getParsedChain().add(0, leafEs);
-            trustAnchor.setTrustAnchorId(leafEs.getSubject());
-            chainsList.add(trustAnchor);
+            try {
+                OpenIdFederationConfig trustAnchorConfig = openIdFederationList.stream()
+                        .filter(x -> leafEs.getSubject().equals(x.getTrustAnchor())).findAny().orElse(null);
+
+                if (trustAnchorConfig != null) {
+                    String encodedTaSelf = OpenIdFederationUtils.getSelfSignedToken(leafEs.getSubject(), session);
+                    EntityStatement taStatement = parseAndValidateTrustAnchorEntityConfiguration(trustAnchorConfig, encodedTaSelf);
+
+                    if (validateEntityStatementFields(taStatement, leafEs.getSubject(), leafEs.getSubject())) {
+                        TrustChainResolution trustAnchor = new TrustChainResolution();
+                        trustAnchor.getParsedChain().add(0, taStatement);
+                        trustAnchor.setTrustAnchorId(leafEs.getSubject());
+                        chainsList.add(trustAnchor);
+                    }
+                }
+            } catch (Exception ex) {
+                logger.warn("Problem verifying Trust Anchor entity configuration for " + leafEs.getSubject(), ex);
+            }
         }
 
         return chainsList;
@@ -278,7 +292,10 @@ public class OpenIdFederationTrustChainProcessor implements TrustChainProcessor 
     }
 
     public boolean validateEntityStatementFields(EntityStatement statement, String issuer, String subject) {
-        return statement.getIssuer() == null || statement.getIssuer().equals(issuer) || statement.getSubject() == null || statement.getSubject().equals(subject) || statement.getIat() == null || LocalDateTime.now().toEpochSecond(ZoneOffset.UTC) > statement.getIat() || statement.getExp() == null || LocalDateTime.now().toEpochSecond(ZoneOffset.UTC) < statement.getExp();
+        return statement.getIssuer() != null && statement.getIssuer().equals(issuer) &&
+                statement.getSubject() != null && statement.getSubject().equals(subject) &&
+                statement.getIat() != null && LocalDateTime.now().toEpochSecond(ZoneOffset.UTC) >= statement.getIat() &&
+                statement.getExp() != null && LocalDateTime.now().toEpochSecond(ZoneOffset.UTC) <= statement.getExp();
     }
 
     @Override
@@ -289,10 +306,10 @@ public class OpenIdFederationTrustChainProcessor implements TrustChainProcessor 
         if (statement.getSubject() == null) {
             throw new ErrorResponseException(Errors.INVALID_SUBJECT, "No issuer in the request.", Response.Status.NOT_FOUND);
         }
-        if (statement.getIat() == null && LocalDateTime.now().toEpochSecond(ZoneOffset.UTC) > statement.getIat()) {
+        if (statement.getIat() == null || LocalDateTime.now().toEpochSecond(ZoneOffset.UTC) > statement.getIat()) {
             throw new ErrorResponseException(Errors.INVALID_REQUEST, "Iat must exist and be before now.", Response.Status.BAD_REQUEST);
         }
-        if (statement.getExp() == null && LocalDateTime.now().toEpochSecond(ZoneOffset.UTC) < statement.getExp()) {
+        if (statement.getExp() == null || LocalDateTime.now().toEpochSecond(ZoneOffset.UTC) < statement.getExp()) {
             throw new ErrorResponseException(Errors.INVALID_REQUEST, "Exp must exist and be before now.", Response.Status.BAD_REQUEST);
         }
         if (statement.getAuthorityHints() == null || statement.getAuthorityHints().isEmpty()) {
