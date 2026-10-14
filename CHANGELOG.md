@@ -15,12 +15,13 @@ Our Keycloak version is working well with PostgreSQL database. For using other S
 ### Added
 - Token Exchange : Allow requested_token_type=urn:ietf:params:oauth:token-type:refresh_token with offline client session and created access token containing offline_access
 - Proxy token introspection translation general implementation (back end) and ClaimRenamingTranslationProvider, ScalarValueNormalisationTranslationProvider, ClaimRemovalTranslationProvider
+- Add Keycloak upstream method buildSPDescriptor of SPMetadataDescriptor class
 
 ### Changed
 - Support trusted public keys for each OpenID Federation Trust Anchor
 
-### Added
-- Add Keycloak upstream method buildSPDescriptor of SPMetadataDescriptor class 
+### Fixed
+- Fix F-01. Trust chain can end at a Trust Anchor without that Trust Anchor's keys
 
 ## [26.6.6-1.2] -2026-09-15
 
