@@ -81,6 +81,9 @@ public class AccessTokenIntrospectionProvider<T extends AccessToken> implements 
     private static final String wellKnown = "/.well-known/openid-configuration";
     private static final String PROXIED_TOKEN_INTROSPECTION_FALLBACK_PROVIDERS = "proxiedTokenIntrospectionFallbackProviders";
     public static final String ORDER = "order";
+    private static final String PROXIED_TOKEN_INTROSPECTION = "proxied_token_introspection";
+    private static final String ORIGINAL_RESPONSE = "original_response";
+    private static final String TRANSLATED_RESPONSE = "translated_response";
 
     protected final KeycloakSession session;
     protected final TokenManager tokenManager;
@@ -189,10 +192,13 @@ public class AccessTokenIntrospectionProvider<T extends AccessToken> implements 
 
                 tokenMetadata.put(OAuth2Constants.TOKEN_TYPE, transformedToken.getType());
                 tokenMetadata.put("active", true);
+                eventBuilder.detail("active", "true");
                 eventBuilder.success();
             } else {
                 tokenMetadata = JsonSerialization.createObjectNode();
                 logger.warn("Keycloak token introspection return false");
+                eventBuilder.detail("active", "false");
+                eventBuilder.success();
                 tokenMetadata.put("active", false);
             }
 
@@ -421,9 +427,13 @@ public class AccessTokenIntrospectionProvider<T extends AccessToken> implements 
     protected Response introspectWithProxied(String token, String issuer, RealmModel realm) throws IOException {
 
         try {
-            String cachedToken = (String) tokenRelayCache.get(new Key(token, realm.getName()));
-            if (cachedToken != null)
-                return Response.ok(cachedToken).type(MediaType.APPLICATION_JSON_TYPE).build();
+            eventBuilder.detail(PROXIED_TOKEN_INTROSPECTION, "true");
+//            String cachedToken = (String) tokenRelayCache.get(new Key(token, realm.getName()));
+//            if (cachedToken != null) {
+//                eventBuilder.detail(TRANSLATED_RESPONSE, cachedToken);
+//                eventBuilder.success();
+//                return Response.ok(cachedToken).type(MediaType.APPLICATION_JSON_TYPE).build();
+//            }
 
             IdentityProviderModel issuerIdp = realm.getIdentityProvidersStream().filter(idp -> issuer.equals(idp.getConfig().get("issuer")) && idp.isEnabled()).findAny().orElse(null);
             if (issuerIdp != null) {
@@ -456,14 +466,14 @@ public class AccessTokenIntrospectionProvider<T extends AccessToken> implements 
             logger.warn(problem);
             eventBuilder.detail("Remote introspection problem", problem);
             if (eventBuilder.getEvent().getError() == null)
-                eventBuilder.error(Errors.TOKEN_INTROSPECTION_FAILED);
+                eventBuilder.error(Errors.PROXIED_TOKEN_INTROSPECTION_FAILED);
             ObjectNode tokenMetadata = JsonSerialization.createObjectNode();
             tokenMetadata.put("active", false);
             return Response.ok(JsonSerialization.writeValueAsBytes(tokenMetadata)).type(MediaType.APPLICATION_JSON_TYPE).build();
         } catch (Exception e) {
             eventBuilder.detail("Remote introspection exception", e.getMessage());
             if (eventBuilder.getEvent().getError() == null)
-                eventBuilder.error(Errors.TOKEN_INTROSPECTION_FAILED);
+                eventBuilder.error(Errors.PROXIED_TOKEN_INTROSPECTION_FAILED);
             logger.warn("Error during remote introspection", e);
             throw new RuntimeException("Error creating token introspection response.", e);
         }
@@ -474,6 +484,7 @@ public class AccessTokenIntrospectionProvider<T extends AccessToken> implements 
         if (response.getStatus() > 300) {
             logger.warn("Remote introspection Idp return http status " + response.getStatus() + " with body :");
             logger.warn(response.asString());
+            eventBuilder.error(Errors.PROXIED_TOKEN_INTROSPECTION_FAILED);
             ObjectNode tokenMetadata = JsonSerialization.createObjectNode();
             tokenMetadata.put("active", false);
             return Response.ok(JsonSerialization.writeValueAsBytes(tokenMetadata)).type(MediaType.APPLICATION_JSON_TYPE).build();
@@ -483,8 +494,9 @@ public class AccessTokenIntrospectionProvider<T extends AccessToken> implements 
         // Only translate active tokens
         if (responseNode.has("active") && responseNode.get("active").asBoolean()) {
 
+            eventBuilder.detail(ORIGINAL_RESPONSE, response.asString());
             // 2. Query translations
-            List<ComponentModel> translationComponents = realm.getComponentsStream(ProxiedTokenIntrospectionTranslationsSpi.SPI_NAME, Map.of(ProxiedTokenIntrospectionTranslationsSpi.IDP, oidcIssuerIdp.getAlias(), ProxiedTokenIntrospectionTranslationsSpi.GLOBAL, realm.getName(), ProxiedTokenIntrospectionTranslationsSpi.CLIENT, eventBuilder.getEvent().getClientId())).sorted(java.util.Comparator.comparingInt(this::getComponentOrder))
+            List<ComponentModel> translationComponents = realm.getComponentsStream("org.keycloak.protocol.oidc.ProxiedTokenIntrospectionTranslationsProvider", Map.of(ProxiedTokenIntrospectionTranslationsSpi.IDP, oidcIssuerIdp.getAlias(), ProxiedTokenIntrospectionTranslationsSpi.GLOBAL, realm.getName(), ProxiedTokenIntrospectionTranslationsSpi.CLIENT, eventBuilder.getEvent().getClientId())).sorted(java.util.Comparator.comparingInt(this::getComponentOrder))
                     .toList();
 
             // 3. Instantiate and execute the translate() method for each configured component
@@ -510,13 +522,17 @@ public class AccessTokenIntrospectionProvider<T extends AccessToken> implements 
             String finalResponseString = JsonSerialization.writeValueAsString(responseNode);
 
             // Cache and return transformed payload
-            tokenRelayCache.put(new Key(token, realm.getName()), finalResponseString);
+           // tokenRelayCache.put(new Key(token, realm.getName()), finalResponseString);
+            eventBuilder.detail(TRANSLATED_RESPONSE, finalResponseString);
+            eventBuilder.success();
             return Response.status(response.getStatus())
                     .type(MediaType.APPLICATION_JSON_TYPE)
                     .entity(finalResponseString)
                     .build();
         } else {
-            tokenRelayCache.put(new Key(token, realm.getName()), response.asString());
+            // tokenRelayCache.put(new Key(token, realm.getName()), response.asString());
+            eventBuilder.detail(ORIGINAL_RESPONSE, response.asString());
+            eventBuilder.success();
             return Response.status(response.getStatus()).type(MediaType.APPLICATION_JSON_TYPE).entity(response.asString()).build();
         }
     }
