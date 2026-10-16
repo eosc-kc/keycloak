@@ -1,6 +1,4 @@
 import type RealmRepresentation from "libs/keycloak-admin-client/lib/defs/realmRepresentation";
-import type OpenIdFederationRepresentation from "libs/keycloak-admin-client/lib/defs/openIdFederationRepresentation";
-
 import { AlertVariant, PageSection } from "@patternfly/react-core";
 import { FormProvider, useForm } from "react-hook-form";
 import { useTranslation } from "react-i18next";
@@ -11,6 +9,10 @@ import { useAdminClient } from "../../admin-client";
 import { ViewHeader } from "../../components/view-header/ViewHeader";
 import { useRealm } from "../../context/realm-context/RealmContext";
 import { OpenIdFederationForm } from "./OpenIdFederationForm";
+import {
+  type OpenIdFederationFormValues,
+  toOpenIdFederationRepresentation,
+} from "./form-state";
 import { toOpenIdFederationEdit } from "../routes/OpenIdFederationEdit";
 import { convertFormValuesToObject } from "../../util";
 
@@ -28,18 +30,28 @@ export default function AddOpenIdFederation() {
 
   const { realm: realmName, realmRepresentation } = useRealm();
 
-  const form = useForm<OpenIdFederationRepresentation>({
+  const form = useForm<OpenIdFederationFormValues>({
     shouldUnregister: false,
+    defaultValues: {
+      trustAnchor: "",
+      jwks: "",
+    },
   });
 
   const [realm, setRealm] = useState<RealmRepresentation>();
 
-  useFetch(() => adminClient.realms.findOne({ realm: realmName }), setRealm, []);
+  useFetch(
+    () => adminClient.realms.findOne({ realm: realmName }),
+    setRealm,
+    [],
+  );
 
   const effectiveRealm = realm ?? realmRepresentation;
 
-  const save = async (r: OpenIdFederationRepresentation) => {
-    const payload = convertFormValuesToObject(r);
+  const save = async (r: OpenIdFederationFormValues) => {
+    const payload = toOpenIdFederationRepresentation(
+      convertFormValuesToObject(r),
+    );
 
     if (payload.idpConfiguration?.defaultScope === "") {
       delete payload.idpConfiguration.defaultScope;

@@ -7,6 +7,8 @@ import {
   PageSection,
   Tab,
   TabTitleText,
+  TextArea,
+  ValidatedOptions,
 } from "@patternfly/react-core";
 import {
   Select,
@@ -18,7 +20,12 @@ import { Controller, useFormContext, useWatch } from "react-hook-form";
 import { useTranslation } from "react-i18next";
 import { useLocation, useNavigate } from "react-router-dom";
 
-import { HelpItem, ScrollForm, TextControl } from "@keycloak/keycloak-ui-shared";
+import {
+  FormErrorText,
+  HelpItem,
+  ScrollForm,
+  TextControl,
+} from "@keycloak/keycloak-ui-shared";
 
 import { FormAccess } from "../../components/form/FormAccess";
 import { convertToFormValues } from "../../util";
@@ -39,6 +46,11 @@ import { FormGroupField } from "../../identity-providers/component/FormGroupFiel
 import { AdvancedSettings } from "./AdvancedSettings";
 import { FixedButtonsGroup } from "../../components/form/FixedButtonGroup";
 import { toOpenIdFederationCreate } from "../routes/OpenIdFederationCreate";
+import {
+  type OpenIdFederationFormValues,
+  toOpenIdFederationFormValues,
+  validateJwks,
+} from "./form-state";
 
 const promptOptions: Record<string, string> = {
   unspecified: "",
@@ -48,8 +60,21 @@ const promptOptions: Record<string, string> = {
   select_account: "select_account",
 };
 
+const jwksPlaceholder = `{
+  "keys": [
+    {
+      "kid": "key-1",
+      "kty": "RSA",
+      "use": "sig",
+      "alg": "RS256",
+      "n": "...",
+      "e": "AQAB"
+    }
+  ]
+}`;
+
 interface OpenIdFederationFormProps {
-  save: (data: OpenIdFederationRepresentation) => void;
+  save: (data: OpenIdFederationFormValues) => void;
   openIdFederation?: OpenIdFederationRepresentation;
   realm?: RealmRepresentation;
 }
@@ -67,20 +92,48 @@ export const OpenIdFederationForm = ({
   const { id } = useParams<OpenIdFederationEditParams>();
 
   const { control, handleSubmit, setValue, reset, formState } =
-    useFormContext<OpenIdFederationRepresentation>();
+    useFormContext<OpenIdFederationFormValues>();
 
   const { isDirty } = formState;
 
   const [promptOpen, setPromptOpen] = useState(false);
+  const [isJwksValid, setIsJwksValid] = useState(false);
 
   const passScope = useWatch({
     control,
     name: "idpConfiguration.passScope",
   });
 
+  const jwks = useWatch({
+    control,
+    name: "jwks",
+    defaultValue: "",
+  });
+
+  useEffect(() => {
+    let active = true;
+
+    if (!jwks.trim()) {
+      setIsJwksValid(false);
+      return;
+    }
+
+    setIsJwksValid(false);
+    void validateJwks(jwks).then((message) => {
+      if (active) {
+        setIsJwksValid(message === undefined);
+      }
+    });
+
+    return () => {
+      active = false;
+    };
+  }, [jwks]);
+
   const setupForm = () => {
-    reset(openIdFederation);
-    convertToFormValues(openIdFederation, setValue);
+    const formValues = toOpenIdFederationFormValues(openIdFederation);
+    reset(formValues);
+    convertToFormValues(formValues, setValue);
   };
 
   const entityKey =
@@ -129,7 +182,7 @@ export const OpenIdFederationForm = ({
   // Single submit for the whole form:
   // if trustAnchor invalid, jump to Settings tab so user sees the error
   const onSubmit = handleSubmit(save, (invalid) => {
-    if ((invalid as any)?.trustAnchor) {
+    if (invalid.trustAnchor || invalid.jwks) {
       navigate(toTab("settings"));
     }
   });
@@ -139,7 +192,10 @@ export const OpenIdFederationForm = ({
       title: t("oidcSettings"),
       panel: (
         <div className="pf-v5-c-form pf-m-horizontal pf-v5-u-mt-lg">
-          <SwitchField label="passLoginHint" field="idpConfiguration.loginHint" />
+          <SwitchField
+            label="passLoginHint"
+            field="idpConfiguration.loginHint"
+          />
           <SwitchField label="passMaxAge" field="idpConfiguration.passMaxAge" />
           <SwitchField
             label="passCurrentLocale"
@@ -153,7 +209,10 @@ export const OpenIdFederationForm = ({
             field="idpConfiguration.disableUserInfo"
             label="disableUserInfo"
           />
-          <SwitchField field="idpConfiguration.disableNonce" label="disableNonce" />
+          <SwitchField
+            field="idpConfiguration.disableNonce"
+            label="disableNonce"
+          />
           <SwitchField
             field="idpConfiguration.validateRefreshToken"
             label="validateRefreshToken"
@@ -302,13 +361,72 @@ export const OpenIdFederationForm = ({
                 type="text"
                 rules={{ required: t("required") }}
               />
+              <FormGroup
+                label={t("jwksPublic")}
+                fieldId="jwks"
+                className="pf-v5-u-mt-md"
+                labelIcon={
+                  !jwks.trim() ? (
+                    <HelpItem
+                      helpText={t("jwksNotConfiguredHelp")}
+                      fieldLabelId="jwks"
+                      isRecommendation
+                    />
+                  ) : isJwksValid ? (
+                    <HelpItem
+                      helpText={t("jwksConfiguredHelp")}
+                      fieldLabelId="jwks"
+                    />
+                  ) : undefined
+                }
+              >
+                <Controller
+                  name="jwks"
+                  control={control}
+                  defaultValue=""
+                  rules={{
+                    validate: async (value) => {
+                      const message = await validateJwks(value);
+                      return message ? t(message) : true;
+                    },
+                  }}
+                  render={({ field, fieldState }) => (
+                    <>
+                      <TextArea
+                        {...field}
+                        id="jwks"
+                        data-testid="jwks"
+                        aria-label={t("jwksPublic")}
+                        placeholder={jwksPlaceholder}
+                        rows={12}
+                        resizeOrientation="vertical"
+                        validated={
+                          fieldState.error
+                            ? ValidatedOptions.error
+                            : ValidatedOptions.default
+                        }
+                      />
+                      {fieldState.error && (
+                        <FormErrorText
+                          data-testid="jwks-helper"
+                          message={fieldState.error.message ?? ""}
+                        />
+                      )}
+                    </>
+                  )}
+                />
+              </FormGroup>
             </PageSection>
           </Tab>
 
-          {realm?.openIdFederationEntityTypes?.includes("OPENID_RELYING_PARTY") && (
+          {realm?.openIdFederationEntityTypes?.includes(
+            "OPENID_RELYING_PARTY",
+          ) && (
             <Tab
               id="idp"
-              title={<TabTitleText>{t("identityProviderSettings")}</TabTitleText>}
+              title={
+                <TabTitleText>{t("identityProviderSettings")}</TabTitleText>
+              }
               {...idpTab}
             >
               <PageSection variant="light">
