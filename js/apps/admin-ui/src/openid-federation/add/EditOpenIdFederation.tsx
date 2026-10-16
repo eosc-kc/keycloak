@@ -19,6 +19,10 @@ import {
 } from "@keycloak/keycloak-ui-shared";
 
 import { OpenIdFederationForm } from "./OpenIdFederationForm";
+import {
+  type OpenIdFederationFormValues,
+  toOpenIdFederationRepresentation,
+} from "./form-state";
 
 type Params = {
   id: string;
@@ -39,7 +43,7 @@ export default function EditIdentityFederation() {
   const [openIdFederation, setOpenIdFederation] =
     useState<OpenIdFederationRepresentation>();
 
-  const form = useForm<OpenIdFederationRepresentation>();
+  const form = useForm<OpenIdFederationFormValues>();
   // Load OpenID federation
   useFetch(
     () =>
@@ -60,8 +64,10 @@ export default function EditIdentityFederation() {
 
   const effectiveRealm = realm ?? realmRepresentation;
 
-  const save = async (r: OpenIdFederationRepresentation) => {
-    const payload = convertFormValuesToObject(r);
+  const save = async (r: OpenIdFederationFormValues) => {
+    const payload = toOpenIdFederationRepresentation(
+      convertFormValuesToObject(r),
+    );
 
     if (payload.idpConfiguration?.defaultScope === "") {
       delete payload.idpConfiguration.defaultScope;
