@@ -82,6 +82,7 @@ public interface Errors {
     String ALREADY_LOGGED_IN = "already_logged_in";
 
     String TOKEN_INTROSPECTION_FAILED = "token_introspection_failed";
+    String PROXIED_TOKEN_INTROSPECTION_FAILED = "proxied_token_introspection_failed";
 
     String REGISTRATION_DISABLED = "registration_disabled";
     String RESET_CREDENTIAL_DISABLED = "reset_credential_disabled";

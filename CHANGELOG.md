@@ -19,8 +19,10 @@ Our Keycloak version is working well with PostgreSQL database. For using other S
 
 ### Changed
 - Support trusted public keys for each OpenID Federation Trust Anchor
+- Remove proxied token introspection cache
 
 ### Fixed
+- Correct logging of Proxied Token Introspection
 - Fix F-01. Trust chain can end at a Trust Anchor without that Trust Anchor's keys
 
 ## [26.6.6-1.2] -2026-09-15
