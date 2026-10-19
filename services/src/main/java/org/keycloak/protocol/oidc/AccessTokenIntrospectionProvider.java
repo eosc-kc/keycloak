@@ -58,7 +58,6 @@ import org.keycloak.models.customcache.CustomCacheProvider;
 import org.keycloak.models.customcache.CustomCacheProviderFactory;
 import org.keycloak.protocol.LoginProtocol;
 import org.keycloak.protocol.oidc.representations.OIDCConfigurationRepresentation;
-import org.keycloak.protocol.oidc.utils.Key;
 import org.keycloak.representations.AccessToken;
 import org.keycloak.services.Urls;
 import org.keycloak.services.util.DefaultClientSessionContext;
