@@ -645,6 +645,9 @@ public class RefreshTokenTest {
             RefreshToken refreshToken2 = oauth.parseRefreshToken(response2.getRefreshToken());
             assertNotNull(refreshToken2);
             assertScopes("openid acr roles phone address email profile basic service_account web-origins",  refreshToken2.getScope());
+            AccessToken accessToken = oauth.parseRefreshToken(response2.getAccessToken());
+            assertNotNull(accessToken);
+            assertScopes("openid email phone profile",  accessToken.getScope());
 
         } finally {
             oauth.scope(null);

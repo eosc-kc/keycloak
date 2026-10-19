@@ -25,6 +25,7 @@ Our Keycloak version is working well with PostgreSQL database. For using other S
 ### Fixed
 - Correct logging of Proxied Token Introspection
 - Fix F-01. Trust chain can end at a Trust Anchor without that Trust Anchor's keys
+- Fix problem of refresh token scope parameter containing dynamic scope
 
 ## [26.6.6-1.2] -2026-09-15
 

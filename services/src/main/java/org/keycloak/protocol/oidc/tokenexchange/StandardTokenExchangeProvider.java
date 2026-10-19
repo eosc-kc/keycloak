@@ -315,6 +315,7 @@ public class StandardTokenExchangeProvider extends AbstractTokenExchangeProvider
 
             if (OAuth2Constants.REFRESH_TOKEN_TYPE.equals(requestedTokenType)) {
                 responseBuilder.generateRefreshToken();
+                responseBuilder.issuedTokenType(OAuth2Constants.REFRESH_TOKEN_TYPE);
                 bindExchangedOfflineRefreshTokenExpiration(responseBuilder.getRefreshToken(), originalUserSession, subjectToken);
             }
 
