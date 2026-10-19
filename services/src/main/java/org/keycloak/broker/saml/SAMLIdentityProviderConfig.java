@@ -362,6 +362,16 @@ public class SAMLIdentityProviderConfig extends IdentityProviderModel {
         }
     }
 
+    public SamlPrincipalType getPrincipalType() throws IOException {
+        LinkedList<Principal> principals = getMultiplePrincipals();
+        return !principals.isEmpty() ? principals.get(0).getPrincipalType() : null;
+    }
+
+    public String getPrincipalAttribute() throws IOException {
+        LinkedList<Principal> principals = getMultiplePrincipals();
+        return !principals.isEmpty() ? principals.get(0).getPrincipalAttribute() : null;
+    }
+
     public void setMultiplePrincipals(LinkedList<Principal> multiplePrincipals) {
         try {
             getConfig().put(MULTIPLE_PRINCIPALS, JsonSerialization.writeValueAsString(multiplePrincipals));
