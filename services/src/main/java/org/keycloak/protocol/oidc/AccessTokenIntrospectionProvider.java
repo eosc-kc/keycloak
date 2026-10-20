@@ -198,14 +198,10 @@ public class AccessTokenIntrospectionProvider<T extends AccessToken> implements 
                     // consumers can use this to convert an opaque token into an JWT based token
                     tokenMetadata.put("jwt", session.tokens().encode(transformedToken));
                 }
-                eventBuilder.detail("active", "true");
-
                 eventBuilder.success();
             } else {
                 tokenMetadata = JsonSerialization.createObjectNode();
                 logger.debug("Keycloak token introspection return false");
-                eventBuilder.detail("active", "false");
-                eventBuilder.success();
                 tokenMetadata.put("active", false);
             }
 
