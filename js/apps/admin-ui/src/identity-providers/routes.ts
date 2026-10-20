@@ -12,8 +12,14 @@ import { IdentityProviderCreateRoute } from "./routes/IdentityProviderCreate";
 import { IdentityProviderOAuth2Route } from "./routes/IdentityProviderOAuth2";
 import { IdentityProviderJWTAuthorizationGrantRoute } from "./routes/IdentityProviderJWTAuthorizationGrant";
 import { IdentityProviderOpendIdFederationRoute } from "./routes/IdentityProviderOpenIdFederation";
+import {
+  AddTokenTranslationRuleRoute,
+  EditTokenTranslationRuleRoute,
+} from "./routes/TokenTranslationRule";
 
 const routes: AppRouteObject[] = [
+  AddTokenTranslationRuleRoute,
+  EditTokenTranslationRuleRoute,
   IdentityProviderAddMapperRoute,
   IdentityProviderEditMapperRoute,
   IdentityProvidersRoute,
