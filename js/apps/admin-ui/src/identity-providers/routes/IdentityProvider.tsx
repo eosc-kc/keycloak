@@ -6,6 +6,7 @@ import type { AppRouteObject } from "../../routes";
 export type IdentityProviderTab =
   | "settings"
   | "mappers"
+  | "token-translation-rules"
   | "permissions"
   | "events";
 

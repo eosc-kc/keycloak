@@ -78,6 +78,7 @@ import JWTAuthorizationGrantSettings from "./JWTAuthorizationGrantSettings";
 import { DefaultSwitchControl } from "../../components/SwitchControl";
 import { GroupResourceContext } from "../../context/group-resource/GroupResourceContext";
 import { OpenIdFederationSettings } from "./OpenIdFederationSettings";
+import { TokenTranslationRulesList } from "../token-translation-rules/TokenTranslationRulesList";
 
 type HeaderProps = {
   onChange: (value: boolean) => void;
@@ -366,6 +367,7 @@ export default function DetailSettings() {
 
   const settingsTab = useTab("settings");
   const mappersTab = useTab("mappers");
+  const tokenTranslationRulesTab = useTab("token-translation-rules");
   const permissionsTab = useTab("permissions");
   const eventsTab = useTab("events");
 
@@ -802,6 +804,14 @@ export default function DetailSettings() {
                 ]}
               />
             </GroupResourceContext>
+          </Tab>
+          <Tab
+            id="token-translation-rules"
+            data-testid="token-translation-rules-tab"
+            title={<TabTitleText>{t("tokenTranslationRules")}</TabTitleText>}
+            {...tokenTranslationRulesTab}
+          >
+            <TokenTranslationRulesList />
           </Tab>
           {isFeatureEnabled(Feature.AdminFineGrainedAuthz) && (
             <Tab
