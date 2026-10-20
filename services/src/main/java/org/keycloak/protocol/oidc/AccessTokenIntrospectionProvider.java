@@ -191,13 +191,10 @@ public class AccessTokenIntrospectionProvider<T extends AccessToken> implements 
 
                 tokenMetadata.put(OAuth2Constants.TOKEN_TYPE, transformedToken.getType());
                 tokenMetadata.put("active", true);
-                eventBuilder.detail("active", "true");
                 eventBuilder.success();
             } else {
                 tokenMetadata = JsonSerialization.createObjectNode();
                 logger.warn("Keycloak token introspection return false");
-                eventBuilder.detail("active", "false");
-                eventBuilder.success();
                 tokenMetadata.put("active", false);
             }
 
