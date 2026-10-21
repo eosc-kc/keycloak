@@ -60,6 +60,7 @@ public class ClaimRemovalTranslationProviderFactory implements ProxiedTokenIntro
                 .label("Claim Name")
                 .helpText("Claim name, or a regular expression if isRegex is true, to be removed.")
                 .type(ProviderConfigProperty.STRING_TYPE)
+                .required(true)
                 .add()
                 .property()
                 .name(IS_REGEX)
