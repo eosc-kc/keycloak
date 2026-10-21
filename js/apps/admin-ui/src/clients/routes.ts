@@ -35,8 +35,14 @@ import {
   ScopeDetailsRoute,
   ScopeDetailsWithScopeIdRoute,
 } from "./routes/Scope";
+import {
+  AddClientTokenTranslationRuleRoute,
+  EditClientTokenTranslationRuleRoute,
+} from "./routes/TokenTranslationRule";
 
 const routes: AppRouteObject[] = [
+  AddClientTokenTranslationRuleRoute,
+  EditClientTokenTranslationRuleRoute,
   ClientRegistrationRoute,
   AddRegistrationProviderRoute,
   EditRegistrationProviderRoute,

@@ -7,6 +7,10 @@ import type { TFunction } from "i18next";
 export const isRealmClient = (client: ClientRepresentation): boolean =>
   client.attributes?.["realm_client"] === true.toString();
 
+export const supportsTokenTranslationRules = (
+  client: ClientRepresentation,
+): boolean => client.protocol === "openid-connect";
+
 /**
  * Gets a human readable name for the specified protocol.
  */

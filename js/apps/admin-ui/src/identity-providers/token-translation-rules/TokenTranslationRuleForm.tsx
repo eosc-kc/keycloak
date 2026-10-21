@@ -1,5 +1,9 @@
 import type ComponentRepresentation from "@keycloak/keycloak-admin-client/lib/defs/componentRepresentation";
 import type ComponentTypeRepresentation from "@keycloak/keycloak-admin-client/lib/defs/componentTypeRepresentation";
+import type {
+  AccessType,
+  AccessTypeFunc,
+} from "@keycloak/keycloak-admin-client/lib/defs/whoAmIRepresentation";
 import {
   HelpItem,
   KeycloakSelect,
@@ -22,7 +26,7 @@ import {
 import { useMemo, useState } from "react";
 import { Controller, FormProvider, useForm, useWatch } from "react-hook-form";
 import { useTranslation } from "react-i18next";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, type Path, useNavigate } from "react-router-dom";
 import { useAdminClient } from "../../admin-client";
 import { useConfirmDialog } from "../../components/confirm-dialog/ConfirmDialog";
 import { DynamicComponents } from "../../components/dynamic/DynamicComponents";
@@ -40,6 +44,7 @@ import {
 import {
   IDP_TOKEN_TRANSLATION_SUB_TYPE,
   TOKEN_TRANSLATION_PROVIDER_TYPE,
+  type TokenTranslationRuleSubType,
 } from "./constants";
 
 const normalizeConfig = (config: ComponentRepresentation["config"] = {}) =>
@@ -50,13 +55,29 @@ const normalizeConfig = (config: ComponentRepresentation["config"] = {}) =>
     ]),
   );
 
-export default function TokenTranslationRuleForm() {
+type TokenTranslationRuleFormProps = {
+  parentId: string;
+  subType: TokenTranslationRuleSubType;
+  backToList: Partial<Path>;
+  toEdit: (id: string) => Partial<Path>;
+  manageRole: Exclude<AccessType, AccessTypeFunc>;
+  fineGrainedAccess?: boolean;
+  id?: string;
+};
+
+export function TokenTranslationRuleForm({
+  parentId,
+  subType,
+  backToList,
+  toEdit,
+  manageRole,
+  fineGrainedAccess,
+  id,
+}: TokenTranslationRuleFormProps) {
   const { adminClient } = useAdminClient();
   const { t } = useTranslation();
   const { addAlert, addError } = useAlerts();
   const navigate = useNavigate();
-  const { realm } = useRealm();
-  const { alias, providerId, id } = useParams<EditTokenTranslationRuleParams>();
   const serverInfo = useServerInfo();
   const ruleTypes = useMemo(
     () =>
@@ -81,13 +102,6 @@ export default function TokenTranslationRuleForm() {
   const selectedType = ruleTypes.find(
     ({ id: typeId }) => typeId === selectedProviderId,
   );
-
-  const backToList = toIdentityProvider({
-    realm,
-    providerId,
-    alias,
-    tab: "token-translation-rules",
-  });
 
   useFetch(
     async () => (id ? adminClient.components.findOne({ id }) : undefined),
@@ -114,8 +128,8 @@ export default function TokenTranslationRuleForm() {
       id,
       providerId: values.providerId,
       providerType: TOKEN_TRANSLATION_PROVIDER_TYPE,
-      parentId: alias,
-      subType: IDP_TOKEN_TRANSLATION_SUB_TYPE,
+      parentId,
+      subType,
       config: normalizeConfig(values.config),
     };
 
@@ -127,14 +141,7 @@ export default function TokenTranslationRuleForm() {
       } else {
         const created = await adminClient.components.create(component);
         addAlert(t("tokenTranslationRuleCreateSuccess"), AlertVariant.success);
-        navigate(
-          toEditTokenTranslationRule({
-            realm,
-            providerId,
-            alias,
-            id: created.id,
-          }),
-        );
+        navigate(toEdit(created.id));
       }
     } catch (error) {
       addError(
@@ -187,7 +194,8 @@ export default function TokenTranslationRuleForm() {
       />
       <FormProvider {...form}>
         <FormAccess
-          role="manage-identity-providers"
+          role={manageRole}
+          fineGrainedAccess={fineGrainedAccess}
           isHorizontal
           className="pf-v5-u-mt-lg"
           onSubmit={form.handleSubmit(save)}
@@ -276,5 +284,33 @@ export default function TokenTranslationRuleForm() {
         </FormAccess>
       </FormProvider>
     </PageSection>
+  );
+}
+
+export default function IdentityProviderTokenTranslationRuleForm() {
+  const { realm } = useRealm();
+  const { alias, providerId, id } = useParams<EditTokenTranslationRuleParams>();
+
+  return (
+    <TokenTranslationRuleForm
+      parentId={alias}
+      subType={IDP_TOKEN_TRANSLATION_SUB_TYPE}
+      backToList={toIdentityProvider({
+        realm,
+        providerId,
+        alias,
+        tab: "token-translation-rules",
+      })}
+      toEdit={(createdId) =>
+        toEditTokenTranslationRule({
+          realm,
+          providerId,
+          alias,
+          id: createdId,
+        })
+      }
+      manageRole="manage-identity-providers"
+      id={id}
+    />
   );
 }

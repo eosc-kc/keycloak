@@ -15,7 +15,8 @@ export type ClientTab =
   | "serviceAccount"
   | "permissions"
   | "sessions"
-  | "events";
+  | "events"
+  | "token-translation-rules";
 
 export type ClientParams = {
   realm: string;

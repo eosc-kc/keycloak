@@ -72,10 +72,19 @@ import { toCreateRole } from "./routes/NewRole";
 import { ClientScopes } from "./scopes/ClientScopes";
 import { EvaluateScopes } from "./scopes/EvaluateScopes";
 import { ServiceAccount } from "./service-account/ServiceAccount";
-import { getProtocolName, isRealmClient } from "./utils";
+import {
+  getProtocolName,
+  isRealmClient,
+  supportsTokenTranslationRules,
+} from "./utils";
 import { UserEvents } from "../events/UserEvents";
 import { useIsAdminPermissionsClient } from "../utils/useIsAdminPermissionsClient";
 import { AdminEvents } from "../events/AdminEvents";
+import { ScopedTokenTranslationRulesList } from "../identity-providers/token-translation-rules/TokenTranslationRulesList";
+import {
+  toAddClientTokenTranslationRule,
+  toEditClientTokenTranslationRule,
+} from "./routes/TokenTranslationRule";
 
 type ClientDetailHeaderProps = {
   onChange: (value: boolean) => void;
@@ -250,6 +259,9 @@ export default function ClientDetails() {
   const permissionsTab = useRoutableTab(tab("permissions"));
   const advancedTab = useRoutableTab(tab("advanced"));
   const eventsTab = useRoutableTab(tab("events"));
+  const tokenTranslationRulesTab = useRoutableTab(
+    tab("token-translation-rules"),
+  );
 
   const [activeEventsTab, setActiveEventsTab] = useState("userEvents");
 
@@ -556,6 +568,28 @@ export default function ClientDetails() {
                     />
                   </Tab>
                 </RoutableTabs>
+              </Tab>
+            )}
+            {supportsTokenTranslationRules(client) && (
+              <Tab
+                id="token-translation-rules"
+                data-testid="client-token-translation-rules-tab"
+                title={
+                  <TabTitleText>{t("tokenTranslationRules")}</TabTitleText>
+                }
+                {...tokenTranslationRulesTab}
+              >
+                <ScopedTokenTranslationRulesList
+                  parentId={client.clientId!}
+                  subType="client"
+                  toCreate={toAddClientTokenTranslationRule({
+                    realm,
+                    clientId,
+                  })}
+                  toDetail={(id) =>
+                    toEditClientTokenTranslationRule({ realm, clientId, id })
+                  }
+                />
               </Tab>
             )}
             {client!.authorizationServicesEnabled &&

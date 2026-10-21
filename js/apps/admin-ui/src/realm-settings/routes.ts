@@ -19,9 +19,17 @@ import {
   RealmSettingsRouteWithTab,
 } from "./routes/RealmSettings";
 import { ThemeTabRoute } from "./routes/ThemesTab";
+import {
+  AddRealmTokenTranslationRuleRoute,
+  EditRealmTokenTranslationRuleRoute,
+  RealmTokenTranslationRulesRoute,
+} from "./routes/TokenTranslationRules";
 import { UserProfileRoute } from "./routes/UserProfile";
 
 const routes: AppRouteObject[] = [
+  AddRealmTokenTranslationRuleRoute,
+  EditRealmTokenTranslationRuleRoute,
+  RealmTokenTranslationRulesRoute,
   RealmSettingsRoute,
   RealmSettingsRouteWithTab,
   KeysRoute,

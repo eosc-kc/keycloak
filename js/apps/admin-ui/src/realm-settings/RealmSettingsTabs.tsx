@@ -53,6 +53,7 @@ import { RealmSettingsTab, toRealmSettings } from "./routes/RealmSettings";
 import { SecurityDefenses } from "./security-defences/SecurityDefenses";
 import { UserProfileTab } from "./user-profile/UserProfileTab";
 import { OpenIdEndpointConfigurationTab } from "./OpenIdEndpointConfigurationTab";
+import { RealmTokenTranslationRules } from "./token-translation-rules/RealmTokenTranslationRules";
 
 export interface UIRealmRepresentation extends RealmRepresentation {
   upConfig?: UserProfileConfig;
@@ -294,6 +295,7 @@ export const RealmSettingsTabs = () => {
   const securityDefensesTab = useTab("security-defenses");
   const sessionsTab = useTab("sessions");
   const tokensTab = useTab("tokens");
+  const tokenTranslationRulesTab = useTab("token-translation-rules");
   const clientPoliciesTab = useTab("client-policies");
   const userProfileTab = useTab("user-profile");
   const userRegistrationTab = useTab("user-registration");
@@ -429,6 +431,13 @@ export const RealmSettingsTabs = () => {
             {...tokensTab}
           >
             <RealmSettingsTokensTab save={save} realm={realm!} />
+          </Tab>
+          <Tab
+            title={<TabTitleText>{t("tokenTranslationRules")}</TabTitleText>}
+            data-testid="rs-token-translation-rules-tab"
+            {...tokenTranslationRulesTab}
+          >
+            <RealmTokenTranslationRules realm={realmName} />
           </Tab>
           {isFeatureEnabled(Feature.ClientPolicies) && (
             <Tab
