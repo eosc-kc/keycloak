@@ -13,7 +13,7 @@ import {
 } from "@patternfly/react-core";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, type Path, useNavigate } from "react-router-dom";
 import { useAdminClient } from "../../admin-client";
 import { useConfirmDialog } from "../../components/confirm-dialog/ConfirmDialog";
 import { useRealm } from "../../context/realm-context/RealmContext";
@@ -26,6 +26,7 @@ import {
 import {
   IDP_TOKEN_TRANSLATION_SUB_TYPE,
   TOKEN_TRANSLATION_PROVIDER_TYPE,
+  type TokenTranslationRuleSubType,
   tokenTranslationRuleOrder,
 } from "./constants";
 
@@ -34,29 +35,35 @@ type TokenTranslationRuleRow = ComponentRepresentation & {
   order: string;
 };
 
-export const TokenTranslationRulesList = () => {
+type ScopedTokenTranslationRulesListProps = {
+  parentId: string;
+  subType: TokenTranslationRuleSubType;
+  toCreate: Partial<Path>;
+  toDetail: (id: string) => Partial<Path>;
+};
+
+export const ScopedTokenTranslationRulesList = ({
+  parentId,
+  subType,
+  toCreate,
+  toDetail,
+}: ScopedTokenTranslationRulesListProps) => {
   const { adminClient } = useAdminClient();
   const { t } = useTranslation();
   const { addAlert, addError } = useAlerts();
   const navigate = useNavigate();
-  const { realm } = useRealm();
-  const { alias, providerId } = useParams<IdentityProviderParams>();
   const [key, setKey] = useState(0);
   const [selectedRule, setSelectedRule] = useState<ComponentRepresentation>();
 
-  const toCreate = toAddTokenTranslationRule({ realm, alias, providerId });
-  const toDetail = (id: string) =>
-    toEditTokenTranslationRule({ realm, alias, providerId, id });
-
   const loader = async (): Promise<TokenTranslationRuleRow[]> => {
     const rules = await adminClient.components.find({
-      parent: alias,
+      parent: parentId,
       type: TOKEN_TRANSLATION_PROVIDER_TYPE,
-      subType: IDP_TOKEN_TRANSLATION_SUB_TYPE,
+      subType,
     });
 
     return rules
-      .filter(({ subType }) => subType === IDP_TOKEN_TRANSLATION_SUB_TYPE)
+      .filter((rule) => rule.subType === subType)
       .sort(
         (left, right) =>
           tokenTranslationRuleOrder(left.config?.order) -
@@ -139,5 +146,21 @@ export const TokenTranslationRulesList = () => {
         }
       />
     </>
+  );
+};
+
+export const TokenTranslationRulesList = () => {
+  const { realm } = useRealm();
+  const { alias, providerId } = useParams<IdentityProviderParams>();
+
+  return (
+    <ScopedTokenTranslationRulesList
+      parentId={alias}
+      subType={IDP_TOKEN_TRANSLATION_SUB_TYPE}
+      toCreate={toAddTokenTranslationRule({ realm, alias, providerId })}
+      toDetail={(id) =>
+        toEditTokenTranslationRule({ realm, alias, providerId, id })
+      }
+    />
   );
 };
