@@ -370,17 +370,19 @@ public class TokenManager {
         String oldTokenScope = refreshToken.getScope();
         //The requested scope MUST NOT include any scope not originally granted by the resource owner
         //if scope parameter is not null, remove every scope that is not part of scope parameter
-       if (scopeParameter != null && !scopeParameter.isEmpty()) {
+        if (scopeParameter != null && !scopeParameter.isEmpty()) {
             if (Profile.isFeatureEnabled(Profile.Feature.DYNAMIC_SCOPES)) {
-                Set<String> scopeParamScopes = Arrays.stream(scopeParameter.split(" ")).map(s -> s.split(":")[0]).collect(Collectors.toSet());
-                oldTokenScope = Arrays.stream(oldTokenScope.split(" ")).map(s -> s.split(":")[0])
-                        .map(transformScopes(session, scopeParamScopes))
+                Set<String> tokenScopes = oldTokenScope != null
+                        ? TokenManager.parseScopeParameter(oldTokenScope).collect(Collectors.toSet())
+                        : Collections.emptySet();
+                oldTokenScope = Arrays.stream(scopeParameter.split(" "))
+                        .map(transformScopes(session, tokenScopes, true))
                         .filter(Objects::nonNull)
                         .collect(Collectors.joining(" "));
             } else {
                 Set<String> scopeParamScopes = Arrays.stream(scopeParameter.split(" ")).collect(Collectors.toSet());
                 oldTokenScope = Arrays.stream(oldTokenScope.split(" "))
-                        .map(transformScopes(session, scopeParamScopes))
+                        .map(transformScopes(session, scopeParamScopes, false))
                         .filter(Objects::nonNull)
                         .collect(Collectors.joining(" "));
             }
@@ -474,9 +476,9 @@ public class TokenManager {
         }, Duration.of(10, ChronoUnit.SECONDS), 10);
     }
 
-    private Function<String, String> transformScopes(KeycloakSession session, Set<String> requestedScopes) {
+    private Function<String, String> transformScopes(KeycloakSession session, Set<String> requestedScopes, boolean dynamicScopesEnabled) {
         return scope -> {
-            if (requestedScopes.contains(scope)) {
+            if (requestedScopes.contains(scope) || (dynamicScopesEnabled && scope.contains(":") && requestedScopes.contains(scope.split(":")[0]))) {
                 return scope;
             }
 
@@ -947,7 +949,7 @@ public class TokenManager {
 
         if (Profile.isFeatureEnabled(Profile.Feature.DYNAMIC_SCOPES) && clientSessionCtx.getScopeString() != null ) {
             String newScope = dynamicScopeFiltering( clientSessionCtx.getScopeString(),clientSessionCtx.getClientScopesStream(), newToken, userSession.getUser(), true);
-            token.setScope(newScope);
+            newToken.setScope(newScope);
             clientSessionCtx.getClientSession().setNote(OAuth2Constants.SCOPE,newScope);
         }
         final ClientModel[] requestedAudienceClients = clientSessionCtx.getAttribute(Constants.REQUESTED_AUDIENCE_CLIENTS, ClientModel[].class);
@@ -1612,8 +1614,10 @@ public class TokenManager {
 
             res = transformAccessTokenResponse(session, res, userSession, clientSessionCtx);
 
-            // OIDC Financial API Read Only Profile : scope MUST be returned in the response from Token Endpoint
-            String responseScope = clientSessionCtx.getScopeString();
+            // OIDC Financial API Read Only Profile : scope MUST be returned in the response from Token Endpoint.
+            // Per RFC 6749 §§3.3/5.1 and RFC 8693 §2.2.1, scope describes the token in the access_token
+            // response field (normally the access token).
+            String responseScope = getResponseScope();
             res.setScope(responseScope);
             event.detail(Details.SCOPE, responseScope);
 
@@ -1624,6 +1628,13 @@ public class TokenManager {
 
             response = res;
             return response;
+        }
+
+        private String getResponseScope() {
+            if (accessToken != null) {
+                return accessToken.getScope();
+            }
+            return clientSessionCtx.getScopeString();
         }
 
 
