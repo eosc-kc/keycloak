@@ -58,35 +58,29 @@ public class OpenIdFederationClientRegistrationService extends AbstractClientReg
         checkSsl();
 
         if ("application/entity-statement+jwt".equals(headers.getMediaType().toString())) {
-            EntityStatement statement = null;
             try {
-                statement = trustChainProcessor.parseAndValidateSelfSigned(body);
+                return commonExplicitRegistrationProcess(body, realm, true);
             } catch (InvalidTrustChainException ex) {
                 logger.error("Entity statement is not valid", ex);
                 throw new ErrorResponseException(Errors.INVALID_REQUEST, "Entity statement is not valid", Response.Status.BAD_REQUEST);
             }
 
-            trustChainProcessor.validationRules(statement, true);
-
-            logger.info("starting validating trust chains");
-            return commonExplicitRegistrationProcess(statement, realm);
-
         } else {
-            EntityStatement statement = null;
             try {
                 List<String> trustChains = JsonSerialization.readValue(body, new TypeReference<List<String>>() {});
-                statement = trustChainProcessor.parseAndValidateSelfSigned(trustChains.get(0));
-            } catch (Exception e) {
+                return commonExplicitRegistrationProcess(trustChains.get(0), realm, false);
+            } catch (Exception ex) {
+                logger.error("Trust Chains is not valid", ex);
                 throw new ErrorResponseException(Errors.INVALID_REQUEST, "Body must be Trust Chains", Response.Status.BAD_REQUEST);
             }
-            trustChainProcessor.validationRules(statement, false);
-            return commonExplicitRegistrationProcess(statement, realm);
         }
     }
 
-    private Response commonExplicitRegistrationProcess(EntityStatement statement, RealmModel realm){
+    private Response commonExplicitRegistrationProcess(String leafToken, RealmModel realm, boolean checkAudience) throws InvalidTrustChainException {
         logger.info("starting validating trust chains");
-        TrustChainResolution validChain = trustChainProcessor.constructTrustChains(statement, realm.getOpenIdFederations(), true);
+        EntityStatement statement = trustChainProcessor.parseAndValidateSelfSigned(leafToken);
+        trustChainProcessor.validationRules(statement, checkAudience);
+        TrustChainResolution validChain = trustChainProcessor.constructTrustChains(leafToken, statement, realm.getOpenIdFederations(), true);
         if (validChain == null) {
             throw new ErrorResponseException(Errors.INVALID_TRUST_ANCHOR, "No trusted trust anchor could be found", Response.Status.NOT_FOUND);
         }
