@@ -354,7 +354,6 @@ public class V1TokenExchangeProvider extends AbstractTokenExchangeProvider {
                 && targetUserSession.getPersistenceState() != UserSessionModel.SessionPersistenceState.TRANSIENT) {
             responseBuilder.generateRefreshToken();
             responseBuilder.getRefreshToken().issuedFor(client.getClientId());
-            responseBuilder.issuedTokenType(OAuth2Constants.REFRESH_TOKEN_TYPE);
             issuedTokenType = OAuth2Constants.REFRESH_TOKEN_TYPE;
         } else {
             issuedTokenType = OAuth2Constants.ACCESS_TOKEN_TYPE;

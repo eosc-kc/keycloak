@@ -1291,7 +1291,6 @@ public class TokenManager {
         RefreshToken refreshToken;
         IDToken idToken;
         String responseTokenType;
-        String issuedTokenType;
 
         boolean generateAccessTokenHash = false;
         String codeHash;
@@ -1351,16 +1350,6 @@ public class TokenManager {
 
         public AccessTokenResponseBuilder responseTokenType(String responseTokenType) {
             this.responseTokenType = responseTokenType;
-            return this;
-        }
-
-        /**
-         * Sets the OAuth token type that will be reported as {@code issued_token_type}
-         * (used by token exchange). When this is a refresh token type, the token response
-         * {@code scope} describes the refresh token rather than the access token.
-         */
-        public AccessTokenResponseBuilder issuedTokenType(String issuedTokenType) {
-            this.issuedTokenType = issuedTokenType;
             return this;
         }
 
@@ -1627,9 +1616,7 @@ public class TokenManager {
 
             // OIDC Financial API Read Only Profile : scope MUST be returned in the response from Token Endpoint.
             // Per RFC 6749 §§3.3/5.1 and RFC 8693 §2.2.1, scope describes the token in the access_token
-            // response field (normally the access token).For refresh token flow, that
-            // can differ from clientSessionCtx.getScopeString(). When token exchange issues a refresh
-            // token (issued_token_type=refresh_token), scope describes the refresh token instead.
+            // response field (normally the access token).
             String responseScope = getResponseScope();
             res.setScope(responseScope);
             event.detail(Details.SCOPE, responseScope);
@@ -1644,10 +1631,7 @@ public class TokenManager {
         }
 
         private String getResponseScope() {
-            if (OAuth2Constants.REFRESH_TOKEN_TYPE.equals(issuedTokenType) && refreshToken != null) {
-                return refreshToken.getScope();
-            }
-            if (accessToken != null && accessToken.getScope() != null) {
+            if (accessToken != null) {
                 return accessToken.getScope();
             }
             return clientSessionCtx.getScopeString();
