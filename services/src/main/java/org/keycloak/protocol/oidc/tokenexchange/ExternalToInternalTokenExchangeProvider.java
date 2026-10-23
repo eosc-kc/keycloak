@@ -33,6 +33,7 @@ import org.keycloak.events.Errors;
 import org.keycloak.models.UserModel;
 import org.keycloak.models.UserSessionModel;
 import org.keycloak.protocol.oidc.TokenExchangeContext;
+import org.keycloak.representations.AccessToken;
 import org.keycloak.services.CorsErrorResponseException;
 import org.keycloak.services.managers.UserSessionManager;
 
@@ -67,7 +68,7 @@ public class ExternalToInternalTokenExchangeProvider extends StandardTokenExchan
     }
 
     @Override
-    protected String getRequestedTokenType() {
+    protected String getRequestedTokenType(AccessToken accessToken) {
         String requestedTokenType = params.getRequestedTokenType();
         if (requestedTokenType == null) {
             requestedTokenType = OAuth2Constants.ACCESS_TOKEN_TYPE;
