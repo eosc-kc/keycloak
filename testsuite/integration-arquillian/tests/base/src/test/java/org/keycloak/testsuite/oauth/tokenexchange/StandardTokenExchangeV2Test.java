@@ -946,13 +946,13 @@ public class StandardTokenExchangeV2Test extends AbstractClientPoliciesTest {
             response = tokenExchange(accessToken, "requester-client", "secret", List.of("target-client1"), OAuth2Constants.REFRESH_TOKEN_TYPE);
             assertEquals(Response.Status.BAD_REQUEST.getStatusCode(), response.getStatusCode());
             assertEquals(response.getError(), Errors.INVALID_REQUEST);
-            assertEquals(response.getErrorDescription(), "Could not have requested_token_type as refresh token from offline user session and return no offline user session");
+            assertEquals(response.getErrorDescription(), "Refresh token not valid as requested_token_type because creating a new session is needed");
             events.expect(EventType.TOKEN_EXCHANGE_ERROR)
                     .client("requester-client")
                     .error(Errors.INVALID_REQUEST)
                     .user(mike.getId())
                     .session(originalToken.getSessionId())
-                    .detail(Details.REASON, "Could not have requested_token_type as refresh token from offline user session and return no offline user session")
+                    .detail(Details.REASON, "Refresh token not valid as requested_token_type because creating a new session is needed")
                     .assertEvent();
         }
     }
@@ -960,7 +960,7 @@ public class StandardTokenExchangeV2Test extends AbstractClientPoliciesTest {
     @Test
     public void testOfflineAccessAllowedAfterOfflineAccessLogin() throws Exception {
         try (ClientAttributeUpdater clientUpdater1 = ClientAttributeUpdater.forClient(adminClient, TEST, "requester-client")
-                .setAttribute(OIDCConfigAttributes.USE_REFRESH_TOKEN, "false")
+                .setAttribute(OIDCConfigAttributes.STANDARD_TOKEN_EXCHANGE_REFRESH_ENABLED, OIDCAdvancedConfigWrapper.TokenExchangeRefreshTokenEnabled.SAME_SESSION.name())
                 .update();
              ClientAttributeUpdater clientUpdater2 = ClientAttributeUpdater.forClient(adminClient, TEST, "subject-client")
                      .setOptionalClientScopes(List.of(OAuth2Constants.OFFLINE_ACCESS))
@@ -1003,7 +1003,7 @@ public class StandardTokenExchangeV2Test extends AbstractClientPoliciesTest {
                 .setOfflineSessionMaxLifespan(3600)
                 .update();
              ClientAttributeUpdater clientUpdater1 = ClientAttributeUpdater.forClient(adminClient, TEST, "requester-client")
-                     .setAttribute(OIDCConfigAttributes.USE_REFRESH_TOKEN, "false")
+                     .setAttribute(OIDCConfigAttributes.STANDARD_TOKEN_EXCHANGE_REFRESH_ENABLED, OIDCAdvancedConfigWrapper.TokenExchangeRefreshTokenEnabled.SAME_SESSION.name())
                      .setAttribute(OIDCConfigAttributes.CLIENT_OFFLINE_SESSION_MAX_LIFESPAN, "72000")
                      .setAttribute(OIDCConfigAttributes.CLIENT_OFFLINE_SESSION_IDLE_TIMEOUT, "72000")
                      .update();
@@ -1036,7 +1036,7 @@ public class StandardTokenExchangeV2Test extends AbstractClientPoliciesTest {
     public void testExchangedOfflineTokenIntrospection() throws Exception {
         final UserRepresentation mike = ApiUtil.findUserByUsername(adminClient.realm(TEST), "mike");
         try (ClientAttributeUpdater clientUpdater1 = ClientAttributeUpdater.forClient(adminClient, TEST, "requester-client")
-                .setAttribute(OIDCConfigAttributes.USE_REFRESH_TOKEN, "false")
+                .setAttribute(OIDCConfigAttributes.STANDARD_TOKEN_EXCHANGE_REFRESH_ENABLED, OIDCAdvancedConfigWrapper.TokenExchangeRefreshTokenEnabled.SAME_SESSION.name())
                 .setAttribute(OIDCConfigAttributes.ALLOW_TOKEN_INTROSPECTION_WITHOUT_AUDIENCE_CHECK, "true")
                 .update();
              ClientAttributeUpdater clientUpdater2 = ClientAttributeUpdater.forClient(adminClient, TEST, "subject-client")
@@ -1066,7 +1066,7 @@ public class StandardTokenExchangeV2Test extends AbstractClientPoliciesTest {
     public void testExchangedOfflineRefreshTokenFlow() throws Exception {
         final UserRepresentation johnUser = ApiUtil.findUserByUsernameId(adminClient.realm(TEST), "john").toRepresentation();
         try (ClientAttributeUpdater clientUpdater1 = ClientAttributeUpdater.forClient(adminClient, TEST, "requester-client")
-                .setAttribute(OIDCConfigAttributes.USE_REFRESH_TOKEN, "false")
+                .setAttribute(OIDCConfigAttributes.STANDARD_TOKEN_EXCHANGE_REFRESH_ENABLED, OIDCAdvancedConfigWrapper.TokenExchangeRefreshTokenEnabled.SAME_SESSION.name())
                 .update();
              ClientAttributeUpdater clientUpdater2 = ClientAttributeUpdater.forClient(adminClient, TEST, "subject-client")
                      .setOptionalClientScopes(List.of(OAuth2Constants.OFFLINE_ACCESS))
@@ -1083,11 +1083,23 @@ public class StandardTokenExchangeV2Test extends AbstractClientPoliciesTest {
             AccessTokenResponse refreshResponse = oauth.doRefreshTokenRequest(response.getRefreshToken());
             assertEquals(Response.Status.OK.getStatusCode(), refreshResponse.getStatusCode());
             assertNotNull(refreshResponse.getAccessToken());
-            assertNull(refreshResponse.getRefreshToken());
+            assertNotNull(refreshResponse.getRefreshToken());
+            assertEquals(TokenUtil.TOKEN_TYPE_OFFLINE, oauth.parseRefreshToken(refreshResponse.getRefreshToken()).getType());
+            AccessToken refreshedAccessToken = assertAudiencesAndScopes(refreshResponse, List.of("requester-client", "target-client1"),
+                    List.of("offline_access", "default-scope1"), true);
+            events.expect(EventType.REFRESH_TOKEN)
+                    .client("requester-client")
+                    .user(johnUser)
+                    .detail(Details.TOKEN_ID, refreshedAccessToken.getId())
+                    .detail(Details.REFRESH_TOKEN_ID, AssertEvents.isTokenId())
+                    .detail(Details.REFRESH_TOKEN_TYPE, TokenUtil.TOKEN_TYPE_OFFLINE)
+                    .detail(Details.UPDATED_REFRESH_TOKEN_ID, AssertEvents.isTokenId())
+                    .session(refreshedAccessToken.getSessionId())
+                    .assertEvent();
 
             // Refresh again after time passes (offline session still valid)
             setTimeOffset(30);
-            refreshResponse = oauth.doRefreshTokenRequest(response.getRefreshToken());
+            refreshResponse = oauth.doRefreshTokenRequest(refreshResponse.getRefreshToken());
             assertEquals(Response.Status.OK.getStatusCode(), refreshResponse.getStatusCode());
             assertIntrospectSuccess(refreshResponse.getAccessToken(), "requester-client", "secret", johnUser.getId());
         }
