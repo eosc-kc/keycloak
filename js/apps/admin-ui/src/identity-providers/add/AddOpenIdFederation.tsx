@@ -1,14 +1,19 @@
 import type IdentityProviderRepresentation from "@keycloak/keycloak-admin-client/lib/defs/identityProviderRepresentation";
 import type OpenIdFederationRepresentation from "libs/keycloak-admin-client/lib/defs/openIdFederationRepresentation";
 
-import { ActionGroup, AlertVariant, Button, PageSection } from "@patternfly/react-core";
-import { useState } from "react";
+import {
+  ActionGroup,
+  AlertVariant,
+  Button,
+  PageSection,
+} from "@patternfly/react-core";
+import { useEffect, useState } from "react";
 import { FormProvider, useForm } from "react-hook-form";
 import { useTranslation } from "react-i18next";
 import { Link, useNavigate } from "react-router-dom";
 
 import { useAdminClient } from "../../admin-client";
-import { useAlerts } from "@keycloak/keycloak-ui-shared";
+import { FormSubmitButton, useAlerts } from "@keycloak/keycloak-ui-shared";
 
 import { FormAccess } from "../../components/form/FormAccess";
 import { ViewHeader } from "../../components/view-header/ViewHeader";
@@ -35,17 +40,12 @@ export default function AddIdentityProvider() {
     shouldUnregister: false,
   });
 
-  const {
-    handleSubmit,
-    formState: { isDirty },
-  } = form;
+  const { handleSubmit, formState } = form;
 
   const [trustAnchors, setTrustAnchors] = useState<string[]>([]);
 
-  // KC26 style: no useFetch; fetch locally (avoid dependency on legacy hook)
-  // If you already have a shared useFetch from keycloak-ui-shared in your repo, you can swap it in.
-  useState(() => {
-    (async () => {
+  useEffect(() => {
+    const loadTrustAnchors = async () => {
       try {
         const openIdFederations = await adminClient.openIdFederations.find({
           realm,
@@ -58,8 +58,10 @@ export default function AddIdentityProvider() {
       } catch {
         setTrustAnchors([]);
       }
-    })();
-  });
+    };
+
+    void loadTrustAnchors();
+  }, [adminClient, realm]);
 
   const onSubmit = async (provider: IdentityProviderRepresentation) => {
     try {
@@ -93,7 +95,7 @@ export default function AddIdentityProvider() {
             isHorizontal
             onSubmit={handleSubmit(onSubmit)}
           >
-            <OIDCGeneralSettings/>
+            <OIDCGeneralSettings />
             <OpenIdFederationSettings
               readOnly={false}
               create
@@ -101,14 +103,15 @@ export default function AddIdentityProvider() {
             />
 
             <ActionGroup>
-              <Button
-                isDisabled={!isDirty}
-                variant="primary"
-                type="submit"
+              <FormSubmitButton
+                formState={formState}
+                allowInvalid
+                isLoading={formState.isSubmitting}
+                spinnerAriaValueText={t("spinnerLoading")}
                 data-testid="createProvider"
               >
                 {t("add")}
-              </Button>
+              </FormSubmitButton>
               <Button
                 variant="link"
                 data-testid="cancel"
