@@ -34,7 +34,6 @@ import org.keycloak.crypto.PublicKeysWrapper;
 import org.keycloak.crypto.RS256SignatureProviderFactory;
 import org.keycloak.crypto.SignatureProvider;
 import org.keycloak.events.Errors;
-import org.keycloak.exceptions.InvalidTrustChainException;
 import org.keycloak.exceptions.MetadataPolicyCombinationException;
 import org.keycloak.exceptions.MetadataPolicyException;
 import org.keycloak.http.simple.SimpleHttp;
@@ -146,8 +145,7 @@ public class OpenIdFederationTrustChainProcessor implements TrustChainProcessor 
                     }
                     logger.debug(String.format("EntityStatement of %s about %s. AuthHints: %s", subNodeSelfES.getIssuer(), subNodeSelfES.getSubject(), subNodeSelfES.getAuthorityHints()));
 
-                    String fedApiUrl = subNodeSelfES.getMetadata().getFederationEntity().getFederationFetchEndpoint();
-                    String encodedSubNodeSubordinate = OpenIdFederationUtils.getSubordinateToken(fedApiUrl, leafEs.getSubject(), session);
+                    String encodedSubNodeSubordinate = OpenIdFederationUtils.getSubordinateToken(subNodeSelfES.getMetadata().getFederationEntity().getFederationFetchEndpoint(), leafEs.getSubject(), session);
                     EntityStatement subNodeSubordinateES = parseAndValidateSelfSigned(encodedSubNodeSubordinate, EntityStatement.class, subNodeSelfES.getJwks(), "entity-statement+jwt");
                     if (!validateEntityStatementFields(subNodeSubordinateES, authHint, leafEs.getSubject())) {
                         throw new ErrorResponseException(Errors.INVALID_TRUST_CHAIN, "Trust chain is not valid", Response.Status.BAD_REQUEST);

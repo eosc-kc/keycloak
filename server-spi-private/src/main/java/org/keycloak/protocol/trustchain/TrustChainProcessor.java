@@ -4,7 +4,6 @@ import java.util.List;
 
 import jakarta.ws.rs.core.UriInfo;
 
-import org.keycloak.exceptions.InvalidTrustChainException;
 import org.keycloak.jose.jwk.JSONWebKeySet;
 import org.keycloak.models.IdentityProviderModel;
 import org.keycloak.models.OpenIdFederationConfig;
