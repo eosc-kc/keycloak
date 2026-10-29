@@ -16,7 +16,7 @@ import org.keycloak.representations.openid_federation.TrustChainResolution;
 public interface TrustChainProcessor extends Provider {
 
     TrustChainResolution constructTrustChains(String leafToken, EntityStatement leafEs, List<OpenIdFederationConfig> openIdFederationList, boolean forRp);
-    EntityStatement parseAndValidateSelfSigned(String token) throws InvalidTrustChainException;
+    EntityStatement parseAndValidateSelfSigned(String token);
     boolean validateEntityStatementFields(EntityStatement statement, String issuer, String subject);
     void validationRules(EntityStatement statement, boolean checkAudience);
     JSONWebKeySet getKeySet(RealmModel realm);

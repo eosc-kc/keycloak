@@ -16,7 +16,6 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import jakarta.ws.rs.BadRequestException;
 import jakarta.ws.rs.NotFoundException;
 import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.core.UriInfo;
@@ -149,7 +148,7 @@ public class OpenIdFederationTrustChainProcessor implements TrustChainProcessor 
 
                     String fedApiUrl = subNodeSelfES.getMetadata().getFederationEntity().getFederationFetchEndpoint();
                     String encodedSubNodeSubordinate = OpenIdFederationUtils.getSubordinateToken(fedApiUrl, leafEs.getSubject(), session);
-                    EntityStatement subNodeSubordinateES = parseAndValidateSelfSigned(encodedSubNodeSubordinate, EntityStatement.class, subNodeSelfES.getJwks());
+                    EntityStatement subNodeSubordinateES = parseAndValidateSelfSigned(encodedSubNodeSubordinate, EntityStatement.class, subNodeSelfES.getJwks(), "entity-statement+jwt");
                     if (!validateEntityStatementFields(subNodeSubordinateES, authHint, leafEs.getSubject())) {
                         throw new ErrorResponseException(Errors.INVALID_TRUST_CHAIN, "Trust chain is not valid", Response.Status.BAD_REQUEST);
                     }
@@ -157,7 +156,7 @@ public class OpenIdFederationTrustChainProcessor implements TrustChainProcessor 
                     // Verify the child's token with the keys attested by the superior in subNodeSubordinateES
                     if (childToken != null) {
                         try {
-                            parseAndValidateSelfSigned(childToken, EntityStatement.class, subNodeSubordinateES.getJwks());
+                            parseAndValidateSelfSigned(childToken, EntityStatement.class, subNodeSubordinateES.getJwks(), "entity-statement+jwt");
                         } catch (Exception e) {
                             throw new ErrorResponseException(Errors.INVALID_TRUST_CHAIN, "Child token fails verification against superior's attested JWKS", Response.Status.BAD_REQUEST);
                         }
@@ -215,10 +214,10 @@ public class OpenIdFederationTrustChainProcessor implements TrustChainProcessor 
 
     }
 
-    public <T extends EntityStatement> T parseAndValidateSelfSigned(String token, Class<T> clazz, JSONWebKeySet publicKey) throws IOException, JWSInputException, VerificationException {
+    public <T extends EntityStatement> T parseAndValidateSelfSigned(String token, Class<T> clazz, JSONWebKeySet publicKey, String headerType) throws IOException, JWSInputException, VerificationException {
         JWSInput jws = (JWSInput)JOSEParser.parse(token);
 
-        if (jws.getHeader().getType() == null || !jws.getHeader().getType().equals("entity-statement+jwt")) {
+        if (jws.getHeader().getType() == null || !jws.getHeader().getType().equals(headerType)) {
             throw new VerificationException("Invalid typ header");
         }
 
@@ -273,13 +272,13 @@ public class OpenIdFederationTrustChainProcessor implements TrustChainProcessor 
      * (key rollover per OpenID Federation §11.2). Unverifiable updates leave trusted keys unchanged.
      * When no trusted keys are configured, falls back to validating with keys embedded in the statement.
      */
-    EntityStatement parseAndValidateTrustAnchorEntityConfiguration(OpenIdFederationConfig federationConfig, String encodedSubNodeSelf) throws InvalidTrustChainException {
+    EntityStatement parseAndValidateTrustAnchorEntityConfiguration(OpenIdFederationConfig federationConfig, String encodedSubNodeSelf){
         if (federationConfig.getJwks() == null || federationConfig.getJwks().getKeys() == null || federationConfig.getJwks().getKeys().length == 0) {
             return parseAndValidateSelfSigned(encodedSubNodeSelf);
         }
 
         try {
-            EntityStatement statement = parseAndValidateSelfSigned(encodedSubNodeSelf, EntityStatement.class, federationConfig.getJwks());
+            EntityStatement statement = parseAndValidateSelfSigned(encodedSubNodeSelf, EntityStatement.class, federationConfig.getJwks(), "entity-statement+jwt");
 
             //TO BE CHECKED - ROLL OVER KEYS
             // Key rollover: accept updated keys only from an Entity Configuration verified with a trusted key.
@@ -438,11 +437,11 @@ public class OpenIdFederationTrustChainProcessor implements TrustChainProcessor 
         String opToken = OpenIdFederationUtils.getSelfSignedToken(opIssuer, session);
         EntityStatement opStatement = parseAndValidateSelfSigned(opToken);
         if (!validateEntityStatementFields(opStatement, opIssuer, opIssuer) || opStatement.getMetadata().getOpenIdProviderMetadata() == null || !opStatement.getMetadata().getOpenIdProviderMetadata().getClientRegistrationTypesSupported().contains("explicit") || opStatement.getMetadata().getOpenIdProviderMetadata().getFederationRegistrationEndpoint() == null) {
-            throw new BadRequestException("No valid OP Entity Statement");
+            throw new ErrorResponseException(Errors.INVALID_TRUST_CHAIN, "No valid OP Entity Statement", Response.Status.BAD_REQUEST);
         }
         TrustChainResolution trustChainResolution = constructTrustChains(opToken, opStatement, Stream.of(federationConfig).toList(), false);
         if (trustChainResolution == null) {
-            throw new BadRequestException("No common trust chain found");
+            throw new ErrorResponseException(Errors.INVALID_TRUST_CHAIN, "No common trust chain found", Response.Status.BAD_REQUEST);
         }
         OPMetadata op = (OPMetadata) trustChainResolution.getMetadataAfterPolicies();
         model = OIDCIdentityProviderFactory.parseOIDCConfig(op, OpenIdFederationIdentityProviderConfig.class, model);
@@ -468,11 +467,11 @@ public class OpenIdFederationTrustChainProcessor implements TrustChainProcessor 
                 .entity(entity)
                 .asResponse();
         if (response.getStatus() < 200 || response.getStatus() >= 400) {
-            throw new BadRequestException("Error during explicit client registration with body : " + response.asString());
+            throw new ErrorResponseException(Errors.INVALID_TRUST_CHAIN, "Error during explicit client registration with body : " + response.asString(), Response.Status.BAD_REQUEST);
         }
-        EntityStatementExplicitResponse statementResponse = parseAndValidateSelfSigned(response.asString(), EntityStatementExplicitResponse.class, opStatement.getJwks());
+        EntityStatementExplicitResponse statementResponse = parseAndValidateSelfSigned(response.asString(), EntityStatementExplicitResponse.class, opStatement.getJwks(), "explicit-registration-response+jwt");
         if (!validateEntityStatementFields(statementResponse, opIssuer, opIssuer) || statementResponse.getTrustAnchor() == null || LocalDateTime.now().toEpochSecond(ZoneOffset.UTC) > statementResponse.getExp()) {
-            throw new BadRequestException("No valid OP Entity Statement");
+            throw new ErrorResponseException(Errors.INVALID_TRUST_CHAIN, "No valid OP Entity Statement", Response.Status.BAD_REQUEST);
         }
         model.getConfig().put(IdentityProviderModel.LAST_REFRESH_TIME, String.valueOf(Instant.now().toEpochMilli()));
         return model.getInternalId() == null ? OpenIdFederationUtils.convertEntityStatementToIdp(model, realm, statementResponse, new HashMap<>(federationConfig.getIdpConfiguration())) : OpenIdFederationUtils.updateIdPFromEntityStatement(model, statementResponse);
@@ -490,7 +489,7 @@ public class OpenIdFederationTrustChainProcessor implements TrustChainProcessor 
         rPMetadata.setSubjectType(subjectTypesSupported.stream()
                 .filter(x -> opMetadata.getSubjectTypesSupported().contains(x))
                 .findFirst()
-                .orElseThrow(() -> new BadRequestException("No subject type common exists")));
+                .orElseThrow(() -> new ErrorResponseException(Errors.INVALID_TRUST_CHAIN, "No subject type common exists", Response.Status.BAD_REQUEST)));
         rPMetadata.setClientName(opMetadata.getCommonMetadata().getOrganizationName() != null ? opMetadata.getCommonMetadata().getOrganizationName() : subject);
     }
 
