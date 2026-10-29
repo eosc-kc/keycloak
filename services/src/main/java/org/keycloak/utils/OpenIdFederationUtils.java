@@ -9,6 +9,7 @@ import java.util.Map;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import jakarta.ws.rs.BadRequestException;
 import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.core.UriInfo;
 
@@ -59,7 +60,12 @@ public class OpenIdFederationUtils {
     }
 
     public static String getSubordinateToken(String fedApiUrl, String subject, KeycloakSession session) throws IOException {
-        return SimpleHttp.doGet((fedApiUrl + "?sub=" + urlEncode(subject)),session).asString();
+        SimpleHttp.Response response = SimpleHttp.doGet((fedApiUrl + "?sub=" + urlEncode(subject)), session).asResponse();
+        int status = response.getStatus();
+        if (status < 200 || status >= 400) {
+            throw new BadRequestException("Fetch endpoint failed with response: " + response.asString() + " and status code : " + status);
+        }
+        return response.asString();
     }
 
     public static boolean containedInListEndpoint(String listApiUrl, String entityType, String issuer, KeycloakSession session) throws IOException {
