@@ -377,11 +377,11 @@ public class OpenIdFederationTrustChainProcessor implements TrustChainProcessor 
         if (statement.getSubject() == null) {
             throw new ErrorResponseException(Errors.INVALID_SUBJECT, "No issuer in the request.", Response.Status.NOT_FOUND);
         }
-        if (statement.getIat() == null || LocalDateTime.now().toEpochSecond(ZoneOffset.UTC) > statement.getIat()) {
+        if (statement.getIat() == null || LocalDateTime.now().toEpochSecond(ZoneOffset.UTC) < statement.getIat()) {
             throw new ErrorResponseException(Errors.INVALID_REQUEST, "Iat must exist and be before now.", Response.Status.BAD_REQUEST);
         }
-        if (statement.getExp() == null || LocalDateTime.now().toEpochSecond(ZoneOffset.UTC) < statement.getExp()) {
-            throw new ErrorResponseException(Errors.INVALID_REQUEST, "Exp must exist and be before now.", Response.Status.BAD_REQUEST);
+        if (statement.getExp() == null || LocalDateTime.now().toEpochSecond(ZoneOffset.UTC) > statement.getExp()) {
+            throw new ErrorResponseException(Errors.INVALID_REQUEST, "Exp must exist and be after now.", Response.Status.BAD_REQUEST);
         }
         if (statement.getAuthorityHints() == null || statement.getAuthorityHints().isEmpty()) {
             throw new ErrorResponseException(Errors.INVALID_REQUEST, "No authorityHints in the request.", Response.Status.BAD_REQUEST);
