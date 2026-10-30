@@ -67,6 +67,7 @@ import org.keycloak.representations.idm.IdentityProviderMapperTypeRepresentation
 import org.keycloak.representations.idm.IdentityProviderRepresentation;
 import org.keycloak.representations.idm.ManagementPermissionReference;
 import org.keycloak.services.ErrorResponse;
+import org.keycloak.services.ErrorResponseException;
 import org.keycloak.services.resources.IdentityBrokerService;
 import org.keycloak.services.resources.KeycloakOpenAPI;
 import org.keycloak.services.resources.admin.fgap.AdminPermissionEvaluator;
@@ -256,6 +257,11 @@ public class IdentityProviderResource {
             IdentityProviderModel model = trustChainProcessor.updateIdP(identityProviderModel, realm, session.getContext().getUri(UrlType.FRONTEND), session.getContext().getUri(UrlType.BACKEND));
             realm.updateIdentityProvider(model);
             return  Response.noContent().build();
+        } catch (ErrorResponseException e) {
+            logger.warnf("Error during updating OpenId Federation Identity Provider with error %s and errorDescription %s", e.getError(), e.getErrorDescription());
+            identityProviderModel.setEnabled(false);
+            realm.updateIdentityProvider(identityProviderModel);
+            throw e;
         } catch (Exception e) {
             logger.warn("Error during updating OpenId Federation Identity Provider", e);
             identityProviderModel.setEnabled(false);
