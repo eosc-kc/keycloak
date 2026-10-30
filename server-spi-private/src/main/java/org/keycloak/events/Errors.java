@@ -72,6 +72,7 @@ public interface Errors {
     String INVALID_TRUST_ANCHOR = "invalid_trust_anchor";
     String INVALID_METADATA = "invalid_metadata";
     String INVALID_TRUST_CHAIN = "invalid_trust_chain";
+    String INVALID_EXPLICIT_RESPONSE = "invalid_explicit_response";
     String INVALID_FORM = "invalid_form";
     String INVALID_CONFIG = "invalid_config";
     String EXPIRED_CODE = "expired_code";

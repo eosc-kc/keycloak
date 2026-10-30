@@ -56,7 +56,12 @@ public class OpenIdFederationUtils {
     public static String getSelfSignedToken(String issuer, KeycloakSession session) throws IOException {
         issuer = issuer.trim();
         if (!issuer.endsWith("/")) issuer += "/";
-        return SimpleHttp.doGet((issuer + WELL_KNOWN_SUBPATH), session).asString();
+        SimpleHttp.Response response = SimpleHttp.doGet((issuer + WELL_KNOWN_SUBPATH), session).asResponse();
+        int status = response.getStatus();
+        if (status < 200 || status >= 400) {
+            throw new BadRequestException(".well-known/openid-federation failed with response: " + response.asString() + " and status code : " + status);
+        }
+        return response.asString();
     }
 
     public static String getSubordinateToken(String fedApiUrl, String subject, KeycloakSession session) throws IOException {

@@ -24,7 +24,8 @@ Our Keycloak version is working well with PostgreSQL database. For using other S
 ### Fixed
 - Correct logging of Proxied Token Introspection
 - Fix F-01. Trust chain can end at a Trust Anchor without that Trust Anchor's keys
-- F-02. Registration request signing key not bound to the trust chain
+- Fix F-02. Registration request signing key not bound to the trust chain
+- Check that Explicit Client Registration Response subject is RP issuer (OpenId Federation IdP creation)
 - Fix problem of refresh token scope parameter containing dynamic scope
 
 ## [26.6.6-1.2] -2026-09-15

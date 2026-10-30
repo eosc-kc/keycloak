@@ -465,11 +465,11 @@ public class OpenIdFederationTrustChainProcessor implements TrustChainProcessor 
                 .entity(entity)
                 .asResponse();
         if (response.getStatus() < 200 || response.getStatus() >= 400) {
-            throw new ErrorResponseException(Errors.INVALID_TRUST_CHAIN, "Error during explicit client registration with body : " + response.asString(), Response.Status.BAD_REQUEST);
+            throw new ErrorResponseException(Errors.INVALID_EXPLICIT_RESPONSE, "Error during explicit client registration with body : " + response.asString(), Response.Status.BAD_REQUEST);
         }
         EntityStatementExplicitResponse statementResponse = parseAndValidateSelfSigned(response.asString(), EntityStatementExplicitResponse.class, opStatement.getJwks(), "explicit-registration-response+jwt");
-        if (!validateEntityStatementFields(statementResponse, opIssuer, opIssuer) || statementResponse.getTrustAnchor() == null || LocalDateTime.now().toEpochSecond(ZoneOffset.UTC) > statementResponse.getExp()) {
-            throw new ErrorResponseException(Errors.INVALID_TRUST_CHAIN, "No valid OP Entity Statement", Response.Status.BAD_REQUEST);
+        if (!validateEntityStatementFields(statementResponse, opIssuer, Urls.realmIssuer(frontendUriInfo.getBaseUri(), realm.getName())) || statementResponse.getTrustAnchor() == null) {
+            throw new ErrorResponseException(Errors.INVALID_EXPLICIT_RESPONSE, "No valid OP Entity Statement", Response.Status.BAD_REQUEST);
         }
         model.getConfig().put(IdentityProviderModel.LAST_REFRESH_TIME, String.valueOf(Instant.now().toEpochMilli()));
         return model.getInternalId() == null ? OpenIdFederationUtils.convertEntityStatementToIdp(model, realm, statementResponse, new HashMap<>(federationConfig.getIdpConfiguration())) : OpenIdFederationUtils.updateIdPFromEntityStatement(model, statementResponse);
