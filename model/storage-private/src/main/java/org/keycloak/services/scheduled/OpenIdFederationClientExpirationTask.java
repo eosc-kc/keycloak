@@ -1,5 +1,10 @@
 package org.keycloak.services.scheduled;
 
+import java.time.LocalDateTime;
+import java.time.ZoneOffset;
+
+import org.keycloak.events.EventBuilder;
+import org.keycloak.events.EventType;
 import org.keycloak.models.ClientModel;
 import org.keycloak.models.KeycloakSession;
 import org.keycloak.models.RealmModel;
@@ -13,6 +18,7 @@ import org.jboss.logging.Logger;
 public class OpenIdFederationClientExpirationTask implements ScheduledTask {
 
     protected static final Logger logger = Logger.getLogger(OpenIdFederationClientExpirationTask.class);
+    public static final String TASK_NAME = "OpenIdFederationClientExpirationTask_";
 
     protected final String id;
     protected final String realmId;
@@ -24,20 +30,22 @@ public class OpenIdFederationClientExpirationTask implements ScheduledTask {
 
     @Override
     public void run(KeycloakSession session) {
-        logger.info(" OpenId Federation Client with id= " + id + " has expired.");
         RealmModel realm = session.realms().getRealm(realmId);
         if ( realm == null) {
             TimerProvider timer = session.getProvider(TimerProvider.class);
-            timer.cancelTask("OpenIdFederationClientExpirationTask_" + id);
+            timer.cancelTask(OpenIdFederationClientExpirationTask.TASK_NAME + id);
             return;
         }
         ClientModel client = session.clients().getClientById(realm, id);
-        if (client == null || client.getAttribute(OIDCConfigAttributes.EXPIRATION_TIME) == null ) {
-            TimerProvider timer = session.getProvider(TimerProvider.class);
-            timer.cancelTask("OpenIdFederationClientExpirationTask_" + id);
-        } else {
+        if (client != null && client.getAttribute(OIDCConfigAttributes.EXPIRATION_TIME) != null && LocalDateTime.now().toEpochSecond(ZoneOffset.UTC) >= Long.parseLong(client.getAttribute(OIDCConfigAttributes.EXPIRATION_TIME))) {
+            logger.info(" OpenId Federation Client with id= " + id + " has expired.");
             client.setEnabled(false);
             client.updateClient();
+            EventBuilder event = new EventBuilder(realm, session,  new DummyClientConnection("127.0.0.1"))
+                    .event(EventType.FEDERATION_EXPIRATION)
+                    .client(client)
+                    .detail("type", "client");
+            event.success();
         }
     }
 }
