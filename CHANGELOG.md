@@ -16,6 +16,7 @@ Our Keycloak version is working well with PostgreSQL database. For using other S
 - Proxy token introspection translation general implementation (back end) and ClaimRenamingTranslationProvider, ScalarValueNormalisationTranslationProvider, ClaimRemovalTranslationProvider
 - Add Keycloak upstream method buildSPDescriptor of SPMetadataDescriptor class
 - Support Eidas Identity Provider
+- Add FEDERATION_EXPIRATION event type for OpenId Federation Client and Identity Provider expiration
 
 ### Changed
 - Support trusted public keys for each OpenID Federation Trust Anchor
@@ -27,6 +28,7 @@ Our Keycloak version is working well with PostgreSQL database. For using other S
 - Fix F-02. Registration request signing key not bound to the trust chain
 - Check that Explicit Client Registration Response subject is RP issuer (OpenId Federation IdP creation)
 - Fix problem of refresh token scope parameter containing dynamic scope
+- Fix problem with disabling OpenId Federation Client before expiring
 
 ## [26.6.6-1.2] -2026-09-15
 
