@@ -1,7 +1,6 @@
 package org.keycloak.services.scheduled;
 
-import java.time.LocalDateTime;
-import java.time.ZoneOffset;
+import java.time.Instant;
 
 import org.keycloak.events.EventBuilder;
 import org.keycloak.events.EventType;
@@ -37,7 +36,7 @@ public class OpenIdFederationClientExpirationTask implements ScheduledTask {
             return;
         }
         ClientModel client = session.clients().getClientById(realm, id);
-        if (client != null && client.getAttribute(OIDCConfigAttributes.EXPIRATION_TIME) != null && LocalDateTime.now().toEpochSecond(ZoneOffset.UTC) >= Long.parseLong(client.getAttribute(OIDCConfigAttributes.EXPIRATION_TIME))) {
+        if (client != null && client.getAttribute(OIDCConfigAttributes.EXPIRATION_TIME) != null && Instant.now().getEpochSecond() >= Long.parseLong(client.getAttribute(OIDCConfigAttributes.EXPIRATION_TIME))) {
             logger.info(" OpenId Federation Client with id= " + id + " has expired.");
             client.setEnabled(false);
             client.updateClient();

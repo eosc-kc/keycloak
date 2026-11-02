@@ -3,8 +3,6 @@ package org.keycloak.utils;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.time.Instant;
-import java.time.LocalDateTime;
-import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -362,8 +360,8 @@ public class OpenIdFederationTrustChainProcessor implements TrustChainProcessor 
     public boolean validateEntityStatementFields(EntityStatement statement, String issuer, String subject) {
         return statement.getIssuer() != null && statement.getIssuer().equals(issuer) &&
                 statement.getSubject() != null && statement.getSubject().equals(subject) &&
-                statement.getIat() != null && LocalDateTime.now().toEpochSecond(ZoneOffset.UTC) >= statement.getIat() &&
-                statement.getExp() != null && LocalDateTime.now().toEpochSecond(ZoneOffset.UTC) <= statement.getExp();
+                statement.getIat() != null && Instant.now().getEpochSecond() >= statement.getIat() &&
+                statement.getExp() != null && Instant.now().getEpochSecond() <= statement.getExp();
     }
 
     @Override
@@ -374,10 +372,10 @@ public class OpenIdFederationTrustChainProcessor implements TrustChainProcessor 
         if (statement.getSubject() == null) {
             throw new ErrorResponseException(Errors.INVALID_SUBJECT, "No issuer in the request.", Response.Status.NOT_FOUND);
         }
-        if (statement.getIat() == null || LocalDateTime.now().toEpochSecond(ZoneOffset.UTC) < statement.getIat()) {
+        if (statement.getIat() == null || Instant.now().getEpochSecond() < statement.getIat()) {
             throw new ErrorResponseException(Errors.INVALID_REQUEST, "Iat must exist and be before now.", Response.Status.BAD_REQUEST);
         }
-        if (statement.getExp() == null || LocalDateTime.now().toEpochSecond(ZoneOffset.UTC) > statement.getExp()) {
+        if (statement.getExp() == null || Instant.now().getEpochSecond() > statement.getExp()) {
             throw new ErrorResponseException(Errors.INVALID_REQUEST, "Exp must exist and be after now.", Response.Status.BAD_REQUEST);
         }
         if (statement.getAuthorityHints() == null || statement.getAuthorityHints().isEmpty()) {

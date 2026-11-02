@@ -1,7 +1,6 @@
 package org.keycloak.services.scheduled;
 
-import java.time.LocalDateTime;
-import java.time.ZoneOffset;
+import java.time.Instant;
 import java.util.Map;
 
 import org.keycloak.common.util.Time;
@@ -52,7 +51,7 @@ public class StartUpTasks implements ScheduledTask {
                     conf.configure(clientModel, realm);
                 } else if (clientModel.getAttributes().get(OIDCConfigAttributes.EXPIRATION_TIME) != null) {
                     OpenIdFederationClientExpirationTask federationTask = new OpenIdFederationClientExpirationTask(clientModel.getId(), realm.getId());
-                    long expiration = (LocalDateTime.now().toEpochSecond(ZoneOffset.UTC) - Long.valueOf(clientModel.getAttribute(OIDCConfigAttributes.EXPIRATION_TIME))) * 1000;
+                    long expiration = (Instant.now().getEpochSecond() - Long.valueOf(clientModel.getAttribute(OIDCConfigAttributes.EXPIRATION_TIME))) * 1000;
                     ClusterAwareScheduledTaskRunner taskRunner = new ClusterAwareScheduledTaskRunner(session.getKeycloakSessionFactory(), federationTask, expiration > 60 * 1000 ? expiration : 60 * 1000);
                     timer.scheduleOnce(taskRunner, expiration > 60 * 1000 ? expiration : 60 * 1000, "OpenidFederationExplicitClient_" + clientModel.getId());
                 }
