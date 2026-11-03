@@ -21,5 +21,6 @@ public interface TrustChainProcessor extends Provider {
     JSONWebKeySet getKeySet(RealmModel realm);
     IdentityProviderModel updateIdP(IdentityProviderModel model, RealmModel realm, UriInfo frontendUriInfo, UriInfo backendUriInfo) throws Exception;
     IdentityProviderModel rPexcplicitRegistration(String opIssuer, String trustAnchor, IdentityProviderModel model, RealmModel realm, UriInfo frontendUriInfo, UriInfo backendUriInfo) throws Exception;
+    boolean isValidUrl(String urlString);
 
 }

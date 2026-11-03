@@ -1,6 +1,8 @@
 package org.keycloak.utils;
 
 import java.io.IOException;
+import java.net.InetAddress;
+import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.util.ArrayList;
@@ -133,8 +135,9 @@ public class OpenIdFederationTrustChainProcessor implements TrustChainProcessor 
         if (leafEs.getAuthorityHints() != null && !leafEs.getAuthorityHints().isEmpty()) {
             leafEs.getAuthorityHints().forEach(authHint -> {
                 try {
-                    if (visitedNodes.contains(authHint) && !trustAnchorIds.contains(authHint))
+                    if ((visitedNodes.contains(authHint) && !trustAnchorIds.contains(authHint)) || !isValidUrl(authHint)) {
                         return;
+                    }
                     String encodedSubNodeSelf = OpenIdFederationUtils.getSelfSignedToken(authHint, session);
                     OpenIdFederationConfig trustAnchorConfig = openIdFederationList.stream().filter(x -> authHint.equals(x.getTrustAnchor())).findAny().orElse(null);
                     EntityStatement subNodeSelfES = trustAnchorConfig != null ? parseAndValidateTrustAnchorEntityConfiguration(trustAnchorConfig, encodedSubNodeSelf) : parseAndValidateSelfSigned(encodedSubNodeSelf);
@@ -185,7 +188,7 @@ public class OpenIdFederationTrustChainProcessor implements TrustChainProcessor 
 
             });
 
-        } else if (trustAnchorIds.contains(leafEs.getSubject())) {
+        } else if (trustAnchorIds.contains(leafEs.getSubject()) && isValidUrl(leafEs.getSubject())) {
             try {
                 OpenIdFederationConfig trustAnchorConfig = openIdFederationList.stream()
                         .filter(x -> leafEs.getSubject().equals(x.getTrustAnchor())).findAny().orElse(null);
@@ -428,6 +431,9 @@ public class OpenIdFederationTrustChainProcessor implements TrustChainProcessor 
 
     @Override
     public IdentityProviderModel rPexcplicitRegistration(String opIssuer, String trustAnchor, IdentityProviderModel model, RealmModel realm, UriInfo frontendUriInfo, UriInfo backendUriInfo) throws Exception {
+        if (!isValidUrl(opIssuer)) {
+            throw new ErrorResponseException(Errors.INVALID_ISSUER, "No valid issuer", Response.Status.BAD_REQUEST);
+        }
         OpenIdFederationGeneralConfig federationGeneralConfig = realm.getOpenIdFederationGeneralConfig();
         OpenIdFederationConfig federationConfig = federationGeneralConfig.getOpenIdFederationList().stream().filter(x -> trustAnchor.equals(x.getTrustAnchor())).findAny().orElseThrow(() -> new NotFoundException("Trust anchor does not exist"));
         String opToken = OpenIdFederationUtils.getSelfSignedToken(opIssuer, session);
@@ -492,6 +498,51 @@ public class OpenIdFederationTrustChainProcessor implements TrustChainProcessor 
     @Override
     public void close() {
 
+    }
+
+    @Override
+    public boolean isValidUrl(String urlString) {
+        try {
+            if (urlString == null || urlString.isBlank()) {
+                return false;
+            }
+
+            URI uri = new URI(urlString);
+
+            // 1. Enforce HTTPS(MitM prevention)
+            if (!"https".equalsIgnoreCase(uri.getScheme())) {
+                logger.warnf("OpenID Federation URL %s is not https", urlString);
+                return false;
+            }
+
+            String host = uri.getHost();
+            if (host == null) {
+                logger.warnf("OpenID Federation URL %s does not contain a valid host", urlString);
+                return false;
+            }
+
+            // 2. DNS Resolution and IP filtering (SSRF prevention)
+            // Can throw UnknownHostException if the domain doesn't exist
+            InetAddress[] addresses = InetAddress.getAllByName(host);
+
+            for (InetAddress address : addresses) {
+                if (address.isLoopbackAddress() || address.isLinkLocalAddress() || address.isSiteLocalAddress() || address.isAnyLocalAddress()) {
+                    logger.warnf("OpenID Federation URL %s contains a blocked address for host %s", urlString, host);
+                    return false;
+                }
+
+                // Catch-all for IPv6 Unique Local Addresses
+                byte[] addressBytes = address.getAddress();
+                if (addressBytes.length == 16 && (addressBytes[0] & (byte) 0xfe) == (byte) 0xfc) {
+                    logger.warnf("OpenID Federation URL %s contains a blocked IPv6 address for host %s", urlString, host);
+                    return false;
+                }
+            }
+            return true;
+        } catch (Exception e) {
+            logger.warn("OpenID Federation URL validation failed: " + e.getMessage(), e);
+            return false;
+        }
     }
 
 }

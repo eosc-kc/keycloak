@@ -79,6 +79,9 @@ public class OpenIdFederationClientRegistrationService extends AbstractClientReg
     private Response commonExplicitRegistrationProcess(String leafToken, RealmModel realm, boolean checkAudience) throws InvalidTrustChainException {
         logger.info("starting validating trust chains");
         EntityStatement statement = trustChainProcessor.parseAndValidateSelfSigned(leafToken);
+        if (!trustChainProcessor.isValidUrl(statement.getIssuer())) {
+            throw new ErrorResponseException(Errors.INVALID_ISSUER, "No valid issuer", Response.Status.BAD_REQUEST);
+        }
         trustChainProcessor.validationRules(statement, checkAudience);
         TrustChainResolution validChain = trustChainProcessor.constructTrustChains(leafToken, statement, realm.getOpenIdFederations(), true);
         if (validChain == null) {

@@ -17,10 +17,11 @@ import org.keycloak.OAuth2Constants;
 import org.keycloak.broker.oidc.OAuth2IdentityProviderConfig;
 import org.keycloak.broker.oidc.OIDCIdentityProviderConfig;
 import org.keycloak.broker.oidc.federation.OpenIdFederationIdentityProviderConfig;
-import org.keycloak.broker.provider.util.SimpleHttp;
 import org.keycloak.events.Errors;
 import org.keycloak.events.EventBuilder;
 import org.keycloak.exceptions.InvalidTrustChainException;
+import org.keycloak.http.simple.SimpleHttp;
+import org.keycloak.http.simple.SimpleHttpResponse;
 import org.keycloak.models.AuthenticationFlowModel;
 import org.keycloak.models.ClientModel;
 import org.keycloak.models.IdentityProviderModel;
@@ -56,7 +57,7 @@ public class OpenIdFederationUtils {
     public static String getSelfSignedToken(String issuer, KeycloakSession session) throws IOException {
         issuer = issuer.trim();
         if (!issuer.endsWith("/")) issuer += "/";
-        SimpleHttp.Response response = SimpleHttp.doGet((issuer + WELL_KNOWN_SUBPATH), session).asResponse();
+       SimpleHttpResponse response = SimpleHttp.create(session).doGet((issuer + WELL_KNOWN_SUBPATH)).asResponse();
         int status = response.getStatus();
         if (status < 200 || status >= 400) {
             throw new BadRequestException(".well-known/openid-federation failed with response: " + response.asString() + " and status code : " + status);
@@ -65,7 +66,7 @@ public class OpenIdFederationUtils {
     }
 
     public static String getSubordinateToken(String fedApiUrl, String subject, KeycloakSession session) throws IOException {
-        SimpleHttp.Response response = SimpleHttp.doGet((fedApiUrl + "?sub=" + urlEncode(subject)), session).asResponse();
+        SimpleHttpResponse response = SimpleHttp.create(session).doGet((fedApiUrl + "?sub=" + urlEncode(subject))).asResponse();
         int status = response.getStatus();
         if (status < 200 || status >= 400) {
             throw new BadRequestException("Fetch endpoint failed with response: " + response.asString() + " and status code : " + status);
@@ -74,7 +75,7 @@ public class OpenIdFederationUtils {
     }
 
     public static boolean containedInListEndpoint(String listApiUrl, String entityType, String issuer, KeycloakSession session) throws IOException {
-        return listApiUrl != null && SimpleHttp.doGet(listApiUrl + "?entity_type=" + entityType, session).asJson(new TypeReference<List<String>>(){}).contains(issuer);
+        return listApiUrl != null && SimpleHttp.create(session).doGet(listApiUrl + "?entity_type=" + entityType).asJson(new TypeReference<List<String>>(){}).contains(issuer);
     }
 
     private static String urlEncode(String url) {
