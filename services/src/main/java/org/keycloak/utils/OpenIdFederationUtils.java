@@ -113,6 +113,7 @@ public class OpenIdFederationUtils {
         model.setLinkOnly(Boolean.valueOf(federationIdPConfig.get("linkOnly")));
         model.setStoreToken(Boolean.valueOf(federationIdPConfig.get("storeToken")));
         model.setTrustEmail(Boolean.valueOf(federationIdPConfig.get("trustEmail")));
+        model.setHideOnLogin(Boolean.valueOf(federationIdPConfig.get("hideOnLogin")));
         model.setSyncMode(federationIdPConfig.get("syncMode") != null ? IdentityProviderSyncMode.valueOf(federationIdPConfig.get("syncMode")) : IdentityProviderSyncMode.IMPORT);
         if (federationIdPConfig.get("firstBrokerLoginFlowAlias") == null || federationIdPConfig.get("postBrokerLoginFlowAlias").isEmpty()) {
             model.setFirstBrokerLoginFlowId(realm.getFlowByAlias(DefaultAuthenticationFlows.FIRST_BROKER_LOGIN_FLOW).getId());
