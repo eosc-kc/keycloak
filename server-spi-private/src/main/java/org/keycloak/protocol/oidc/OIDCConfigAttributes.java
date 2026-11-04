@@ -111,6 +111,13 @@ public final class OIDCConfigAttributes {
     public static final String SECTOR_IDENTIFIER_URI = "sectorIdentifierUri";
     public static final String EXPIRATION_TIME = "expiration.time";
 
+    /**
+     * Marks clients created via OpenID Federation automatic registration.
+     * Such clients must keep using a signed Request Object with the §12.1.1.1 claim checks
+     * on every authorization request, not only on the first registration request.
+     */
+    public static final String OPENID_FEDERATION_AUTOMATIC_REGISTRATION = "openid.federation.automatic.registration";
+
     public static final String ALLOW_TOKEN_INTROSPECTION_WITHOUT_AUDIENCE_CHECK = "allow.token.introspection.without.audience.check";
 
     public static final String ALLOW_USERINFO_WITH_LIGHTWEIGHT_ACCESS_TOKEN = "allow.userinfo.with.lightweight.access.token";

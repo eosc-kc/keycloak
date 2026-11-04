@@ -52,6 +52,7 @@ import org.keycloak.organization.utils.Organizations;
 import org.keycloak.protocol.AuthorizationEndpointBase;
 import org.keycloak.protocol.oidc.ClientCreationUtils;
 import org.keycloak.protocol.oidc.OIDCAdvancedConfigWrapper;
+import org.keycloak.protocol.oidc.OIDCConfigAttributes;
 import org.keycloak.protocol.oidc.OIDCLoginProtocol;
 import org.keycloak.protocol.oidc.endpoints.checker.AuthorizationCheckException;
 import org.keycloak.protocol.oidc.endpoints.checker.AuthorizationEndpointChecker;
@@ -162,7 +163,13 @@ public class AuthorizationEndpoint extends AuthorizationEndpointBase {
         }
         checkClient(clientId, params);
 
-        request = automaticRegistration ? AuthorizationEndpointRequestParserProcessor.parseRequestOpenIdFederation(event, session, client, params, AuthorizationEndpointRequestParserProcessor.EndpointType.OIDC_AUTH_ENDPOINT) :AuthorizationEndpointRequestParserProcessor.parseRequest(event, session, client, params, AuthorizationEndpointRequestParserProcessor.EndpointType.OIDC_AUTH_ENDPOINT, ishareRequest);
+        // Automatically registered federation clients must keep using the §12.1.1.1 Request Object
+        // path on every request, not only while the client is being created/updated.
+        boolean openIdFederationAutomaticClient = automaticRegistration
+                || Boolean.parseBoolean(client.getAttribute(OIDCConfigAttributes.OPENID_FEDERATION_AUTOMATIC_REGISTRATION));
+        request = openIdFederationAutomaticClient
+                ? AuthorizationEndpointRequestParserProcessor.parseRequestOpenIdFederation(event, session, client, params, AuthorizationEndpointRequestParserProcessor.EndpointType.OIDC_AUTH_ENDPOINT)
+                : AuthorizationEndpointRequestParserProcessor.parseRequest(event, session, client, params, AuthorizationEndpointRequestParserProcessor.EndpointType.OIDC_AUTH_ENDPOINT, ishareRequest);
 
         AuthorizationEndpointChecker checker = new AuthorizationEndpointChecker()
                 .event(event)

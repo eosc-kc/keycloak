@@ -32,6 +32,7 @@ import org.keycloak.models.OpenIdFederationGeneralConfig;
 import org.keycloak.models.RealmModel;
 import org.keycloak.models.enums.ClientRegistrationTypeEnum;
 import org.keycloak.models.utils.DefaultAuthenticationFlows;
+import org.keycloak.protocol.oidc.OIDCAdvancedConfigWrapper;
 import org.keycloak.protocol.oidc.OIDCConfigAttributes;
 import org.keycloak.protocol.oidc.federation.OpenIdFederationWellKnownProviderFactory;
 import org.keycloak.protocol.trustchain.TrustChainProcessor;
@@ -178,7 +179,7 @@ public class OpenIdFederationUtils {
         return model;
     }
 
-    public static ClientModel createOrUpdateAutomaticClient(String clientId, KeycloakSession session, RealmModel realm) throws IOException, InvalidTrustChainException {
+    public static ClientModel createOrUpdateAutomaticClient(String clientId, KeycloakSession session, RealmModel realm) throws IOException {
         String rpMetadata = OpenIdFederationUtils.getSelfSignedToken(clientId, session);
         TrustChainProcessor trustChainProcessor = session.getProvider(TrustChainProcessor.class, OpenIdFederationTrustChainProcessorFactory.PROVIDER_ID);
         EntityStatement rpEntityStatement = trustChainProcessor.parseAndValidateSelfSigned(rpMetadata);
@@ -195,6 +196,15 @@ public class OpenIdFederationUtils {
         provider.setEvent(event);
         provider.setAuth(new ClientRegistrationAuth(session, provider, event, "openid-connect"));
         provider.createOrUpdateClient(rpEntityStatement, (RPMetadata) validChain.getMetadataAfterPolicies());
-        return realm.getClientByClientId(clientId);
+
+        // Automatic registration (§12.1.1): require a signed Request Object on every subsequent
+        // authorization request, and keep the federation-specific claim checks (not only on create).
+        ClientModel client = realm.getClientByClientId(clientId);
+        if (client != null) {
+            client.setAttribute(OIDCConfigAttributes.OPENID_FEDERATION_AUTOMATIC_REGISTRATION, Boolean.TRUE.toString());
+            OIDCAdvancedConfigWrapper.fromClientModel(client)
+                    .setRequestObjectRequired(OIDCConfigAttributes.REQUEST_OBJECT_REQUIRED_REQUEST_OR_REQUEST_URI);
+        }
+        return client;
     }
 }
