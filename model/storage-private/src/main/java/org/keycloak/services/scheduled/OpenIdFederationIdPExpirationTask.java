@@ -46,6 +46,7 @@ public class OpenIdFederationIdPExpirationTask implements ScheduledTask {
             TrustChainProcessor trustChainProcessor = session.getProvider(TrustChainProcessor.class, "openid-federation");
             try {
                 UriInfo fixedUriInfo = new EnvKeycloakUriInfo(URI.create(realm.getAttribute(KEYCLOAK_URL)));
+                session.getContext().setRealm(realm);
                 idp = trustChainProcessor.updateIdP(idp, realm, fixedUriInfo, fixedUriInfo);
             } catch (Exception e) {
                 logger.warn("Error during updating OPenId Federation Identity Provider", e);

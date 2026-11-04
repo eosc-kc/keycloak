@@ -18,6 +18,12 @@ public class OpenIdFederationGeneralConfig implements Serializable {
     // default 1 day - duration
     private String federationResolveEndpoint;
     private String federationHistoricalKeysEndpoint;
+    private Integer connectionTimeout;
+    private Integer socketTimeout;
+    private Integer connectionRequestTimeout;
+    private Integer maxAuthorityHints;
+    private Integer maxHops;
+    private Integer totalTimeout;
     private List<OpenIdFederationConfig> openIdFederationList = List.of();
     private List<EntityTypeEnum> entityTypes;
     private List<ClientRegistrationTypeEnum> opClientRegistrationTypesSupported;
@@ -95,6 +101,54 @@ public class OpenIdFederationGeneralConfig implements Serializable {
 
     public void setFederationHistoricalKeysEndpoint(String federationHistoricalKeysEndpoint) {
         this.federationHistoricalKeysEndpoint = federationHistoricalKeysEndpoint;
+    }
+
+    public Integer getConnectionTimeout() {
+        return connectionTimeout;
+    }
+
+    public void setConnectionTimeout(Integer connectionTimeout) {
+        this.connectionTimeout = connectionTimeout;
+    }
+
+    public Integer getSocketTimeout() {
+        return socketTimeout;
+    }
+
+    public void setSocketTimeout(Integer socketTimeout) {
+        this.socketTimeout = socketTimeout;
+    }
+
+    public Integer getConnectionRequestTimeout() {
+        return connectionRequestTimeout;
+    }
+
+    public void setConnectionRequestTimeout(Integer connectionRequestTimeout) {
+        this.connectionRequestTimeout = connectionRequestTimeout;
+    }
+
+    public Integer getMaxAuthorityHints() {
+        return maxAuthorityHints;
+    }
+
+    public void setMaxAuthorityHints(Integer maxAuthorityHints) {
+        this.maxAuthorityHints = maxAuthorityHints;
+    }
+
+    public Integer getMaxHops() {
+        return maxHops;
+    }
+
+    public void setMaxHops(Integer maxHops) {
+        this.maxHops = maxHops;
+    }
+
+    public Integer getTotalTimeout() {
+        return totalTimeout;
+    }
+
+    public void setTotalTimeout(Integer totalTimeout) {
+        this.totalTimeout = totalTimeout;
     }
 
     public List<OpenIdFederationConfig> getOpenIdFederationList() {

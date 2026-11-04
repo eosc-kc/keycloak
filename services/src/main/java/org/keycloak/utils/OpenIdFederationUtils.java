@@ -6,6 +6,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -17,10 +18,10 @@ import org.keycloak.OAuth2Constants;
 import org.keycloak.broker.oidc.OAuth2IdentityProviderConfig;
 import org.keycloak.broker.oidc.OIDCIdentityProviderConfig;
 import org.keycloak.broker.oidc.federation.OpenIdFederationIdentityProviderConfig;
-import org.keycloak.broker.provider.util.SimpleHttp;
 import org.keycloak.events.Errors;
 import org.keycloak.events.EventBuilder;
-import org.keycloak.exceptions.InvalidTrustChainException;
+import org.keycloak.http.simple.SimpleHttp;
+import org.keycloak.http.simple.SimpleHttpResponse;
 import org.keycloak.models.AuthenticationFlowModel;
 import org.keycloak.models.ClientModel;
 import org.keycloak.models.IdentityProviderModel;
@@ -45,6 +46,7 @@ import org.keycloak.services.clientregistration.ClientRegistrationAuth;
 import org.keycloak.services.clientregistration.openid_federation.OpenIdFederationClientRegistrationService;
 
 import com.fasterxml.jackson.core.type.TypeReference;
+import org.apache.http.client.config.RequestConfig;
 import org.jboss.logging.Logger;
 
 public class OpenIdFederationUtils {
@@ -56,7 +58,7 @@ public class OpenIdFederationUtils {
     public static String getSelfSignedToken(String issuer, KeycloakSession session) throws IOException {
         issuer = issuer.trim();
         if (!issuer.endsWith("/")) issuer += "/";
-        SimpleHttp.Response response = SimpleHttp.doGet((issuer + WELL_KNOWN_SUBPATH), session).asResponse();
+        SimpleHttpResponse response = createSimpleHttp(session).doGet((issuer + WELL_KNOWN_SUBPATH)).asResponse();
         int status = response.getStatus();
         if (status < 200 || status >= 400) {
             throw new BadRequestException(".well-known/openid-federation failed with response: " + response.asString() + " and status code : " + status);
@@ -65,7 +67,7 @@ public class OpenIdFederationUtils {
     }
 
     public static String getSubordinateToken(String fedApiUrl, String subject, KeycloakSession session) throws IOException {
-        SimpleHttp.Response response = SimpleHttp.doGet((fedApiUrl + "?sub=" + urlEncode(subject)), session).asResponse();
+        SimpleHttpResponse response = createSimpleHttp(session).doGet((fedApiUrl + "?sub=" + urlEncode(subject))).asResponse();
         int status = response.getStatus();
         if (status < 200 || status >= 400) {
             throw new BadRequestException("Fetch endpoint failed with response: " + response.asString() + " and status code : " + status);
@@ -74,7 +76,19 @@ public class OpenIdFederationUtils {
     }
 
     public static boolean containedInListEndpoint(String listApiUrl, String entityType, String issuer, KeycloakSession session) throws IOException {
-        return listApiUrl != null && SimpleHttp.doGet(listApiUrl + "?entity_type=" + entityType, session).asJson(new TypeReference<List<String>>(){}).contains(issuer);
+        return listApiUrl != null && createSimpleHttp(session).doGet(listApiUrl + "?entity_type=" + entityType).asJson(new TypeReference<List<String>>(){}).contains(issuer);
+    }
+
+    public static SimpleHttp createSimpleHttp(KeycloakSession session) {
+        return SimpleHttp.create(session).withRequestConfig(createRequestConfig(session.getContext().getRealm().getOpenIdFederationGeneralConfig()));
+    }
+
+    public static RequestConfig createRequestConfig(OpenIdFederationGeneralConfig config) {
+        return RequestConfig.custom()
+                .setConnectTimeout((int) TimeUnit.SECONDS.toMillis(config.getConnectionTimeout()))
+                .setSocketTimeout((int) TimeUnit.SECONDS.toMillis(config.getSocketTimeout()))
+                .setConnectionRequestTimeout((int) TimeUnit.SECONDS.toMillis(config.getConnectionRequestTimeout()))
+                .build();
     }
 
     private static String urlEncode(String url) {
@@ -177,13 +191,13 @@ public class OpenIdFederationUtils {
         return model;
     }
 
-    public static ClientModel createOrUpdateAutomaticClient(String clientId, KeycloakSession session, RealmModel realm) throws IOException, InvalidTrustChainException {
+    public static ClientModel createOrUpdateAutomaticClient(String clientId, KeycloakSession session, RealmModel realm) throws IOException {
         String rpMetadata = OpenIdFederationUtils.getSelfSignedToken(clientId, session);
         TrustChainProcessor trustChainProcessor = session.getProvider(TrustChainProcessor.class, OpenIdFederationTrustChainProcessorFactory.PROVIDER_ID);
         EntityStatement rpEntityStatement = trustChainProcessor.parseAndValidateSelfSigned(rpMetadata);
         trustChainProcessor.validationRules(rpEntityStatement, false);
         logger.info("starting validating trust chains");
-        TrustChainResolution validChain = trustChainProcessor.constructTrustChains(rpMetadata, rpEntityStatement, realm.getOpenIdFederations(), true);
+        TrustChainResolution validChain = trustChainProcessor.constructTrustChains(rpMetadata, rpEntityStatement, realm.getOpenIdFederationGeneralConfig(), true);
 
         if (validChain == null) {
             throw new ErrorResponseException(Errors.INVALID_TRUST_ANCHOR, "No trusted trust anchor could be found", Response.Status.NOT_FOUND);
