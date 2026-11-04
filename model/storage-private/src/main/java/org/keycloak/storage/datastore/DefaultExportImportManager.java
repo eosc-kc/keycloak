@@ -1529,6 +1529,12 @@ public class DefaultExportImportManager implements ExportImportManager {
             config.setLifespan(rep.getOpenIdFederationLifespan());
             config.setFederationResolveEndpoint(rep.getOpenIdFederationResolveEndpoint());
             config.setFederationHistoricalKeysEndpoint(rep.getOpenIdFederationHistoricalKeysEndpoint());
+            config.setConnectionTimeout(rep.getOpenIdFederationConnectionTimeout());
+            config.setSocketTimeout(rep.getOpenIdFederationSocketTimeout());
+            config.setConnectionRequestTimeout(rep.getOpenIdFederationConnectionRequestTimeout());
+            config.setMaxAuthorityHints(rep.getOpenIdFederationMaxAuthorityHints());
+            config.setMaxHops(rep.getOpenIdFederationMaxHops());
+            config.setTotalTimeout(rep.getOpenIdFederationTotalTimeout());
             if (rep.getOpenIdFederationEntityTypes() != null) {
                 config.setEntityTypes(rep.getOpenIdFederationEntityTypes().stream().map(EntityTypeEnum::valueOf).collect(Collectors.toList()));
             }

@@ -223,6 +223,12 @@ public class ModelToRepresentation {
         REALM_EXCLUDED_ATTRIBUTES.add(Constants.OPENID_FEDERATION_ORGANIZATION_URI);
         REALM_EXCLUDED_ATTRIBUTES.add(Constants.OPENID_FEDERATION_LOGO_URI);
         REALM_EXCLUDED_ATTRIBUTES.add(Constants.OPENID_FEDERATION_POLICY_URI);
+        REALM_EXCLUDED_ATTRIBUTES.add(Constants.OPENID_FEDERATION_CONNECTION_TIMEOUT);
+        REALM_EXCLUDED_ATTRIBUTES.add(Constants.OPENID_FEDERATION_SOCKET_TIMEOUT);
+        REALM_EXCLUDED_ATTRIBUTES.add(Constants.OPENID_FEDERATION_CONNECTION_REQUEST_TIMEOUT);
+        REALM_EXCLUDED_ATTRIBUTES.add(Constants.OPENID_FEDERATION_MAX_AUTHORITY_HINTS);
+        REALM_EXCLUDED_ATTRIBUTES.add(Constants.OPENID_FEDERATION_MAX_HOPS);
+        REALM_EXCLUDED_ATTRIBUTES.add(Constants.OPENID_FEDERATION_TOTAL_TIMEOUT);
         REALM_EXCLUDED_ATTRIBUTES.add(Constants.OPENID_FEDERATION_ENTITY_TYPES);
         REALM_EXCLUDED_ATTRIBUTES.add(Constants.OPENID_FEDERATION_OP_CLIENT_REGISTRATION_TYPES_SUPPORTED);
         REALM_EXCLUDED_ATTRIBUTES.add(Constants.OPENID_FEDERATION_RP_CLIENT_REGISTRATION_TYPES_SUPPORTED);
@@ -651,6 +657,12 @@ public class ModelToRepresentation {
             rep.setOpenIdFederationLifespan(openIdFederationConfig.getLifespan());
             rep.setOpenIdFederationResolveEndpoint(openIdFederationConfig.getFederationResolveEndpoint());
             rep.setOpenIdFederationHistoricalKeysEndpoint(openIdFederationConfig.getFederationHistoricalKeysEndpoint());
+            rep.setOpenIdFederationConnectionTimeout(openIdFederationConfig.getConnectionTimeout());
+            rep.setOpenIdFederationSocketTimeout(openIdFederationConfig.getSocketTimeout());
+            rep.setOpenIdFederationConnectionRequestTimeout(openIdFederationConfig.getConnectionRequestTimeout());
+            rep.setOpenIdFederationMaxAuthorityHints(openIdFederationConfig.getMaxAuthorityHints());
+            rep.setOpenIdFederationMaxHops(openIdFederationConfig.getMaxHops());
+            rep.setOpenIdFederationTotalTimeout(openIdFederationConfig.getTotalTimeout());
             if (openIdFederationConfig.getEntityTypes() != null)
                 rep.setOpenIdFederationEntityTypes(openIdFederationConfig.getEntityTypes().stream().map(EntityTypeEnum::name).collect(Collectors.toList()));
             if (openIdFederationConfig.getOpClientRegistrationTypesSupported() != null)

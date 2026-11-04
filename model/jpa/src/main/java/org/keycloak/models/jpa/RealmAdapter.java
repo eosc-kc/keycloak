@@ -1227,6 +1227,12 @@ public class RealmAdapter implements StorageProviderRealmModel, JpaModel<RealmEn
             config.setLifespan(getAttribute(Constants.OPENID_FEDERATION_LIFESPAN, 86400));
             config.setFederationResolveEndpoint(getAttribute(Constants.OPENID_FEDERATION_RESOLVE_ENDPOINT));
             config.setFederationHistoricalKeysEndpoint(getAttribute(Constants.OPENID_FEDERATION_HISTORICAL_KEYS_ENDPOINT));
+            config.setConnectionTimeout(getAttribute(Constants.OPENID_FEDERATION_CONNECTION_TIMEOUT, 3));
+            config.setSocketTimeout(getAttribute(Constants.OPENID_FEDERATION_SOCKET_TIMEOUT, 5));
+            config.setConnectionRequestTimeout(getAttribute(Constants.OPENID_FEDERATION_CONNECTION_REQUEST_TIMEOUT, 5));
+            config.setMaxAuthorityHints(getAttribute(Constants.OPENID_FEDERATION_MAX_AUTHORITY_HINTS, 5));
+            config.setMaxHops(getAttribute(Constants.OPENID_FEDERATION_MAX_HOPS, 10));
+            config.setTotalTimeout(getAttribute(Constants.OPENID_FEDERATION_TOTAL_TIMEOUT, 30));
             String entityTypes = getAttribute(Constants.OPENID_FEDERATION_ENTITY_TYPES);
             if (entityTypes != null && !entityTypes.isEmpty()) {
                 config.setEntityTypes(Arrays.asList(entityTypes.split(",")).stream()
@@ -1278,6 +1284,12 @@ public class RealmAdapter implements StorageProviderRealmModel, JpaModel<RealmEn
             setAttribute(Constants.OPENID_FEDERATION_LIFESPAN, generalConfig.getLifespan() == null ? String.valueOf(86400) : String.valueOf(generalConfig.getLifespan()));
             setAttribute(Constants.OPENID_FEDERATION_RESOLVE_ENDPOINT, generalConfig.getFederationResolveEndpoint());
             setAttribute(Constants.OPENID_FEDERATION_HISTORICAL_KEYS_ENDPOINT, generalConfig.getFederationHistoricalKeysEndpoint());
+            setAttribute(Constants.OPENID_FEDERATION_CONNECTION_TIMEOUT, generalConfig.getConnectionTimeout() == null ? String.valueOf(3) : String.valueOf(generalConfig.getConnectionTimeout()));
+            setAttribute(Constants.OPENID_FEDERATION_SOCKET_TIMEOUT, generalConfig.getSocketTimeout() == null ? String.valueOf(5) : String.valueOf(generalConfig.getSocketTimeout()));
+            setAttribute(Constants.OPENID_FEDERATION_CONNECTION_REQUEST_TIMEOUT, generalConfig.getConnectionRequestTimeout() == null ? String.valueOf(5) : String.valueOf(generalConfig.getConnectionRequestTimeout()));
+            setAttribute(Constants.OPENID_FEDERATION_MAX_AUTHORITY_HINTS, generalConfig.getMaxAuthorityHints() == null ? String.valueOf(5) : String.valueOf(generalConfig.getMaxAuthorityHints()));
+            setAttribute(Constants.OPENID_FEDERATION_MAX_HOPS, generalConfig.getMaxHops() == null ? String.valueOf(10) : String.valueOf(generalConfig.getMaxHops()));
+            setAttribute(Constants.OPENID_FEDERATION_TOTAL_TIMEOUT, generalConfig.getTotalTimeout() == null ? String.valueOf(30) : String.valueOf(generalConfig.getTotalTimeout()));
             if (generalConfig.getEntityTypes() == null || generalConfig.getEntityTypes().isEmpty()) {
                 removeAttribute(Constants.OPENID_FEDERATION_ENTITY_TYPES);
             } else {

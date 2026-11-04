@@ -173,6 +173,12 @@ public class RealmRepresentation {
     private Integer openIdFederationLifespan;
     private String openIdFederationResolveEndpoint;
     private String openIdFederationHistoricalKeysEndpoint;
+    private Integer openIdFederationConnectionTimeout;
+    private Integer openIdFederationSocketTimeout;
+    private Integer openIdFederationConnectionRequestTimeout;
+    private Integer openIdFederationMaxAuthorityHints;
+    private Integer openIdFederationMaxHops;
+    private Integer openIdFederationTotalTimeout;
     private List<OpenIdFederationRepresentation> openIdFederationList;
     private List<String> openIdFederationEntityTypes;
     private List<String> openIdFederationOPClientRegistrationTypesSupported;
@@ -1409,6 +1415,54 @@ public class RealmRepresentation {
 
     public void setOpenIdFederationHistoricalKeysEndpoint(String openIdFederationHistoricalKeysEndpoint) {
         this.openIdFederationHistoricalKeysEndpoint = openIdFederationHistoricalKeysEndpoint;
+    }
+
+    public Integer getOpenIdFederationConnectionTimeout() {
+        return openIdFederationConnectionTimeout;
+    }
+
+    public void setOpenIdFederationConnectionTimeout(Integer openIdFederationConnectionTimeout) {
+        this.openIdFederationConnectionTimeout = openIdFederationConnectionTimeout;
+    }
+
+    public Integer getOpenIdFederationSocketTimeout() {
+        return openIdFederationSocketTimeout;
+    }
+
+    public void setOpenIdFederationSocketTimeout(Integer openIdFederationSocketTimeout) {
+        this.openIdFederationSocketTimeout = openIdFederationSocketTimeout;
+    }
+
+    public Integer getOpenIdFederationConnectionRequestTimeout() {
+        return openIdFederationConnectionRequestTimeout;
+    }
+
+    public void setOpenIdFederationConnectionRequestTimeout(Integer openIdFederationConnectionRequestTimeout) {
+        this.openIdFederationConnectionRequestTimeout = openIdFederationConnectionRequestTimeout;
+    }
+
+    public Integer getOpenIdFederationMaxAuthorityHints() {
+        return openIdFederationMaxAuthorityHints;
+    }
+
+    public void setOpenIdFederationMaxAuthorityHints(Integer openIdFederationMaxAuthorityHints) {
+        this.openIdFederationMaxAuthorityHints = openIdFederationMaxAuthorityHints;
+    }
+
+    public Integer getOpenIdFederationMaxHops() {
+        return openIdFederationMaxHops;
+    }
+
+    public void setOpenIdFederationMaxHops(Integer openIdFederationMaxHops) {
+        this.openIdFederationMaxHops = openIdFederationMaxHops;
+    }
+
+    public Integer getOpenIdFederationTotalTimeout() {
+        return openIdFederationTotalTimeout;
+    }
+
+    public void setOpenIdFederationTotalTimeout(Integer openIdFederationTotalTimeout) {
+        this.openIdFederationTotalTimeout = openIdFederationTotalTimeout;
     }
 
     public List<OpenIdFederationRepresentation> getOpenIdFederationList() {

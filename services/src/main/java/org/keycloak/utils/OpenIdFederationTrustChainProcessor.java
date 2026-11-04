@@ -1,7 +1,9 @@
 package org.keycloak.utils;
 
 import java.io.IOException;
+import java.net.URI;
 import java.nio.charset.StandardCharsets;
+import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -89,15 +91,18 @@ public class OpenIdFederationTrustChainProcessor implements TrustChainProcessor 
     /**
      * @param leafToken the raw encoded JWT of the leaf node
      * @param leafEs this is the parsed EntityStatement of a leaf node
-     * @param openIdFederationList this should hold the openid federations configured in realm
+     * @param openIdFederationGeneralConfig this should hold the openid federation configuration in realm
      * @return any valid trust chains from the leaf node JWT to the trust anchor.
      */
     @Override
-    public TrustChainResolution constructTrustChains(String leafToken, EntityStatement leafEs, List<OpenIdFederationConfig> openIdFederationList, boolean forRp) {
-
-        List<TrustChainResolution> trustChainResolutions = subTrustChains(leafToken, leafEs.getSubject(), leafEs, openIdFederationList, new HashSet<>(), forRp);
+    public TrustChainResolution constructTrustChains(String leafToken, EntityStatement leafEs, OpenIdFederationGeneralConfig openIdFederationGeneralConfig, boolean forRp) {
+        Instant startTime = Instant.now();
+        List<TrustChainResolution> trustChainResolutions = subTrustChains(leafToken, leafEs.getSubject(), leafEs, openIdFederationGeneralConfig, new HashSet<>(), forRp, 0);
 
         for (TrustChainResolution trustChainResolution : trustChainResolutions) {
+            if (Duration.between(startTime, Instant.now()).toMillis() > openIdFederationGeneralConfig.getTotalTimeout()) {
+                throw new ErrorResponseException(Errors.SESSION_EXPIRED, "Time for trust resolution has expired", Response.Status.BAD_REQUEST);
+            }
             //combine policies if valid till now
             List<EntityStatement> parsedChain = trustChainResolution.getParsedChain();
             try {
@@ -124,70 +129,88 @@ public class OpenIdFederationTrustChainProcessor implements TrustChainProcessor 
         return null;
     }
 
-    private List<TrustChainResolution> subTrustChains(String childToken, String initialEntity, EntityStatement leafEs, List<OpenIdFederationConfig> openIdFederationList, Set<String> visitedNodes, boolean forRp) {
+    // Added 'int depth' parameter to track recursion limit
+    private List<TrustChainResolution> subTrustChains(String childToken, String initialEntity, EntityStatement leafEs, OpenIdFederationGeneralConfig openIdFederationGeneralConfig, Set<String> visitedNodes, boolean forRp, int depth) {
 
         List<TrustChainResolution> chainsList = new ArrayList<>();
+
+        // 1. Enforce Max Hops (Depth limit)
+        if (depth > openIdFederationGeneralConfig.getMaxHops()) {
+            logger.warn("Max trust chain depth exceeded during resolution for " + initialEntity);
+            return chainsList;
+        }
+
         visitedNodes.add(leafEs.getSubject());
-        Set<String> trustAnchorIds = openIdFederationList.stream().map(OpenIdFederationConfig::getTrustAnchor).collect(Collectors.toSet());
+        Set<String> trustAnchorIds = openIdFederationGeneralConfig.getOpenIdFederationList().stream().map(OpenIdFederationConfig::getTrustAnchor).collect(Collectors.toSet());
 
         if (leafEs.getAuthorityHints() != null && !leafEs.getAuthorityHints().isEmpty()) {
-            leafEs.getAuthorityHints().forEach(authHint -> {
-                try {
-                    if (visitedNodes.contains(authHint) && !trustAnchorIds.contains(authHint))
-                        return;
-                    String encodedSubNodeSelf = OpenIdFederationUtils.getSelfSignedToken(authHint, session);
-                    OpenIdFederationConfig trustAnchorConfig = openIdFederationList.stream().filter(x -> authHint.equals(x.getTrustAnchor())).findAny().orElse(null);
-                    EntityStatement subNodeSelfES = trustAnchorConfig != null ? parseAndValidateTrustAnchorEntityConfiguration(trustAnchorConfig, encodedSubNodeSelf) : parseAndValidateSelfSigned(encodedSubNodeSelf);
-                    if (!validateEntityStatementFields(subNodeSelfES, authHint, authHint)) {
-                        throw new ErrorResponseException(Errors.INVALID_TRUST_CHAIN, "Trust chain is not valid", Response.Status.BAD_REQUEST);
-                    }
-                    logger.debug(String.format("EntityStatement of %s about %s. AuthHints: %s", subNodeSelfES.getIssuer(), subNodeSelfES.getSubject(), subNodeSelfES.getAuthorityHints()));
 
-                    String encodedSubNodeSubordinate = OpenIdFederationUtils.getSubordinateToken(subNodeSelfES.getMetadata().getFederationEntity().getFederationFetchEndpoint(), leafEs.getSubject(), session);
-                    EntityStatement subNodeSubordinateES = parseAndValidateSelfSigned(encodedSubNodeSubordinate, EntityStatement.class, subNodeSelfES.getJwks(), "entity-statement+jwt");
-                    if (!validateEntityStatementFields(subNodeSubordinateES, authHint, leafEs.getSubject())) {
-                        throw new ErrorResponseException(Errors.INVALID_TRUST_CHAIN, "Trust chain is not valid", Response.Status.BAD_REQUEST);
-                    }
-
-                    // Verify the child's token with the keys attested by the superior in subNodeSubordinateES
-                    if (childToken != null) {
+            // 2. Enforce Max Authority Hints using stream().limit()
+            leafEs.getAuthorityHints().stream()
+                    .limit(openIdFederationGeneralConfig.getMaxAuthorityHints())
+                    .forEach(authHint -> {
                         try {
-                            parseAndValidateSelfSigned(childToken, EntityStatement.class, subNodeSubordinateES.getJwks(), "entity-statement+jwt");
-                        } catch (Exception e) {
-                            throw new ErrorResponseException(Errors.INVALID_TRUST_CHAIN, "Child token fails verification against superior's attested JWKS", Response.Status.BAD_REQUEST);
+                            if ((visitedNodes.contains(authHint) && !trustAnchorIds.contains(authHint)) || !isValidUrl(authHint)) {
+                                return;
+                            }
+
+                            // (Retained from Fix-03: Add the exact authority hint URL to visitedNodes)
+                            visitedNodes.add(authHint);
+
+                            String encodedSubNodeSelf = OpenIdFederationUtils.getSelfSignedToken(authHint, session);
+                            OpenIdFederationConfig trustAnchorConfig = openIdFederationGeneralConfig.getOpenIdFederationList().stream().filter(x -> authHint.equals(x.getTrustAnchor())).findAny().orElse(null);
+                            EntityStatement subNodeSelfES = trustAnchorConfig != null ? parseAndValidateTrustAnchorEntityConfiguration(trustAnchorConfig, encodedSubNodeSelf) : parseAndValidateSelfSigned(encodedSubNodeSelf);
+                            if (!validateEntityStatementFields(subNodeSelfES, authHint, authHint)) {
+                                throw new ErrorResponseException(Errors.INVALID_TRUST_CHAIN, "Trust chain is not valid", Response.Status.BAD_REQUEST);
+                            }
+                            logger.debug(String.format("EntityStatement of %s about %s. AuthHints: %s", subNodeSelfES.getIssuer(), subNodeSelfES.getSubject(), subNodeSelfES.getAuthorityHints()));
+
+                            String encodedSubNodeSubordinate = OpenIdFederationUtils.getSubordinateToken(subNodeSelfES.getMetadata().getFederationEntity().getFederationFetchEndpoint(), leafEs.getSubject(), session);
+                            EntityStatement subNodeSubordinateES = parseAndValidateSelfSigned(encodedSubNodeSubordinate, EntityStatement.class, subNodeSelfES.getJwks(), "entity-statement+jwt");
+                            if (!validateEntityStatementFields(subNodeSubordinateES, authHint, leafEs.getSubject())) {
+                                throw new ErrorResponseException(Errors.INVALID_TRUST_CHAIN, "Trust chain is not valid", Response.Status.BAD_REQUEST);
+                            }
+
+                            // Verify the child's token with the keys attested by the superior in subNodeSubordinateES
+                            if (childToken != null) {
+                                try {
+                                    parseAndValidateSelfSigned(childToken, EntityStatement.class, subNodeSubordinateES.getJwks(), "entity-statement+jwt");
+                                } catch (Exception e) {
+                                    throw new ErrorResponseException(Errors.INVALID_TRUST_CHAIN, "Child token fails verification against superior's attested JWKS", Response.Status.BAD_REQUEST);
+                                }
+                            }
+
+                            if (leafEs.getSubject().equals(initialEntity) && (subNodeSubordinateES.getMetadata() == null ||
+                                    ((forRp && subNodeSubordinateES.getMetadata().getRelyingPartyMetadata() == null) || (!forRp && subNodeSubordinateES.getMetadata().getOpenIdProviderMetadata() == null)))
+                                    && !OpenIdFederationUtils.containedInListEndpoint(subNodeSelfES.getMetadata().getFederationEntity().getFederationListEndpoint(), forRp ? EntityTypeEnum.OPENID_RELYING_PARTY.getValue() : EntityTypeEnum.OPENID_PROVIDER.getValue(), initialEntity, session)) {
+                                //check that RP is registered as RP in immediate superior
+                                throw new ErrorResponseException(Errors.INVALID_TRUST_CHAIN, "Trust chain is not valid", Response.Status.BAD_REQUEST);
+                            }
+                            logger.debug(String.format("EntityStatement of %s about %s. AuthHints: %s", subNodeSubordinateES.getIssuer(), subNodeSubordinateES.getSubject(), subNodeSubordinateES.getAuthorityHints()));
+
+                            visitedNodes.add(subNodeSelfES.getSubject());
+                            if (trustAnchorConfig != null ) {
+                                TrustChainResolution trustAnchor = new TrustChainResolution();
+                                trustAnchor.getParsedChain().add(0, subNodeSelfES);
+                                trustAnchor.setTrustAnchorId(authHint);
+                                chainsList.add(trustAnchor);
+                            } else {
+                                // Pass depth + 1 to the next recursive level
+                                List<TrustChainResolution> subList = subTrustChains(encodedSubNodeSelf, initialEntity, subNodeSelfES, openIdFederationGeneralConfig, visitedNodes, forRp, depth + 1);
+                                for (TrustChainResolution tcr : subList) {
+                                    tcr.getParsedChain().add(0, subNodeSelfES);
+                                    chainsList.add(tcr);
+                                }
+                            }
+                        } catch (Exception ex) {
+                            logger.warn("Problem during trust chain resolution for " + initialEntity, ex);
                         }
-                    }
 
-                    if (leafEs.getSubject().equals(initialEntity) && (subNodeSubordinateES.getMetadata() == null ||
-                            ((forRp && subNodeSubordinateES.getMetadata().getRelyingPartyMetadata() == null) || (!forRp && subNodeSubordinateES.getMetadata().getOpenIdProviderMetadata() == null)))
-                            && !OpenIdFederationUtils.containedInListEndpoint(subNodeSelfES.getMetadata().getFederationEntity().getFederationListEndpoint(), forRp ? EntityTypeEnum.OPENID_RELYING_PARTY.getValue() : EntityTypeEnum.OPENID_PROVIDER.getValue(), initialEntity, session)) {
-                        //check that RP is registered as RP in immediate superior
-                        throw new ErrorResponseException(Errors.INVALID_TRUST_CHAIN, "Trust chain is not valid", Response.Status.BAD_REQUEST);
-                    }
-                    logger.debug(String.format("EntityStatement of %s about %s. AuthHints: %s", subNodeSubordinateES.getIssuer(), subNodeSubordinateES.getSubject(), subNodeSubordinateES.getAuthorityHints()));
+                    });
 
-                    visitedNodes.add(subNodeSelfES.getSubject());
-                    if (trustAnchorConfig != null ) {
-                        TrustChainResolution trustAnchor = new TrustChainResolution();
-                        trustAnchor.getParsedChain().add(0, subNodeSelfES);
-                        trustAnchor.setTrustAnchorId(authHint);
-                        chainsList.add(trustAnchor);
-                    } else {
-                        List<TrustChainResolution> subList = subTrustChains(encodedSubNodeSelf, initialEntity, subNodeSelfES, openIdFederationList, visitedNodes, forRp);
-                        for (TrustChainResolution tcr : subList) {
-                            tcr.getParsedChain().add(0, subNodeSelfES);
-                            chainsList.add(tcr);
-                        }
-                    }
-                } catch (Exception ex) {
-                    logger.warn("Problem during trust chain resolution for " + initialEntity, ex);
-                }
-
-            });
-
-        } else if (trustAnchorIds.contains(leafEs.getSubject())) {
+        } else if (trustAnchorIds.contains(leafEs.getSubject()) && isValidUrl(leafEs.getSubject())) {
             try {
-                OpenIdFederationConfig trustAnchorConfig = openIdFederationList.stream()
+                OpenIdFederationConfig trustAnchorConfig = openIdFederationGeneralConfig.getOpenIdFederationList().stream()
                         .filter(x -> leafEs.getSubject().equals(x.getTrustAnchor())).findAny().orElse(null);
 
                 if (trustAnchorConfig != null) {
@@ -207,7 +230,6 @@ public class OpenIdFederationTrustChainProcessor implements TrustChainProcessor 
         }
 
         return chainsList;
-
     }
 
     public <T extends EntityStatement> T parseAndValidateSelfSigned(String token, Class<T> clazz, JSONWebKeySet publicKey, String headerType) throws IOException, JWSInputException, VerificationException {
@@ -428,6 +450,9 @@ public class OpenIdFederationTrustChainProcessor implements TrustChainProcessor 
 
     @Override
     public IdentityProviderModel rPexcplicitRegistration(String opIssuer, String trustAnchor, IdentityProviderModel model, RealmModel realm, UriInfo frontendUriInfo, UriInfo backendUriInfo) throws Exception {
+        if (!isValidUrl(opIssuer)) {
+            throw new ErrorResponseException(Errors.INVALID_ISSUER, "No valid issuer", Response.Status.BAD_REQUEST);
+        }
         OpenIdFederationGeneralConfig federationGeneralConfig = realm.getOpenIdFederationGeneralConfig();
         OpenIdFederationConfig federationConfig = federationGeneralConfig.getOpenIdFederationList().stream().filter(x -> trustAnchor.equals(x.getTrustAnchor())).findAny().orElseThrow(() -> new NotFoundException("Trust anchor does not exist"));
         String opToken = OpenIdFederationUtils.getSelfSignedToken(opIssuer, session);
@@ -435,7 +460,7 @@ public class OpenIdFederationTrustChainProcessor implements TrustChainProcessor 
         if (!validateEntityStatementFields(opStatement, opIssuer, opIssuer) || opStatement.getMetadata().getOpenIdProviderMetadata() == null || !opStatement.getMetadata().getOpenIdProviderMetadata().getClientRegistrationTypesSupported().contains("explicit") || opStatement.getMetadata().getOpenIdProviderMetadata().getFederationRegistrationEndpoint() == null) {
             throw new ErrorResponseException(Errors.INVALID_TRUST_CHAIN, "No valid OP Entity Statement", Response.Status.BAD_REQUEST);
         }
-        TrustChainResolution trustChainResolution = constructTrustChains(opToken, opStatement, Stream.of(federationConfig).toList(), false);
+        TrustChainResolution trustChainResolution = constructTrustChains(opToken, opStatement, federationGeneralConfig, false);
         if (trustChainResolution == null) {
             throw new ErrorResponseException(Errors.INVALID_TRUST_CHAIN, "No common trust chain found", Response.Status.BAD_REQUEST);
         }
@@ -492,6 +517,51 @@ public class OpenIdFederationTrustChainProcessor implements TrustChainProcessor 
     @Override
     public void close() {
 
+    }
+
+    @Override
+    public boolean isValidUrl(String urlString) {
+        try {
+            if (urlString == null || urlString.isBlank()) {
+                return false;
+            }
+
+            URI uri = new URI(urlString);
+
+            // 1. Enforce HTTPS(MitM prevention)
+            if (!"https".equalsIgnoreCase(uri.getScheme())) {
+                logger.warnf("OpenID Federation URL %s is not https", urlString);
+                return false;
+            }
+
+            String host = uri.getHost();
+            if (host == null) {
+                logger.warnf("OpenID Federation URL %s does not contain a valid host", urlString);
+                return false;
+            }
+
+//            // 2. DNS Resolution and IP filtering (SSRF prevention)
+//            // Can throw UnknownHostException if the domain doesn't exist
+//            InetAddress[] addresses = InetAddress.getAllByName(host);
+//
+//            for (InetAddress address : addresses) {
+//                if (address.isLoopbackAddress() || address.isLinkLocalAddress() || address.isSiteLocalAddress() || address.isAnyLocalAddress()) {
+//                    logger.warnf("OpenID Federation URL %s contains a blocked address for host %s", urlString, host);
+//                    return false;
+//                }
+//
+//                // Catch-all for IPv6 Unique Local Addresses
+//                byte[] addressBytes = address.getAddress();
+//                if (addressBytes.length == 16 && (addressBytes[0] & (byte) 0xfe) == (byte) 0xfc) {
+//                    logger.warnf("OpenID Federation URL %s contains a blocked IPv6 address for host %s", urlString, host);
+//                    return false;
+//                }
+//            }
+            return true;
+        } catch (Exception e) {
+            logger.warn("OpenID Federation URL validation failed: " + e.getMessage(), e);
+            return false;
+        }
     }
 
 }
