@@ -24,6 +24,7 @@ import {
   FormErrorText,
   HelpItem,
   ScrollForm,
+  SelectControl,
   TextControl,
 } from "@keycloak/keycloak-ui-shared";
 
@@ -45,6 +46,7 @@ import { SwitchField } from "../../identity-providers/component/SwitchField";
 import { FormGroupField } from "../../identity-providers/component/FormGroupField";
 import { AdvancedSettings } from "./AdvancedSettings";
 import { FixedButtonsGroup } from "../../components/form/FixedButtonGroup";
+import { DefaultSwitchControl } from "../../components/SwitchControl";
 import { toOpenIdFederationCreate } from "../routes/OpenIdFederationCreate";
 import {
   type OpenIdFederationFormValues,
@@ -59,6 +61,8 @@ const promptOptions: Record<string, string> = {
   login: "login",
   select_account: "select_account",
 };
+
+const pkceMethods = ["plain", "S256"] as const;
 
 const jwksPlaceholder = `{
   "keys": [
@@ -102,6 +106,11 @@ export const OpenIdFederationForm = ({
   const passScope = useWatch({
     control,
     name: "idpConfiguration.passScope",
+  });
+
+  const isPkceEnabled = useWatch({
+    control,
+    name: "idpConfiguration.pkceEnabled",
   });
 
   const jwks = useWatch({
@@ -206,12 +215,25 @@ export const OpenIdFederationForm = ({
             label="backchannelLogout"
           />
           <SwitchField
+            field="idpConfiguration.sendIdTokenOnLogout"
+            label="sendIdTokenOnLogout"
+            defaultValue="true"
+          />
+          <SwitchField
+            field="idpConfiguration.sendClientIdOnLogout"
+            label="sendClientIdOnLogout"
+          />
+          <SwitchField
             field="idpConfiguration.disableUserInfo"
             label="disableUserInfo"
           />
           <SwitchField
             field="idpConfiguration.disableNonce"
             label="disableNonce"
+          />
+          <SwitchField
+            field="idpConfiguration.disableTypeClaimCheck"
+            label="disableTypeClaimCheck"
           />
           <SwitchField
             field="idpConfiguration.validateRefreshToken"
@@ -264,6 +286,30 @@ export const OpenIdFederationForm = ({
             field="idpConfiguration.acceptsPromptNoneForwardFromClient"
             label="acceptsPromptNone"
           />
+          <SwitchField
+            field="idpConfiguration.requiresShortStateParameter"
+            label="requiresShortStateParameter"
+          />
+
+          <DefaultSwitchControl
+            name="idpConfiguration.pkceEnabled"
+            label={t("pkceEnabled")}
+            stringify
+          />
+          {isPkceEnabled === "true" && (
+            <SelectControl
+              name="idpConfiguration.pkceMethod"
+              label={t("pkceMethod")}
+              labelIcon={t("pkceMethodHelp")}
+              controller={{
+                defaultValue: pkceMethods[0],
+              }}
+              options={pkceMethods.map((option) => ({
+                key: option,
+                value: t(option),
+              }))}
+            />
+          )}
 
           <FormGroup
             label={t("allowedClockSkew")}

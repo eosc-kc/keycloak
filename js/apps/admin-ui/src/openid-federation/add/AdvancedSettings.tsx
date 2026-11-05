@@ -1,5 +1,10 @@
 import type AuthenticationFlowRepresentation from "@keycloak/keycloak-admin-client/lib/defs/authenticationFlowRepresentation";
-import { FormGroup } from "@patternfly/react-core";
+import {
+  FormGroup,
+  Switch,
+  TextInput,
+  ValidatedOptions,
+} from "@patternfly/react-core";
 import {
   Select,
   SelectOption,
@@ -10,10 +15,19 @@ import { Controller, useFormContext, useWatch } from "react-hook-form";
 import { useTranslation } from "react-i18next";
 
 import { useAdminClient } from "../../admin-client";
-import { useFetch, HelpItem } from "@keycloak/keycloak-ui-shared";
+import {
+  FormErrorText,
+  HelpItem,
+  SelectControl,
+  useFetch,
+} from "@keycloak/keycloak-ui-shared";
 
-import type { FieldProps } from "../../identity-providers/component/FormGroupField";
+import {
+  type FieldProps,
+  FormGroupField,
+} from "../../identity-providers/component/FormGroupField";
 import { SwitchField } from "../../identity-providers/component/SwitchField";
+import type { OpenIdFederationFormValues } from "./form-state";
 
 const LoginFlow = ({
   field,
@@ -63,8 +77,7 @@ const LoginFlow = ({
           ];
 
           const rawValue = (rhfField.value ?? "") as string;
-          const displayedSelection =
-            rawValue === "" ? t("none") : rawValue;
+          const displayedSelection = rawValue === "" ? t("none") : rawValue;
 
           return (
             <Select
@@ -90,22 +103,25 @@ const LoginFlow = ({
   );
 };
 
-
 const syncModes = ["import", "legacy", "force"] as const;
+const showInAccountConsoleValues = ["ALWAYS", "WHEN_LINKED", "NEVER"];
 
 export const AdvancedSettings = () => {
   const { t } = useTranslation();
-  const { control } = useFormContext();
+  const {
+    control,
+    register,
+    formState: { errors },
+  } = useFormContext<OpenIdFederationFormValues>();
 
   const [syncModeOpen, setSyncModeOpen] = useState(false);
 
-  // if you need the old "filteredByClaim" behavior again, you can re-enable it with useWatch
-  // const filteredByClaim = useWatch({
-  //   control,
-  //   name: "idpConfiguration.filteredByClaim",
-  //   defaultValue: "false",
-  // });
-  // const claimFilterRequired = filteredByClaim === "true";
+  const filteredByClaim = useWatch({
+    control,
+    name: "idpConfiguration.filteredByClaim",
+    defaultValue: "false",
+  });
+  const claimFilterRequired = filteredByClaim === "true";
 
   return (
     <>
@@ -131,6 +147,98 @@ export const AdvancedSettings = () => {
         field="idpConfiguration.promotedLoginbutton"
         label="promotedLoginbutton"
       />
+      <SelectControl
+        name="idpConfiguration.showInAccountConsole"
+        label={t("showInAccountConsole")}
+        labelIcon={t("showInAccountConsoleHelp")}
+        options={showInAccountConsoleValues.map((showInAccountConsole) => ({
+          key: showInAccountConsole,
+          value: t(
+            `showInAccountConsole.${showInAccountConsole.toLowerCase()}`,
+          ),
+        }))}
+        controller={{
+          defaultValue: showInAccountConsoleValues[0],
+          rules: { required: t("required") },
+        }}
+      />
+
+      <FormGroupField label="filteredByClaim">
+        <Controller
+          name="idpConfiguration.filteredByClaim"
+          defaultValue="false"
+          control={control}
+          render={({ field }) => (
+            <Switch
+              id="filteredByClaim"
+              label={t("on")}
+              labelOff={t("off")}
+              isChecked={field.value === "true"}
+              onChange={(_event, value) => field.onChange(value.toString())}
+            />
+          )}
+        />
+      </FormGroupField>
+      {claimFilterRequired && (
+        <>
+          <FormGroup
+            label={t("claimFilterName")}
+            labelIcon={
+              <HelpItem
+                helpText={t("claimFilterNameHelp")}
+                fieldLabelId="claimFilterName"
+              />
+            }
+            fieldId="kc-oidfed-claim-filter-name"
+            isRequired
+          >
+            <TextInput
+              isRequired
+              id="kc-oidfed-claim-filter-name"
+              data-testid="claimFilterName"
+              validated={
+                errors.idpConfiguration?.claimFilterName
+                  ? ValidatedOptions.error
+                  : ValidatedOptions.default
+              }
+              {...register("idpConfiguration.claimFilterName", {
+                required: true,
+              })}
+            />
+            {errors.idpConfiguration?.claimFilterName && (
+              <FormErrorText message={t("required")} />
+            )}
+          </FormGroup>
+          <FormGroup
+            label={t("claimFilterValue")}
+            labelIcon={
+              <HelpItem
+                helpText={t("claimFilterValueHelp")}
+                fieldLabelId="claimFilterValue"
+              />
+            }
+            fieldId="kc-oidfed-claim-filter-value"
+            isRequired
+          >
+            <TextInput
+              isRequired
+              id="kc-oidfed-claim-filter-value"
+              data-testid="claimFilterValue"
+              validated={
+                errors.idpConfiguration?.claimFilterValue
+                  ? ValidatedOptions.error
+                  : ValidatedOptions.default
+              }
+              {...register("idpConfiguration.claimFilterValue", {
+                required: true,
+              })}
+            />
+            {errors.idpConfiguration?.claimFilterValue && (
+              <FormErrorText message={t("required")} />
+            )}
+          </FormGroup>
+        </>
+      )}
 
       <SwitchField field="idpConfiguration.passSetMfa" label="passSetMfa" />
 
@@ -172,7 +280,7 @@ export const AdvancedSettings = () => {
             >
               {syncModes.map((option) => {
                 const value = option.toUpperCase();
-                
+
                 return (
                   <SelectOption key={option} value={value}>
                     {t(`syncModes.${option}`)}
@@ -183,6 +291,10 @@ export const AdvancedSettings = () => {
           )}
         />
       </FormGroup>
+      <SwitchField
+        field="idpConfiguration.caseSensitiveOriginalUsername"
+        label="caseSensitiveOriginalUsername"
+      />
     </>
   );
 };
