@@ -208,6 +208,13 @@ public class OpenIdFederationUtils {
         provider.setEvent(event);
         provider.setAuth(new ClientRegistrationAuth(session, provider, event, "openid-connect"));
         provider.createOrUpdateClient(rpEntityStatement, (RPMetadata) validChain.getMetadataAfterPolicies());
-        return realm.getClientByClientId(clientId);
+
+        // Automatic registration (§12.1.1): require a signed Request Object on every subsequent
+        // authorization request, and keep the federation-specific claim checks (not only on create).
+        ClientModel client = realm.getClientByClientId(clientId);
+        if (client != null) {
+            client.setAttribute(OIDCConfigAttributes.OPENID_FEDERATION_REGISTRATION, OIDCConfigAttributes.OPENID_FEDERATION_AUTOMATIC);
+        }
+        return client;
     }
 }

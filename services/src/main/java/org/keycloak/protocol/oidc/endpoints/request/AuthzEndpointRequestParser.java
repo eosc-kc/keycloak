@@ -79,6 +79,12 @@ public abstract class AuthzEndpointRequestParser {
 
     public static final String AUTHZ_REQUEST_OBJECT = "ParsedRequestObject";
     public static final String AUTHZ_REQUEST_OBJECT_ENCRYPTED = "EncryptedRequestObject";
+    /**
+     * Session flag set when a nested/inner JWS Request Object was observed during decoding.
+     * Used by OpenID Federation automatic registration to reject JWE envelopes whose
+     * plaintext is raw JSON instead of a signed JWT (OpenID Federation §12.1.1.1).
+     */
+    public static final String AUTHZ_REQUEST_OBJECT_INNER_JWS = "ParsedRequestObjectInnerJws";
 
     /** Set of known protocol GET params not to be stored into additionalReqParams} */
     public static final Set<String> KNOWN_REQ_PARAMS = new HashSet<>();

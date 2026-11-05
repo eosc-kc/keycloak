@@ -16,10 +16,12 @@ import org.keycloak.common.util.Time;
 import org.keycloak.events.Details;
 import org.keycloak.events.Errors;
 import org.keycloak.exceptions.InvalidTrustChainException;
+import org.keycloak.models.ClientModel;
 import org.keycloak.models.KeycloakSession;
 import org.keycloak.models.RealmModel;
 import org.keycloak.models.enums.ClientRegistrationTypeEnum;
 import org.keycloak.models.enums.EntityTypeEnum;
+import org.keycloak.protocol.oidc.OIDCConfigAttributes;
 import org.keycloak.protocol.trustchain.TrustChainProcessor;
 import org.keycloak.representations.idm.ClientRepresentation;
 import org.keycloak.representations.openid_federation.EntityStatement;
@@ -90,6 +92,10 @@ public class OpenIdFederationClientRegistrationService extends AbstractClientReg
         RPMetadata rPMetadata = (RPMetadata) validChain.getMetadataAfterPolicies();
 
         ClientRepresentation client = createOrUpdateClient(statement, rPMetadata);
+        ClientModel clientModel = realm.getClientByClientId(client.getClientId());
+        if (clientModel != null) {
+            clientModel.setAttribute(OIDCConfigAttributes.OPENID_FEDERATION_REGISTRATION, OIDCConfigAttributes.OPENID_FEDERATION_EXPLICIT);
+        }
         URI uri = getRegistrationClientUri(client.getClientId());
         RPMetadata rPMetadataResponse = DescriptionConverter.toExternalResponse(session, client, uri, RPMetadata.class, rPMetadata.getScope()!=null && rPMetadata.getScope().contains(OAuth2Constants.SCOPE_OPENID));
         event.detail(Details.GRANTED_CLIENT, rPMetadataResponse.getScope());

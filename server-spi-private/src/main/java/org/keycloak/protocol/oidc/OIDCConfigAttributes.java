@@ -111,6 +111,11 @@ public final class OIDCConfigAttributes {
     public static final String SECTOR_IDENTIFIER_URI = "sectorIdentifierUri";
     public static final String EXPIRATION_TIME = "expiration.time";
 
+    //Marks OpenID Federation registration.
+    public static final String OPENID_FEDERATION_REGISTRATION = "openid.federation.registration";
+    public static final String OPENID_FEDERATION_EXPLICIT = "explicit";
+    public static final String OPENID_FEDERATION_AUTOMATIC = "automatic";
+
     public static final String ALLOW_TOKEN_INTROSPECTION_WITHOUT_AUDIENCE_CHECK = "allow.token.introspection.without.audience.check";
 
     public static final String ALLOW_USERINFO_WITH_LIGHTWEIGHT_ACCESS_TOKEN = "allow.userinfo.with.lightweight.access.token";

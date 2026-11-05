@@ -14,6 +14,7 @@ Our Keycloak version is working well with PostgreSQL database. For using other S
 
 ### Fixed
 - Fix F-05. Unauthenticated outbound fetches without limits — high
+- Fix F-06. Automatic registration: Request Object checks incomplete — high
 
 ## [26.6.6-1.3] -2026-11-03
 
