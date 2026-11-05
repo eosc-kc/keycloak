@@ -39,6 +39,7 @@ import org.keycloak.models.KeycloakSession;
 import org.keycloak.models.enums.ClientRegistrationTypeEnum;
 import org.keycloak.models.enums.EntityTypeEnum;
 import org.keycloak.protocol.oidc.OIDCClientSecretConfigWrapper;
+import org.keycloak.protocol.oidc.OIDCConfigAttributes;
 import org.keycloak.protocol.oidc.OIDCLoginProtocol;
 import org.keycloak.provider.ProviderConfigProperty;
 import org.keycloak.representations.idm.ClientRepresentation;
@@ -132,6 +133,15 @@ public class ClientIdAndSecretAuthenticator extends AbstractClientAuthenticator 
             return;
         }
 
+        // OpenID Federation §12.1: Automatic Registration requires asymmetric client authentication;
+        // the OP must not accept client_secret for automatically registered clients.
+        if (OIDCConfigAttributes.OPENID_FEDERATION_AUTOMATIC.equals(
+                client.getAttribute(OIDCConfigAttributes.OPENID_FEDERATION_REGISTRATION))) {
+            Response challengeResponse = ClientAuthUtil.errorResponse(Response.Status.UNAUTHORIZED.getStatusCode(), "unauthorized_client",
+                    "OpenID Federation automatic registration clients must use asymmetric client authentication");
+            context.failure(AuthenticationFlowError.INVALID_CLIENT_CREDENTIALS, challengeResponse);
+            return;
+        }
 
         // Skip client_secret validation for public client
         if (client.isPublicClient()) {

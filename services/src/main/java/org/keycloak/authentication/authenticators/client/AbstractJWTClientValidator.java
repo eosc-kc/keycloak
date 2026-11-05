@@ -122,14 +122,17 @@ public abstract class AbstractJWTClientValidator extends AbstractBaseJWTValidato
             try {
                 client = OpenIdFederationUtils.createOrUpdateAutomaticClient(clientId, context.getSession(), realm);
             } catch (Exception e) {
+                logger.errorf(e, "Error creating/updating automatic OpenID Federation client '%s'", clientId);
                 return client == null ? failure(AuthenticationFlowError.CLIENT_NOT_FOUND) : failure(AuthenticationFlowError.CLIENT_DISABLED);
             }
         } else if (client == null) {
             return failure(AuthenticationFlowError.CLIENT_NOT_FOUND);
-        } else {
-            context.getEvent().client(client.getClientId());
-            context.setClient(client);
         }
+
+        // Keep assertion state and auth flow context in sync after automatic registration create/update
+        clientAssertionState.setClient(client);
+        context.getEvent().client(client.getClientId());
+        context.setClient(client);
 
         if (!client.isEnabled()) {
             return failure(AuthenticationFlowError.CLIENT_DISABLED);

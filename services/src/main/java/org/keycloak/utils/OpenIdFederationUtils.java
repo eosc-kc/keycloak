@@ -15,6 +15,7 @@ import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.core.UriInfo;
 
 import org.keycloak.OAuth2Constants;
+import org.keycloak.authentication.authenticators.client.JWTClientAuthenticator;
 import org.keycloak.broker.oidc.OAuth2IdentityProviderConfig;
 import org.keycloak.broker.oidc.OIDCIdentityProviderConfig;
 import org.keycloak.broker.oidc.federation.OpenIdFederationIdentityProviderConfig;
@@ -209,12 +210,25 @@ public class OpenIdFederationUtils {
         provider.setAuth(new ClientRegistrationAuth(session, provider, event, "openid-connect"));
         provider.createOrUpdateClient(rpEntityStatement, (RPMetadata) validChain.getMetadataAfterPolicies());
 
-        // Automatic registration (§12.1.1): require a signed Request Object on every subsequent
-        // authorization request, and keep the federation-specific claim checks (not only on create).
+        // Automatic registration (§12.1): mark client and enforce asymmetric client authentication.
+        // No client secret is assigned; subsequent authz/token/userinfo use the automatic attribute.
         ClientModel client = realm.getClientByClientId(clientId);
         if (client != null) {
-            client.setAttribute(OIDCConfigAttributes.OPENID_FEDERATION_REGISTRATION, OIDCConfigAttributes.OPENID_FEDERATION_AUTOMATIC);
+            applyAutomaticRegistrationClientSettings(client);
         }
         return client;
+    }
+
+    /**
+     * OpenID Federation §12.1: asymmetric cryptography MUST be used for Automatic Registration;
+     * the OP neither assigns nor returns a Client Secret. Also require Request Object on later
+     * authorization requests (defense in depth alongside the federation request parser).
+     */
+    public static void applyAutomaticRegistrationClientSettings(ClientModel client) {
+        client.setAttribute(OIDCConfigAttributes.OPENID_FEDERATION_REGISTRATION, OIDCConfigAttributes.OPENID_FEDERATION_AUTOMATIC);
+        String authenticator = client.getClientAuthenticatorType();
+        if (authenticator == null || "client-secret".equals(authenticator)) {
+            client.setClientAuthenticatorType(JWTClientAuthenticator.PROVIDER_ID);
+        }
     }
 }

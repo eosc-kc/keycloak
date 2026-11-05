@@ -219,12 +219,14 @@ public class UserInfoEndpoint {
 
             String clientId = token.getIssuedFor();
             clientModel = realm.getClientByClientId(clientId);
+            // Same automatic-registration resolution as AuthorizationEndpoint / token client auth
             if (UriUtils.isUri(clientId) && (clientModel == null || !clientModel.isEnabled()) && realm.isOpenIdFederationTypeRegistrationSupported(EntityTypeEnum.OPENID_PROVIDER, ClientRegistrationTypeEnum.AUTOMATIC)) {
                 try {
                     clientModel = OpenIdFederationUtils.createOrUpdateAutomaticClient(clientId, session, realm);
                 } catch (Exception e) {
+                    logger.errorf(e, "Error creating/updating automatic OpenID Federation client '%s' at UserInfo", clientId);
                     event.error(clientModel == null ? Errors.CLIENT_NOT_FOUND : Errors.CLIENT_DISABLED);
-                    throw error.invalidToken(clientModel == null ?"Client not found" : "Client disabled");
+                    throw error.invalidToken(clientModel == null ? "Client not found" : "Client disabled");
                 }
             } else if (clientModel == null) {
                 event.error(Errors.CLIENT_NOT_FOUND);
