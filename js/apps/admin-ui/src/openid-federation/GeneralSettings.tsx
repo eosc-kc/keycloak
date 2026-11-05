@@ -7,6 +7,7 @@ import {
   FormGroup,
   PageSection,
   Switch,
+  TextInput,
   ValidatedOptions,
   ToolbarItem,
   Stack,
@@ -15,7 +16,13 @@ import {
 import { useConfirmDialog } from "../components/confirm-dialog/ConfirmDialog";
 import { Link, useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
-import { Controller, FormProvider, useForm, useWatch } from "react-hook-form";
+import {
+  Controller,
+  FormProvider,
+  useForm,
+  useFormContext,
+  useWatch,
+} from "react-hook-form";
 import { useTranslation } from "react-i18next";
 import { MultiLineInput } from "../components/multi-line-input/MultiLineInput";
 import { FormAccess } from "../components/form/FormAccess";
@@ -60,6 +67,127 @@ const openIdFederationRPClientRegistrationTypesSupported: ClientRegistrationType
   ["EXPLICIT"];
 const openIdFederationOPClientRegistrationTypesSupported: ClientRegistrationTypesSupported[] =
   ["EXPLICIT", "AUTOMATIC"];
+
+type AdvancedSettingName =
+  | "openIdFederationConnectionTimeout"
+  | "openIdFederationSocketTimeout"
+  | "openIdFederationConnectionRequestTimeout"
+  | "openIdFederationMaxAuthorityHints"
+  | "openIdFederationMaxHops"
+  | "openIdFederationTotalTimeout";
+
+type AdvancedNumberControlProps = {
+  name: AdvancedSettingName;
+  label: string;
+  helpText: string;
+  minimum: number;
+};
+
+const AdvancedNumberControl = ({
+  name,
+  label,
+  helpText,
+  minimum,
+}: AdvancedNumberControlProps) => {
+  const { t } = useTranslation();
+  const { control } = useFormContext<RealmRepresentation>();
+
+  return (
+    <FormGroup
+      label={label}
+      fieldId={name}
+      isRequired
+      labelIcon={<HelpItem helpText={helpText} fieldLabelId={name} />}
+    >
+      <Controller
+        name={name}
+        control={control}
+        rules={{
+          required: t("required"),
+          min: {
+            value: minimum,
+            message: t("openIdFederationValueAtLeast", { value: minimum }),
+          },
+          validate: (value) =>
+            Number.isInteger(value) || t("openIdFederationIntegerValue"),
+        }}
+        render={({ field, fieldState }) => (
+          <>
+            <TextInput
+              id={name}
+              data-testid={name}
+              name={field.name}
+              type="number"
+              min={minimum}
+              step={1}
+              value={field.value ?? ""}
+              onBlur={field.onBlur}
+              ref={field.ref}
+              onChange={(_event, value) =>
+                field.onChange(value === "" ? "" : Number(value))
+              }
+              validated={
+                fieldState.error
+                  ? ValidatedOptions.error
+                  : ValidatedOptions.default
+              }
+              aria-label={label}
+              isRequired
+            />
+            {fieldState.error?.message && (
+              <FormErrorText message={fieldState.error.message} />
+            )}
+          </>
+        )}
+      />
+    </FormGroup>
+  );
+};
+
+const OpenIdFederationAdvancedSettings = () => {
+  const { t } = useTranslation();
+
+  return (
+    <>
+      <AdvancedNumberControl
+        name="openIdFederationConnectionTimeout"
+        label={t("connectionTimeout")}
+        helpText={t("openIdFederationConnectionTimeoutHelp")}
+        minimum={-1}
+      />
+      <AdvancedNumberControl
+        name="openIdFederationSocketTimeout"
+        label={t("readTimeout")}
+        helpText={t("openIdFederationSocketTimeoutHelp")}
+        minimum={0}
+      />
+      <AdvancedNumberControl
+        name="openIdFederationConnectionRequestTimeout"
+        label={t("openIdFederationConnectionRequestTimeout")}
+        helpText={t("openIdFederationConnectionRequestTimeoutHelp")}
+        minimum={0}
+      />
+      <AdvancedNumberControl
+        name="openIdFederationMaxAuthorityHints"
+        label={t("openIdFederationMaxAuthorityHints")}
+        helpText={t("openIdFederationMaxAuthorityHintsHelp")}
+        minimum={1}
+      />
+      <AdvancedNumberControl
+        name="openIdFederationMaxHops"
+        label={t("openIdFederationMaxHops")}
+        helpText={t("openIdFederationMaxHopsHelp")}
+        minimum={1}
+      />
+      <AdvancedNumberControl
+        name="openIdFederationTotalTimeout"
+        label={t("openIdFederationTotalTimeout")}
+        helpText={t("openIdFederationTotalTimeoutHelp")}
+        minimum={1}
+      />
+    </>
+  );
+};
 
 const OpenIdFederationLink = (
   openIdFederation: OpenIdFederationRepresentation,
@@ -171,6 +299,15 @@ export const OpenIdFederationGeneralSettings = ({
       openIdFederationHistoricalKeysEndpoint:
         realm.openIdFederationHistoricalKeysEndpoint ?? "",
       openIdFederationLifespan: realm.openIdFederationLifespan ?? 86400,
+      openIdFederationConnectionTimeout:
+        realm.openIdFederationConnectionTimeout ?? 3,
+      openIdFederationSocketTimeout: realm.openIdFederationSocketTimeout ?? 5,
+      openIdFederationConnectionRequestTimeout:
+        realm.openIdFederationConnectionRequestTimeout ?? 5,
+      openIdFederationMaxAuthorityHints:
+        realm.openIdFederationMaxAuthorityHints ?? 5,
+      openIdFederationMaxHops: realm.openIdFederationMaxHops ?? 10,
+      openIdFederationTotalTimeout: realm.openIdFederationTotalTimeout ?? 30,
       openIdFederationEnabled: realm.openIdFederationEnabled ?? false,
       // ...add other fields as needed
     };
@@ -718,6 +855,21 @@ export const OpenIdFederationGeneralSettings = ({
                         />
                       }
                     />
+                  ),
+                },
+                {
+                  title: t("advancedSettings"),
+                  panel: (
+                    <FormProvider {...form}>
+                      <FormAccess
+                        isHorizontal
+                        role="manage-realm"
+                        className="pf-u-mt-lg"
+                        onSubmit={handleSubmit(save)}
+                      >
+                        <OpenIdFederationAdvancedSettings />
+                      </FormAccess>
+                    </FormProvider>
                   ),
                 },
               ]

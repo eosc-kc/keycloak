@@ -144,10 +144,16 @@ export default interface RealmRepresentation {
   openIdFederationResolveEndpoint?: string;
   openIdFederationHistoricalKeysEndpoint?: string;
   openIdFederationLifespan?: number;
+  openIdFederationConnectionTimeout?: number;
+  openIdFederationSocketTimeout?: number;
+  openIdFederationConnectionRequestTimeout?: number;
+  openIdFederationMaxAuthorityHints?: number;
+  openIdFederationMaxHops?: number;
+  openIdFederationTotalTimeout?: number;
   openIdFederationEntityTypes?: EntityTypesSupported[];
   openIdFederationOPClientRegistrationTypesSupported?: ClientRegistrationTypesSupported[];
   openIdFederationRPClientRegistrationTypesSupported?: ClientRegistrationTypesSupported[];
-  claimsSupported?:string[];
+  claimsSupported?: string[];
   issuer?: string;
 }
 
