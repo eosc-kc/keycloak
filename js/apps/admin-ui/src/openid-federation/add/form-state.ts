@@ -19,6 +19,17 @@ export type JwksValidationMessage =
   | "jwksDuplicateKeyId"
   | "jwksInvalidKey";
 
+const defaultIdpConfiguration = {
+  sendIdTokenOnLogout: "true",
+  sendClientIdOnLogout: "false",
+  disableTypeClaimCheck: "false",
+  requiresShortStateParameter: "false",
+  pkceEnabled: "false",
+  showInAccountConsole: "ALWAYS",
+  filteredByClaim: "false",
+  caseSensitiveOriginalUsername: "false",
+};
+
 const isObject = (value: unknown): value is Record<string, unknown> =>
   typeof value === "object" && value !== null && !Array.isArray(value);
 
@@ -84,6 +95,10 @@ export const toOpenIdFederationFormValues = (
   representation: OpenIdFederationRepresentation,
 ): OpenIdFederationFormValues => ({
   ...representation,
+  idpConfiguration: {
+    ...defaultIdpConfiguration,
+    ...representation.idpConfiguration,
+  },
   jwks: representation.jwks ? prettyPrintJSON(representation.jwks) : "",
 });
 
