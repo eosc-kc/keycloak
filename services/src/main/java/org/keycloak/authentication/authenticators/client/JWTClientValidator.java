@@ -7,6 +7,7 @@ import java.util.List;
 import org.keycloak.authentication.ClientAuthenticationFlowContext;
 import org.keycloak.protocol.LoginProtocol;
 import org.keycloak.protocol.oidc.OIDCAdvancedConfigWrapper;
+import org.keycloak.protocol.oidc.OIDCConfigAttributes;
 import org.keycloak.protocol.oidc.OIDCLoginProtocol;
 import org.keycloak.protocol.oidc.OIDCLoginProtocolService;
 import org.keycloak.protocol.oidc.OIDCProviderConfig;
@@ -28,6 +29,14 @@ public class JWTClientValidator extends AbstractJWTClientValidator {
     @Override
     protected List<String> getExpectedAudiences() {
         String issuerUrl = Urls.realmIssuer(context.getUriInfo().getBaseUri(), realm.getName());
+
+        // OpenID Federation §12.1.1.2 / processing of private_key_jwt for Automatic Registration:
+        // audience MUST be the OP Entity Identifier and MUST NOT include any other values.
+        if (clientAssertionState.getClient() != null && OIDCConfigAttributes.OPENID_FEDERATION_AUTOMATIC.equals(
+                clientAssertionState.getClient().getAttribute(OIDCConfigAttributes.OPENID_FEDERATION_REGISTRATION))) {
+            return List.of(issuerUrl);
+        }
+
         String tokenUrl = OIDCLoginProtocolService.tokenUrl(context.getUriInfo().getBaseUriBuilder()).build(realm.getName()).toString();
         String tokenIntrospectUrl = OIDCLoginProtocolService.tokenIntrospectionUrl(context.getUriInfo().getBaseUriBuilder()).build(realm.getName()).toString();
         String parEndpointUrl = ParEndpoint.parUrl(context.getUriInfo().getBaseUriBuilder()).build(realm.getName()).toString();
@@ -40,6 +49,10 @@ public class JWTClientValidator extends AbstractJWTClientValidator {
 
     @Override
     protected boolean isMultipleAudienceAllowed() {
+        if (clientAssertionState.getClient() != null && OIDCConfigAttributes.OPENID_FEDERATION_AUTOMATIC.equals(
+                clientAssertionState.getClient().getAttribute(OIDCConfigAttributes.OPENID_FEDERATION_REGISTRATION))) {
+            return false;
+        }
         OIDCLoginProtocol loginProtocol = (OIDCLoginProtocol) context.getSession().getProvider(LoginProtocol.class, OIDCLoginProtocol.LOGIN_PROTOCOL);
         OIDCProviderConfig config = loginProtocol.getConfig();
         return config.isAllowMultipleAudiencesForJwtClientAuthentication();
