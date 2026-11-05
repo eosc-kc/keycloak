@@ -190,7 +190,7 @@ public class AuthorizationEndpointRequestParserProcessor {
             client.setEnabled(false);
             client.updateClient();
             ServicesLogger.LOGGER.invalidRequest(e);
-            event.error(Errors.INVALID_REQUEST);
+            event.error(e.getMessage());
             event.detail("Automatic","true");
             throw new ErrorPageException(session, Response.Status.BAD_REQUEST, Messages.INVALID_REQUEST_AUTOMATIC_REGISTRATION);
         }

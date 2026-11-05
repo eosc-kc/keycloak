@@ -52,6 +52,7 @@ import org.keycloak.organization.utils.Organizations;
 import org.keycloak.protocol.AuthorizationEndpointBase;
 import org.keycloak.protocol.oidc.ClientCreationUtils;
 import org.keycloak.protocol.oidc.OIDCAdvancedConfigWrapper;
+import org.keycloak.protocol.oidc.OIDCConfigAttributes;
 import org.keycloak.protocol.oidc.OIDCLoginProtocol;
 import org.keycloak.protocol.oidc.endpoints.checker.AuthorizationCheckException;
 import org.keycloak.protocol.oidc.endpoints.checker.AuthorizationEndpointChecker;
@@ -113,7 +114,6 @@ public class AuthorizationEndpoint extends AuthorizationEndpointBase {
 
     private AuthorizationEndpointRequest request;
     private String redirectUri;
-    private boolean automaticRegistration = false;
     private boolean ishareRequest = false;
 
     public AuthorizationEndpoint(KeycloakSession session, EventBuilder event) {
@@ -162,7 +162,10 @@ public class AuthorizationEndpoint extends AuthorizationEndpointBase {
         }
         checkClient(clientId, params);
 
-        request = automaticRegistration ? AuthorizationEndpointRequestParserProcessor.parseRequestOpenIdFederation(event, session, client, params, AuthorizationEndpointRequestParserProcessor.EndpointType.OIDC_AUTH_ENDPOINT) :AuthorizationEndpointRequestParserProcessor.parseRequest(event, session, client, params, AuthorizationEndpointRequestParserProcessor.EndpointType.OIDC_AUTH_ENDPOINT, ishareRequest);
+        // Automatically registered federation clients must keep using the §12.1.1.1 Request Object path on every request
+        request = OIDCConfigAttributes.OPENID_FEDERATION_AUTOMATIC.equals(client.getAttribute(OIDCConfigAttributes.OPENID_FEDERATION_REGISTRATION))
+                ? AuthorizationEndpointRequestParserProcessor.parseRequestOpenIdFederation(event, session, client, params, AuthorizationEndpointRequestParserProcessor.EndpointType.OIDC_AUTH_ENDPOINT)
+                : AuthorizationEndpointRequestParserProcessor.parseRequest(event, session, client, params, AuthorizationEndpointRequestParserProcessor.EndpointType.OIDC_AUTH_ENDPOINT, ishareRequest);
 
         AuthorizationEndpointChecker checker = new AuthorizationEndpointChecker()
                 .event(event)
@@ -332,10 +335,11 @@ public class AuthorizationEndpoint extends AuthorizationEndpointBase {
         } else if (UriUtils.isUri(clientId) && (client == null || !client.isEnabled()) && realm.isOpenIdFederationTypeRegistrationSupported(EntityTypeEnum.OPENID_PROVIDER, ClientRegistrationTypeEnum.AUTOMATIC)) {
                 try {
                     client = OpenIdFederationUtils.createOrUpdateAutomaticClient(clientId, session, realm);
-                    automaticRegistration = true;
                 } catch (ErrorPageException | ErrorResponseException e) {
+                    logger.errorf(e, "Error creating/updating automatic client '%s'", clientId);
                     throw e;
                 } catch (Exception e) {
+                    logger.errorf(e, "Unexpected error occurred while creating/updating automatic client '%s'", clientId);
                     throw new ErrorResponseException(Errors.INVALID_REQUEST, e.getMessage(), Response.Status.BAD_REQUEST);
                 }
         }
