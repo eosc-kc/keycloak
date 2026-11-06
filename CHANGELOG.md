@@ -19,6 +19,7 @@ Our Keycloak version is working well with PostgreSQL database. For using other S
 - Fix F-05. Unauthenticated outbound fetches without limits — high
 - Fix F-06. Automatic registration: Request Object checks incomplete — high
 - Rollback or disable automatic registered OPenID Federation client when validation fails in JWTClientAuthenticator and UserInfoEndpoint
+- Correct calculation of when an OpenID Federation Client expiration schedule task run
 
 ## [26.6.6-1.3] -2026-11-03
 
