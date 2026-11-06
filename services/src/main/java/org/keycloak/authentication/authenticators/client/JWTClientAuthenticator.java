@@ -84,7 +84,15 @@ public class JWTClientAuthenticator extends AbstractClientAuthenticator {
 
             JWTClientValidator validator = new JWTClientValidator(context, this::verifySignature, getId());
 
-            if (!validator.validate()) return;
+            if (!validator.validate()) {
+                ClientModel client = clientAssertionState.getClient();
+                if (OIDCConfigAttributes.OPENID_FEDERATION_AUTOMATIC.equals(
+                        client.getAttribute(OIDCConfigAttributes.OPENID_FEDERATION_REGISTRATION))) {
+                    client.setEnabled(false);
+                    client.updateClient();
+                }
+                return;
+            }
 
             context.success();
         } catch (Exception e) {

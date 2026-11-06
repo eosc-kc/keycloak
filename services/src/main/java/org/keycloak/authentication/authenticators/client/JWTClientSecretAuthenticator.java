@@ -74,7 +74,7 @@ public class JWTClientSecretAuthenticator extends AbstractClientAuthenticator {
             }
 
             // OpenID Federation §12.1: Automatic Registration requires asymmetric client authentication
-            if (clientAssertionState.getClient() != null && OIDCConfigAttributes.OPENID_FEDERATION_AUTOMATIC.equals(
+            if (clientAssertionState.getClient() == null || OIDCConfigAttributes.OPENID_FEDERATION_AUTOMATIC.equals(
                     clientAssertionState.getClient().getAttribute(OIDCConfigAttributes.OPENID_FEDERATION_REGISTRATION))) {
                 Response challengeResponse = ClientAuthUtil.errorResponse(Response.Status.UNAUTHORIZED.getStatusCode(), "unauthorized_client",
                         "OpenID Federation automatic registration clients must use asymmetric client authentication");
