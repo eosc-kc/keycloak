@@ -37,6 +37,9 @@ export const ClientDescription = ({
   const expirationTime = watch(
     convertAttributeNameToForm("attributes.expiration.time"),
   ) as unknown as number;
+  const openIdFederationRegistration = watch(
+    convertAttributeNameToForm("attributes.openid.federation.registration"),
+  ) as unknown as string;
   const lastRefreshed = watch(
     convertAttributeNameToForm("attributes.saml.last.refresh.time"),
   ) as unknown as string;
@@ -188,6 +191,13 @@ export const ClientDescription = ({
           }
         >
           {formatDate(new Date(expirationTime * 1000), FORMAT_DATE_AND_TIME)}
+        </FormGroup>
+      )}
+      {openIdFederationRegistration && (
+        <FormGroup
+          label={t("openIdFederationClientRegistrationTypesSupported")}
+        >
+          {openIdFederationRegistration}
         </FormGroup>
       )}
     </FormAccess>
