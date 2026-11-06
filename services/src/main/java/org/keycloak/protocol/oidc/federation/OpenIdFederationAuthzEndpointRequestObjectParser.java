@@ -38,6 +38,8 @@ public class OpenIdFederationAuthzEndpointRequestObjectParser extends AuthzEndpo
         this.requestParams = session.tokens().decodeClientJWT(requestObject, client, createRequestObjectValidator(session), JsonNode.class);
 
         if (this.requestParams == null) {
+            client.setEnabled(false);
+            client.updateClient();
             throw new RuntimeException("Failed to verify signature on 'request' object");
         }
 
@@ -45,10 +47,14 @@ public class OpenIdFederationAuthzEndpointRequestObjectParser extends AuthzEndpo
         // Encryption alone (JWE wrapping raw JSON) is not enough; a nested signed JWS is required.
         if (session.getAttribute(AUTHZ_REQUEST_OBJECT_ENCRYPTED) != null
                 && session.getAttribute(AUTHZ_REQUEST_OBJECT_INNER_JWS) == null) {
+            client.setEnabled(false);
+            client.updateClient();
             throw new RuntimeException("Encrypted request object for OpenID Federation automatic authorisation must contain a nested signed JWT");
         }
 
         if (requestParams.has(OIDCLoginProtocol.REQUEST_URI_PARAM)) {
+            client.setEnabled(false);
+            client.updateClient();
             throw new RuntimeException("The request_uri claim should not be set in the request object");
         }
 
@@ -56,6 +62,8 @@ public class OpenIdFederationAuthzEndpointRequestObjectParser extends AuthzEndpo
                 || !requestParams.has("client_id") || !requestParams.has("iss") || !requestParams.has("aud")
                 || !client.getClientId().equals(requestParams.get("client_id").asText()) || !client.getClientId().equals(requestParams.get("iss").asText())
                 || !Urls.realmIssuer(session.getContext().getUri(UrlType.FRONTEND).getBaseUri(), session.getContext().getRealm().getName()).equals(requestParams.get("aud").asText())) {
+            client.setEnabled(false);
+            client.updateClient();
             throw new RuntimeException(Messages.OPENID_FEDERATION_AUTOMATIC_FALSE_REQUEST_OBJECT);
         }
 
@@ -64,11 +72,15 @@ public class OpenIdFederationAuthzEndpointRequestObjectParser extends AuthzEndpo
         long now = Time.currentTime();
         String jti = requestParams.get("jti").asText();
         if (now >= exp || StringUtil.isBlank(jti)) {
+            client.setEnabled(false);
+            client.updateClient();
             throw new RuntimeException(Messages.OPENID_FEDERATION_AUTOMATIC_FALSE_REQUEST_OBJECT);
         }
 
         //jti unique check
         if (!session.singleUseObjects().putIfAbsent(REQUEST_OBJECT_JTI_KEY_PREFIX + client.getClientId() + "." + jti, exp - now)) {
+            client.setEnabled(false);
+            client.updateClient();
             throw new RuntimeException(Messages.OPENID_FEDERATION_AUTOMATIC_FALSE_REQUEST_OBJECT);
         }
 

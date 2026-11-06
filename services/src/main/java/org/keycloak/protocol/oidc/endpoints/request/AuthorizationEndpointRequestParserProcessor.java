@@ -144,8 +144,12 @@ public class AuthorizationEndpointRequestParserProcessor {
             String requestUriParam = requestParams.getFirst(OIDCLoginProtocol.REQUEST_URI_PARAM);
 
             if (requestParam != null && requestUriParam != null) {
+                client.setEnabled(false);
+                client.updateClient();
                 throw new RuntimeException("Illegal to use both 'request' and 'request_uri' parameters together");
             } else  if (requestParam == null && requestUriParam == null) {
+                client.setEnabled(false);
+                client.updateClient();
                 throw new RuntimeException("For automatic client registration, you need to use either 'request' or 'request_uri' parameter");
             }
 
@@ -153,9 +157,13 @@ public class AuthorizationEndpointRequestParserProcessor {
 
             if (OIDCConfigAttributes.REQUEST_OBJECT_REQUIRED_REQUEST.equals(requestObjectRequired)
                     && requestParam == null) {
+                client.setEnabled(false);
+                client.updateClient();
                 throw new RuntimeException("Client is required to use 'request' parameter.");
             } else if (OIDCConfigAttributes.REQUEST_OBJECT_REQUIRED_REQUEST_URI.equals(requestObjectRequired)
                     && requestUriParam == null) {
+                client.setEnabled(false);
+                client.updateClient();
                 throw new RuntimeException("Client is required to use 'request_uri' parameter.");
             }
 
@@ -165,12 +173,16 @@ public class AuthorizationEndpointRequestParserProcessor {
                 // Define, if the request is `PAR` or usual `Request Object`.
                 RequestUriType requestUriType = getRequestUriType(requestUriParam);
                 if (requestUriType == RequestUriType.PAR) {
+                    client.setEnabled(false);
+                    client.updateClient();
                     throw new RuntimeException("For automatic client registration, push authorization is not supported");
                 } else {
                     // Validate "requestUriParam" with allowed requestUris
                     List<String> requestUris = OIDCAdvancedConfigWrapper.fromClientModel(client).getRequestUris();
                     String requestUri = RedirectUtils.verifyRedirectUri(session, client.getRootUrl(), requestUriParam, new HashSet<>(requestUris), false);
                     if (requestUri == null) {
+                        client.setEnabled(false);
+                        client.updateClient();
                         throw new RuntimeException("Specified 'request_uri' not allowed for this client.");
                     }
                     try (InputStream is = session.getProvider(HttpClientProvider.class).get(requestUri)) {
@@ -187,8 +199,6 @@ public class AuthorizationEndpointRequestParserProcessor {
             return request;
 
         } catch (Exception e) {
-            client.setEnabled(false);
-            client.updateClient();
             ServicesLogger.LOGGER.invalidRequest(e);
             event.error(e.getMessage());
             event.detail("Automatic","true");

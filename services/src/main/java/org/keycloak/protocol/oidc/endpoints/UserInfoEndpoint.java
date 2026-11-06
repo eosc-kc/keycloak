@@ -192,6 +192,7 @@ public class UserInfoEndpoint {
             throw error.unauthorized();
         }
 
+        boolean isAutomaticClientUpdated = false;
         AccessToken token;
         ClientModel clientModel = null;
         try {
@@ -223,6 +224,7 @@ public class UserInfoEndpoint {
             if (UriUtils.isUri(clientId) && (clientModel == null || !clientModel.isEnabled()) && realm.isOpenIdFederationTypeRegistrationSupported(EntityTypeEnum.OPENID_PROVIDER, ClientRegistrationTypeEnum.AUTOMATIC)) {
                 try {
                     clientModel = OpenIdFederationUtils.createOrUpdateAutomaticClient(clientId, session, realm);
+                    isAutomaticClientUpdated = true;
                 } catch (Exception e) {
                     logger.errorf(e, "Error creating/updating automatic OpenID Federation client '%s' at UserInfo", clientId);
                     event.error(clientModel == null ? Errors.CLIENT_NOT_FOUND : Errors.CLIENT_DISABLED);
@@ -243,6 +245,9 @@ public class UserInfoEndpoint {
                     .withChecks(NotBeforeCheck.forModel(realm), NotBeforeCheck.forModel(clientModel), new TokenManager.TokenRevocationCheck(session))
                     .verify();
         } catch (VerificationException e) {
+            if (isAutomaticClientUpdated) {
+                session.getTransactionManager().setRollbackOnly();
+            }
             if (clientModel == null) {
                 cors.allowAllOrigins();
             }
@@ -263,6 +268,7 @@ public class UserInfoEndpoint {
         event.session(token.getSessionId());
         UserSessionUtil.UserSessionValidationResult userSessionValidation = UserSessionUtil.findValidSessionForAccessToken(session, realm, token, clientModel, (invalidUserSession -> {}));
         if (userSessionValidation.getError() != null) {
+            if (isAutomaticClientUpdated) session.getTransactionManager().setRollbackOnly();
             event.error(userSessionValidation.getError());
             throw error.invalidToken(userSessionValidation.getError());
         }
@@ -331,6 +337,7 @@ public class UserInfoEndpoint {
         try {
             session.clientPolicy().triggerOnEvent(new UserInfoRequestContext(clientSession, tokenForUserInfo));
         } catch (ClientPolicyException cpe) {
+            if (isAutomaticClientUpdated) session.getTransactionManager().setRollbackOnly();
             event.detail(Details.REASON, Details.CLIENT_POLICY_ERROR);
             event.detail(Details.CLIENT_POLICY_ERROR, cpe.getError());
             event.detail(Details.CLIENT_POLICY_ERROR_DETAIL, cpe.getErrorDetail());
@@ -380,6 +387,7 @@ public class UserInfoEndpoint {
                 responseBuilder = Response.ok(cfg.isUserInfoEncryptionRequired() ? jweFromContent(signedUserInfo, "JWT") :
                         signedUserInfo).header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JWT);
             } catch (RuntimeException re) {
+                if (isAutomaticClientUpdated) session.getTransactionManager().setRollbackOnly();
                 throw error.status(Response.Status.INTERNAL_SERVER_ERROR).build();
             }
             event.detail(Details.SIGNATURE_REQUIRED, "true");
@@ -389,6 +397,7 @@ public class UserInfoEndpoint {
                 responseBuilder = Response.ok(jweFromContent(JsonSerialization.writeValueAsString(claims), null))
                         .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JWT);
             } catch (RuntimeException | IOException ex) {
+                if (isAutomaticClientUpdated) session.getTransactionManager().setRollbackOnly();
                 throw error.status(Response.Status.INTERNAL_SERVER_ERROR).build();
             }
 
