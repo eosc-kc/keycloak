@@ -53,7 +53,7 @@ export const RequiredActionConfigModal = ({
     mode: "onSubmit",
   });
 
-  const { setValue, handleSubmit, reset, getValues } = form;
+  const { setValue, handleSubmit, reset } = form;
 
   const setupForm = (config?: RequiredActionConfigRepresentation) => {
     convertToFormValues(config || {}, setValue);
@@ -110,9 +110,9 @@ export const RequiredActionConfigModal = ({
 
   const doResetTermsAndConditions = async () => {
     try {
-      await adminClient.authenticationManagement.resetRequiredActionConfig(
-        { alias: requiredAction.alias! },
-      );
+      await adminClient.authenticationManagement.resetRequiredActionConfig({
+        alias: requiredAction.alias!,
+      });
       addAlert(t("requiredActionResetSuccess"), AlertVariant.success);
     } catch (error) {
       addError("requiredActionResetError", error);
