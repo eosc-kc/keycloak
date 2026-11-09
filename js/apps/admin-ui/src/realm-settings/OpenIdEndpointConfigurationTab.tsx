@@ -26,8 +26,7 @@ export const OpenIdEndpointConfigurationTab = ({
   const { t } = useTranslation();
 
   const [newClaim, setNewClaim] = useState("");
-  const { control, handleSubmit, setValue, reset } =
-    useForm<RealmRepresentation>();
+  const { control, handleSubmit, reset } = useForm<RealmRepresentation>();
 
   const setupForm = () => {
     reset({

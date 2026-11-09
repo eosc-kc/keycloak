@@ -11,7 +11,7 @@ import {
   MenuToggle,
   Select,
   SelectList,
-  SelectOption
+  SelectOption,
 } from "@patternfly/react-core";
 import { Controller, useFormContext } from "react-hook-form";
 import { useTranslation } from "react-i18next";

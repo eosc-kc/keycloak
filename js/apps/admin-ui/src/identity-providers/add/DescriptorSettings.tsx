@@ -2,12 +2,11 @@ import IdentityProviderRepresentation from "@keycloak/keycloak-admin-client/lib/
 import {
   ExpandableSection,
   MenuToggle,
-  MenuToggleElement,
   Select,
   SelectList,
   SelectOption,
 } from "@patternfly/react-core";
-import { useRef, useState } from "react";
+import { useState } from "react";
 import {
   Controller,
   FormProvider,
