@@ -1,6 +1,5 @@
 package org.keycloak.services.scheduled;
 
-import java.time.Instant;
 import java.util.Map;
 
 import org.keycloak.common.util.Time;
