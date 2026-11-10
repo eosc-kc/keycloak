@@ -97,6 +97,7 @@ public interface Errors {
 
     String USER_SESSION_NOT_FOUND = "user_session_not_found";
     String SESSION_EXPIRED = "session_expired";
+    String TRUST_CHAIN_RESOLUTION_TIMEOUT = "trust_chain_resolution_timeout";
 
     String EMAIL_SEND_FAILED = "email_send_failed";
     String INVALID_EMAIL = "invalid_email";

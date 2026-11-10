@@ -100,8 +100,8 @@ public class OpenIdFederationTrustChainProcessor implements TrustChainProcessor 
         List<TrustChainResolution> trustChainResolutions = subTrustChains(leafToken, leafEs.getSubject(), leafEs, openIdFederationGeneralConfig, new HashSet<>(), forRp, 0);
 
         for (TrustChainResolution trustChainResolution : trustChainResolutions) {
-            if (Duration.between(startTime, Instant.now()).toMillis() > openIdFederationGeneralConfig.getTotalTimeout()) {
-                throw new ErrorResponseException(Errors.SESSION_EXPIRED, "Time for trust resolution has expired", Response.Status.BAD_REQUEST);
+            if (Duration.between(startTime, Instant.now()).toSeconds() > openIdFederationGeneralConfig.getTotalTimeout() ) {
+                throw new ErrorResponseException(Errors.TRUST_CHAIN_RESOLUTION_TIMEOUT, "Trust chain resolution exceeded the configured time limit.", Response.Status.BAD_REQUEST);
             }
             //combine policies if valid till now
             List<EntityStatement> parsedChain = trustChainResolution.getParsedChain();
@@ -460,6 +460,7 @@ public class OpenIdFederationTrustChainProcessor implements TrustChainProcessor 
         if (!validateEntityStatementFields(opStatement, opIssuer, opIssuer) || opStatement.getMetadata().getOpenIdProviderMetadata() == null || !opStatement.getMetadata().getOpenIdProviderMetadata().getClientRegistrationTypesSupported().contains("explicit") || opStatement.getMetadata().getOpenIdProviderMetadata().getFederationRegistrationEndpoint() == null) {
             throw new ErrorResponseException(Errors.INVALID_TRUST_CHAIN, "No valid OP Entity Statement", Response.Status.BAD_REQUEST);
         }
+        logger.info("Starting validating trust chain for issuer: " + opStatement.getIssuer() + " with explicit registration as RP for realm: " + realm.getName());
         TrustChainResolution trustChainResolution = constructTrustChains(opToken, opStatement, federationGeneralConfig, false);
         if (trustChainResolution == null) {
             throw new ErrorResponseException(Errors.INVALID_TRUST_CHAIN, "No common trust chain found", Response.Status.BAD_REQUEST);
