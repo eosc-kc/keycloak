@@ -197,7 +197,7 @@ public class OpenIdFederationUtils {
         TrustChainProcessor trustChainProcessor = session.getProvider(TrustChainProcessor.class, OpenIdFederationTrustChainProcessorFactory.PROVIDER_ID);
         EntityStatement rpEntityStatement = trustChainProcessor.parseAndValidateSelfSigned(rpMetadata);
         trustChainProcessor.validationRules(rpEntityStatement, false);
-        logger.info("starting validating trust chains");
+        logger.info("Starting validating trust chain for issuer: " + rpEntityStatement.getIssuer() + " with automatic registration as RP for realm: " + realm.getName());
         TrustChainResolution validChain = trustChainProcessor.constructTrustChains(rpMetadata, rpEntityStatement, realm.getOpenIdFederationGeneralConfig(), true);
 
         if (validChain == null) {

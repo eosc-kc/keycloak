@@ -85,6 +85,7 @@ public class OpenIdFederationClientRegistrationService extends AbstractClientReg
             throw new ErrorResponseException(Errors.INVALID_ISSUER, "No valid issuer", Response.Status.BAD_REQUEST);
         }
         trustChainProcessor.validationRules(statement, checkAudience);
+        logger.info("Starting validating trust chain for issuer: " + statement.getIssuer() + " with explicit registration as OP for realm: " + realm.getName());
         TrustChainResolution validChain = trustChainProcessor.constructTrustChains(leafToken, statement, realm.getOpenIdFederationGeneralConfig(), true);
         if (validChain == null) {
             throw new ErrorResponseException(Errors.INVALID_TRUST_ANCHOR, "No trusted trust anchor could be found", Response.Status.NOT_FOUND);
