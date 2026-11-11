@@ -89,9 +89,7 @@ public class OpenIdFederationWellKnownProvider extends OIDCWellKnownProvider {
         if (openIdFederationConfig.getEntityTypes() != null && openIdFederationConfig.getEntityTypes().contains(EntityTypeEnum.OPENID_RELYING_PARTY)) {
             RPMetadata rPMetadata = OpenIdFederationUtils.createRPMetadata(openIdFederationConfig, rpRegistrationTypes.stream(), null, RealmsResource.protocolUrl(backendUriInfo).clone().path(OIDCLoginProtocolService.class, "certs").build(realm.getName(),
                     OIDCLoginProtocol.LOGIN_PROTOCOL).toString(), frontendUriInfo, realm.getName());
-            // For now, use default subject types since we removed the individual federation configs
-            List<String> openIdFederationSubjectTypes = OIDCWellKnownProvider.DEFAULT_SUBJECT_TYPES_SUPPORTED;
-            rPMetadata.setSubjectTypesSupported(openIdFederationSubjectTypes);
+            rPMetadata.setSubjectTypesSupported(rpRegistrationTypes.stream().map(ClientRegistrationTypeEnum::getValue).collect(Collectors.toList()));
             metadata.setRelyingPartyMetadata(rPMetadata);
         }
 
