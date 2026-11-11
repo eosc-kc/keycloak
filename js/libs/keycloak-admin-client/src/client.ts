@@ -21,6 +21,7 @@ import { Credentials, getToken, Settings } from "./utils/auth.js";
 import { defaultBaseUrl, defaultRealm } from "./utils/constants.js";
 import { DecodedToken, decodeToken } from "./utils/decode.js";
 import { IdentityFederations } from "./resources/identityFederations.js";
+import { TrustMarks } from "./resources/trustMarks.js";
 
 export type RequestOptions = Omit<RequestInit, "signal">;
 
@@ -59,6 +60,7 @@ export class KeycloakAdminClient {
   public openIdFederations: OpenIdFederations;
   public identityProviders: IdentityProviders;
   public identityFederations: IdentityFederations;
+  public trustMarks: TrustMarks;
   public components: Components;
   public serverInfo: ServerInfo;
   public whoAmI: WhoAmI;
@@ -105,6 +107,7 @@ export class KeycloakAdminClient {
     this.identityProviders = new IdentityProviders(this);
     this.openIdFederations = new OpenIdFederations(this);
     this.identityFederations = new IdentityFederations(this);
+    this.trustMarks = new TrustMarks(this);
     this.components = new Components(this);
     this.authenticationManagement = new AuthenticationManagement(this);
     this.serverInfo = new ServerInfo(this);
