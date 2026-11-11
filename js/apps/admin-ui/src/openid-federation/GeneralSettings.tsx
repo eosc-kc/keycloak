@@ -53,6 +53,8 @@ import {
   ListEmptyState,
 } from "@keycloak/keycloak-ui-shared";
 import { useAdminClient } from "../admin-client";
+import type TrustMarkRepresentation from "@keycloak/keycloak-admin-client/lib/defs/trustMarkRepresentation";
+import { TrustMarkTable } from "./trust-mark/TrustMarkTable";
 
 type OpenIdFederationGeneralTabProps = {
   realm: RealmRepresentation;
@@ -61,6 +63,8 @@ type OpenIdFederationGeneralTabProps = {
     openIdFederations: OpenIdFederationRepresentation[],
   ) => void;
   save: (realm: RealmRepresentation) => void;
+  trustMarks?: TrustMarkRepresentation[];
+  setTrustMarks?: (trustMarks: TrustMarkRepresentation[]) => void;
 };
 
 const openIdFederationRPClientRegistrationTypesSupported: ClientRegistrationTypesSupported[] =
@@ -211,6 +215,8 @@ export const OpenIdFederationGeneralSettings = ({
   openIdFederations = [],
   setOpenIdFederations,
   save,
+  trustMarks = [],
+  setTrustMarks = () => undefined,
 }: OpenIdFederationGeneralTabProps) => {
   const { t } = useTranslation();
   const form = useForm<RealmRepresentation>();
@@ -794,6 +800,16 @@ export const OpenIdFederationGeneralSettings = ({
             : []),
           ...(isOpenIdFederationEnabled
             ? [
+                {
+                  title: t("trustMarkSettings"),
+                  panel: (
+                    <TrustMarkTable
+                      realm={realm.realm as string}
+                      trustMarks={trustMarks}
+                      setTrustMarks={setTrustMarks}
+                    />
+                  ),
+                },
                 {
                   title: t("openIdFederationSettings"),
                   panel: (

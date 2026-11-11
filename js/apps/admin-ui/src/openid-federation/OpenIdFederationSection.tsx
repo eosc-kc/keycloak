@@ -18,6 +18,7 @@ import {
 } from "@keycloak/keycloak-ui-shared";
 import { useRealm } from "../context/realm-context/RealmContext";
 import { convertFormValuesToObject, isEmptyValue } from "../util";
+import type TrustMarkRepresentation from "@keycloak/keycloak-admin-client/lib/defs/trustMarkRepresentation";
 
 export default function OpenIdFederationSection() {
   const { t } = useTranslation();
@@ -29,6 +30,7 @@ export default function OpenIdFederationSection() {
   const { adminClient } = useAdminClient();
   const [openIdFederations, setOpenIdFederations] =
     useState<OpenIdFederationRepresentation[]>();
+  const [trustMarks, setTrustMarks] = useState<TrustMarkRepresentation[]>();
   const [key, setKey] = useState(0);
   const refresh = () => {
     setKey(key + 1);
@@ -48,6 +50,18 @@ export default function OpenIdFederationSection() {
       }
     },
     setOpenIdFederations,
+    [key],
+  );
+  useFetch(
+    async () => {
+      try {
+        return await adminClient.trustMarks.find({ realm: realmName });
+      } catch {
+        setTrustMarks([]);
+        return [];
+      }
+    },
+    setTrustMarks,
     [key],
   );
 
@@ -120,6 +134,8 @@ export default function OpenIdFederationSection() {
             realm={realm}
             openIdFederations={openIdFederations}
             setOpenIdFederations={setOpenIdFederations}
+            trustMarks={trustMarks}
+            setTrustMarks={setTrustMarks}
             save={save}
           />
         </PageSection>

@@ -449,7 +449,7 @@ export default function DetailSettings() {
         addAlert(t("refreshProviderSuccess"), AlertVariant.success);
         refresh();
       } catch (error) {
-        addError(t("refreshProviderError"), error);
+        addError("refreshProviderError", error);
       }
     },
   });
