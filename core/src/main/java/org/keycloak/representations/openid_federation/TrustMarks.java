@@ -15,6 +15,14 @@ public class TrustMarks {
     private String trustMark;
     private Map<String, Object> otherClaims = new HashMap<String, Object>();
 
+    public TrustMarks() {
+    }
+
+    public TrustMarks(String trustMarkType, String trustMark) {
+        this.trustMarkType = trustMarkType;
+        this.trustMark = trustMark;
+    }
+
     public String getTrustMarkType() {
         return trustMarkType;
     }

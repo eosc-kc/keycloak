@@ -13,8 +13,8 @@ public class OpenIdFederationTrustMarksUtils {
 
     public static void validateTrustMark(TrustMarkRepresentation rep) {
         // 1. trustMarkType required
-        if (rep.getTrustMarkType() == null || rep.getTrustMarkType().trim().isEmpty()) {
-            throw ErrorResponse.error("trustMarkType is required.", Response.Status.BAD_REQUEST);
+        if (rep.getTrustMarkType() == null || rep.getTrustMarkType().trim().isEmpty() || rep.isSelfSigned()== null) {
+            throw ErrorResponse.error("trustMarkType and selfSigned are required.", Response.Status.BAD_REQUEST);
         }
 
         if (rep.isSelfSigned()) {

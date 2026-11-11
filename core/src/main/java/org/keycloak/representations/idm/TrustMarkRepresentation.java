@@ -5,7 +5,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 public class TrustMarkRepresentation {
     private String id;
     private String trustMarkType;
-    private boolean selfSigned;
+    private Boolean selfSigned;
     @JsonProperty("sub")
     private String subject;
     @JsonProperty("iss")
@@ -35,11 +35,11 @@ public class TrustMarkRepresentation {
         this.trustMarkType = trustMarkType;
     }
 
-    public boolean isSelfSigned() {
+    public Boolean isSelfSigned() {
         return selfSigned;
     }
 
-    public void setSelfSigned(boolean selfSigned) {
+    public void setSelfSigned(Boolean selfSigned) {
         this.selfSigned = selfSigned;
     }
 

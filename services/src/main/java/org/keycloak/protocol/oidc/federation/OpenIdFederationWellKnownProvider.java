@@ -14,19 +14,23 @@ import jakarta.ws.rs.core.UriInfo;
 import org.keycloak.models.KeycloakSession;
 import org.keycloak.models.OpenIdFederationGeneralConfig;
 import org.keycloak.models.RealmModel;
+import org.keycloak.models.TrustMarkModel;
 import org.keycloak.models.enums.ClientRegistrationTypeEnum;
 import org.keycloak.models.enums.EntityTypeEnum;
+import org.keycloak.models.utils.ModelToRepresentation;
 import org.keycloak.protocol.oidc.OIDCLoginProtocol;
 import org.keycloak.protocol.oidc.OIDCLoginProtocolService;
 import org.keycloak.protocol.oidc.OIDCWellKnownProvider;
 import org.keycloak.protocol.oidc.representations.OIDCConfigurationRepresentation;
 import org.keycloak.protocol.trustchain.TrustChainProcessor;
+import org.keycloak.representations.idm.TrustMarkRepresentation;
 import org.keycloak.representations.openid_federation.CommonMetadata;
 import org.keycloak.representations.openid_federation.EntityStatement;
 import org.keycloak.representations.openid_federation.Metadata;
 import org.keycloak.representations.openid_federation.OPMetadata;
 import org.keycloak.representations.openid_federation.OpenIdFederationEntity;
 import org.keycloak.representations.openid_federation.RPMetadata;
+import org.keycloak.representations.openid_federation.TrustMarks;
 import org.keycloak.services.Urls;
 import org.keycloak.services.resources.RealmsResource;
 import org.keycloak.urls.UrlType;
@@ -98,8 +102,32 @@ public class OpenIdFederationWellKnownProvider extends OIDCWellKnownProvider {
             metadata.setFederationEntity(federationEntity);
         }
 
-        EntityStatement entityStatement = new EntityStatement(Urls.realmIssuer(frontendUriInfo.getBaseUri(), realm.getName()), Long.valueOf(openIdFederationConfig.getLifespan()), new ArrayList<>(openIdFederationConfig.getAuthorityHints()), trustChainProcessor.getKeySet(realm));
+        String realmIssuer = Urls.realmIssuer(frontendUriInfo.getBaseUri(), realm.getName());
+        EntityStatement entityStatement = new EntityStatement(realmIssuer, Long.valueOf(openIdFederationConfig.getLifespan()), new ArrayList<>(openIdFederationConfig.getAuthorityHints()), trustChainProcessor.getKeySet(realm));
         entityStatement.setMetadata(metadata);
+
+        List<TrustMarkModel> realmTrustMarks = realm.getTrustMarks();
+        if (realmTrustMarks != null && !realmTrustMarks.isEmpty()) {
+            List<TrustMarks> trustMarksList = new ArrayList<>();
+
+            for (TrustMarkModel trustMarkModel : realmTrustMarks) {
+                String jwtString = null;
+                if (trustMarkModel.isSelfSigned()) {
+                    TrustMarkRepresentation trustMarkToken = ModelToRepresentation.toRepresentation(trustMarkModel);
+                    trustMarkToken.setId(null);
+                    trustMarkToken.setSelfSigned(null);
+                    trustMarkToken.setIssuer(realmIssuer);
+                    trustMarkToken.setSubject(realmIssuer);
+                    // Encode using same keys as OpenId Federation Entity Statement
+                    jwtString = session.tokens().encodeSelfSignedTrustMark(trustMarkToken);
+                } else {
+                    jwtString = trustMarkModel.getJwt();
+                }
+                TrustMarks trustMark = new TrustMarks(trustMarkModel.getTrustMarkType(), jwtString);
+                trustMarksList.add(trustMark);
+            }
+            entityStatement.setTrustMarks(trustMarksList);
+        }
 
         return session.tokens().encodeForOpenIdFederation(entityStatement);
     }
