@@ -61,6 +61,7 @@ import org.keycloak.protocol.oidc.OIDCLoginProtocol;
 import org.keycloak.protocol.oidc.mappers.LogoutTokenMapper;
 import org.keycloak.representations.JsonWebToken;
 import org.keycloak.representations.LogoutToken;
+import org.keycloak.representations.idm.TrustMarkRepresentation;
 import org.keycloak.representations.openid_federation.EntityStatement;
 import org.keycloak.services.util.DefaultClientSessionContext;
 import org.keycloak.util.JsonSerialization;
@@ -71,6 +72,7 @@ import org.jboss.logging.Logger;
 public class DefaultTokenManager implements TokenManager {
 
     private static final Logger logger = Logger.getLogger(DefaultTokenManager.class);
+    private static final String TRUST_MARK_TYPE = "trust-mark+jwt";
 
     private final KeycloakSession session;
 
@@ -109,6 +111,17 @@ public class DefaultTokenManager implements TokenManager {
         String encodedToken = new JWSBuilder().type(token.getType()).jsonContent(token).sign(signer);
         return encodedToken;
     }
+
+    @Override
+    public String encodeSelfSignedTrustMark(TrustMarkRepresentation trustMarkRepresentation) {
+        String signatureAlgorithm = signatureAlgorithm(TokenCategory.ENTITY_STATEMENT);
+
+        SignatureSignerContext signer = session.getProvider(SignatureProvider.class, signatureAlgorithm).signer();
+
+        String encodedToken = new JWSBuilder().type(TRUST_MARK_TYPE).jsonContent(trustMarkRepresentation).sign(signer);
+        return encodedToken;
+    }
+
 
     @Override
     public <T> T decode(String token, Class<T> clazz) {

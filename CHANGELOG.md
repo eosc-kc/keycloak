@@ -16,7 +16,7 @@ Our Keycloak version is working well with PostgreSQL database. For using other S
 - **OpenID Federation:** Previously created automatic registered OpenID Federation Clients must be disabled or deleted for automatic registered OpenID Federation client works correctly.
 
 ### Added
-- Manage Internal Trust Marks
+- Manage and publish Trust Marks
 
 ### Fixed
 - Fix F-05. Unauthenticated outbound fetches without limits — high

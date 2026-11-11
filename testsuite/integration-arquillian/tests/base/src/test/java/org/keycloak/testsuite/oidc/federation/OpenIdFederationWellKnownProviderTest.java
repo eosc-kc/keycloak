@@ -2,6 +2,7 @@ package org.keycloak.testsuite.oidc.federation;
 
 import java.io.IOException;
 import java.net.URI;
+import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -13,14 +14,19 @@ import jakarta.ws.rs.core.UriBuilder;
 
 import org.keycloak.OAuth2Constants;
 import org.keycloak.admin.client.resource.RealmResource;
+import org.keycloak.common.util.Time;
 import org.keycloak.jose.jwk.JSONWebKeySet;
 import org.keycloak.jose.jwk.JWK;
+import org.keycloak.jose.jws.JWSBuilder;
 import org.keycloak.protocol.oidc.federation.OpenIdFederationWellKnownProviderFactory;
+import org.keycloak.representations.JsonWebToken;
 import org.keycloak.representations.idm.OpenIdFederationRepresentation;
 import org.keycloak.representations.idm.RealmRepresentation;
+import org.keycloak.representations.idm.TrustMarkRepresentation;
 import org.keycloak.representations.openid_federation.EntityStatement;
 import org.keycloak.representations.openid_federation.OPMetadata;
 import org.keycloak.representations.openid_federation.RPMetadata;
+import org.keycloak.representations.openid_federation.TrustMarks;
 import org.keycloak.services.resources.IdentityBrokerService;
 import org.keycloak.services.resources.RealmsResource;
 import org.keycloak.testsuite.Assert;
@@ -71,6 +77,24 @@ public class OpenIdFederationWellKnownProviderTest extends AbstractWellKnownProv
             openIdFederationRepresentation.setIdpConfiguration(idpConfiguration);
             testRealm.openIdFederationsResource().create(openIdFederationRepresentation);
 
+            long currentTime = Time.currentTime();
+            TrustMarkRepresentation created = new TrustMarkRepresentation();
+            created.setTrustMarkType("https://edugain.org/trust-mark/member");
+            created.setSelfSigned(true);
+            created.setIat(currentTime - 100);
+            created.setExp(currentTime + (24 * 60 * 60));
+            created.setLogoUri("https://edugain.org/logo.png");
+            created.setRef("https://edugain.org/trust-mark/ref");
+            created.setDelegation("https://edugain.org/delegation");
+            testRealm.trustMarksResource().create(created);
+
+            created = new TrustMarkRepresentation();
+            created.setTrustMarkType("https://edugain.org/trust-mark/external");
+            created.setSelfSigned(false);
+            String jwt = createDummyJwt("https://edugain.org/issuer", "https://edugain.org/subject", currentTime - 100, currentTime + (24 * 60 * 60));
+            created.setJwt(jwt);
+            testRealm.trustMarksResource().create(created);
+
             //When Open Id Federation is configured
             EntityStatement statement = getOIDCFederationDiscoveryRepresentation(client, OAuthClient.AUTH_SERVER_ROOT);
             assertEquals(TokenUtil.ENTITY_STATEMENT_JWT, statement.getType());
@@ -81,6 +105,20 @@ public class OpenIdFederationWellKnownProviderTest extends AbstractWellKnownProv
             assertEquals("https://edugain.org/federation", statement.getAuthorityHints().get(0));
             Assert.assertNotNull(statement.getMetadata().getFederationEntity());
             assertEquals("Keycloak", statement.getMetadata().getFederationEntity().getCommonMetadata().getOrganizationName());
+
+            List<TrustMarks> trustMarks = statement.getTrustMarks();
+            Assert.assertNotNull("Trust marks claim must not be null", trustMarks);
+            assertEquals("There should be exactly two trust marks", 2, trustMarks.size());
+            trustMarks.forEach(t -> {
+                if ("https://edugain.org/trust-mark/member".equals(t.getTrustMarkType())) {
+                    Assert.assertNotNull("Self-signed trust mark should generate a JWT", t.getTrustMark());
+                } else if ("https://edugain.org/trust-mark/external".equals(t.getTrustMarkType())) {
+                    assertEquals("External trust mark JWT must match the configured static JWT", jwt, t.getTrustMark());
+                } else {
+                    Assert.fail("Unexpected trust mark type found: " + t.getTrustMarkType());
+                }
+            });
+
             OPMetadata op = statement.getMetadata().getOpenIdProviderMetadata();
             assertEquals(1, op.getClientRegistrationTypesSupported().size());
             assertEquals("explicit", op.getClientRegistrationTypesSupported().get(0));
@@ -106,6 +144,17 @@ public class OpenIdFederationWellKnownProviderTest extends AbstractWellKnownProv
             testRealm.update(realmRep);
             client.close();
         }
+    }
+
+    private String createDummyJwt(String iss, String sub, Long iat, Long exp) {
+        JsonWebToken token = new JsonWebToken();
+        if (iss != null) token.issuer(iss);
+        if (sub != null) token.subject(sub);
+        if (iat != null) token.iat(iat);
+        if (exp != null) token.exp(exp);
+
+        // Uses "none" algorithm to bypass actual crypto for structural tests
+        return new JWSBuilder().type("JWT").jsonContent(token).none();
     }
 
     @Test
