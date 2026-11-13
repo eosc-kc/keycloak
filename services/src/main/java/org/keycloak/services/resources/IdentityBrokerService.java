@@ -74,6 +74,7 @@ import org.keycloak.broker.federation.FederationProvider;
 import org.keycloak.broker.federation.SAMLFederationProviderFactory;
 import org.keycloak.broker.oidc.AbstractOAuth2IdentityProvider;
 import org.keycloak.broker.oidc.OAuth2IdentityProviderConfig;
+import org.keycloak.broker.oidc.federation.OpenIdFederationAutomaticIdentityProviderFactory;
 import org.keycloak.broker.oidc.federation.OpenIdFederationIdentityProvider;
 import org.keycloak.broker.oidc.federation.OpenIdFederationIdentityProviderFactory;
 import org.keycloak.broker.provider.AuthenticationRequest;
@@ -187,6 +188,7 @@ public class IdentityBrokerService implements UserAuthenticationIdentityProvider
     public static final String LINKING_IDENTITY_PROVIDER = "LINKING_IDENTITY_PROVIDER";
     private static final String KEYCLOAK_REMEMBER_IDPS = "KEYCLOAK_REMEMBER_IDPS_";
     private static final int COOKIE_IDPS_DEFAULT_MAX_AGE = 31536000;
+    private static List<String> OPENID_FEDERATION_IDPS = List.of(OpenIdFederationIdentityProviderFactory.PROVIDER_ID, OpenIdFederationAutomaticIdentityProviderFactory.PROVIDER_ID);
 
     private static final Logger logger = Logger.getLogger(IdentityBrokerService.class);
 
@@ -395,7 +397,7 @@ public class IdentityBrokerService implements UserAuthenticationIdentityProvider
         ClientSessionCode<AuthenticationSessionModel> clientSessionCode = new ClientSessionCode<>(session, realmModel, authSession);
         clientSessionCode.setAction(AuthenticationSessionModel.Action.AUTHENTICATE.name());
         clientSessionCode.getOrGenerateCode();
-        if (OpenIdFederationIdentityProviderFactory.PROVIDER_ID.equals(identityProviderModel.getProviderId())) {
+        if (OPENID_FEDERATION_IDPS.contains(identityProviderModel.getProviderId())) {
             clientSessionCode.getClientSession().setClientNote(Details.REQUEST_IDENTITY_PROVIDER, providerAlias);
         }
         authSession.setProtocol(client.getProtocol());
@@ -427,7 +429,7 @@ public class IdentityBrokerService implements UserAuthenticationIdentityProvider
             }
             UserAuthenticationIdentityProvider<?> identityProvider = getIdentityProvider(session, identityProviderModel, UserAuthenticationIdentityProvider.class);
             String idpRedirectUri;
-            if (OpenIdFederationIdentityProviderFactory.PROVIDER_ID.equals(identityProviderModel.getProviderId())) {
+            if (OPENID_FEDERATION_IDPS.contains(identityProviderModel.getProviderId())) {
                 idpRedirectUri = getRedirectUriForOpenIdFederation();
             } else if (identityProviderModel.getFederations() != null && !identityProviderModel.getFederations().isEmpty()) {
                 idpRedirectUri = getRedirectUriForSamlFederation();
@@ -494,13 +496,13 @@ public class IdentityBrokerService implements UserAuthenticationIdentityProvider
             if (clientSessionCode.getClientSession() != null && loginHint != null) {
                 clientSessionCode.getClientSession().setClientNote(OIDCLoginProtocol.LOGIN_HINT_PARAM, loginHint);
             }
-            if (OpenIdFederationIdentityProviderFactory.PROVIDER_ID.equals(identityProviderModel.getProviderId())) {
+            if (OPENID_FEDERATION_IDPS.contains(identityProviderModel.getProviderId())) {
                 clientSessionCode.getClientSession().setClientNote(Details.REQUEST_IDENTITY_PROVIDER, providerAlias);
             }
 
             UserAuthenticationIdentityProvider<?> identityProvider = getIdentityProvider(session, identityProviderModel.getAlias());
             String idpRedirectUri;
-            if (OpenIdFederationIdentityProviderFactory.PROVIDER_ID.equals(identityProviderModel.getProviderId())) {
+            if (OPENID_FEDERATION_IDPS.contains(identityProviderModel.getProviderId())) {
                 idpRedirectUri = getRedirectUriForOpenIdFederation();
             } else if (identityProviderModel.getFederations() != null && !identityProviderModel.getFederations().isEmpty()) {
                 idpRedirectUri = getRedirectUriForSamlFederation();
@@ -719,7 +721,7 @@ public class IdentityBrokerService implements UserAuthenticationIdentityProvider
         ClientSessionCode<AuthenticationSessionModel> clientSessionCode = new ClientSessionCode<>(session, realmModel, authSession);
         clientSessionCode.setAction(AuthenticationSessionModel.Action.AUTHENTICATE.name());
         String idpRedirectUri;
-        if (OpenIdFederationIdentityProviderFactory.PROVIDER_ID.equals(identityProvider.getConfig().getProviderId())) {
+        if (OPENID_FEDERATION_IDPS.contains(identityProvider.getConfig().getProviderId())) {
             idpRedirectUri = getRedirectUriForOpenIdFederation();
         } else if (identityProvider.getConfig().getFederations() != null && !identityProvider.getConfig().getFederations().isEmpty()) {
             idpRedirectUri = getRedirectUriForSamlFederation();

@@ -73,6 +73,9 @@ public class TokenUtil {
     public static final String APPLICATION_ENTITY_STATEMENT_JWT = "application/entity-statement+jwt";
     public static final String EXPLICIT_REGISTRATION_RESPONSE_JWT = "explicit-registration-response+jwt";
     public static final String APPLICATION_EXPLICIT_REGISTRATION_RESPONSE_JWT = "application/explicit-registration-response+jwt";
+    /** JAR / OpenID Federation automatic registration Request Object typ (RFC 9101 / OIDFED §12.1.1.1). */
+    public static final String OAUTH_AUTHZ_REQUEST_JWT = "oauth-authz-req+jwt";
+    public static final String TRUST_CHAIN = "trust_chain";
 
     public static final String TOKEN_BACKCHANNEL_LOGOUT_EVENT = "http://schemas.openid.net/event/backchannel-logout";
     
