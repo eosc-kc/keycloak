@@ -68,7 +68,7 @@ type OpenIdFederationGeneralTabProps = {
 };
 
 const openIdFederationRPClientRegistrationTypesSupported: ClientRegistrationTypesSupported[] =
-  ["EXPLICIT"];
+  ["EXPLICIT", "AUTOMATIC"];
 const openIdFederationOPClientRegistrationTypesSupported: ClientRegistrationTypesSupported[] =
   ["EXPLICIT", "AUTOMATIC"];
 
