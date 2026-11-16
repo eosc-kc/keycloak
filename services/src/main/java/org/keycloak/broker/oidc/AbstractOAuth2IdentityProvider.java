@@ -142,8 +142,8 @@ public abstract class AbstractOAuth2IdentityProvider<C extends OAuth2IdentityPro
     public static final String OAUTH2_PARAMETER_CLIENT_SECRET = "client_secret";
     public static final String OAUTH2_PARAMETER_GRANT_TYPE = "grant_type";
 
-    private static final String BROKER_CODE_CHALLENGE_PARAM = "BROKER_CODE_CHALLENGE";
-    private static final String BROKER_CODE_CHALLENGE_METHOD_PARAM = "BROKER_CODE_CHALLENGE_METHOD";
+    protected static final String BROKER_CODE_CHALLENGE_PARAM = "BROKER_CODE_CHALLENGE";
+    protected static final String BROKER_CODE_CHALLENGE_METHOD_PARAM = "BROKER_CODE_CHALLENGE_METHOD";
 
     public static final String ACCESS_TOKEN_EXPIRATION = "accessTokenExpiration";
 
