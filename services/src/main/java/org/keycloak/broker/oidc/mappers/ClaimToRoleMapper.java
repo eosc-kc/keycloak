@@ -25,7 +25,7 @@ import java.util.Set;
 
 import org.keycloak.broker.oidc.KeycloakOIDCIdentityProviderFactory;
 import org.keycloak.broker.oidc.OIDCIdentityProviderFactory;
-import org.keycloak.broker.oidc.federation.OpenIdFederationIdentityProviderFactory;
+import org.keycloak.broker.oidc.federation.OpenIdFederationExplicitIdentityProviderFactory;
 import org.keycloak.broker.provider.BrokeredIdentityContext;
 import org.keycloak.broker.provider.ConfigConstants;
 import org.keycloak.models.IdentityProviderMapperModel;
@@ -38,7 +38,7 @@ import org.keycloak.provider.ProviderConfigProperty;
  */
 public class ClaimToRoleMapper extends AbstractClaimToRoleMapper {
 
-    public static final String[] COMPATIBLE_PROVIDERS = {KeycloakOIDCIdentityProviderFactory.PROVIDER_ID, OIDCIdentityProviderFactory.PROVIDER_ID, OpenIdFederationIdentityProviderFactory.PROVIDER_ID};
+    public static final String[] COMPATIBLE_PROVIDERS = {KeycloakOIDCIdentityProviderFactory.PROVIDER_ID, OIDCIdentityProviderFactory.PROVIDER_ID, OpenIdFederationExplicitIdentityProviderFactory.PROVIDER_ID};
 
     private static final List<ProviderConfigProperty> configProperties = new ArrayList<ProviderConfigProperty>();
     private static final Set<IdentityProviderSyncMode> IDENTITY_PROVIDER_SYNC_MODES = new HashSet<>(Arrays.asList(IdentityProviderSyncMode.values()));

@@ -12,17 +12,17 @@ import org.keycloak.protocol.oidc.OIDCConfigAttributes;
 
 import static org.keycloak.common.util.UriUtils.checkUrl;
 
-public class OpenIdFederationIdentityProviderConfig extends OIDCIdentityProviderConfig {
+public class OpenIdFederationExplicitIdentityProviderConfig extends OIDCIdentityProviderConfig {
 
     public static final String AUTHORITY_HINTS = "authorityHints";
 
     public static final String TRUST_ANCHOR_ID = "trustAnchorId";
 
-    public OpenIdFederationIdentityProviderConfig() {
+    public OpenIdFederationExplicitIdentityProviderConfig() {
         super();
     }
 
-    public OpenIdFederationIdentityProviderConfig(IdentityProviderModel model) {
+    public OpenIdFederationExplicitIdentityProviderConfig(IdentityProviderModel model) {
         super(model);
     }
 

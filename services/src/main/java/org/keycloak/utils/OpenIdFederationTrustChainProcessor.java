@@ -25,7 +25,7 @@ import org.keycloak.broker.oidc.OAuth2IdentityProviderConfig;
 import org.keycloak.broker.oidc.OIDCIdentityProvider;
 import org.keycloak.broker.oidc.OIDCIdentityProviderConfig;
 import org.keycloak.broker.oidc.OIDCIdentityProviderFactory;
-import org.keycloak.broker.oidc.federation.OpenIdFederationIdentityProviderConfig;
+import org.keycloak.broker.oidc.federation.OpenIdFederationExplicitIdentityProviderConfig;
 import org.keycloak.common.VerificationException;
 import org.keycloak.common.util.Time;
 import org.keycloak.crypto.KeyType;
@@ -439,7 +439,7 @@ public class OpenIdFederationTrustChainProcessor implements TrustChainProcessor 
 
     @Override
     public IdentityProviderModel updateIdP(IdentityProviderModel model, RealmModel realm, UriInfo frontendUriInfo, UriInfo backendUriInfo) throws Exception {
-        model = rPexcplicitRegistration(model.getConfig().get(OIDCIdentityProviderConfig.ISSUER), model.getConfig().get(OpenIdFederationIdentityProviderConfig.TRUST_ANCHOR_ID), model, realm, frontendUriInfo, backendUriInfo);
+        model = rPexcplicitRegistration(model.getConfig().get(OIDCIdentityProviderConfig.ISSUER), model.getConfig().get(OpenIdFederationExplicitIdentityProviderConfig.TRUST_ANCHOR_ID), model, realm, frontendUriInfo, backendUriInfo);
         TimerProvider timer = session.getProvider(TimerProvider.class);
         OpenIdFederationIdPExpirationTask task = new OpenIdFederationIdPExpirationTask(model.getAlias(), realm.getId());
         long expiration = Long.valueOf(model.getConfig().get(OIDCConfigAttributes.EXPIRATION_TIME)) * 1000 - Time.currentTimeMillis();
@@ -466,7 +466,7 @@ public class OpenIdFederationTrustChainProcessor implements TrustChainProcessor 
             throw new ErrorResponseException(Errors.INVALID_TRUST_CHAIN, "No common trust chain found", Response.Status.BAD_REQUEST);
         }
         OPMetadata op = (OPMetadata) trustChainResolution.getMetadataAfterPolicies();
-        model = OIDCIdentityProviderFactory.parseOIDCConfig(op, OpenIdFederationIdentityProviderConfig.class, model);
+        model = OIDCIdentityProviderFactory.parseOIDCConfig(op, OpenIdFederationExplicitIdentityProviderConfig.class, model);
 
         JSONWebKeySet jwks = getKeySet(realm);
         EntityStatement entityStatement = new EntityStatement(Urls.realmIssuer(frontendUriInfo.getBaseUri(), realm.getName()), Long.valueOf(federationGeneralConfig.getLifespan()), Stream.of(trustChainResolution.getLeafId()).collect(Collectors.toList()), jwks);

@@ -18,7 +18,7 @@ import org.keycloak.OAuth2Constants;
 import org.keycloak.authentication.authenticators.client.JWTClientAuthenticator;
 import org.keycloak.broker.oidc.OAuth2IdentityProviderConfig;
 import org.keycloak.broker.oidc.OIDCIdentityProviderConfig;
-import org.keycloak.broker.oidc.federation.OpenIdFederationIdentityProviderConfig;
+import org.keycloak.broker.oidc.federation.OpenIdFederationExplicitIdentityProviderConfig;
 import org.keycloak.events.Errors;
 import org.keycloak.events.EventBuilder;
 import org.keycloak.http.simple.SimpleHttp;
@@ -165,8 +165,8 @@ public class OpenIdFederationUtils {
         model.getConfig().put(OAuth2IdentityProviderConfig.CLIENT_SECRET, rp.getClientSecret());
         model.getConfig().put(OAuth2IdentityProviderConfig.CLIENT_AUTH_METHOD, rp.getTokenEndpointAuthMethod());
         model.getConfig().put(OAuth2IdentityProviderConfig.CLIENT_ASSERTION_SIGNING_ALG, rp.getTokenEndpointAuthSigningAlg());
-        model.getConfig().put(OpenIdFederationIdentityProviderConfig.TRUST_ANCHOR_ID, entityStatement.getTrustAnchor());
-        model.getConfig().put(OpenIdFederationIdentityProviderConfig.AUTHORITY_HINTS, entityStatement.getAuthorityHints().stream().collect(Collectors.joining("##")));
+        model.getConfig().put(OpenIdFederationExplicitIdentityProviderConfig.TRUST_ANCHOR_ID, entityStatement.getTrustAnchor());
+        model.getConfig().put(OpenIdFederationExplicitIdentityProviderConfig.AUTHORITY_HINTS, entityStatement.getAuthorityHints().stream().collect(Collectors.joining("##")));
         model.getConfig().put(OIDCConfigAttributes.EXPIRATION_TIME, String.valueOf(entityStatement.getExp()));
         model.getConfig().putAll(federationIdPConfig);
         return model;
@@ -186,8 +186,8 @@ public class OpenIdFederationUtils {
         model.getConfig().put(OAuth2IdentityProviderConfig.CLIENT_SECRET, rp.getClientSecret());
         model.getConfig().put(OAuth2IdentityProviderConfig.CLIENT_AUTH_METHOD, rp.getTokenEndpointAuthMethod());
         model.getConfig().put(OAuth2IdentityProviderConfig.CLIENT_ASSERTION_SIGNING_ALG, rp.getTokenEndpointAuthSigningAlg());
-        model.getConfig().put(OpenIdFederationIdentityProviderConfig.TRUST_ANCHOR_ID, entityStatement.getTrustAnchor());
-        model.getConfig().put(OpenIdFederationIdentityProviderConfig.AUTHORITY_HINTS, entityStatement.getAuthorityHints().stream().collect(Collectors.joining("##")));
+        model.getConfig().put(OpenIdFederationExplicitIdentityProviderConfig.TRUST_ANCHOR_ID, entityStatement.getTrustAnchor());
+        model.getConfig().put(OpenIdFederationExplicitIdentityProviderConfig.AUTHORITY_HINTS, entityStatement.getAuthorityHints().stream().collect(Collectors.joining("##")));
         model.getConfig().put(OIDCConfigAttributes.EXPIRATION_TIME, String.valueOf(entityStatement.getExp()));
         return model;
     }

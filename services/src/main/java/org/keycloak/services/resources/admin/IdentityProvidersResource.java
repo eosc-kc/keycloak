@@ -37,8 +37,8 @@ import jakarta.ws.rs.core.MultivaluedMap;
 import jakarta.ws.rs.core.Response;
 
 import org.keycloak.broker.oidc.OIDCIdentityProviderConfig;
-import org.keycloak.broker.oidc.federation.OpenIdFederationIdentityProviderConfig;
-import org.keycloak.broker.oidc.federation.OpenIdFederationIdentityProviderFactory;
+import org.keycloak.broker.oidc.federation.OpenIdFederationExplicitIdentityProviderConfig;
+import org.keycloak.broker.oidc.federation.OpenIdFederationExplicitIdentityProviderFactory;
 import org.keycloak.broker.provider.IdentityProviderFactory;
 import org.keycloak.common.util.PemUtils;
 import org.keycloak.common.util.StreamUtil;
@@ -284,7 +284,7 @@ public class IdentityProvidersResource {
         ReservedCharValidator.validateNoSpace(representation.getAlias());
 
         try {
-            IdentityProviderModel identityProvider = OpenIdFederationIdentityProviderFactory.PROVIDER_ID.equals(representation.getProviderId()) ? createModelForOpenIdFederation(representation) : RepresentationToModel.toModel(realm, representation, session);
+            IdentityProviderModel identityProvider = OpenIdFederationExplicitIdentityProviderFactory.PROVIDER_ID.equals(representation.getProviderId()) ? createModelForOpenIdFederation(representation) : RepresentationToModel.toModel(realm, representation, session);
             session.identityProviders().create(identityProvider);
 
             representation.setInternalId(identityProvider.getInternalId());
@@ -320,13 +320,13 @@ public class IdentityProvidersResource {
     private IdentityProviderModel createModelForOpenIdFederation(IdentityProviderRepresentation representation){
         if (realm.isOpenIdFederationTypeRegistrationSupported(EntityTypeEnum.OPENID_RELYING_PARTY, ClientRegistrationTypeEnum.EXPLICIT) && representation.getConfig().get(OIDCIdentityProviderConfig.ISSUER) != null) {
             try {
-                  IdentityProviderModel model = new OpenIdFederationIdentityProviderConfig();
+                  IdentityProviderModel model = new OpenIdFederationExplicitIdentityProviderConfig();
                   if (representation.getConfig().get("guiOrder") != null && !representation.getConfig().get("guiOrder").isEmpty()) {
                     model.getConfig().put("guiOrder", representation.getConfig().get("guiOrder"));
                   }
                   model.setAlias(representation.getAlias());
                   TrustChainProcessor trustChainProcessor = session.getProvider(TrustChainProcessor.class, OpenIdFederationTrustChainProcessorFactory.PROVIDER_ID);
-                  return trustChainProcessor.rPexcplicitRegistration(representation.getConfig().get(OIDCIdentityProviderConfig.ISSUER), representation.getConfig().get(OpenIdFederationIdentityProviderConfig.TRUST_ANCHOR_ID), model, realm, session.getContext().getUri(UrlType.FRONTEND), session.getContext().getUri(UrlType.BACKEND));
+                  return trustChainProcessor.rPexcplicitRegistration(representation.getConfig().get(OIDCIdentityProviderConfig.ISSUER), representation.getConfig().get(OpenIdFederationExplicitIdentityProviderConfig.TRUST_ANCHOR_ID), model, realm, session.getContext().getUri(UrlType.FRONTEND), session.getContext().getUri(UrlType.BACKEND));
             } catch (ErrorResponseException e) {
                 throw e;
             } catch (Exception e) {

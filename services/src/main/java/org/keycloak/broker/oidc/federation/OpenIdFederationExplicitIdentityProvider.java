@@ -6,9 +6,9 @@ import org.keycloak.http.simple.SimpleHttpRequest;
 import org.keycloak.models.KeycloakSession;
 import org.keycloak.services.Urls;
 
-public class OpenIdFederationIdentityProvider extends OIDCIdentityProvider {
+public class OpenIdFederationExplicitIdentityProvider extends OIDCIdentityProvider {
 
-    public OpenIdFederationIdentityProvider(KeycloakSession session, OpenIdFederationIdentityProviderConfig config) {
+    public OpenIdFederationExplicitIdentityProvider(KeycloakSession session, OpenIdFederationExplicitIdentityProviderConfig config) {
         super(session, config);
     }
 
