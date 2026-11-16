@@ -27,10 +27,12 @@ public class TrustMarkRepresentation {
         this.id = id;
     }
 
+    @JsonProperty("trust_mark_type")
     public String getTrustMarkType() {
         return trustMarkType;
     }
 
+    @JsonProperty("trust_mark_type")
     public void setTrustMarkType(String trustMarkType) {
         this.trustMarkType = trustMarkType;
     }
