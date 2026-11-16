@@ -1,19 +1,13 @@
 package org.keycloak.representations.openid_federation;
 
-import java.util.HashMap;
-import java.util.Map;
-
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class TrustMarks {
 
-    @JsonProperty("trust_mark_type")
     private String trustMarkType;
-    @JsonProperty("trust_mark")
     private String trustMark;
-    private Map<String, Object> otherClaims = new HashMap<String, Object>();
 
     public TrustMarks() {
     }
@@ -23,27 +17,23 @@ public class TrustMarks {
         this.trustMark = trustMark;
     }
 
+    @JsonProperty("trust_mark_type")
     public String getTrustMarkType() {
         return trustMarkType;
     }
 
+    @JsonProperty("trust_mark_type")
     public void setTrustMarkType(String trustMarkType) {
         this.trustMarkType = trustMarkType;
     }
 
+    @JsonProperty("trust_mark")
     public String getTrustMark() {
         return trustMark;
     }
 
+    @JsonProperty("trust_mark")
     public void setTrustMark(String trustMark) {
         this.trustMark = trustMark;
-    }
-
-    public Map<String, Object> getOtherClaims() {
-        return otherClaims;
-    }
-
-    public void setOtherClaims(Map<String, Object> otherClaims) {
-        this.otherClaims = otherClaims;
     }
 }
