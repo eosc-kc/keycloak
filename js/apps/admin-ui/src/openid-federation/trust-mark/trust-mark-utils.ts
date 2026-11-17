@@ -5,7 +5,7 @@ import type TrustMarkRepresentation from "@keycloak/keycloak-admin-client/lib/de
 import type { TrustMarkRequest } from "@keycloak/keycloak-admin-client/lib/defs/trustMarkRepresentation";
 
 export type TrustMarkFormValues = {
-  trustMarkType: string;
+  trust_mark_type: string;
   selfSigned: boolean;
   jwt: string;
   iat: string;
@@ -18,7 +18,7 @@ export type TrustMarkFormValues = {
 export type DecodedTrustMark = {
   issuer: string;
   subject: string;
-  trustMarkType: string;
+  trust_mark_type: string;
   issuedAt: number;
   expiresAt?: number;
   logoUri?: string;
@@ -91,7 +91,7 @@ const decodeClaims = (
   const decoded: DecodedTrustMark = {
     issuer: payload.iss,
     subject: payload.sub,
-    trustMarkType,
+    trust_mark_type: trustMarkType,
     issuedAt: payload.iat,
     expiresAt: payload.exp,
     logoUri: payload.logo_uri as string | undefined,
@@ -152,17 +152,17 @@ export const toTrustMarkRequest = (
   values: TrustMarkFormValues,
   { issuedAt }: { issuedAt?: number } = {},
 ): TrustMarkRequest => {
-  const trustMarkType = values.trustMarkType.trim();
+  const trustMarkType = values.trust_mark_type.trim();
   if (!values.selfSigned) {
     return {
-      trustMarkType,
+      trust_mark_type: trustMarkType,
       selfSigned: false,
       jwt: normalizeTrustMarkJwt(values.jwt),
     };
   }
 
   return {
-    trustMarkType,
+    trust_mark_type: trustMarkType,
     selfSigned: true,
     iat: issuedAt ?? toNumericDate(values.iat),
     ...(values.exp && { exp: toNumericDate(values.exp) }),
@@ -195,7 +195,7 @@ export const formatNumericDateForInput = (value?: number) => {
 export const toTrustMarkFormValues = (
   trustMark?: TrustMarkRepresentation,
 ): TrustMarkFormValues => ({
-  trustMarkType: trustMark?.trustMarkType ?? "",
+  trust_mark_type: trustMark?.trust_mark_type ?? "",
   selfSigned: trustMark?.selfSigned ?? false,
   jwt: trustMark?.jwt ?? "",
   iat: formatNumericDateForInput(trustMark?.iat),

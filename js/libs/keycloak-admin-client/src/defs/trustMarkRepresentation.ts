@@ -1,6 +1,6 @@
 export default interface TrustMarkRepresentation {
   id?: string;
-  trustMarkType: string;
+  trust_mark_type: string;
   selfSigned: boolean;
   sub?: string;
   iss?: string;
@@ -14,12 +14,12 @@ export default interface TrustMarkRepresentation {
 
 export type TrustMarkRequest =
   | {
-      trustMarkType: string;
+      trust_mark_type: string;
       selfSigned: false;
       jwt: string;
     }
   | {
-      trustMarkType: string;
+      trust_mark_type: string;
       selfSigned: true;
       iat: number;
       exp?: number;
