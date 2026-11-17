@@ -39,7 +39,7 @@ export const TrustMarkTable = ({
   const [toggleDeleteDialog, DeleteConfirm] = useConfirmDialog({
     titleKey: t("deleteTrustMark"),
     messageKey: t("deleteConfirmTrustMark", {
-      trustMarkType: selected?.trustMarkType,
+      trustMarkType: selected?.trust_mark_type,
     }),
     continueButtonLabel: t("delete"),
     continueButtonVariant: ButtonVariant.danger,
@@ -86,11 +86,11 @@ export const TrustMarkTable = ({
         ]}
         columns={[
           {
-            name: "trustMarkType",
+            name: "trust_mark_type",
             displayKey: t("trustMarkType"),
-            cellRenderer: ({ id, trustMarkType }) => (
+            cellRenderer: ({ id, trust_mark_type }) => (
               <Link to={toTrustMarkEdit({ realm, id: id ?? "" })}>
-                {trustMarkType}
+                {trust_mark_type}
               </Link>
             ),
           },

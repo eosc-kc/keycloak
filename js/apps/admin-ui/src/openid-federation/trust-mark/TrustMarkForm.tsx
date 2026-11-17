@@ -129,7 +129,7 @@ export const TrustMarkForm = ({
     formState: { isValid, isSubmitting },
   } = useFormContext<TrustMarkFormValues>();
 
-  const trustMarkType = useWatch({ control, name: "trustMarkType" }) ?? "";
+  const trustMarkType = useWatch({ control, name: "trust_mark_type" }) ?? "";
   const selfSigned = useWatch({ control, name: "selfSigned" }) ?? false;
   const jwt = useWatch({ control, name: "jwt" }) ?? "";
   const validation = useMemo(
@@ -165,7 +165,7 @@ export const TrustMarkForm = ({
       onSubmit={handleSubmit(save)}
     >
       <TextControl
-        name="trustMarkType"
+        name="trust_mark_type"
         label={t("trustMarkType")}
         labelIcon={t("trustMarkTypeHelp")}
         helperText={t("trustMarkTypeHint")}
