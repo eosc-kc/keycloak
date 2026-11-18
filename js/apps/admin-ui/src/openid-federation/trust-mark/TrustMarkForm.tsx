@@ -17,10 +17,13 @@ import {
   FormErrorText,
   HelpItem,
   TextControl,
+  useEnvironment,
 } from "@keycloak/keycloak-ui-shared";
 
 import { FormAccess } from "../../components/form/FormAccess";
 import { FixedButtonsGroup } from "../../components/form/FixedButtonGroup";
+import { useRealm } from "../../context/realm-context/RealmContext";
+import { addTrailingSlash } from "../../util";
 import {
   decodeAndValidateTrustMark,
   normalizeTrustMarkJwt,
@@ -122,6 +125,11 @@ export const TrustMarkForm = ({
 }: TrustMarkFormProps) => {
   const { t } = useTranslation();
   const {
+    environment: { serverBaseUrl },
+  } = useEnvironment();
+  const { realm } = useRealm();
+  const expectedSubject = `${addTrailingSlash(serverBaseUrl)}realms/${realm}`;
+  const {
     clearErrors,
     control,
     handleSubmit,
@@ -133,8 +141,8 @@ export const TrustMarkForm = ({
   const selfSigned = useWatch({ control, name: "selfSigned" }) ?? false;
   const jwt = useWatch({ control, name: "jwt" }) ?? "";
   const validation = useMemo(
-    () => decodeAndValidateTrustMark(jwt, trustMarkType),
-    [jwt, trustMarkType],
+    () => decodeAndValidateTrustMark(jwt, trustMarkType, expectedSubject),
+    [expectedSubject, jwt, trustMarkType],
   );
 
   useEffect(() => {
@@ -218,8 +226,14 @@ export const TrustMarkForm = ({
             rules={{
               required: t("required"),
               validate: (value) => {
-                const result = decodeAndValidateTrustMark(value, trustMarkType);
-                return result.error ? t(result.error) : true;
+                const result = decodeAndValidateTrustMark(
+                  value,
+                  trustMarkType,
+                  expectedSubject,
+                );
+                return result.error
+                  ? t(result.error, { expectedSubject })
+                  : true;
               },
             }}
             render={({ field, fieldState }) => (
