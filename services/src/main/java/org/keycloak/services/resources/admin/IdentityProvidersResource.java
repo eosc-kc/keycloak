@@ -37,6 +37,7 @@ import jakarta.ws.rs.core.MultivaluedMap;
 import jakarta.ws.rs.core.Response;
 
 import org.keycloak.broker.oidc.OIDCIdentityProviderConfig;
+import org.keycloak.broker.oidc.federation.OpenIdFederationAutomaticIdentityProviderConfig;
 import org.keycloak.broker.oidc.federation.OpenIdFederationExplicitIdentityProviderConfig;
 import org.keycloak.broker.oidc.federation.OpenIdFederationExplicitIdentityProviderFactory;
 import org.keycloak.broker.provider.IdentityProviderFactory;
@@ -76,6 +77,7 @@ import org.keycloak.services.util.ResourcesUtil;
 import org.keycloak.timer.TimerProvider;
 import org.keycloak.urls.UrlType;
 import org.keycloak.utils.OpenIdFederationTrustChainProcessorFactory;
+import org.keycloak.utils.OpenIdFederationUtils;
 import org.keycloak.utils.ReservedCharValidator;
 import org.keycloak.utils.StringUtil;
 
@@ -284,15 +286,14 @@ public class IdentityProvidersResource {
         ReservedCharValidator.validateNoSpace(representation.getAlias());
 
         try {
-            IdentityProviderModel identityProvider = OpenIdFederationExplicitIdentityProviderFactory.PROVIDER_ID.equals(representation.getProviderId()) ? createModelForOpenIdFederation(representation) : RepresentationToModel.toModel(realm, representation, session);
+            IdentityProviderModel identityProvider = OpenIdFederationUtils.OPENID_FEDERATION_IDPS.contains(representation.getProviderId()) ? createModelForOpenIdFederation(representation) : RepresentationToModel.toModel(realm, representation, session);
             session.identityProviders().create(identityProvider);
 
             representation.setInternalId(identityProvider.getInternalId());
             representation.setHideOnLogin(identityProvider.isHideOnLogin()); // update in case of legacy hide on login attr was used.
-            //for autoupdated IdPs create schedule task
             if (Boolean.valueOf(identityProvider.getConfig().get(IdentityProviderModel.AUTO_UPDATE)))
                 createScheduleTask(identityProvider.getAlias(), Long.parseLong(identityProvider.getConfig().get(IdentityProviderModel.REFRESH_PERIOD)) * 1000);
-            //create expiration task for OpenIdFederation IdP
+            //create expiration task for OpenIdFederation IdPs
             if (identityProvider.getConfig().get(OIDCConfigAttributes.EXPIRATION_TIME) != null) {
                 TimerProvider timer = session.getProvider(TimerProvider.class);
                 OpenIdFederationIdPExpirationTask task = new OpenIdFederationIdPExpirationTask(identityProvider.getAlias(), realm.getId());
@@ -318,15 +319,16 @@ public class IdentityProvidersResource {
     }
 
     private IdentityProviderModel createModelForOpenIdFederation(IdentityProviderRepresentation representation){
-        if (realm.isOpenIdFederationTypeRegistrationSupported(EntityTypeEnum.OPENID_RELYING_PARTY, ClientRegistrationTypeEnum.EXPLICIT) && representation.getConfig().get(OIDCIdentityProviderConfig.ISSUER) != null) {
+        boolean isExplicit = OpenIdFederationExplicitIdentityProviderFactory.PROVIDER_ID.equals(representation.getProviderId());
+        if (realm.isOpenIdFederationTypeRegistrationSupported(EntityTypeEnum.OPENID_RELYING_PARTY, isExplicit ? ClientRegistrationTypeEnum.EXPLICIT : ClientRegistrationTypeEnum.AUTOMATIC) && representation.getConfig().get(OIDCIdentityProviderConfig.ISSUER) != null) {
             try {
-                  IdentityProviderModel model = new OpenIdFederationExplicitIdentityProviderConfig();
+                  IdentityProviderModel model = isExplicit ? new OpenIdFederationExplicitIdentityProviderConfig() : new OpenIdFederationAutomaticIdentityProviderConfig();
                   if (representation.getConfig().get("guiOrder") != null && !representation.getConfig().get("guiOrder").isEmpty()) {
                     model.getConfig().put("guiOrder", representation.getConfig().get("guiOrder"));
                   }
                   model.setAlias(representation.getAlias());
                   TrustChainProcessor trustChainProcessor = session.getProvider(TrustChainProcessor.class, OpenIdFederationTrustChainProcessorFactory.PROVIDER_ID);
-                  return trustChainProcessor.rPexcplicitRegistration(representation.getConfig().get(OIDCIdentityProviderConfig.ISSUER), representation.getConfig().get(OpenIdFederationExplicitIdentityProviderConfig.TRUST_ANCHOR_ID), model, realm, session.getContext().getUri(UrlType.FRONTEND), session.getContext().getUri(UrlType.BACKEND));
+                  return isExplicit ? trustChainProcessor.rPexcplicitRegistration(representation.getConfig().get(OIDCIdentityProviderConfig.ISSUER), representation.getConfig().get(OpenIdFederationExplicitIdentityProviderConfig.TRUST_ANCHOR_ID), model, realm, session.getContext().getUri(UrlType.FRONTEND), session.getContext().getUri(UrlType.BACKEND)) : trustChainProcessor.rPΑutomaticRegistration(representation.getConfig().get(OIDCIdentityProviderConfig.ISSUER), representation.getConfig().get(OpenIdFederationExplicitIdentityProviderConfig.TRUST_ANCHOR_ID), model, realm, session.getContext().getUri(UrlType.FRONTEND)) ;
             } catch (ErrorResponseException e) {
                 throw e;
             } catch (Exception e) {

@@ -2,6 +2,7 @@ package org.keycloak.services.scheduled;
 
 import java.net.URI;
 import java.time.Instant;
+import java.util.List;
 
 import jakarta.ws.rs.core.UriInfo;
 
@@ -21,6 +22,7 @@ import org.jboss.logging.Logger;
 public class OpenIdFederationIdPExpirationTask implements ScheduledTask {
 
     protected static final Logger logger = Logger.getLogger(OpenIdFederationIdPExpirationTask.class);
+    public static List<String> OPENID_FEDERATION_IDPS = List.of("openid-federation-explicit", "openid-federation-automatic");
 
     public static final String KEYCLOAK_URL = "keycloakUrl";
     protected final String alias;
@@ -41,7 +43,7 @@ public class OpenIdFederationIdPExpirationTask implements ScheduledTask {
         }
         session.getContext().setRealm(realm);
         IdentityProviderModel idp = session.identityProviders().getByAlias(alias);
-        if (idp != null && "openid-federation".equals(idp.getProviderId()) && idp.getConfig().get(OIDCConfigAttributes.EXPIRATION_TIME) != null && Instant.now().getEpochSecond() >= Long.parseLong(idp.getConfig().get(OIDCConfigAttributes.EXPIRATION_TIME))) {
+        if (idp != null && OPENID_FEDERATION_IDPS.contains(idp.getProviderId()) && idp.getConfig().get(OIDCConfigAttributes.EXPIRATION_TIME) != null && Instant.now().getEpochSecond() >= Long.parseLong(idp.getConfig().get(OIDCConfigAttributes.EXPIRATION_TIME))) {
             logger.info(" OpenId Federation IdP with alias= " + alias + " has expired.");
             TrustChainProcessor trustChainProcessor = session.getProvider(TrustChainProcessor.class, "openid-federation");
             try {

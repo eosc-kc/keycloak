@@ -79,6 +79,7 @@ import org.keycloak.services.util.ResourcesUtil;
 import org.keycloak.timer.TimerProvider;
 import org.keycloak.urls.UrlType;
 import org.keycloak.utils.OpenIdFederationTrustChainProcessorFactory;
+import org.keycloak.utils.OpenIdFederationUtils;
 import org.keycloak.utils.ProfileHelper;
 
 import org.eclipse.microprofile.openapi.annotations.Operation;
@@ -248,7 +249,7 @@ public class IdentityProviderResource {
             throw new jakarta.ws.rs.NotFoundException();
         }
 
-        if (!OpenIdFederationExplicitIdentityProviderFactory.PROVIDER_ID.equals(identityProviderModel.getProviderId()) || !realm.isOpenIdFederationTypeRegistrationSupported(EntityTypeEnum.OPENID_RELYING_PARTY, ClientRegistrationTypeEnum.EXPLICIT)) {
+        if (OpenIdFederationUtils.OPENID_FEDERATION_IDPS.contains(identityProviderModel.getProviderId()) || !realm.isOpenIdFederationTypeRegistrationSupported(EntityTypeEnum.OPENID_RELYING_PARTY, OpenIdFederationExplicitIdentityProviderFactory.PROVIDER_ID.equals(identityProviderModel.getProviderId()) ? ClientRegistrationTypeEnum.EXPLICIT : ClientRegistrationTypeEnum.AUTOMATIC)) {
             throw ErrorResponse.error("This Identity Provider is not OpenId Federation type or this realm is not OpenId Federation as RP with explicit registration", BAD_REQUEST);
         }
 

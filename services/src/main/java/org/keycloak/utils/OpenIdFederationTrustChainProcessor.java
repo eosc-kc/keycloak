@@ -26,6 +26,7 @@ import org.keycloak.broker.oidc.OIDCIdentityProvider;
 import org.keycloak.broker.oidc.OIDCIdentityProviderConfig;
 import org.keycloak.broker.oidc.OIDCIdentityProviderFactory;
 import org.keycloak.broker.oidc.federation.OpenIdFederationExplicitIdentityProviderConfig;
+import org.keycloak.broker.oidc.federation.OpenIdFederationExplicitIdentityProviderFactory;
 import org.keycloak.common.VerificationException;
 import org.keycloak.common.util.Time;
 import org.keycloak.crypto.KeyType;
@@ -439,7 +440,9 @@ public class OpenIdFederationTrustChainProcessor implements TrustChainProcessor 
 
     @Override
     public IdentityProviderModel updateIdP(IdentityProviderModel model, RealmModel realm, UriInfo frontendUriInfo, UriInfo backendUriInfo) throws Exception {
-        model = rPexcplicitRegistration(model.getConfig().get(OIDCIdentityProviderConfig.ISSUER), model.getConfig().get(OpenIdFederationExplicitIdentityProviderConfig.TRUST_ANCHOR_ID), model, realm, frontendUriInfo, backendUriInfo);
+        model = OpenIdFederationExplicitIdentityProviderFactory.PROVIDER_ID.equals(model.getProviderId()) ?
+                rPexcplicitRegistration(model.getConfig().get(OIDCIdentityProviderConfig.ISSUER), model.getConfig().get(OpenIdFederationExplicitIdentityProviderConfig.TRUST_ANCHOR_ID), model, realm, frontendUriInfo, backendUriInfo) :
+                rPΑutomaticRegistration(model.getConfig().get(OIDCIdentityProviderConfig.ISSUER), model.getConfig().get(OpenIdFederationExplicitIdentityProviderConfig.TRUST_ANCHOR_ID), model, realm, frontendUriInfo);
         TimerProvider timer = session.getProvider(TimerProvider.class);
         OpenIdFederationIdPExpirationTask task = new OpenIdFederationIdPExpirationTask(model.getAlias(), realm.getId());
         long expiration = Long.valueOf(model.getConfig().get(OIDCConfigAttributes.EXPIRATION_TIME)) * 1000 - Time.currentTimeMillis();
@@ -450,16 +453,10 @@ public class OpenIdFederationTrustChainProcessor implements TrustChainProcessor 
 
     @Override
     public IdentityProviderModel rPexcplicitRegistration(String opIssuer, String trustAnchor, IdentityProviderModel model, RealmModel realm, UriInfo frontendUriInfo, UriInfo backendUriInfo) throws Exception {
-        if (!isValidUrl(opIssuer)) {
-            throw new ErrorResponseException(Errors.INVALID_ISSUER, "No valid issuer", Response.Status.BAD_REQUEST);
-        }
+        String opToken = OpenIdFederationUtils.getSelfSignedToken(opIssuer, session);
+        EntityStatement opStatement = parseOpWellKnown(opIssuer, opToken, true);
         OpenIdFederationGeneralConfig federationGeneralConfig = realm.getOpenIdFederationGeneralConfig();
         OpenIdFederationConfig federationConfig = federationGeneralConfig.getOpenIdFederationList().stream().filter(x -> trustAnchor.equals(x.getTrustAnchor())).findAny().orElseThrow(() -> new NotFoundException("Trust anchor does not exist"));
-        String opToken = OpenIdFederationUtils.getSelfSignedToken(opIssuer, session);
-        EntityStatement opStatement = parseAndValidateSelfSigned(opToken);
-        if (!validateEntityStatementFields(opStatement, opIssuer, opIssuer) || opStatement.getMetadata().getOpenIdProviderMetadata() == null || !opStatement.getMetadata().getOpenIdProviderMetadata().getClientRegistrationTypesSupported().contains("explicit") || opStatement.getMetadata().getOpenIdProviderMetadata().getFederationRegistrationEndpoint() == null) {
-            throw new ErrorResponseException(Errors.INVALID_TRUST_CHAIN, "No valid OP Entity Statement", Response.Status.BAD_REQUEST);
-        }
         logger.info("Starting validating trust chain for issuer: " + opStatement.getIssuer() + " with explicit registration as RP for realm: " + realm.getName());
         TrustChainResolution trustChainResolution = constructTrustChains(opToken, opStatement, federationGeneralConfig, false);
         if (trustChainResolution == null) {
@@ -497,6 +494,35 @@ public class OpenIdFederationTrustChainProcessor implements TrustChainProcessor 
         }
         model.getConfig().put(IdentityProviderModel.LAST_REFRESH_TIME, String.valueOf(Instant.now().toEpochMilli()));
         return model.getInternalId() == null ? OpenIdFederationUtils.convertEntityStatementToIdp(model, realm, statementResponse, new HashMap<>(federationConfig.getIdpConfiguration())) : OpenIdFederationUtils.updateIdPFromEntityStatement(model, statementResponse);
+    }
+
+    @Override
+    public IdentityProviderModel rPΑutomaticRegistration(String opIssuer, String trustAnchor, IdentityProviderModel model, RealmModel realm, UriInfo frontendUriInfo) throws Exception {
+        String opToken = OpenIdFederationUtils.getSelfSignedToken(opIssuer, session);
+        EntityStatement opStatement = parseOpWellKnown(opIssuer, opToken, false);
+        OpenIdFederationGeneralConfig federationGeneralConfig = realm.getOpenIdFederationGeneralConfig();
+        OpenIdFederationConfig federationConfig = federationGeneralConfig.getOpenIdFederationList().stream().filter(x -> trustAnchor.equals(x.getTrustAnchor())).findAny().orElseThrow(() -> new NotFoundException("Trust anchor does not exist"));
+        logger.info("Starting validating trust chain for issuer: " + opStatement.getIssuer() + " with automatic registration as RP for realm: " + realm.getName());
+        TrustChainResolution trustChainResolution = constructTrustChains(opToken, opStatement, federationGeneralConfig, false);
+        if (trustChainResolution == null) {
+            throw new ErrorResponseException(Errors.INVALID_TRUST_CHAIN, "No common trust chain found", Response.Status.BAD_REQUEST);
+        }
+
+        return OpenIdFederationUtils.createAutomaticIdentityProvider(model, realm, frontendUriInfo, session.tokens().signatureAlgorithm(TokenCategory.ENTITY_STATEMENT), federationConfig.getIdpConfiguration(), trustChainResolution, opStatement.getExp());
+    }
+
+    private EntityStatement parseOpWellKnown(String opIssuer, String opToken, boolean isExplicit) throws IOException {
+        if (!isValidUrl(opIssuer)) {
+            throw new ErrorResponseException(Errors.INVALID_ISSUER, "No valid issuer", Response.Status.BAD_REQUEST);
+        }
+        EntityStatement opStatement = parseAndValidateSelfSigned(opToken);
+        if (!validateEntityStatementFields(opStatement, opIssuer, opIssuer) || opStatement.getMetadata().getOpenIdProviderMetadata() == null
+                || (isExplicit && (!opStatement.getMetadata().getOpenIdProviderMetadata().getClientRegistrationTypesSupported().contains("explicit") || opStatement.getMetadata().getOpenIdProviderMetadata().getFederationRegistrationEndpoint() == null))
+                || (!isExplicit && !opStatement.getMetadata().getOpenIdProviderMetadata().getClientRegistrationTypesSupported().contains("automatic"))) {
+
+            throw new ErrorResponseException(Errors.INVALID_TRUST_CHAIN, "No valid OP Entity Statement", Response.Status.BAD_REQUEST);
+        }
+        return opStatement;
     }
 
     private void metadataFromFederation(RPMetadata rPMetadata, Map<String, String> federationConfig) {

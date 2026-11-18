@@ -30,6 +30,7 @@ import java.util.regex.Pattern;
 
 import org.keycloak.broker.oidc.KeycloakOIDCIdentityProviderFactory;
 import org.keycloak.broker.oidc.OIDCIdentityProviderFactory;
+import org.keycloak.broker.oidc.federation.OpenIdFederationAutomaticIdentityProviderFactory;
 import org.keycloak.broker.oidc.federation.OpenIdFederationExplicitIdentityProviderFactory;
 import org.keycloak.broker.provider.BrokeredIdentityContext;
 import org.keycloak.broker.saml.mappers.UsernameTemplateMapper.Target;
@@ -72,6 +73,7 @@ public class UsernameTemplateMapper extends AbstractClaimMapper {
             KeycloakOIDCIdentityProviderFactory.PROVIDER_ID,
             OIDCIdentityProviderFactory.PROVIDER_ID,
             OpenIdFederationExplicitIdentityProviderFactory.PROVIDER_ID,
+            OpenIdFederationAutomaticIdentityProviderFactory.PROVIDER_ID,
             BitbucketIdentityProviderFactory.PROVIDER_ID,
             FacebookIdentityProviderFactory.PROVIDER_ID,
             GitHubIdentityProviderFactory.PROVIDER_ID,
