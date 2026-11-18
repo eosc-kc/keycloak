@@ -70,7 +70,7 @@ public class TrustMarksResource {
     @Operation(summary = "Create a new trust mark")
     public Response create(TrustMarkRepresentation representation) {
         this.auth.realm().requireManageRealm();
-        OpenIdFederationTrustMarksUtils.validateTrustMark(representation);
+        OpenIdFederationTrustMarksUtils.validateTrustMark(representation, session);
         TrustMarkModel model = RepresentationToModel.toModel(representation);
         realm.addTrustMark(model);
         representation.setId(model.getId());

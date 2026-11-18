@@ -66,7 +66,7 @@ public class TrustMarkResource {
     @Operation(summary = "Update the trust mark")
     public Response update(final TrustMarkRepresentation rep) {
         auth.realm().requireManageRealm();
-        OpenIdFederationTrustMarksUtils.validateTrustMark(rep);
+        OpenIdFederationTrustMarksUtils.validateTrustMark(rep, session);
         rep.setId(trustMarkModel.getId());
         trustMarkModel = RepresentationToModel.toModel(rep);
         realm.updateTrustMark(trustMarkModel);

@@ -5,13 +5,16 @@ import jakarta.ws.rs.core.Response;
 import org.keycloak.common.util.Time;
 import org.keycloak.jose.jws.JWSInput;
 import org.keycloak.jose.jws.JWSInputException;
+import org.keycloak.models.KeycloakSession;
 import org.keycloak.representations.JsonWebToken;
 import org.keycloak.representations.idm.TrustMarkRepresentation;
 import org.keycloak.services.ErrorResponse;
+import org.keycloak.services.Urls;
+import org.keycloak.urls.UrlType;
 
 public class OpenIdFederationTrustMarksUtils {
 
-    public static void validateTrustMark(TrustMarkRepresentation rep) {
+    public static void validateTrustMark(TrustMarkRepresentation rep, KeycloakSession session) {
         // 1. trustMarkType required
         if (rep.getTrustMarkType() == null || rep.getTrustMarkType().trim().isEmpty() || rep.isSelfSigned()== null) {
             throw ErrorResponse.error("trustMarkType and selfSigned are required.", Response.Status.BAD_REQUEST);
@@ -44,8 +47,8 @@ public class OpenIdFederationTrustMarksUtils {
                 if (token.getIssuer() == null) {
                     throw ErrorResponse.error("JWT must contain the 'iss' claim.", Response.Status.BAD_REQUEST);
                 }
-                if (token.getSubject() == null) {
-                    throw ErrorResponse.error("JWT must contain the 'sub' claim.", Response.Status.BAD_REQUEST);
+                if (token.getSubject() == null || !Urls.realmIssuer(session.getContext().getUri(UrlType.FRONTEND).getBaseUri(), session.getContext().getRealm().getName()).equals(token.getSubject())) {
+                    throw ErrorResponse.error("JWT must contain realm issuer as the 'sub' claim.", Response.Status.BAD_REQUEST);
                 }
                 if (token.getIat() == null) {
                     throw ErrorResponse.error("JWT must contain the 'iat' claim.", Response.Status.BAD_REQUEST);
