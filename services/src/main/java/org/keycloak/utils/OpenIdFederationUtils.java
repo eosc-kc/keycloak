@@ -208,7 +208,7 @@ public class OpenIdFederationUtils {
         OpenIdFederationClientRegistrationService provider = new OpenIdFederationClientRegistrationService(session);
         provider.setEvent(event);
         provider.setAuth(new ClientRegistrationAuth(session, provider, event, "openid-connect"));
-        provider.createOrUpdateClient(rpEntityStatement, (RPMetadata) validChain.getMetadataAfterPolicies());
+        provider.createOrUpdateClient(rpEntityStatement, (RPMetadata) validChain.getMetadataAfterPolicies(), validChain.getExpirationTime());
 
         // Automatic registration (§12.1): mark client and enforce asymmetric client authentication.
         // No client secret is assigned; subsequent authz/token/userinfo use the automatic attribute.

@@ -11,6 +11,7 @@ import jakarta.ws.rs.InternalServerErrorException;
 import jakarta.ws.rs.NotFoundException;
 import jakarta.ws.rs.core.UriInfo;
 
+import org.keycloak.common.util.Time;
 import org.keycloak.models.KeycloakSession;
 import org.keycloak.models.OpenIdFederationGeneralConfig;
 import org.keycloak.models.RealmModel;
@@ -103,7 +104,7 @@ public class OpenIdFederationWellKnownProvider extends OIDCWellKnownProvider {
         }
 
         String realmIssuer = Urls.realmIssuer(frontendUriInfo.getBaseUri(), realm.getName());
-        EntityStatement entityStatement = new EntityStatement(realmIssuer, Long.valueOf(openIdFederationConfig.getLifespan()), new ArrayList<>(openIdFederationConfig.getAuthorityHints()), trustChainProcessor.getKeySet(realm));
+        EntityStatement entityStatement = new EntityStatement(realmIssuer, (long) Time.currentTime() + Long.valueOf(openIdFederationConfig.getLifespan()), new ArrayList<>(openIdFederationConfig.getAuthorityHints()), trustChainProcessor.getKeySet(realm));
         entityStatement.setMetadata(metadata);
 
         List<TrustMarkModel> realmTrustMarks = realm.getTrustMarks();

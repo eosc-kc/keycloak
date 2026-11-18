@@ -12,6 +12,8 @@ public class TrustChainResolution {
 
     private String leafId;
 
+    private Long expirationTime;
+
     private MetadataInterface metadataAfterPolicies;
 
     public TrustChainResolution() {
@@ -49,6 +51,14 @@ public class TrustChainResolution {
 
     public void setLeafId(String leafId) {
         this.leafId = leafId;
+    }
+
+    public Long getExpirationTime() {
+        return expirationTime;
+    }
+
+    public void setExpirationTime(Long expirationTime) {
+        this.expirationTime = expirationTime;
     }
 
     public MetadataInterface getMetadataAfterPolicies() {

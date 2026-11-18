@@ -60,7 +60,7 @@ public class EntityStatement extends JsonWebToken {
         this.issuer = issuer;
         this.subject = issuer;
         this.issuedNow();
-        this.exp(this.iat + expiration);
+        this.exp(expiration);
         this.authorityHints = authorityHints;
         this.setJwks(jwks);
         this.type(TokenUtil.ENTITY_STATEMENT_JWT);

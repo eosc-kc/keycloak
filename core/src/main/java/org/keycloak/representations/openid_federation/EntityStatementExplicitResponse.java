@@ -12,11 +12,11 @@ public class EntityStatementExplicitResponse extends EntityStatement{
     @JsonProperty("trust_anchor")
     protected String trustAnchor;
 
-    public EntityStatementExplicitResponse (EntityStatement statement, String issuer, RPMetadata rpMetadata, String trustAnchor, String authorityHint){
+    public EntityStatementExplicitResponse (EntityStatement statement, String issuer, RPMetadata rpMetadata, String trustAnchor, String authorityHint, Long exp){
         this.issuer = issuer;
         this.subject = statement.getSubject();
         this.iat = Long.valueOf(rpMetadata.getClientIdIssuedAt());
-        this.exp = statement.getExp();
+        this.exp = exp;
         this.jwks = statement.getJwks();
         this.audience = new String [] {statement.getSubject()};
         this.trustAnchor = trustAnchor;
