@@ -35,7 +35,8 @@ export type TrustMarkValidationMessage =
   | "trustMarkRequiredClaims"
   | "trustMarkInvalidClaimTypes"
   | "trustMarkExpirationInPast"
-  | "trustMarkTypeMismatch";
+  | "trustMarkTypeMismatch"
+  | "trustMarkSubjectMismatch";
 
 export type TrustMarkValidationResult = {
   decoded?: DecodedTrustMark;
@@ -69,6 +70,7 @@ const validateHeader = (
 const decodeClaims = (
   payload: JWTPayload,
   expectedType: string,
+  expectedSubject?: string,
 ): TrustMarkValidationResult => {
   const trustMarkType = payload.trust_mark_type;
   if (
@@ -106,6 +108,10 @@ const decodeClaims = (
     return { decoded, error: "trustMarkExpirationInPast" };
   }
 
+  if (expectedSubject && decoded.subject !== expectedSubject) {
+    return { decoded, error: "trustMarkSubjectMismatch" };
+  }
+
   return trustMarkType === expectedType.trim()
     ? { decoded }
     : { decoded, error: "trustMarkTypeMismatch" };
@@ -114,6 +120,7 @@ const decodeClaims = (
 export const decodeAndValidateTrustMark = (
   trustMarkJwt: string,
   expectedType: string,
+  expectedSubject?: string,
 ): TrustMarkValidationResult => {
   const normalizedJwt = normalizeTrustMarkJwt(trustMarkJwt);
   const parts = normalizedJwt.split(".");
@@ -131,7 +138,11 @@ export const decodeAndValidateTrustMark = (
 
   try {
     const headerError = validateHeader(decodeProtectedHeader(normalizedJwt));
-    const claimsResult = decodeClaims(decodeJwt(normalizedJwt), expectedType);
+    const claimsResult = decodeClaims(
+      decodeJwt(normalizedJwt),
+      expectedType,
+      expectedSubject,
+    );
     return headerError
       ? { decoded: claimsResult.decoded, error: headerError }
       : claimsResult;
