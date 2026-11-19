@@ -6,6 +6,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import jakarta.ws.rs.core.Response;
+import jakarta.ws.rs.core.UriBuilder;
 
 import org.keycloak.admin.client.resource.RealmResource;
 import org.keycloak.admin.client.resource.TrustMarkResource;
@@ -15,11 +16,14 @@ import org.keycloak.jose.jwk.JSONWebKeySet;
 import org.keycloak.jose.jwk.JWK;
 import org.keycloak.jose.jws.JWSBuilder;
 import org.keycloak.representations.JsonWebToken;
+import org.keycloak.representations.idm.ErrorRepresentation;
 import org.keycloak.representations.idm.OpenIdFederationRepresentation;
 import org.keycloak.representations.idm.RealmRepresentation;
 import org.keycloak.representations.idm.TrustMarkRepresentation;
+import org.keycloak.services.resources.RealmsResource;
 import org.keycloak.testsuite.AbstractTestRealmKeycloakTest;
 import org.keycloak.testsuite.admin.ApiUtil;
+import org.keycloak.testsuite.util.oauth.OAuthClient;
 import org.keycloak.utils.OpenIdFederationUtils;
 
 import org.junit.After;
@@ -75,7 +79,7 @@ public class TrustMarksTest extends AbstractTestRealmKeycloakTest {
     }
 
     @Test
-    public void internalTrustMarks() {
+    public void selfSignedTrustMarks() {
         RealmResource testRealm = adminClient.realm("test");
             TrustMarksResource trustMarksResource = testRealm.trustMarksResource();
             long currentTime = Time.currentTime();
@@ -122,17 +126,18 @@ public class TrustMarksTest extends AbstractTestRealmKeycloakTest {
     }
 
     @Test
-    public void externalTrustMarks() {
+    public void noSelfSignedTrustMarks() {
         RealmResource testRealm = adminClient.realm("test");
             TrustMarksResource trustMarksResource = testRealm.trustMarksResource();
             long currentTime = Time.currentTime();
+            String realmSubject = RealmsResource.realmBaseUrl(UriBuilder.fromUri(OAuthClient.AUTH_SERVER_ROOT)).build("test").toString();
 
             TrustMarkRepresentation created = new TrustMarkRepresentation();
             created.setTrustMarkType("https://edugain.org/trust-mark/external");
             created.setSelfSigned(false);
 
             // Generate a dummy JWT representing the trust mark
-            String jwt = createDummyJwt("https://edugain.org/issuer", "https://edugain.org/subject", currentTime - 100, currentTime + (24 * 60 * 60));
+            String jwt = createDummyJwt("https://edugain.org/issuer", realmSubject, currentTime - 100, currentTime + (24 * 60 * 60));
             created.setJwt(jwt);
 
             String trustMarkId;
@@ -151,7 +156,7 @@ public class TrustMarksTest extends AbstractTestRealmKeycloakTest {
             assertTrustMark(created, fetched, trustMarkId);
 
             // Update: Supply a new JWT (e.g., extended expiration)
-            String updatedJwt = createDummyJwt("https://edugain.org/issuer", "https://edugain.org/subject", currentTime, currentTime + (24 * 60 * 60));
+            String updatedJwt = createDummyJwt("https://edugain.org/issuer", realmSubject, currentTime, currentTime + (24 * 60 * 60));
             fetched.setJwt(updatedJwt);
 
             try (Response response = trustMarkResource.update(fetched)) {
@@ -172,54 +177,97 @@ public class TrustMarksTest extends AbstractTestRealmKeycloakTest {
     @Test
     public void trustMarksValidationErrors() {
         RealmResource testRealm = adminClient.realm("test");
-            TrustMarksResource trustMarksResource = testRealm.trustMarksResource();
-            long currentTime = Time.currentTime();
+        TrustMarksResource trustMarksResource = testRealm.trustMarksResource();
+        long currentTime = Time.currentTime();
+        String realmSubject = RealmsResource.realmBaseUrl(UriBuilder.fromUri(OAuthClient.AUTH_SERVER_ROOT)).build("test").toString();
 
-            // Case 1: Missing trustMarkType
-            TrustMarkRepresentation rep1 = new TrustMarkRepresentation();
-            rep1.setSelfSigned(true);
-            rep1.setIat(currentTime - 100);
-            assertBadRequest(trustMarksResource.create(rep1));
+        // Missing trustMarkType
+        TrustMarkRepresentation rep1 = new TrustMarkRepresentation();
+        rep1.setSelfSigned(true);
+        rep1.setIat(currentTime - 100);
+        assertBadRequest(trustMarksResource.create(rep1),
+                "trustMarkType and selfSigned are required.");
 
-            // Case 2: Self-signed but exp is in the past
-            TrustMarkRepresentation rep2 = new TrustMarkRepresentation();
-            rep2.setTrustMarkType("type");
-            rep2.setSelfSigned(true);
-            rep2.setIat(currentTime - 100);
-            rep2.setExp(currentTime - 50);
-            assertBadRequest(trustMarksResource.create(rep2));
+        // Self-signed missing iat
+        TrustMarkRepresentation rep3 = new TrustMarkRepresentation();
+        rep3.setTrustMarkType("https://edugain.org/trust-mark/member");
+        rep3.setSelfSigned(true);
+        assertBadRequest(trustMarksResource.create(rep3),
+                "iat is required when selfSigned is true.");
 
-            // Case 3: Not self-signed, but has extraneous fields (logoUri)
-            TrustMarkRepresentation rep3 = new TrustMarkRepresentation();
-            rep3.setTrustMarkType("type");
-            rep3.setSelfSigned(false);
-            rep3.setJwt(createDummyJwt("iss", "sub", currentTime, currentTime + (24 * 60 * 60)));
-            rep3.setLogoUri("https://edugain.org/logo.png");
-            assertBadRequest(trustMarksResource.create(rep3));
+        // Self-signed with exp in the past
+        TrustMarkRepresentation rep4 = new TrustMarkRepresentation();
+        rep4.setTrustMarkType("https://edugain.org/trust-mark/member");
+        rep4.setSelfSigned(true);
+        rep4.setIat(currentTime - 100);
+        rep4.setExp(currentTime - 50);
+        assertBadRequest(trustMarksResource.create(rep4),
+                "exp must not be before current time.");
 
-            // Case 4: Not self-signed, JWT missing mandatory 'iss' claim
-            TrustMarkRepresentation rep4 = new TrustMarkRepresentation();
-            rep4.setTrustMarkType("type");
-            rep4.setSelfSigned(false);
-            rep4.setJwt(createDummyJwt(null, "sub", currentTime, currentTime + (24 * 60 * 60)));
-            assertBadRequest(trustMarksResource.create(rep4));
+        // Not self-signed missing jwt
+        TrustMarkRepresentation rep5 = new TrustMarkRepresentation();
+        rep5.setTrustMarkType("https://edugain.org/trust-mark/external");
+        rep5.setSelfSigned(false);
+        assertBadRequest(trustMarksResource.create(rep5),
+                "jwt is required when selfSigned is false.");
 
-            // Case 5: 'subject' directly in the root representation
-            TrustMarkRepresentation rep5 = new TrustMarkRepresentation();
-            rep5.setTrustMarkType("type");
-            rep5.setSelfSigned(true);
-            rep5.setIat(currentTime - 100);
-            rep5.setSubject("invalid-root-subject");
-            assertBadRequest(trustMarksResource.create(rep5));
+        // Not self-signed with extraneous fields (logoUri)
+        TrustMarkRepresentation rep6 = new TrustMarkRepresentation();
+        rep6.setTrustMarkType("https://edugain.org/trust-mark/external");
+        rep6.setSelfSigned(false);
+        rep6.setJwt(createDummyJwt("https://edugain.org/issuer", realmSubject, currentTime, currentTime + (24 * 60 * 60)));
+        rep6.setLogoUri("https://edugain.org/logo.png");
+        assertBadRequest(trustMarksResource.create(rep6),
+                "Only jwt and trustMarkType are allowed when selfSigned is false.");
 
+        // Not self-signed with invalid JWT format
+        TrustMarkRepresentation rep7 = new TrustMarkRepresentation();
+        rep7.setTrustMarkType("https://edugain.org/trust-mark/external");
+        rep7.setSelfSigned(false);
+        rep7.setJwt("not-a-valid-jwt");
+        assertBadRequest(trustMarksResource.create(rep7),
+                "Invalid JWT format.");
+
+        // Not self-signed, JWT missing 'iss' claim
+        TrustMarkRepresentation rep8 = new TrustMarkRepresentation();
+        rep8.setTrustMarkType("https://edugain.org/trust-mark/external");
+        rep8.setSelfSigned(false);
+        rep8.setJwt(createDummyJwt(null, realmSubject, currentTime, currentTime + (24 * 60 * 60)));
+        assertBadRequest(trustMarksResource.create(rep8),
+                "JWT must contain the 'iss' claim.");
+
+        // Not self-signed, JWT 'sub' does not match realm issuer
+        TrustMarkRepresentation rep9 = new TrustMarkRepresentation();
+        rep9.setTrustMarkType("https://edugain.org/trust-mark/external");
+        rep9.setSelfSigned(false);
+        rep9.setJwt(createDummyJwt("https://edugain.org/issuer", "https://edugain.org/wrong-subject", currentTime, currentTime + (24 * 60 * 60)));
+        assertBadRequest(trustMarksResource.create(rep9),
+                "JWT must contain realm issuer as the 'sub' claim.");
+
+        // Not self-signed, JWT missing 'iat' claim
+        TrustMarkRepresentation rep10 = new TrustMarkRepresentation();
+        rep10.setTrustMarkType("https://edugain.org/trust-mark/external");
+        rep10.setSelfSigned(false);
+        rep10.setJwt(createDummyJwt("https://edugain.org/issuer", realmSubject, null, currentTime + (24 * 60 * 60)));
+        assertBadRequest(trustMarksResource.create(rep10),
+                "JWT must contain the 'iat' claim.");
+
+        // Not self-signed, JWT 'exp' in the past
+        TrustMarkRepresentation rep11 = new TrustMarkRepresentation();
+        rep11.setTrustMarkType("https://edugain.org/trust-mark/external");
+        rep11.setSelfSigned(false);
+        rep11.setJwt(createDummyJwt("https://edugain.org/issuer", realmSubject, currentTime - 100, currentTime - 50));
+        assertBadRequest(trustMarksResource.create(rep11),
+                "JWT 'exp' claim must not be before current time.");
 
     }
 
-    private void assertBadRequest(Response response) {
-        try {
+    private void assertBadRequest(Response response, String expectedErrorMessage) {
+        try (response) {
             assertEquals(Response.Status.BAD_REQUEST.getStatusCode(), response.getStatus());
-        } finally {
-            response.close();
+            ErrorRepresentation error = response.readEntity(ErrorRepresentation.class);
+            assertNotNull("Expected ErrorRepresentation in response body", error);
+            assertEquals(expectedErrorMessage, error.getErrorMessage());
         }
     }
 
