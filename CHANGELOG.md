@@ -10,7 +10,7 @@ Full Keycloak upstream jira issue can be shown if filtered by Fix version.
 
 Our Keycloak version is working well with PostgreSQL database. For using other SQL databases, text field in database need to be evaluated.
 
-## [Unreleased]
+## [26.6.6-1.4] -2026-11-19
 
 ### Upgrade Notes
 - **OpenID Federation:** Previously created automatic registered OpenID Federation Clients must be disabled or deleted for automatic registered OpenID Federation client works correctly.
