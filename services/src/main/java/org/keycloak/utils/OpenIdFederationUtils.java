@@ -109,6 +109,9 @@ public class OpenIdFederationUtils {
         rPMetadata.setContacts(openIdFederationConfig.getContacts());
         rPMetadata.setLogoUri(openIdFederationConfig.getLogoUri());
         rPMetadata.setPolicyUri(openIdFederationConfig.getPolicyUri());
+        if (openIdFederationConfig.getTosUri() != null) {
+            rPMetadata.setTosUri(openIdFederationConfig.getTosUri());
+        }
         rPMetadata.setCommonMetadata(common);
         rPMetadata.setJwksUri(jwksUri);
         rPMetadata.setGrantTypes(Collections.singletonList(OAuth2Constants.AUTHORIZATION_CODE));

@@ -225,6 +225,7 @@ public class ModelToRepresentation {
         REALM_EXCLUDED_ATTRIBUTES.add(Constants.OPENID_FEDERATION_ORGANIZATION_URI);
         REALM_EXCLUDED_ATTRIBUTES.add(Constants.OPENID_FEDERATION_LOGO_URI);
         REALM_EXCLUDED_ATTRIBUTES.add(Constants.OPENID_FEDERATION_POLICY_URI);
+        REALM_EXCLUDED_ATTRIBUTES.add(Constants.OPENID_FEDERATION_TOS_URI);
         REALM_EXCLUDED_ATTRIBUTES.add(Constants.OPENID_FEDERATION_CONNECTION_TIMEOUT);
         REALM_EXCLUDED_ATTRIBUTES.add(Constants.OPENID_FEDERATION_SOCKET_TIMEOUT);
         REALM_EXCLUDED_ATTRIBUTES.add(Constants.OPENID_FEDERATION_CONNECTION_REQUEST_TIMEOUT);
@@ -654,6 +655,7 @@ public class ModelToRepresentation {
             rep.setOpenIdFederationContacts(openIdFederationConfig.getContacts());
             rep.setOpenIdFederationLogoUri(openIdFederationConfig.getLogoUri());
             rep.setOpenIdFederationPolicyUri(openIdFederationConfig.getPolicyUri());
+            rep.setOpenIdFederationTosUri(openIdFederationConfig.getTosUri());
             rep.setOpenIdFederationOrganizationUri(openIdFederationConfig.getOrganizationUri());
             rep.setOpenIdFederationAuthorityHints(openIdFederationConfig.getAuthorityHints());
             rep.setOpenIdFederationLifespan(openIdFederationConfig.getLifespan());

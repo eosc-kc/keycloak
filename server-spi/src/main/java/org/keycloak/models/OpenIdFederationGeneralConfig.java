@@ -12,6 +12,7 @@ public class OpenIdFederationGeneralConfig implements Serializable {
     private List<String> contacts;
     private String logoUri;
     private String policyUri;
+    private String tosUri;
     private String organizationUri;
     private List<String> authorityHints;
     private Integer lifespan;
@@ -62,6 +63,14 @@ public class OpenIdFederationGeneralConfig implements Serializable {
 
     public void setPolicyUri(String policyUri) {
         this.policyUri = policyUri;
+    }
+
+    public String getTosUri() {
+        return tosUri;
+    }
+
+    public void setTosUri(String tosUri) {
+        this.tosUri = tosUri;
     }
 
     public String getOrganizationUri() {
