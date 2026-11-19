@@ -9,6 +9,7 @@ import java.util.stream.Stream;
 
 import jakarta.ws.rs.client.Client;
 import jakarta.ws.rs.client.WebTarget;
+import jakarta.ws.rs.core.HttpHeaders;
 import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.core.UriBuilder;
 
@@ -225,10 +226,17 @@ public class OpenIdFederationWellKnownProviderTest extends AbstractWellKnownProv
     }
 
     private EntityStatement getOIDCFederationDiscoveryRepresentation(Client client, String uriTemplate) {
-        String jwtFederation = getOIDCFederationDiscoveryConfiguration(client, uriTemplate).readEntity(String.class);
-        EntityStatement statement = null;
-        statement = oauth.verifyToken(jwtFederation, EntityStatement.class);
-        return statement;
+        try (Response response = getOIDCFederationDiscoveryConfiguration(client, uriTemplate)) {
+            assertEquals("Expected HTTP 200 for Accept: application/entity-statement+jwt", 200, response.getStatus());
+            assertEquals("Invalid Content-Type header", TokenUtil.APPLICATION_ENTITY_STATEMENT_JWT, response.getHeaderString(HttpHeaders.CONTENT_TYPE));
+
+            String jwtFederation = response.readEntity(String.class);
+            Assert.assertNotNull("Response body must not be null", jwtFederation);
+            Assert.assertFalse("Response body must be a compact JWT, not JSON", jwtFederation.trim().startsWith("{"));
+            assertEquals("Compact JWT must have 3 dot-separated parts", 3, jwtFederation.split("\\.").length);
+
+            return oauth.verifyToken(jwtFederation, EntityStatement.class);
+        }
     }
 
     private Response getOIDCFederationDiscoveryConfiguration(Client client, String uriTemplate) {
@@ -236,7 +244,7 @@ public class OpenIdFederationWellKnownProviderTest extends AbstractWellKnownProv
         URI oidcDiscoveryUri = RealmsResource.wellKnownProviderUrl(builder).build("test", OpenIdFederationWellKnownProviderFactory.PROVIDER_ID);
         WebTarget oidcDiscoveryTarget = client.target(oidcDiscoveryUri);
 
-        return oidcDiscoveryTarget.request().get();
+        return oidcDiscoveryTarget.request(TokenUtil.APPLICATION_ENTITY_STATEMENT_JWT).get();
     }
 
 
