@@ -140,6 +140,7 @@ export default interface RealmRepresentation {
   openIdFederationContacts?: string[];
   openIdFederationLogoUri?: string;
   openIdFederationPolicyUri?: string;
+  openIdFederationTosUri?: string;
   openIdFederationOrganizationUri?: string;
   openIdFederationResolveEndpoint?: string;
   openIdFederationHistoricalKeysEndpoint?: string;

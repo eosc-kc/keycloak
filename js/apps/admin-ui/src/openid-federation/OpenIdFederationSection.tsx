@@ -87,6 +87,7 @@ export default function OpenIdFederationSection() {
       "openIdFederationOrganizationName",
       "openIdFederationOrganizationUri",
       "openIdFederationPolicyUri",
+      "openIdFederationTosUri",
       "openIdFederationResolveEndpoint",
     ];
 
