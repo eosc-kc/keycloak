@@ -72,6 +72,19 @@ const openIdFederationRPClientRegistrationTypesSupported: ClientRegistrationType
 const openIdFederationOPClientRegistrationTypesSupported: ClientRegistrationTypesSupported[] =
   ["EXPLICIT", "AUTOMATIC"];
 
+const isValidHttpUrl = (value: string | undefined) => {
+  if (!value) {
+    return true;
+  }
+
+  try {
+    const url = new URL(value);
+    return url.protocol === "http:" || url.protocol === "https:";
+  } catch {
+    return false;
+  }
+};
+
 type AdvancedSettingName =
   | "openIdFederationConnectionTimeout"
   | "openIdFederationSocketTimeout"
@@ -296,6 +309,7 @@ export const OpenIdFederationGeneralSettings = ({
         realm.openIdFederationAuthorityHints ?? [],
       openIdFederationLogoUri: realm.openIdFederationLogoUri ?? "",
       openIdFederationPolicyUri: realm.openIdFederationPolicyUri ?? "",
+      openIdFederationTosUri: realm.openIdFederationTosUri ?? "",
       openIdFederationOrganizationName:
         realm.openIdFederationOrganizationName ?? "",
       openIdFederationOrganizationUri:
@@ -443,6 +457,17 @@ export const OpenIdFederationGeneralSettings = ({
                         name="openIdFederationPolicyUri"
                         label={t("openIdFederationPolicyUri")}
                         type="text"
+                      />
+                      <TextControl
+                        name="openIdFederationTosUri"
+                        label={t("openIdFederationTosUri")}
+                        labelIcon={t("openIdFederationTosUriHelp")}
+                        type="url"
+                        rules={{
+                          validate: (value) =>
+                            isValidHttpUrl(value) ||
+                            t("openIdFederationTosUriInvalid"),
+                        }}
                       />
                       <TextControl
                         name="openIdFederationOrganizationName"
