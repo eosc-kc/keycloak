@@ -11,7 +11,7 @@ on:
   workflow_dispatch:
 
 env:
-  MAVEN_ARGS: "-B -nsu -Daether.connector.http.connectionMaxTtl=25"
+  MAVEN_ARGS: "-B -nsu -s .github/maven-ci-settings.xml -Daether.connector.http.connectionMaxTtl=25 -Daether.connector.connectTimeout=5000 -Daether.connector.requestTimeout=15000"
 
 concurrency:
   # Only cancel jobs for PR updates

@@ -10,7 +10,8 @@ on:
   workflow_dispatch:
 
 env:
-  MAVEN_ARGS: "-B -nsu -Daether.connector.http.connectionMaxTtl=25"
+  # maven-ci-settings.xml mirrors jboss-public-repository* to Central to avoid repository.jboss.org hangs.
+  MAVEN_ARGS: "-B -nsu -s .github/maven-ci-settings.xml -Daether.connector.http.connectionMaxTtl=25 -Daether.connector.connectTimeout=5000 -Daether.connector.requestTimeout=15000"
   SUREFIRE_RERUN_FAILING_COUNT: 2
   SUREFIRE_RETRY: "-Dsurefire.rerunFailingTestsCount=2"
   KC_TEST_GITHUB_SLOW_METHOD: "10"
@@ -113,7 +114,7 @@ jobs:
         uses: ./.github/actions/build-keycloak
 
       - name: Spotless
-        run: ./mvnw -Pdocs,distribution,operator spotless:check
+        run: ./mvnw $MAVEN_ARGS -Pdocs,distribution,operator spotless:check
 
       - name: Check for unstaged proto.lock files
         if: github.event_name == 'pull_request' && startsWith(github.event.pull_request.base.ref, 'release/')

@@ -885,7 +885,7 @@ public class StandardTokenExchangeV2Test extends AbstractClientPoliciesTest {
 
             oauth.client("requester-client", "secret");
             response = oauth.doRefreshTokenRequest(response.getRefreshToken());
-            exchangedToken = assertAudiencesAndScopes(response, List.of("requester-client", "target-client1"), List.of("default-scope1", "optional-scope2"), true);
+            exchangedToken = assertAudiencesAndScopes(response, List.of("target-client1"), List.of("default-scope1", "optional-scope2"), true);
             events.expect(EventType.REFRESH_TOKEN)
                     .detail(Details.TOKEN_ID, exchangedToken.getId())
                     .detail(Details.REFRESH_TOKEN_ID, AssertEvents.isTokenId())
@@ -1190,7 +1190,7 @@ public class StandardTokenExchangeV2Test extends AbstractClientPoliciesTest {
             assertNotNull(refreshResponse.getAccessToken());
             assertNotNull(refreshResponse.getRefreshToken());
             assertEquals(TokenUtil.TOKEN_TYPE_OFFLINE, oauth.parseRefreshToken(refreshResponse.getRefreshToken()).getType());
-            AccessToken refreshedAccessToken = assertAudiencesAndScopes(refreshResponse, List.of("requester-client", "target-client1"),
+            AccessToken refreshedAccessToken = assertAudiencesAndScopes(refreshResponse, List.of("target-client1"),
                     List.of("offline_access", "default-scope1"), true);
             events.expect(EventType.REFRESH_TOKEN)
                     .client("requester-client")
