@@ -164,7 +164,7 @@ public class DynamicScopesIsolationTest {
         @Override
         public RealmConfigBuilder configure(RealmConfigBuilder realm) {
             realm.addUser(USERNAME).password(PASSWORD).email("test@localhost")
-                    .firstName("Test").lastName("User");
+                    .firstName("Test").lastName("User").attribute(SCOPE_NAME, VALUE_A).attribute(SCOPE_NAME, VALUE_B);
             return realm;
         }
     }

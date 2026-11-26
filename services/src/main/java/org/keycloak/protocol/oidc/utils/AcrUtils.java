@@ -29,13 +29,22 @@ import java.util.Optional;
 import java.util.OptionalInt;
 import java.util.stream.Collectors;
 
+import jakarta.ws.rs.core.Response;
+
 import org.keycloak.authentication.authenticators.util.LoAUtil;
+import org.keycloak.events.Errors;
+import org.keycloak.events.EventBuilder;
 import org.keycloak.models.ClientModel;
 import org.keycloak.models.Constants;
+import org.keycloak.models.KeycloakSession;
 import org.keycloak.models.RealmModel;
 import org.keycloak.protocol.oidc.OIDCAdvancedConfigWrapper;
+import org.keycloak.protocol.oidc.OIDCLoginProtocol;
 import org.keycloak.representations.ClaimsRepresentation;
 import org.keycloak.representations.IDToken;
+import org.keycloak.services.ErrorPageException;
+import org.keycloak.services.messages.Messages;
+import org.keycloak.sessions.AuthenticationSessionModel;
 import org.keycloak.util.JsonSerialization;
 
 import com.fasterxml.jackson.core.type.TypeReference;
@@ -63,15 +72,16 @@ public class AcrUtils {
     /**
      * Maps ACR values to LoA and returns the lowest. Unmapped or non-numeric ACRs fall back to {@link Constants#MINIMUM_LOA}.
      */
-    public static OptionalInt getLowestLoaForAcrValues(List<String> acrValues, ClientModel client) {
+    public static OptionalInt getLowestLoaForAcrValues(List<String> acrValues, ClientModel client, KeycloakSession session, EventBuilder event, AuthenticationSessionModel authenticationSession) {
         Map<String, Integer> acrLoaMap = getAcrLoaMap(client);
         return acrValues.stream().mapToInt(acr -> {
-            Integer loa = acrLoaMap.get(acr);
             try {
+                Integer loa = acrLoaMap.get(acr);
                 return loa == null ? Integer.parseInt(acr) : loa;
             } catch (NumberFormatException e) {
-                LOGGER.warnf("Requested acr value '%s' is not a number and it is not mapped in the ACR-To-Loa mappings of realm or client. Please doublecheck ACR-to-LOA mapping or correct used ACR.", acr);
-                return Constants.MINIMUM_LOA;
+                LOGGER.errorf("Acr value '%s' is not a number and it is not mapped in the ACR-To-Loa mappings of realm or client. Please doublecheck ACR-to-LOA mapping or correct ACR passed in the 'claims' or 'acr_values' parameter.", acr);
+                event.error(Errors.INVALID_REQUEST);
+                throw new ErrorPageException(session, authenticationSession, Response.Status.BAD_REQUEST, Messages.INVALID_PARAMETER, OIDCLoginProtocol.CLAIMS_PARAM);
             }
         }).min();
     }

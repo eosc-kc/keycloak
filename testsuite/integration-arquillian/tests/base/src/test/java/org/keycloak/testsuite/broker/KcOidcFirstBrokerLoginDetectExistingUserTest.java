@@ -183,6 +183,20 @@ public class KcOidcFirstBrokerLoginDetectExistingUserTest extends AbstractInitia
         idpRep.setTrustEmail(false);
         identityProviderResource.update(idpRep);
 
+        IdentityProviderMapperRepresentation mapper = new IdentityProviderMapperRepresentation();
+        mapper.setName("email-verified-mapper");
+        mapper.setIdentityProviderAlias(bc.getIDPAlias());
+        mapper.setIdentityProviderMapper(UserAttributeMapper.PROVIDER_ID);
+        mapper.setConfig(ImmutableMap.<String, String>builder()
+                .put(IdentityProviderMapperModel.SYNC_MODE, IdentityProviderMapperSyncMode.INHERIT.toString())
+                .put(UserAttributeMapper.CLAIM, "email_verified")
+                .put(UserAttributeMapper.USER_ATTRIBUTE, "emailVerified")
+                .build());
+
+        try (Response response = identityProviderResource.addMapper(mapper)) {
+            getCleanup().addCleanup(() -> identityProviderResource.delete(ApiUtil.getCreatedId(response)));
+        }
+
         oauth.clientId("broker-app");
         loginPage.open(bc.consumerRealmName());
 
@@ -213,7 +227,7 @@ public class KcOidcFirstBrokerLoginDetectExistingUserTest extends AbstractInitia
         mapper.setConfig(ImmutableMap.<String, String>builder()
                 .put(IdentityProviderMapperModel.SYNC_MODE, IdentityProviderMapperSyncMode.INHERIT.toString())
                 .put(UserAttributeMapper.CLAIM, "email_verified")
-                .put(UserAttributeMapper.USER_ATTRIBUTE, "email_verified")
+                .put(UserAttributeMapper.USER_ATTRIBUTE, "emailVerified")
                 .build());
 
         try (Response response = identityProviderResource.addMapper(mapper)) {
