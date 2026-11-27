@@ -17,6 +17,7 @@ Our Keycloak version is working well with PostgreSQL database. For using other S
 
 ### Fixed
 - OpenID Federation : expiration time is the expiration time of the Trust Chain
+- Correct .well-known/openid-federation endpoint headers
 
 ## [26.6.6-1.4] -2026-11-19
 

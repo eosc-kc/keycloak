@@ -44,6 +44,7 @@ import org.keycloak.models.RealmModel;
 import org.keycloak.protocol.LoginProtocol;
 import org.keycloak.protocol.LoginProtocolFactory;
 import org.keycloak.protocol.oidc.federation.OpenIdFederationWellKnownProvider;
+import org.keycloak.protocol.oidc.federation.OpenIdFederationWellKnownProviderFactory;
 import org.keycloak.services.CorsErrorResponseException;
 import org.keycloak.services.clientregistration.ClientRegistrationAuth;
 import org.keycloak.services.clientregistration.ClientRegistrationService;
@@ -241,6 +242,13 @@ public class RealmsResource {
     }
 
     @GET
+    @Path("{realm}/.well-known/openid-federation")
+    @Produces(TokenUtil.APPLICATION_ENTITY_STATEMENT_JWT)
+    public Response getOpenIdFederationWellKnown(final @PathParam("realm") String realm) {
+        return getWellKnownResponse(session, realm, OpenIdFederationWellKnownProviderFactory.PROVIDER_ID, logger);
+    }
+
+    @GET
     @Path("{realm}/.well-known/{alias}")
     @Produces({MediaType.APPLICATION_JSON, APPLICATION_JWT})
     public Response getWellKnown(final @PathParam("realm") String realm,
@@ -261,14 +269,18 @@ public class RealmsResource {
 
         if (wellKnown != null) {
             Object config = wellKnown.getConfig();
-            Response.ResponseBuilder responseBuilder;
 
-            // Check if the provider returned a JWT string or JSON object
-            responseBuilder = Response.ok(config).type(config instanceof String ? APPLICATION_JWT : MediaType.APPLICATION_JSON);
-
+            // Check if the provider returned a JWT string or JSON object or alias is openid-federation
+            String mediaType;
             if (wellKnown instanceof OpenIdFederationWellKnownProvider) {
-                responseBuilder.header("Content-Type", TokenUtil.APPLICATION_ENTITY_STATEMENT_JWT);
+                mediaType = TokenUtil.APPLICATION_ENTITY_STATEMENT_JWT;
+            } else if (config instanceof String) {
+                mediaType = APPLICATION_JWT;
+            } else {
+                mediaType = MediaType.APPLICATION_JSON;
             }
+
+            Response.ResponseBuilder responseBuilder = Response.ok(config).type(mediaType);
 
             return Cors.builder().allowAllOrigins().auth().add(responseBuilder.cacheControl(CacheControlUtil.noCache()));
         }
