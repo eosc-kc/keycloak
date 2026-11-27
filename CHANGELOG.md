@@ -10,6 +10,11 @@ Full Keycloak upstream jira issue can be shown if filtered by Fix version.
 
 Our Keycloak version is working well with PostgreSQL database. For using other SQL databases, text field in database need to be evaluated.
 
+## [Unreleased]
+
+### Fixed
+- OpenID Federation : expiration time is the expiration time of the Trust Chain
+
 ## [26.6.6-1.4] -2026-11-19
 
 ### Upgrade Notes

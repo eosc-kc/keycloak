@@ -92,7 +92,7 @@ public class OpenIdFederationClientRegistrationService extends AbstractClientReg
         }
         RPMetadata rPMetadata = (RPMetadata) validChain.getMetadataAfterPolicies();
 
-        ClientRepresentation client = createOrUpdateClient(statement, rPMetadata);
+        ClientRepresentation client = createOrUpdateClient(statement, rPMetadata, validChain.getExpirationTime());
         ClientModel clientModel = realm.getClientByClientId(client.getClientId());
         if (clientModel != null) {
             clientModel.setAttribute(OIDCConfigAttributes.OPENID_FEDERATION_REGISTRATION, OIDCConfigAttributes.OPENID_FEDERATION_EXPLICIT);
@@ -104,13 +104,13 @@ public class OpenIdFederationClientRegistrationService extends AbstractClientReg
 
         rPMetadataResponse.setClientRegistrationTypes(Stream.of(ClientRegistrationTypeEnum.EXPLICIT.getValue()).collect(Collectors.toList()));
         rPMetadataResponse.setCommonMetadata(rPMetadata.getCommonMetadata());
-        EntityStatementExplicitResponse responseStatement = new EntityStatementExplicitResponse(statement, Urls.realmIssuer(session.getContext().getUri(UrlType.FRONTEND).getBaseUri(), session.getContext().getRealm().getName()), rPMetadataResponse, validChain.getTrustAnchorId(), validChain.getLeafId());
+        EntityStatementExplicitResponse responseStatement = new EntityStatementExplicitResponse(statement, Urls.realmIssuer(session.getContext().getUri(UrlType.FRONTEND).getBaseUri(), session.getContext().getRealm().getName()), rPMetadataResponse, validChain.getTrustAnchorId(), validChain.getLeafId(), validChain.getExpirationTime());
         responseStatement.type(TokenUtil.EXPLICIT_REGISTRATION_RESPONSE_JWT);
         String token = session.tokens().encodeForOpenIdFederation(responseStatement);
         return Response.ok(token).header("Content-Type", TokenUtil.APPLICATION_EXPLICIT_REGISTRATION_RESPONSE_JWT).build();
     }
 
-    public ClientRepresentation createOrUpdateClient(EntityStatement statement, RPMetadata rPMetadata){
+    public ClientRepresentation createOrUpdateClient(EntityStatement statement, RPMetadata rPMetadata, Long exp){
         if (rPMetadata.getJwks() == null && rPMetadata.getJwksUri() == null) {
             rPMetadata.setJwks(statement.getJwks());
         }
@@ -119,9 +119,9 @@ public class OpenIdFederationClientRegistrationService extends AbstractClientReg
         ClientRepresentation client;
         try {
             if (session.getContext().getRealm().getClientByClientId(rPMetadata.getClientId()) == null) {
-                client = createOidcClient(rPMetadata, session, statement.getExp());
+                client = createOidcClient(rPMetadata, session, exp);
             } else {
-                client = updateOidcClient(rPMetadata.getClientId(), rPMetadata, session, statement.getExp());
+                client = updateOidcClient(rPMetadata.getClientId(), rPMetadata, session, exp);
             }
         } catch (Exception e) {
             logger.error("The following error was thrown during OpenId Federation Client explicit registration", e);

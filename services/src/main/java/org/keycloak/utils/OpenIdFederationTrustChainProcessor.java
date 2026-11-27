@@ -121,6 +121,10 @@ public class OpenIdFederationTrustChainProcessor implements TrustChainProcessor 
 
                 trustChainResolution.setCombinedPolicy(combinedPolicy);
                 trustChainResolution.setLeafId(trustChainResolution.getParsedChain().get(0).getSubject());
+                //check also that the expiration time of the leaf node is not after the expiration time of the trust chain resolution
+                if (leafEs.getExp().compareTo(trustChainResolution.getExpirationTime()) < 0) {
+                    trustChainResolution.setExpirationTime(leafEs.getExp());
+                }
                 return trustChainResolution;
             } catch (MetadataPolicyCombinationException | MetadataPolicyException e) {
                 logger.warn(String.format("Cannot combine metadata policy for trust anchor : " + trustChainResolution));
@@ -193,12 +197,16 @@ public class OpenIdFederationTrustChainProcessor implements TrustChainProcessor 
                                 TrustChainResolution trustAnchor = new TrustChainResolution();
                                 trustAnchor.getParsedChain().add(0, subNodeSelfES);
                                 trustAnchor.setTrustAnchorId(authHint);
+                                trustAnchor.setExpirationTime(subNodeSelfES.getExp());
                                 chainsList.add(trustAnchor);
                             } else {
                                 // Pass depth + 1 to the next recursive level
                                 List<TrustChainResolution> subList = subTrustChains(encodedSubNodeSelf, initialEntity, subNodeSelfES, openIdFederationGeneralConfig, visitedNodes, forRp, depth + 1);
                                 for (TrustChainResolution tcr : subList) {
                                     tcr.getParsedChain().add(0, subNodeSelfES);
+                                    if (subNodeSelfES.getExp().compareTo(tcr.getExpirationTime()) < 0) {
+                                        tcr.setExpirationTime(subNodeSelfES.getExp());
+                                    }
                                     chainsList.add(tcr);
                                 }
                             }
@@ -221,6 +229,7 @@ public class OpenIdFederationTrustChainProcessor implements TrustChainProcessor 
                         TrustChainResolution trustAnchor = new TrustChainResolution();
                         trustAnchor.getParsedChain().add(0, taStatement);
                         trustAnchor.setTrustAnchorId(leafEs.getSubject());
+                        trustAnchor.setExpirationTime(taStatement.getExp());
                         chainsList.add(trustAnchor);
                     }
                 }
@@ -469,7 +478,7 @@ public class OpenIdFederationTrustChainProcessor implements TrustChainProcessor 
         model = OIDCIdentityProviderFactory.parseOIDCConfig(op, OpenIdFederationIdentityProviderConfig.class, model);
 
         JSONWebKeySet jwks = getKeySet(realm);
-        EntityStatement entityStatement = new EntityStatement(Urls.realmIssuer(frontendUriInfo.getBaseUri(), realm.getName()), Long.valueOf(federationGeneralConfig.getLifespan()), Stream.of(trustChainResolution.getLeafId()).collect(Collectors.toList()), jwks);
+        EntityStatement entityStatement = new EntityStatement(Urls.realmIssuer(frontendUriInfo.getBaseUri(), realm.getName()), trustChainResolution.getExpirationTime(), Stream.of(trustChainResolution.getLeafId()).collect(Collectors.toList()), jwks);
         entityStatement.addAudience(opIssuer);
         Metadata metadata = new Metadata();
         // Use RP client registration types from general config
