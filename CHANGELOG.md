@@ -12,6 +12,9 @@ Our Keycloak version is working well with PostgreSQL database. For using other S
 
 ## [Unreleased]
 
+### Added
+- Add support for optional tos_uri in RP entity metadata
+
 ### Fixed
 - OpenID Federation : expiration time is the expiration time of the Trust Chain
 

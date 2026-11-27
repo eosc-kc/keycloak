@@ -1524,6 +1524,7 @@ public class DefaultExportImportManager implements ExportImportManager {
             config.setContacts(rep.getOpenIdFederationContacts());
             config.setLogoUri(rep.getOpenIdFederationLogoUri());
             config.setPolicyUri(rep.getOpenIdFederationPolicyUri());
+            config.setTosUri(rep.getOpenIdFederationTosUri());
             config.setOrganizationUri(rep.getOpenIdFederationOrganizationUri());
             config.setAuthorityHints(rep.getOpenIdFederationAuthorityHints());
             config.setLifespan(rep.getOpenIdFederationLifespan());
